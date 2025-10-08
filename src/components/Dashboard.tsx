@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { Card, Select, Label, Spinner } from "flowbite-react";
+import DailyTable from "./DailyTable";
+
 import { Bar } from "react-chartjs-2";
 import {
   fetchBranches,
   fetchCategories,
+  fetchWeeklyReport,
+  fetchWeeklyReportByCategory,
   fetchMonthlyCategoryReportWithWeeks,
   Branch,
   Category,
@@ -11,6 +15,7 @@ import {
   WeeklyReport,
   type MonthlyReport,
   fetchMonthlyReport,
+  type DailyReport,
 } from "../services/api";
 
 import {
@@ -31,8 +36,9 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
-// ...imports y ChartJS como antes
-
+interface WeeklyDashboardProps {
+  weeklyReport: WeeklyReport;
+}
 export default function Dashboard() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -44,13 +50,62 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth() + 1,
   );
+  const [selectedDay, setSelectedDay] = useState<DailyReport | null>(null);
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear(),
   );
   const [report, setReport] = useState<
-    MonthlyCategoryReport | MonthlyReport | null
+    MonthlyCategoryReport | MonthlyReport | WeeklyReport | null
   >(null);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [weeks, setWeeks] = useState<
+    { start: Date; end: Date; label: string }[]
+  >([]);
+  const handleDayClick = (day: DailyReport) => {
+    setSelectedDay(day);
+  };
+  useEffect(() => {
+    if (!selectedYear || !selectedMonth) return;
+
+    const ym = new Date(selectedYear, selectedMonth - 1);
+    const startOfMonth = new Date(ym.getFullYear(), ym.getMonth(), 1);
+    const endOfMonth = new Date(ym.getFullYear(), ym.getMonth() + 1, 0);
+
+    // Encontrar el primer sábado del mes
+    const firstSaturday = new Date(startOfMonth);
+    while (firstSaturday.getDay() !== 6) {
+      firstSaturday.setDate(firstSaturday.getDate() + 1);
+    }
+
+    const weeksArray: { start: Date; end: Date; label: string }[] = [];
+
+    // La primera semana empieza el domingo anterior al primer sábado
+    let weekEnd = new Date(firstSaturday);
+    let weekStart = new Date(weekEnd);
+    weekStart.setDate(weekEnd.getDate() - 6);
+
+    while (weekEnd <= endOfMonth) {
+      weeksArray.push({
+        start: new Date(weekStart),
+        end: new Date(weekEnd),
+        label: `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`,
+      });
+
+      // Pasamos a la siguiente semana (domingo siguiente)
+      weekStart.setDate(weekStart.getDate() + 7);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+    }
+
+    // Si la última semana se pasa del mes, se recorta
+    if (weeksArray.length > 0) {
+      const lastWeek = weeksArray[weeksArray.length - 1];
+      if (lastWeek.end > endOfMonth) lastWeek.end = endOfMonth;
+    }
+
+    setWeeks(weeksArray);
+    setSelectedWeek("all");
+  }, [selectedYear, selectedMonth]);
 
   // Obtener sucursales y categorías
   useEffect(() => {
@@ -64,27 +119,46 @@ export default function Dashboard() {
 
   // Obtener reporte cuando cambian filtros
   useEffect(() => {
-    if (!selectedBranch) return;
+    if (!selectedBranch || !selectedYear || !selectedMonth) return;
 
     setLoading(true);
 
     const fetchData = async () => {
       try {
         let data;
-        if (selectedCategory === "all" || selectedCategory === null) {
-          data = await fetchMonthlyReport(
-            selectedBranch,
-            selectedYear,
-            selectedMonth,
-          );
+
+        if (selectedWeek === "all") {
+          // Todo el mes
+          if (selectedCategory === "all" || selectedCategory === null) {
+            data = await fetchMonthlyReport(
+              selectedBranch,
+              selectedYear,
+              selectedMonth,
+            );
+          } else {
+            data = await fetchMonthlyCategoryReportWithWeeks(
+              selectedBranch,
+              selectedCategory,
+              selectedYear,
+              selectedMonth,
+            );
+          }
         } else {
-          data = await fetchMonthlyCategoryReportWithWeeks(
-            selectedBranch,
-            selectedCategory,
-            selectedYear,
-            selectedMonth,
-          );
+          // Semana específica
+          const week = weeks[selectedWeek];
+          if (!week) return;
+
+          if (selectedCategory === "all" || selectedCategory === null) {
+            data = await fetchWeeklyReport(selectedBranch, week.start);
+          } else {
+            data = await fetchWeeklyReportByCategory(
+              selectedBranch,
+              selectedCategory,
+              week.start,
+            );
+          }
         }
+
         setReport(data);
       } catch (err) {
         console.error("Error fetching report:", err);
@@ -95,10 +169,17 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [selectedBranch, selectedCategory, selectedYear, selectedMonth]);
+  }, [
+    selectedBranch,
+    selectedCategory,
+    selectedYear,
+    selectedMonth,
+    selectedWeek,
+    weeks,
+  ]);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-5">
       {/* Filtros */}
       <div className="flex flex-wrap gap-4">
         <div>
@@ -138,6 +219,21 @@ export default function Dashboard() {
         </div>
 
         <div>
+          <Label htmlFor="year">Año</Label>
+          <Select
+            id="year"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+          >
+            {Array.from({ length: 5 }, (_, i) => (
+              <option key={i} value={2023 + i}>
+                {2023 + i}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div>
           <Label htmlFor="month">Mes</Label>
           <Select
             id="month"
@@ -153,15 +249,20 @@ export default function Dashboard() {
         </div>
 
         <div>
-          <Label htmlFor="year">Año</Label>
+          <Label htmlFor="week">Semana</Label>
           <Select
-            id="year"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            id="week"
+            value={selectedWeek}
+            onChange={(e) =>
+              setSelectedWeek(
+                e.target.value === "all" ? "all" : Number(e.target.value),
+              )
+            }
           >
-            {Array.from({ length: 5 }, (_, i) => (
-              <option key={i} value={2023 + i}>
-                {2023 + i}
+            <option value="all">Todas las semanas</option>
+            {weeks.map((w, idx) => (
+              <option key={idx} value={idx}>
+                {w.label}
               </option>
             ))}
           </Select>
@@ -180,9 +281,27 @@ export default function Dashboard() {
         <>
           {/* Totales */}
           <div className="grid grid-cols-1 gap-4 text-white sm:grid-cols-2 md:grid-cols-4">
-            <Card>Ventas: ${Number(report.totalSales ?? 0).toFixed(2)}</Card>
-            <Card>Gastos: ${Number(report.totalExpenses ?? 0).toFixed(2)}</Card>
-            <Card>Utilidad: ${Number(report.totalProfit ?? 0).toFixed(2)}</Card>
+            <Card>
+              Ventas: $
+              {Number(report.totalSales ?? 0).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Card>
+            <Card>
+              Gastos: $
+              {Number(report.totalExpenses ?? 0).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Card>
+            <Card>
+              Utilidad: $
+              {Number(report.totalProfit ?? 0).toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Card>
             {"totalSold" in report && (
               <Card>
                 Cantidad Vendida: {Number(report.totalSold ?? 0).toFixed(2)} kg
@@ -200,77 +319,177 @@ export default function Dashboard() {
               </Card>
             )}
           </div>
-
           {/* Gráfico semanal */}
-          <div className="mt-6">
-            <Bar
-              data={{
-                labels:
-                  report.weeklyReports?.map((w) =>
-                    new Date(w.weekStart).toLocaleDateString(),
-                  ) || [],
-                datasets: [
-                  {
-                    label: "Ventas",
-                    data: report.weeklyReports?.map((w) => w.totalSales) || [],
-                    backgroundColor: "rgba(34,197,94,0.7)",
-                  },
-                  {
-                    label: "Gastos",
-                    data:
-                      report.weeklyReports?.map((w) => w.totalExpenses) || [],
-                    backgroundColor: "rgba(239,68,68,0.7)",
-                  },
-                  {
-                    label: "Utilidad",
-                    data: report.weeklyReports?.map((w) => w.profit) || [],
-                    backgroundColor: "rgba(59,130,246,0.7)",
-                  },
-                ],
-              }}
-            />
-          </div>
+          {"weeklyReports" in report && (
+            <div className="mt-6">
+              <Bar
+                data={{
+                  labels:
+                    report.weeklyReports?.map((w) =>
+                      new Date(w.weekStart).toLocaleDateString(),
+                    ) || [],
+                  datasets: [
+                    {
+                      label: "Ventas",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalSales) || [],
+                      backgroundColor: "rgba(34,197,94,0.7)",
+                    },
+                    {
+                      label: "Gastos",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalExpenses) || [],
+                      backgroundColor: "rgba(239,68,68,0.7)",
+                    },
+                    {
+                      label: "Utilidad",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalProfit) || [],
+                      backgroundColor: "rgba(59,130,246,0.7)",
+                    },
+                  ],
+                }}
+              />
+            </div>
+          )}
+          {/* Gráfico diario */}
+          {"dailyReports" in report && (
+            <div className="mt-6">
+              <Bar
+                data={{
+                  labels:
+                    report.dailyReports?.map((d) =>
+                      new Date(d.date).toLocaleDateString(),
+                    ) || [],
+                  datasets: [
+                    {
+                      label: "Ventas",
+                      data: report.dailyReports?.map((d) => d.totalSales) || [],
+                      backgroundColor: "rgba(34,197,94,0.7)",
+                    },
+                    {
+                      label: "Gastos",
+                      data:
+                        report.dailyReports?.map((d) => d.totalExpenses) || [],
+                      backgroundColor: "rgba(239,68,68,0.7)",
+                    },
+                    {
+                      label: "Utilidad",
+                      data:
+                        report.dailyReports?.map((w) => w.totalProfit) || [],
+                      backgroundColor: "rgba(59,130,246,0.7)",
+                    },
+                  ],
+                }}
+              />
+            </div>
+          )}
           {/* Tabla semanal */}
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100 text-center">
-                  <th className="px-4 py-2">Semana</th>
-                  <th className="px-4 py-2">Ventas</th>
-                  <th className="px-4 py-2">Gastos</th>
-                  <th className="px-4 py-2">Utilidad</th>
-                  <th className="px-4 py-2">Cantidad Vendida</th>
-                  <th className="px-4 py-2">Cantidad Comprada</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.weeklyReports?.map((w, idx) => (
-                  <tr key={idx} className="border-t text-center text-white">
-                    <td className="px-4 py-2">
-                      {new Date(w.weekStart).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-2">
-                      ${Number(w.totalSales ?? 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2">
-                      ${Number(w.totalExpenses ?? 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2">
-                      ${Number(w.profit ?? 0).toFixed(2)}
-                    </td>
-
-                    <td className="px-4 py-2">
-                      {Number(w.totalSold ?? 0).toFixed(2)}
-                    </td>
-
-                    <td className="px-4 py-2">
-                      {Number(w.totalBought ?? 0).toFixed(2)}
-                    </td>
+          {"weeklyReports" in report && (
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full border border-gray-200">
+                <thead>
+                  <tr className="bg-gray-100 text-center">
+                    <th className="px-4 py-2">Semana</th>
+                    <th className="px-4 py-2">Ventas</th>
+                    <th className="px-4 py-2">Gastos</th>
+                    <th className="px-4 py-2">Utilidad</th>
+                    <th className="px-4 py-2">Cantidad Vendida</th>
+                    <th className="px-4 py-2">Cantidad Comprada</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {report.weeklyReports?.map((w, idx) => (
+                    <tr key={idx} className="border-t text-center text-white">
+                      <td className="px-4 py-2">
+                        {new Date(w.weekStart).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(w.totalSales ?? 0).toLocaleString("es-MX")}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(w.totalExpenses ?? 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(w.totalProfit ?? 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        {Number(w.totalSold ?? 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        {Number(w.totalBought ?? 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* Tabla diaria */}
+          {"dailyReports" in report && (
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full border border-gray-200">
+                <thead>
+                  <tr className="bg-gray-100 text-center">
+                    <th className="px-4 py-2">Día</th>
+                    <th className="px-4 py-2">Ventas</th>
+                    <th className="px-4 py-2">Gastos</th>
+                    <th className="px-4 py-2">Utilidad</th>
+                    <th className="px-4 py-2">Cantidad Vendida</th>
+                    <th className="px-4 py-2">Cantidad Comprada</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-gray-800 text-white">
+                  {report.dailyReports?.map((d, idx) => (
+                    <tr
+                      key={d.date}
+                      onClick={() => handleDayClick(d)}
+                      className={`cursor-pointer transition hover:bg-blue-500 ${
+                        selectedDay?.date === d.date ? "bg-blue-700" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-2">
+                        {new Date(d.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(d.totalSales ?? 0).toLocaleString("es-MX")}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(d.totalExpenses ?? 0).toLocaleString("es-MX")}
+                      </td>
+                      <td className="px-4 py-2">
+                        ${Number(d.totalProfit ?? 0).toLocaleString("es-MX")}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        {Number(d.totalSold ?? 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-2">
+                        {Number(d.totalBought ?? 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* Detalle del día seleccionado */}
+              {selectedDay ? (
+                <Card className="p-4">
+                  <h3 className="mb-4 text-xl font-semibold text-white">
+                    Detalle del{" "}
+                    {new Date(selectedDay.date).toLocaleDateString()}
+                  </h3>
+                  <DailyTable report={selectedDay} />
+                </Card>
+              ) : (
+                <p className="text-white italic">
+                  Haz clic en una fecha para ver el detalle diario.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Desglose */}
           <div className="mt-6 grid grid-cols-1 gap-6 text-white sm:grid-cols-2 md:grid-cols-3">
@@ -349,7 +568,7 @@ export default function Dashboard() {
 
       {/* Mensaje si no hay reporte */}
       {!report && !loading && selectedBranch && (
-        <div className="mt-6 text-center text-gray-500">
+        <div className="mt-6 text-center text-white">
           No hay datos para la selección actual.
         </div>
       )}

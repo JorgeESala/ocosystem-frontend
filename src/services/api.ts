@@ -10,6 +10,24 @@ export interface Category {
   id: number;
   name: string;
 }
+export interface DailyReport {
+  branchId: number;
+  date: string;
+  totalSales: number;
+  totalExpenses: number;
+  totalProfit: number;
+  totalSold: number;
+  totalBought: number;
+  gut?: number;
+  waste?: number;
+  eggs?: number;
+  eggCartonsQuantity?: number;
+  eggsSales?: number;
+  salesByCategory: Record<string, number>[];
+  salesByProduct: Record<string, number>[];
+  quantitiesByProduct: Record<string, number>[];
+  expensesByCategory: Record<string, number>[];
+}
 
 export interface WeeklyReport {
   branchId: number;
@@ -17,14 +35,34 @@ export interface WeeklyReport {
   weekStart: string;
   totalSales: number;
   totalExpenses: number;
-  profit: number;
+  totalProfit: number;
   totalSold: number;
   totalBought: number;
   gut?: number;
   waste?: number;
+  eggs?: number;
+  eggCartons?: number;
+  eggsSales?: number;
   salesByCategory?: Record<string, number>;
   salesByProduct?: Record<string, number>;
   expensesByCategory?: Record<string, number>;
+  dailyReports?: DailyReport[];
+}
+
+export interface MonthlyReport {
+  branchId: number;
+  yearMonth: string;
+  totalSales: number;
+  totalExpenses: number;
+  totalProfit: number;
+  totalSold: number;
+  totalBought: number;
+  eggs?: number;
+  eggCartons?: number;
+  eggsSales?: number;
+  salesByCategory: Record<string, number>[];
+  expensesByCategory: Record<string, number>[];
+  weeklyReports: WeeklyReport[];
 }
 
 export interface MonthlyCategoryReport {
@@ -43,34 +81,6 @@ export interface MonthlyCategoryReport {
   weeklyReports: WeeklyReport[];
 }
 
-export interface MonthlyReport {
-  branchId: number;
-  yearMonth: string;
-  totalSales: number;
-  totalExpenses: number;
-  totalProfit: number;
-  totalSold: number;
-  totalBought: number;
-  salesByCategory: Record<string, number>[];
-  expensesByCategory: Record<string, number>[];
-  weeklyReports: WeeklyReport[];
-}
-export interface DailyReport {
-  branchId: number;
-  date: string;
-  totalSales: number;
-  totalExpenses: number;
-  totalProfit: number;
-  totalSold: number;
-  totalBought: number;
-  gut?: number;
-  waste?: number;
-  salesByCategory: Record<string, number>[];
-  salesByProduct: Record<string, number>[];
-  quantitiesByProduct: Record<string, number>[];
-  expensesByCategory: Record<string, number>[];
-}
-
 // -------------------- FETCH FUNCTIONS --------------------
 
 // Sucursales
@@ -78,13 +88,28 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   const res = await axios.get("http://localhost:8080/api/branches");
   return res.data;
 };
+
 export async function fetchWeeklyReport(
   branchId: number,
+  date: Date,
+): Promise<WeeklyReport> {
+  const isoDate = date.toISOString();
+
+  const res = await fetch(
+    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoDate)}`,
+  );
+
+  if (!res.ok) throw new Error("Error fetching weekly report");
+  return res.json();
+}
+
+export async function fetchWeeklyReportByCategory(
+  branchId: number,
   categoryId: number,
-  date: string,
+  date: Date,
 ): Promise<WeeklyReport> {
   const res = await fetch(
-    `http://localhost:8080/api/reports/weekly-category?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
+    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
   );
   if (!res.ok) throw new Error("Error fetching weekly report");
   return res.json();
