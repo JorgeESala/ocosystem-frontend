@@ -27,6 +27,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import ProductReportsTable from "./ProductReportsTable";
 
 ChartJS.register(
   CategoryScale,
@@ -408,10 +409,18 @@ export default function Dashboard() {
                         ${Number(w.totalSales ?? 0).toLocaleString("es-MX")}
                       </td>
                       <td className="px-4 py-2">
-                        ${Number(w.totalExpenses ?? 0).toFixed(2)}
+                        $
+                        {Number(w.totalExpenses ?? 0).toLocaleString("es-MX", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="px-4 py-2">
-                        ${Number(w.totalProfit ?? 0).toFixed(2)}
+                        $
+                        {Number(w.totalProfit ?? 0).toLocaleString("es-MX", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </td>
 
                       <td className="px-4 py-2">
@@ -490,6 +499,11 @@ export default function Dashboard() {
               )}
             </div>
           )}
+          {"productReports" in report && (
+            <ProductReportsTable
+              reports={report.productReports}
+            ></ProductReportsTable>
+          )}
 
           {/* Desglose */}
           <div className="mt-6 grid grid-cols-1 gap-6 text-white sm:grid-cols-2 md:grid-cols-3">
@@ -501,7 +515,13 @@ export default function Dashboard() {
                     ([cat, total]) => (
                       <li key={cat} className="flex justify-between">
                         <span>{cat}</span>
-                        <span>${Number(total).toFixed(2)}</span>
+                        <span>
+                          $
+                          {Number(total).toLocaleString("es-MX", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </li>
                     ),
                   )}
@@ -517,7 +537,13 @@ export default function Dashboard() {
                     ([cat, total]) => (
                       <li key={cat} className="flex justify-between">
                         <span>{cat}</span>
-                        <span>${Number(total).toFixed(2)}</span>
+                        <span>
+                          $
+                          {Number(total).toLocaleString("es-MX", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </li>
                     ),
                   )}
@@ -525,7 +551,7 @@ export default function Dashboard() {
               </Card>
             )}
 
-            {"salesByProduct" in report && (
+            {/* {"salesByProduct" in report && (
               <Card className="rounded bg-white p-4 shadow">
                 <h2 className="mb-2 text-lg font-bold">Ventas por Producto</h2>
                 <ul>
@@ -536,12 +562,18 @@ export default function Dashboard() {
                   ).map(([prod, total]) => (
                     <li key={prod} className="flex justify-between">
                       <span>{prod}</span>
-                      <span>${Number(total).toFixed(2)}</span>
+                      <span>
+                        $
+                        {Number(total).toLocaleString("es-MX", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </Card>
-            )}
+            )} */}
 
             {"quantitiesByProduct" in report && (
               <Card className="rounded bg-white p-4 shadow">

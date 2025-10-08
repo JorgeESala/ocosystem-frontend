@@ -10,6 +10,21 @@ export interface Category {
   id: number;
   name: string;
 }
+export interface Measurement_unit {
+  name: string;
+  code: string;
+}
+export interface Product {
+  barcode: string;
+  name: string;
+  category: Category;
+  measurement_unit: Measurement_unit;
+}
+export interface ProductReport {
+  product: Product;
+  quantitySold: number;
+  totalSales: number;
+}
 export interface DailyReport {
   branchId: number;
   date: string;
@@ -63,6 +78,7 @@ export interface MonthlyReport {
   salesByCategory: Record<string, number>[];
   expensesByCategory: Record<string, number>[];
   weeklyReports: WeeklyReport[];
+  productReports: ProductReport[];
 }
 
 export interface MonthlyCategoryReport {
