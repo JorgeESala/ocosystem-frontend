@@ -1,4 +1,3 @@
-import React from "react";
 import { DailyReport } from "../services/api";
 
 interface Props {
@@ -16,6 +15,7 @@ export default function DailyTable({ report }: Props) {
             <th className="px-4 py-2 text-right">Comprado</th>
             <th className="px-4 py-2 text-right">Tripa</th>
             <th className="px-4 py-2 text-right">Merma</th>
+            <th className="px-4 py-2 text-right">Matados</th>
             <th className="px-4 py-2 text-right">Casilleros</th>
             <th className="px-4 py-2 text-right">Venta de Huevo</th>
             <th className="px-4 py-2 text-right">Gastos</th>
@@ -42,10 +42,12 @@ export default function DailyTable({ report }: Props) {
             <td className="px-4 py-2 text-right">{report.gut ?? "-"}</td>
             <td className="px-4 py-2 text-right">{report.waste ?? "-"}</td>
             <td className="px-4 py-2 text-right">
+              {report.slaughteredChicken ?? "-"}
+            </td>
+            <td className="px-4 py-2 text-right">
               {report.eggCartonsQuantity ?? "-"}
             </td>
-            <td className="px-4 py-2 text-right">{report.eggsSales ?? "-"}</td>
-
+            <td className="px-4 py-2 text-right">${report.eggsSales ?? "-"}</td>
             <td className="px-4 py-2 text-right">
               $
               {report.totalExpenses.toLocaleString("es-MX", {

@@ -37,9 +37,7 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
-interface WeeklyDashboardProps {
-  weeklyReport: WeeklyReport;
-}
+
 export default function Dashboard() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -75,6 +73,7 @@ export default function Dashboard() {
 
     // Encontrar el primer sábado del mes
     const firstSaturday = new Date(startOfMonth);
+
     while (firstSaturday.getDay() !== 6) {
       firstSaturday.setDate(firstSaturday.getDate() + 1);
     }
@@ -453,15 +452,20 @@ export default function Dashboard() {
                 <tbody className="bg-gray-800 text-white">
                   {report.dailyReports?.map((d, idx) => (
                     <tr
-                      key={d.date}
+                      key={idx}
                       onClick={() => handleDayClick(d)}
                       className={`cursor-pointer transition hover:bg-blue-500 ${
                         selectedDay?.date === d.date ? "bg-blue-700" : ""
                       }`}
                     >
                       <td className="px-4 py-2">
-                        {new Date(d.date).toLocaleDateString()}
+                        {new Date(d.date).toLocaleDateString("es-MX", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                        })}
                       </td>
+
                       <td className="px-4 py-2">
                         ${Number(d.totalSales ?? 0).toLocaleString("es-MX")}
                       </td>

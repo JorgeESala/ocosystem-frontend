@@ -36,6 +36,7 @@ export interface DailyReport {
   gut?: number;
   waste?: number;
   eggs?: number;
+  slaughteredChicken?: number;
   eggCartonsQuantity?: number;
   eggsSales?: number;
   salesByCategory: Record<string, number>[];
@@ -109,12 +110,11 @@ export async function fetchWeeklyReport(
   branchId: number,
   date: Date,
 ): Promise<WeeklyReport> {
-  const isoDate = date.toISOString();
+  const isoWithOffset = date.toISOString().replace("Z", "-05:00");
 
   const res = await fetch(
-    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoDate)}`,
+    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoWithOffset)}`,
   );
-
   if (!res.ok) throw new Error("Error fetching weekly report");
   return res.json();
 }
