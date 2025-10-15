@@ -13,9 +13,9 @@ import {
   Category,
   MonthlyCategoryReport,
   WeeklyReport,
-  type MonthlyReport,
+  MonthlyReport,
   fetchMonthlyReport,
-  type DailyReport,
+  DailyReport,
 } from "../services/api";
 
 import {
@@ -38,7 +38,7 @@ ChartJS.register(
   Legend,
 );
 
-export default function Dashboard() {
+export default function Reports() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<number | null>(null);
