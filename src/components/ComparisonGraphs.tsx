@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+
 import {
   LineChart,
   Line,
@@ -23,18 +24,17 @@ import {
   Category,
   fetchCategories,
   ReportEntry,
-  fetchComparisonData, // Debes crear esta función en tu api.ts
+  fetchComparisonData,
+  Frequency,
 } from "../services/api";
 
 export default function ComparisonsGraphs() {
   const [frequency, setFrequency] = useState<
     "hourly" | "daily" | "weekly" | "monthly" | "yearly"
-  >("weekly");
-  const [metric, setMetric] = useState<"totalSales" | "slaughteredChicken">(
-    "totalSales",
-  );
-  const [switch1, setSwitch1] = useState(false);
-
+  >("daily");
+  const [metric, setMetric] = useState<"sales" | "quantity">("sales");
+  const [isContinuous, setIsContinuous] = useState(true);
+  const [keys, setKeys] = useState<string[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -43,8 +43,267 @@ export default function ComparisonsGraphs() {
 
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  // const apiFrequency = isContinuous
+  //   ? frequency
+  //   : frequency === "weekly"
+  //     ? "daily"
+  //     : frequency === "monthly"
+  //       ? "weekly"
+  //       : frequency === "yearly"
+  //         ? "monthly"
+  //         : frequency;
 
   const [reportData, setReportData] = useState<ReportEntry[]>([]);
+  const [chartData, setChartData] = useState<Record<string, number | string>[]>(
+    [],
+  );
+
+  type GenerateChartDataParams = {
+    selectedBranches: number[];
+    selectedCategories: number[];
+    startDate: Date | null;
+    endDate: Date | null;
+    frequency: Frequency;
+    isContinuous: boolean;
+    metric: "sales" | "quantity";
+    setChartData: (data: any[]) => void;
+    setReportData: (data: any[]) => void;
+    branches: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
+  };
+
+  const generateChartData = async function ({
+    selectedBranches,
+    selectedCategories,
+    startDate,
+    endDate,
+    frequency,
+    isContinuous,
+    metric,
+    setChartData,
+    setReportData,
+    branches,
+    categories,
+  }: GenerateChartDataParams) {
+    // 1️⃣ Validación básica
+    if (selectedBranches.length === 0 || !startDate || !endDate) {
+      setChartData([]);
+      return;
+    }
+
+    // 2️⃣ Armar el request base
+    const request = {
+      branchIds: selectedBranches,
+      startDate,
+      endDate,
+      frequency,
+    };
+
+    // 3️⃣ Obtener los reportes
+    const allReports = await fetchComparisonData(request);
+    setReportData(allReports);
+
+    // 4️⃣ Si la vista es continua: mostrar líneas sucursal-categoría o totales
+    if (isContinuous) {
+      const chartMap: Record<string, any> = {};
+
+      allReports.forEach((r) => {
+        const date = r.startDate.split("T")[0];
+        if (!chartMap[date]) chartMap[date] = { date };
+
+        const branchName =
+          branches.find((b) => b.id === r.branchId)?.name ??
+          `Sucursal ${r.branchId}`;
+
+        if (selectedCategories.length === 0) {
+          // No hay categorías seleccionadas → usar total general por sucursal
+          const key = branchName;
+          const value = metric === "sales" ? r.totalSales : r.totalSold;
+          chartMap[date][key] = value;
+        } else {
+          // Hay categorías seleccionadas → crear línea por sucursal-categoría
+          const source =
+            metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
+
+          selectedCategories.forEach((categoryId) => {
+            const categoryName =
+              categories.find((c) => c.id === categoryId)?.name ?? "";
+            const key = `${branchName} - ${categoryName}`;
+            const value = source[categoryName] ?? 0;
+            chartMap[date][key] = value;
+          });
+        }
+      });
+
+      const formatted = Object.values(chartMap).sort(
+        (a: any, b: any) =>
+          new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
+
+      setChartData(formatted);
+      return;
+    }
+
+    // 5️⃣ Vista NO continua (comparar sucursales consigo mismas)
+    const innerFrequency: Frequency =
+      frequency === "weekly"
+        ? "daily"
+        : frequency === "monthly"
+          ? "weekly"
+          : frequency === "yearly"
+            ? "monthly"
+            : frequency;
+
+    const innerRequest = {
+      branchIds: selectedBranches,
+      startDate,
+      endDate,
+      frequency: innerFrequency,
+    };
+
+    // Petición más detallada (por día, semana o mes)
+    const innerReports = await fetchComparisonData(innerRequest);
+
+    // Map para agrupar por punto del eje X -> { "Semana 1": { "Roneli - Julio": 1000, ... } }
+    const chartMap: Record<string, Record<string, number>> = {};
+
+    // Función auxiliar: nombre del día
+    const getDayName = (isoDate: string): string => {
+      const days = [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado",
+      ];
+      const d = new Date(isoDate);
+      return days[d.getDay()];
+    };
+
+    // Función auxiliar: semana del mes
+    const getWeekOfMonth = (isoDate: string): string => {
+      const d = new Date(isoDate);
+      const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+      const firstWeekday = firstDayOfMonth.getDay(); // domingo = 0
+      const adjustedDay = d.getDate() + firstWeekday;
+      const weekOfMonth = Math.ceil(adjustedDay / 7);
+      return `Semana ${weekOfMonth}`;
+    };
+
+    // Recorremos todos los reportes detallados
+    innerReports.forEach((r) => {
+      const branchName =
+        branches.find((b) => b.id === r.branchId)?.name ??
+        `Sucursal ${r.branchId}`;
+
+      // Clave de grupo: ej. "Roneli - Julio"
+      const groupKey = makeGroupKey(r.startDate, frequency, branchName);
+
+      // Etiqueta del punto en el eje X
+      let pointLabel: string;
+      if (frequency === "monthly") {
+        pointLabel = getWeekOfMonth(r.startDate);
+      } else if (frequency === "weekly") {
+        pointLabel = getDayName(r.startDate);
+      } else {
+        pointLabel = r.startDate.split("T")[0]; // diaria u otra
+      }
+
+      const source =
+        metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
+
+      // Inicializar fila si no existe
+      if (!chartMap[pointLabel]) chartMap[pointLabel] = {};
+
+      // Total según categorías seleccionadas
+      let total: number;
+      if (selectedCategories.length === 0) {
+        total = metric === "sales" ? r.totalSales : r.totalSold;
+      } else {
+        total = 0;
+        selectedCategories.forEach((catId) => {
+          const categoryName =
+            categories.find((c) => c.id === catId)?.name ?? "";
+          total += source[categoryName] ?? 0;
+        });
+      }
+
+      // Guardar total bajo la clave del grupo
+      chartMap[pointLabel][groupKey] = total;
+    });
+
+    // Convertimos chartMap a arreglo
+    const formatted: any[] = Object.entries(chartMap).map(([date, values]) => ({
+      date,
+      ...values,
+    }));
+
+    // Ordenamos eje X
+    if (frequency === "weekly") {
+      const order = [
+        "Domingo",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado",
+      ];
+      formatted.sort((a, b) => order.indexOf(a.date) - order.indexOf(b.date));
+    } else if (frequency === "monthly") {
+      formatted.sort(
+        (a, b) =>
+          parseInt(a.date.replace("Semana ", "")) -
+          parseInt(b.date.replace("Semana ", "")),
+      );
+    }
+
+    setChartData(formatted);
+  };
+
+  // 🧩 Utilidad: genera el nombre del grupo según la frecuencia
+  function makeGroupKey(
+    dateStr: string,
+    frequency: Frequency,
+    branchName: string,
+  ) {
+    const date = new Date(dateStr);
+    const monthNames = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+
+    switch (frequency) {
+      case "weekly":
+        // Semana del año aproximada
+        const week = Math.ceil(
+          ((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) /
+            86400000 +
+            new Date(date.getFullYear(), 0, 1).getDay() +
+            1) /
+            7,
+        );
+        return `${branchName} - Semana ${week}`;
+      case "monthly":
+        return `${branchName} - ${monthNames[date.getMonth()]}`;
+      case "yearly":
+        return `${branchName} - ${date.getFullYear()}`;
+      default:
+        return `${branchName} - ${dateStr}`;
+    }
+  }
 
   // Cargar sucursales y categorías
   useEffect(() => {
@@ -69,42 +328,34 @@ export default function ComparisonsGraphs() {
 
   // Filtrar por categorías y calcular el valor a graficar según metric
   useEffect(() => {
-    if (selectedBranches.length === 0) {
-      setReportData([]);
-      return;
-    }
-    if (!startDate || !endDate || selectedBranches.length === 0) return;
-
-    const request = {
-      branchIds: selectedBranches,
+    generateChartData({
+      selectedBranches,
+      selectedCategories,
       startDate,
       endDate,
-      frequency: frequency,
-    };
-
-    fetchComparisonData(request).then((allReports) => {
-      // allReports ya es un arreglo plano con entries de varias sucursales
-      const chartData: Record<string, any> = {};
-
-      allReports.forEach((r) => {
-        const date = r.startDate.split("T")[0]; // YYYY-MM-DD
-        const branchName =
-          branches.find((b) => b.id === r.branchId)?.name ??
-          `Sucursal ${r.branchId}`;
-
-        if (!chartData[date]) chartData[date] = { date };
-        chartData[date][branchName] = r[metric as keyof ReportEntry];
-      });
-
-      // Convertimos a arreglo y ordenamos por fecha
-      const formattedData = Object.values(chartData).sort(
-        (a: any, b: any) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime(),
-      );
-
-      setReportData(formattedData);
+      frequency,
+      isContinuous,
+      metric,
+      setChartData,
+      setReportData,
+      branches,
+      categories,
     });
-  }, [selectedBranches, startDate, endDate, metric, frequency]);
+  }, [
+    selectedBranches,
+    selectedCategories,
+    startDate,
+    endDate,
+    frequency,
+    isContinuous,
+    metric,
+  ]);
+
+  useEffect(() => {
+    if (chartData.length > 0) {
+      setKeys(Object.keys(chartData[0]).filter((k) => k !== "date"));
+    }
+  }, [chartData]);
 
   return (
     <div className="p-6">
@@ -129,7 +380,9 @@ export default function ComparisonsGraphs() {
           <option value="hourly" disabled>
             Por hora
           </option>
-          <option value="daily">Diario</option>
+          <option disabled={!isContinuous} value="daily">
+            Diario
+          </option>
           <option value="weekly">Semanal</option>
           <option value="monthly">Mensual</option>
           <option value="yearly">Anual</option>
@@ -175,12 +428,10 @@ export default function ComparisonsGraphs() {
           id="indicator"
           className="bg-indigo"
           value={metric}
-          onChange={(e) =>
-            setMetric(e.target.value as "totalSales" | "slaughteredChicken")
-          }
+          onChange={(e) => setMetric(e.target.value as "sales" | "quantity")}
         >
-          <option value="totalSales">Ventas</option>
-          <option value="slaughteredChicken">Matados</option>
+          <option value="sales">Ventas</option>
+          <option value="quantity">Cantidad</option>
         </Select>
 
         <Datepicker
@@ -196,35 +447,30 @@ export default function ComparisonsGraphs() {
 
         <ToggleSwitch
           className="items-center"
-          checked={switch1}
+          checked={isContinuous}
           label="Vista continua"
-          onChange={setSwitch1}
+          onChange={setIsContinuous}
         />
       </div>
 
       {/* Gráfico */}
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={reportData}>
+      <ResponsiveContainer width="100%" height={400} className={"bg-white"}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip />
           <Legend />
-          {selectedBranches.map((branchId, idx) => {
-            const branchName =
-              branches.find((b) => b.id === branchId)?.name ??
-              `Sucursal ${branchId}`;
-            return (
-              <Line
-                key={branchId}
-                type="monotone"
-                dataKey={branchName}
-                stroke={`hsl(${(idx * 90) % 360}, 70%, 50%)`}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            );
-          })}
+          {keys.map((key, idx) => (
+            <Line
+              key={key}
+              type="monotone"
+              dataKey={key}
+              stroke={`hsl(${(idx * 90) % 360}, 70%, 50%)`}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>

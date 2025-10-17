@@ -44,6 +44,7 @@ export interface DailyReport {
   quantitiesByProduct: Record<string, number>[];
   expensesByCategory: Record<string, number>[];
 }
+export type Frequency = "hourly" | "daily" | "weekly" | "monthly" | "yearly";
 
 export interface WeeklyReport {
   branchId: number;
@@ -101,7 +102,7 @@ export interface ReportEntry {
   branchId: number;
   startDate: string;
   endDate: string;
-  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  frequency: Frequency;
 
   totalSales: number;
   totalExpenses: number;
@@ -115,10 +116,10 @@ export interface ReportEntry {
   eggs?: number;
   eggCartons?: number;
   eggsSales?: number;
-
   salesByCategory: Record<string, number>;
   salesByProduct?: Record<string, number>;
-  quantitiesByProduct?: Record<string, number>;
+  quantitiesByProduct: Record<string, number>;
+  quantitiesByCategory: Record<string, number>;
   expensesByCategory: Record<string, number>;
 }
 
@@ -126,41 +127,9 @@ export interface ComparisonRequest {
   branchIds: number[];
   startDate: Date;
   endDate: Date;
-  frequency: "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+  frequency: Frequency;
 }
 
-export async function fetchComparisonData(
-  request: ComparisonRequest,
-): Promise<ReportEntry[]> {
-  try {
-    // Hacer un fetch por cada branch
-    const allReports = await Promise.all(
-      request.branchIds.map(async (branchId) => {
-        const params = new URLSearchParams();
-        params.append("branchId", branchId.toString());
-        params.append("startDate", request.startDate.toISOString());
-        params.append("endDate", request.endDate.toISOString());
-        params.append("frequency", request.frequency);
-
-        const res = await fetch(
-          `http://localhost:8080/api/reports?${params.toString()}`,
-        );
-
-        if (!res.ok) throw new Error(`Error fetching branch ${branchId}`);
-
-        const data: ReportEntry[] = await res.json();
-        // Añadimos branchId a cada entry para identificar la sucursal
-        return data.map((entry) => ({ ...entry, branchId }));
-      }),
-    );
-
-    // Aplanar el array de arrays
-    return allReports.flat();
-  } catch (err) {
-    console.error(err);
-    return [];
-  }
-}
 // -------------------- FETCH FUNCTIONS --------------------
 
 // Sucursales
@@ -227,4 +196,37 @@ export async function fetchMonthlyReport(
   );
   if (!res.ok) throw new Error("Error fetching monthly report");
   return res.json();
+}
+
+export async function fetchComparisonData(
+  request: ComparisonRequest,
+): Promise<ReportEntry[]> {
+  try {
+    // Hacer un fetch por cada branch
+    const allReports = await Promise.all(
+      request.branchIds.map(async (branchId) => {
+        const params = new URLSearchParams();
+        params.append("branchId", branchId.toString());
+        params.append("startDate", request.startDate.toISOString());
+        params.append("endDate", request.endDate.toISOString());
+        params.append("frequency", request.frequency);
+
+        const res = await fetch(
+          `http://localhost:8080/api/reports?${params.toString()}`,
+        );
+
+        if (!res.ok) throw new Error(`Error fetching branch ${branchId}`);
+
+        const data: ReportEntry[] = await res.json();
+        // Añadimos branchId a cada entry para identificar la sucursal
+        return data.map((entry) => ({ ...entry, branchId }));
+      }),
+    );
+
+    // Aplanar el array de arrays
+    return allReports.flat();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
 }

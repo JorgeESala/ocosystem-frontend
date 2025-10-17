@@ -201,6 +201,7 @@ export default function Reports() {
         <div>
           <Label htmlFor="category">Categoría</Label>
           <Select
+            disabled
             id="category"
             value={selectedCategory ?? "all"}
             onChange={(e) =>
