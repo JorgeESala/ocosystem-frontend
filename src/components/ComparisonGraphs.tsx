@@ -23,7 +23,6 @@ import {
   fetchBranches,
   Category,
   fetchCategories,
-  ReportEntry,
   fetchComparisonData,
   Frequency,
 } from "../services/api";
