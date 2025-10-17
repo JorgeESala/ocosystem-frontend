@@ -1,5 +1,5 @@
 import axios from "axios";
-
+const API_URL = import.meta.env.VITE_API_URL;
 // Tipos
 export interface Branch {
   id: number;
@@ -134,7 +134,7 @@ export interface ComparisonRequest {
 
 // Sucursales
 export const fetchBranches = async (): Promise<Branch[]> => {
-  const res = await axios.get("http://localhost:8080/api/branches");
+  const res = await axios.get(`${API_URL}/api/branches`);
   return res.data;
 };
 
@@ -145,7 +145,7 @@ export async function fetchWeeklyReport(
   const isoWithOffset = date.toISOString().replace("Z", "-05:00");
 
   const res = await fetch(
-    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoWithOffset)}`,
+    `${API_URL}/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoWithOffset)}`,
   );
   if (!res.ok) throw new Error("Error fetching weekly report");
   return res.json();
@@ -157,7 +157,7 @@ export async function fetchWeeklyReportByCategory(
   date: Date,
 ): Promise<WeeklyReport> {
   const res = await fetch(
-    `http://localhost:8080/api/reports/weekly?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
+    `${API_URL}/api/reports/weekly?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
   );
   if (!res.ok) throw new Error("Error fetching weekly report");
   return res.json();
@@ -165,7 +165,7 @@ export async function fetchWeeklyReportByCategory(
 
 // Categorías
 export const fetchCategories = async (): Promise<Category[]> => {
-  const res = await axios.get("http://localhost:8080/api/categories");
+  const res = await axios.get(`${API_URL}/api/categories`);
   return res.data;
 };
 
@@ -176,12 +176,9 @@ export const fetchMonthlyCategoryReportWithWeeks = async (
   year: number,
   month: number,
 ): Promise<MonthlyCategoryReport> => {
-  const res = await axios.get(
-    "http://localhost:8080/api/reports/monthly-category",
-    {
-      params: { branchId, categoryId, year, month },
-    },
-  );
+  const res = await axios.get(`${API_URL}/api/reports/monthly-category`, {
+    params: { branchId, categoryId, year, month },
+  });
   return res.data;
 };
 
@@ -192,7 +189,7 @@ export async function fetchMonthlyReport(
   month: number,
 ): Promise<MonthlyReport> {
   const res = await fetch(
-    `http://localhost:8080/api/reports/monthly?branchId=${branchId}&year=${year}&month=${month}`,
+    `${API_URL}/api/reports/monthly?branchId=${branchId}&year=${year}&month=${month}`,
   );
   if (!res.ok) throw new Error("Error fetching monthly report");
   return res.json();
@@ -211,9 +208,7 @@ export async function fetchComparisonData(
         params.append("endDate", request.endDate.toISOString());
         params.append("frequency", request.frequency);
 
-        const res = await fetch(
-          `http://localhost:8080/api/reports?${params.toString()}`,
-        );
+        const res = await fetch(`${API_URL}/api/reports?${params.toString()}`);
 
         if (!res.ok) throw new Error(`Error fetching branch ${branchId}`);
 
