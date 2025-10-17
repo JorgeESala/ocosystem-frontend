@@ -53,7 +53,6 @@ export default function ComparisonsGraphs() {
   //         ? "monthly"
   //         : frequency;
 
-  const [reportData, setReportData] = useState<ReportEntry[]>([]);
   const [chartData, setChartData] = useState<Record<string, number | string>[]>(
     [],
   );
@@ -67,7 +66,6 @@ export default function ComparisonsGraphs() {
     isContinuous: boolean;
     metric: "sales" | "quantity";
     setChartData: (data: any[]) => void;
-    setReportData: (data: any[]) => void;
     branches: { id: number; name: string }[];
     categories: { id: number; name: string }[];
   };
@@ -81,7 +79,6 @@ export default function ComparisonsGraphs() {
     isContinuous,
     metric,
     setChartData,
-    setReportData,
     branches,
     categories,
   }: GenerateChartDataParams) {
@@ -101,7 +98,6 @@ export default function ComparisonsGraphs() {
 
     // 3️⃣ Obtener los reportes
     const allReports = await fetchComparisonData(request);
-    setReportData(allReports);
 
     // 4️⃣ Si la vista es continua: mostrar líneas sucursal-categoría o totales
     if (isContinuous) {
@@ -337,7 +333,6 @@ export default function ComparisonsGraphs() {
       isContinuous,
       metric,
       setChartData,
-      setReportData,
       branches,
       categories,
     });

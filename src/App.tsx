@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Router, Routes } from "react-router-dom";
 import Home from "./components/Home";
-import Dashboard from "./components/Reports";
 import Reports from "./components/Reports";
 import ComparisonGraphs from "./components/ComparisonGraphs";
 
