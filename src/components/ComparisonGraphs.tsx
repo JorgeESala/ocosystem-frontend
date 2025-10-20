@@ -152,7 +152,7 @@ export default function ComparisonsGraphs() {
     const fetchedReports = await fetchComparisonData(innerRequest);
     // 3️⃣ Obtener los reportes
     setReports(fetchedReports);
-
+    console.log(reports);
     // Map para agrupar por punto del eje X -> { "Semana 1": { "Roneli - Julio": 1000, ... } }
     const chartMap: Record<string, Record<string, number>> = {};
 
