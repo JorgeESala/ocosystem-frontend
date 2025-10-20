@@ -25,6 +25,7 @@ import {
   fetchCategories,
   fetchComparisonData,
   Frequency,
+  ReportEntry,
 } from "../services/api";
 
 export default function ComparisonsGraphs() {
@@ -42,19 +43,10 @@ export default function ComparisonsGraphs() {
 
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  // const apiFrequency = isContinuous
-  //   ? frequency
-  //   : frequency === "weekly"
-  //     ? "daily"
-  //     : frequency === "monthly"
-  //       ? "weekly"
-  //       : frequency === "yearly"
-  //         ? "monthly"
-  //         : frequency;
-
   const [chartData, setChartData] = useState<Record<string, number | string>[]>(
     [],
   );
+  const [reports, setReports] = useState<ReportEntry[]>([]);
 
   type GenerateChartDataParams = {
     selectedBranches: number[];
@@ -95,14 +87,14 @@ export default function ComparisonsGraphs() {
       frequency,
     };
 
-    // 3️⃣ Obtener los reportes
-    const allReports = await fetchComparisonData(request);
-
     // 4️⃣ Si la vista es continua: mostrar líneas sucursal-categoría o totales
     if (isContinuous) {
+      const fetchedReports = await fetchComparisonData(request);
+      // 3️⃣ Obtener los reportes
+      setReports(fetchedReports);
       const chartMap: Record<string, any> = {};
 
-      allReports.forEach((r) => {
+      fetchedReports.forEach((r) => {
         const date = r.startDate.split("T")[0];
         if (!chartMap[date]) chartMap[date] = { date };
 
@@ -157,7 +149,9 @@ export default function ComparisonsGraphs() {
     };
 
     // Petición más detallada (por día, semana o mes)
-    const innerReports = await fetchComparisonData(innerRequest);
+    const fetchedReports = await fetchComparisonData(innerRequest);
+    // 3️⃣ Obtener los reportes
+    setReports(fetchedReports);
 
     // Map para agrupar por punto del eje X -> { "Semana 1": { "Roneli - Julio": 1000, ... } }
     const chartMap: Record<string, Record<string, number>> = {};
@@ -188,7 +182,7 @@ export default function ComparisonsGraphs() {
     };
 
     // Recorremos todos los reportes detallados
-    innerReports.forEach((r) => {
+    fetchedReports.forEach((r) => {
       const branchName =
         branches.find((b) => b.id === r.branchId)?.name ??
         `Sucursal ${r.branchId}`;
