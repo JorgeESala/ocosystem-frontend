@@ -41,8 +41,13 @@ export default function ComparisonsGraphs() {
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+
   const [chartData, setChartData] = useState<Record<string, number | string>[]>(
     [],
   );
@@ -424,13 +429,17 @@ export default function ComparisonsGraphs() {
 
         <Datepicker
           language="es-MX"
-          value={startDate || undefined}
-          onChange={setStartDate}
+          value={startDate}
+          onChange={(date) => {
+            if (date) setStartDate(date);
+          }}
         />
         <Datepicker
           language="es-MX"
           value={endDate || undefined}
-          onChange={setEndDate}
+          onChange={(date) => {
+            if (date) setEndDate(date);
+          }}
         />
 
         <ToggleSwitch
