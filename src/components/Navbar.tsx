@@ -6,6 +6,7 @@ import {
   FaHome,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { GiChicken } from "react-icons/gi";
 
 export default function Navbar() {
   const location = useLocation();
@@ -25,9 +26,8 @@ export default function Navbar() {
     <nav className="border-b border-gray-700 bg-gray-900 text-gray-200 shadow-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo o Nombre de la Empresa */}
           <div className="flex items-center space-x-2">
-            <FaChartBar className="text-2xl text-blue-400" />
+            <GiChicken className="text-2xl text-blue-400" />
             <span className="text-xl font-bold">Ocosur</span>
           </div>
 
