@@ -320,71 +320,7 @@ export default function Reports() {
               </Card>
             )}
           </div>
-          {/* Gráfico semanal */}
-          {"weeklyReports" in report && (
-            <div className="mt-6">
-              <Bar
-                data={{
-                  labels:
-                    report.weeklyReports?.map((w) =>
-                      new Date(w.weekStart).toLocaleDateString(),
-                    ) || [],
-                  datasets: [
-                    {
-                      label: "Ventas",
-                      data:
-                        report.weeklyReports?.map((w) => w.totalSales) || [],
-                      backgroundColor: "rgba(34,197,94,0.7)",
-                    },
-                    {
-                      label: "Gastos",
-                      data:
-                        report.weeklyReports?.map((w) => w.totalExpenses) || [],
-                      backgroundColor: "rgba(239,68,68,0.7)",
-                    },
-                    {
-                      label: "Utilidad",
-                      data:
-                        report.weeklyReports?.map((w) => w.totalProfit) || [],
-                      backgroundColor: "rgba(59,130,246,0.7)",
-                    },
-                  ],
-                }}
-              />
-            </div>
-          )}
-          {/* Gráfico diario */}
-          {"dailyReports" in report && (
-            <div className="mt-6">
-              <Bar
-                data={{
-                  labels:
-                    report.dailyReports?.map((d) =>
-                      new Date(d.date).toLocaleDateString(),
-                    ) || [],
-                  datasets: [
-                    {
-                      label: "Ventas",
-                      data: report.dailyReports?.map((d) => d.totalSales) || [],
-                      backgroundColor: "rgba(34,197,94,0.7)",
-                    },
-                    {
-                      label: "Gastos",
-                      data:
-                        report.dailyReports?.map((d) => d.totalExpenses) || [],
-                      backgroundColor: "rgba(239,68,68,0.7)",
-                    },
-                    {
-                      label: "Utilidad",
-                      data:
-                        report.dailyReports?.map((w) => w.totalProfit) || [],
-                      backgroundColor: "rgba(59,130,246,0.7)",
-                    },
-                  ],
-                }}
-              />
-            </div>
-          )}
+
           {/* Tabla semanal */}
           {"weeklyReports" in report && (
             <div className="mt-6 overflow-x-auto">
@@ -600,6 +536,71 @@ export default function Reports() {
               </Card>
             )}
           </div>
+          {/* Gráfico semanal */}
+          {"weeklyReports" in report && (
+            <div className="mt-6">
+              <Bar
+                data={{
+                  labels:
+                    report.weeklyReports?.map((w) =>
+                      new Date(w.weekStart).toLocaleDateString(),
+                    ) || [],
+                  datasets: [
+                    {
+                      label: "Ventas",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalSales) || [],
+                      backgroundColor: "rgba(34,197,94,0.7)",
+                    },
+                    {
+                      label: "Gastos",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalExpenses) || [],
+                      backgroundColor: "rgba(239,68,68,0.7)",
+                    },
+                    {
+                      label: "Utilidad",
+                      data:
+                        report.weeklyReports?.map((w) => w.totalProfit) || [],
+                      backgroundColor: "rgba(59,130,246,0.7)",
+                    },
+                  ],
+                }}
+              />
+            </div>
+          )}
+          {/* Gráfico diario */}
+          {"dailyReports" in report && (
+            <div className="mt-6">
+              <Bar
+                data={{
+                  labels:
+                    report.dailyReports?.map((d) =>
+                      new Date(d.date).toLocaleDateString(),
+                    ) || [],
+                  datasets: [
+                    {
+                      label: "Ventas",
+                      data: report.dailyReports?.map((d) => d.totalSales) || [],
+                      backgroundColor: "rgba(34,197,94,0.7)",
+                    },
+                    {
+                      label: "Gastos",
+                      data:
+                        report.dailyReports?.map((d) => d.totalExpenses) || [],
+                      backgroundColor: "rgba(239,68,68,0.7)",
+                    },
+                    {
+                      label: "Utilidad",
+                      data:
+                        report.dailyReports?.map((w) => w.totalProfit) || [],
+                      backgroundColor: "rgba(59,130,246,0.7)",
+                    },
+                  ],
+                }}
+              />
+            </div>
+          )}
         </>
       )}
 

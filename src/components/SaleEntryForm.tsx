@@ -1,0 +1,176 @@
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  Card,
+  Datepicker,
+  Label,
+  TextInput,
+  Toast,
+  ToastToggle,
+} from "flowbite-react";
+import { HiCheck, HiX } from "react-icons/hi";
+import { Batch, createDailyBatchSale, DailyBatchSale } from "../services/api";
+
+interface SaleEntryFormProps {
+  batch: Batch;
+  existingSale?: DailyBatchSale;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+export default function SaleEntryForm({
+  batch,
+  existingSale,
+  onClose,
+  onSuccess,
+}: SaleEntryFormProps) {
+  const [formData, setFormData] = useState({
+    batchId: batch.id,
+    quantitySold: existingSale ? String(existingSale.quantitySold) : "",
+    kgTotal: existingSale ? String(existingSale.kgTotal) : "",
+    saleTotal: existingSale ? String(existingSale.saleTotal) : "",
+    kgGut: existingSale ? String(existingSale.kgGut) : "",
+    date: existingSale ? new Date(existingSale.date) : new Date(),
+  });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+
+  // Disables the scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    setFormData((prev) => ({ ...prev, date: date ?? new Date() }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (
+      !formData.quantitySold ||
+      !formData.kgTotal ||
+      !formData.saleTotal ||
+      !formData.kgGut ||
+      !formData.date
+    ) {
+      setToastType("error");
+      setToastMessage("Completa todos los campos");
+      return;
+    }
+
+    try {
+      await createDailyBatchSale({
+        batchId: batch.id,
+        quantitySold: Number(formData.quantitySold),
+        kgTotal: Number(formData.kgTotal),
+        saleTotal: formData.saleTotal,
+        kgGut: Number(formData.kgGut),
+        date: formData.date,
+      });
+
+      setToastType("success");
+      setToastMessage("Venta registrada correctamente");
+      onSuccess?.();
+      onClose();
+    } catch {
+      setToastType("error");
+      setToastMessage("Error al registrar la venta");
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-gray-900/25 p-4"
+      onClick={onClose} // closes the modal when the bg is clicked
+    >
+      <Card
+        className="relative w-full max-w-md"
+        onClick={(e) => e.stopPropagation()} // prevents the modal from closing when clicked
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-200"
+        >
+          <HiX className="h-6 w-6" />
+        </button>
+
+        <h3 className="mb-2 text-lg font-semibold text-white">
+          Nueva venta - Remesa #{batch.id}
+        </h3>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <Label>Fecha</Label>
+          <Datepicker
+            language="es-MX"
+            value={formData.date}
+            onChange={handleDateChange}
+          />
+
+          <TextInput
+            name="quantitySold"
+            placeholder="Pollos vendidos"
+            type="number"
+            value={formData.quantitySold}
+            onChange={handleChange}
+          />
+          <TextInput
+            name="kgTotal"
+            placeholder="Kilos vendidos"
+            type="number"
+            step="any"
+            value={formData.kgTotal}
+            onChange={handleChange}
+          />
+          <TextInput
+            name="saleTotal"
+            placeholder="Efectivo recibido"
+            type="number"
+            step="any"
+            value={formData.saleTotal}
+            onChange={handleChange}
+          />
+          <TextInput
+            name="kgGut"
+            placeholder="Kilos de tripa"
+            type="number"
+            step="any"
+            value={formData.kgGut}
+            onChange={handleChange}
+          />
+
+          <div className="mt-2 flex justify-between">
+            <Button type="submit">Guardar</Button>
+            <Button type="button" color="gray" onClick={onClose}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+
+        {toastMessage && (
+          <Toast className="mt-2">
+            <div
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${toastType === "success" ? "bg-green-100 text-green-500" : "bg-red-100 text-red-500"}`}
+            >
+              {toastType === "success" ? (
+                <HiCheck className="h-5 w-5" />
+              ) : (
+                <HiX className="h-5 w-5" />
+              )}
+            </div>
+            <div className="ml-3 text-sm font-normal">{toastMessage}</div>
+            <ToastToggle onClick={() => setToastMessage(null)} />
+          </Toast>
+        )}
+      </Card>
+    </div>
+  );
+}

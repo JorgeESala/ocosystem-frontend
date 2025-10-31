@@ -5,6 +5,43 @@ export interface Branch {
   id: number;
   name: string;
 }
+export interface Batch {
+  id: number;
+  branch: Branch;
+  kgTotal: number;
+  pricePerKg: number;
+  date: Date;
+  provider: string;
+  chickenQuantity: number;
+  priceTotal?: number;
+  avgChickenWeight: number;
+}
+export interface DailyBatchSaleRequest {
+  batchId: string | number;
+  quantitySold: string | number;
+  kgTotal: string | number;
+  saleTotal: string;
+  kgGut: string | number;
+  date: Date | null;
+}
+
+export interface DailyBatchSale {
+  id: number;
+  batch: Batch;
+  quantitySold: number;
+  kgTotal: number;
+  saleTotal: number;
+  kgGut: number;
+  date: Date;
+}
+export interface BatchRequest {
+  branchId: string | number;
+  kgTotal: string | number;
+  pricePerKg: string | number;
+  date: Date | null;
+  provider: string;
+  chickenQuantity: string | number;
+}
 
 export interface Category {
   id: number;
@@ -137,6 +174,66 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   const res = await axios.get(`${API_URL}/api/branches`);
   return res.data;
 };
+export const createBatch = async function (batch: BatchRequest) {
+  const response = await fetch(`${API_URL}/api/batches`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(batch),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al crear el batch");
+  }
+
+  const data: Batch = await response.json();
+  return data;
+};
+export const createDailyBatchSale = async function (
+  batchSale: DailyBatchSaleRequest,
+) {
+  const response = await fetch(`${API_URL}/api/batchSales`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(batchSale),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al Agregar la venta");
+  }
+
+  const data: Batch = await response.json();
+  return data;
+};
+
+export const updateDailyBatchSale = async function (batchSale: DailyBatchSale) {
+  const response = await fetch(`${API_URL}/api/batchSales/${batchSale.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(batchSale),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al Agregar la venta");
+  }
+
+  const data: Batch = await response.json();
+  return data;
+};
+
+export const fetchBatches = async (): Promise<Batch[]> => {
+  const res = await axios.get(`${API_URL}/api/batches`);
+  return res.data;
+};
+export const fetchBatchSales = async (): Promise<DailyBatchSale[]> => {
+  const res = await axios.get(`${API_URL}/api/batchSales`);
+  return res.data;
+};
 
 export async function fetchWeeklyReport(
   branchId: number,
@@ -225,3 +322,9 @@ export async function fetchComparisonData(
     return [];
   }
 }
+export const fetchBatchSalesByBatch = async (
+  batchId: number | string,
+): Promise<DailyBatchSale[]> => {
+  const res = await axios.get(`${API_URL}/api/batchSales/${batchId}`);
+  return res.data;
+};
