@@ -289,13 +289,13 @@ export default function Reports() {
                 maximumFractionDigits: 2,
               })}
             </Card>
-            <Card>
+            {/* <Card>
               Gastos: $
               {Number(report.totalExpenses ?? 0).toLocaleString("es-MX", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
-            </Card>
+            </Card> */}
             <Card>
               Utilidad: $
               {Number(report.totalProfit ?? 0).toLocaleString("es-MX", {
@@ -329,7 +329,7 @@ export default function Reports() {
                   <tr className="bg-gray-100 text-center">
                     <th className="px-4 py-2">Semana</th>
                     <th className="px-4 py-2">Ventas</th>
-                    <th className="px-4 py-2">Gastos</th>
+                    {/* <th className="px-4 py-2">Gastos</th> */}
                     <th className="px-4 py-2">Utilidad</th>
                     <th className="px-4 py-2">Cantidad Vendida</th>
                     <th className="px-4 py-2">Cantidad Comprada</th>
@@ -344,13 +344,13 @@ export default function Reports() {
                       <td className="px-4 py-2">
                         ${Number(w.totalSales ?? 0).toLocaleString("es-MX")}
                       </td>
-                      <td className="px-4 py-2">
+                      {/* <td className="px-4 py-2">
                         $
                         {Number(w.totalExpenses ?? 0).toLocaleString("es-MX", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
-                      </td>
+                      </td> */}
                       <td className="px-4 py-2">
                         $
                         {Number(w.totalProfit ?? 0).toLocaleString("es-MX", {
@@ -380,7 +380,7 @@ export default function Reports() {
                   <tr className="bg-gray-100 text-center">
                     <th className="px-4 py-2">Día</th>
                     <th className="px-4 py-2">Ventas</th>
-                    <th className="px-4 py-2">Gastos</th>
+                    {/* <th className="px-4 py-2">Gastos</th> */}
                     <th className="px-4 py-2">Utilidad</th>
                     <th className="px-4 py-2">Cantidad Vendida</th>
                     <th className="px-4 py-2">Cantidad Comprada</th>
@@ -406,9 +406,9 @@ export default function Reports() {
                       <td className="px-4 py-2">
                         ${Number(d.totalSales ?? 0).toLocaleString("es-MX")}
                       </td>
-                      <td className="px-4 py-2">
+                      {/* <td className="px-4 py-2">
                         ${Number(d.totalExpenses ?? 0).toLocaleString("es-MX")}
-                      </td>
+                      </td> */}
                       <td className="px-4 py-2">
                         ${Number(d.totalProfit ?? 0).toLocaleString("es-MX")}
                       </td>
@@ -552,18 +552,18 @@ export default function Reports() {
                         report.weeklyReports?.map((w) => w.totalSales) || [],
                       backgroundColor: "rgba(34,197,94,0.7)",
                     },
-                    {
-                      label: "Gastos",
-                      data:
-                        report.weeklyReports?.map((w) => w.totalExpenses) || [],
-                      backgroundColor: "rgba(239,68,68,0.7)",
-                    },
-                    {
-                      label: "Utilidad",
-                      data:
-                        report.weeklyReports?.map((w) => w.totalProfit) || [],
-                      backgroundColor: "rgba(59,130,246,0.7)",
-                    },
+                    // {
+                    //   label: "Gastos",
+                    //   data:
+                    //     report.weeklyReports?.map((w) => w.totalExpenses) || [],
+                    //   backgroundColor: "rgba(239,68,68,0.7)",
+                    // },
+                    // {
+                    //   label: "Utilidad",
+                    //   data:
+                    //     report.weeklyReports?.map((w) => w.totalProfit) || [],
+                    //   backgroundColor: "rgba(59,130,246,0.7)",
+                    // },
                   ],
                 }}
               />
@@ -584,18 +584,18 @@ export default function Reports() {
                       data: report.dailyReports?.map((d) => d.totalSales) || [],
                       backgroundColor: "rgba(34,197,94,0.7)",
                     },
-                    {
-                      label: "Gastos",
-                      data:
-                        report.dailyReports?.map((d) => d.totalExpenses) || [],
-                      backgroundColor: "rgba(239,68,68,0.7)",
-                    },
-                    {
-                      label: "Utilidad",
-                      data:
-                        report.dailyReports?.map((w) => w.totalProfit) || [],
-                      backgroundColor: "rgba(59,130,246,0.7)",
-                    },
+                    // {
+                    //   label: "Gastos",
+                    //   data:
+                    //     report.dailyReports?.map((d) => d.totalExpenses) || [],
+                    //   backgroundColor: "rgba(239,68,68,0.7)",
+                    // },
+                    // {
+                    //   label: "Utilidad",
+                    //   data:
+                    //     report.dailyReports?.map((w) => w.totalProfit) || [],
+                    //   backgroundColor: "rgba(59,130,246,0.7)",
+                    // },
                   ],
                 }}
               />

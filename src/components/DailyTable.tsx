@@ -12,13 +12,13 @@ export default function DailyTable({ report }: Props) {
           <tr>
             <th className="px-4 py-2 text-left">Fecha</th>
             <th className="px-4 py-2 text-right">Ventas</th>
-            <th className="px-4 py-2 text-right">Comprado</th>
+            {/* <th className="px-4 py-2 text-right">Comprado</th> */}
             <th className="px-4 py-2 text-right">Tripa</th>
-            <th className="px-4 py-2 text-right">Merma</th>
+            {/* <th className="px-4 py-2 text-right">Merma</th> */}
             <th className="px-4 py-2 text-right">Matados</th>
             <th className="px-4 py-2 text-right">Casilleros</th>
             <th className="px-4 py-2 text-right">Venta de Huevo</th>
-            <th className="px-4 py-2 text-right">Gastos</th>
+            {/* <th className="px-4 py-2 text-right">Gastos</th> */}
           </tr>
         </thead>
         <tbody className="bg-gray-800 text-white">
@@ -36,11 +36,11 @@ export default function DailyTable({ report }: Props) {
                 minimumFractionDigits: 2,
               })}
             </td>
-            <td className="px-4 py-2 text-right">
+            {/* <td className="px-4 py-2 text-right">
               {report.totalBought?.toLocaleString("es-MX") ?? "-"}
-            </td>
-            <td className="px-4 py-2 text-right">{report.gut ?? "-"}</td>
-            <td className="px-4 py-2 text-right">{report.waste ?? "-"}</td>
+            </td> */}
+            <td className="px-4 py-2 text-right">{report.gut ?? "-"} kg</td>
+            {/* <td className="px-4 py-2 text-right">{report.waste ?? "-"}</td> */}
             <td className="px-4 py-2 text-right">
               {report.slaughteredChicken ?? "-"}
             </td>
@@ -48,12 +48,12 @@ export default function DailyTable({ report }: Props) {
               {report.eggCartonsQuantity ?? "-"}
             </td>
             <td className="px-4 py-2 text-right">${report.eggsSales ?? "-"}</td>
-            <td className="px-4 py-2 text-right">
+            {/* <td className="px-4 py-2 text-right">
               $
               {report.totalExpenses.toLocaleString("es-MX", {
                 minimumFractionDigits: 2,
               })}
-            </td>
+            </td> */}
           </tr>
         </tbody>
       </table>
