@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Button, Spinner, Alert, Label } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
-import { Batch, fetchBatches } from "../services/api";
+import {
+  Batch,
+  fetchBatches,
+  fetchBatchSalesByBatch,
+  type DailyBatchSale,
+} from "../services/api";
 import { BatchSalesTable } from "./BatchSalesTable";
 import SaleEntryForm from "./SaleEntryForm";
 
@@ -12,6 +17,9 @@ export const BatchTable: React.FC = () => {
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>();
+  const [batchSales, setBatchSales] = useState<
+    Record<number, DailyBatchSale[]>
+  >({});
 
   useEffect(() => {
     const loadBatches = async () => {
@@ -27,9 +35,20 @@ export const BatchTable: React.FC = () => {
     };
     loadBatches();
   }, []);
-
+  const addSales = async (batch: Batch) => {
+    const data = await fetchBatchSalesByBatch(batch.id);
+    setBatchSales((prev) => ({
+      ...prev,
+      [batch.id]: data,
+    }));
+  };
   const toggleExpand = (id: number) => {
-    setExpandedBatchId(expandedBatchId === id ? null : id);
+    const newId = expandedBatchId === id ? null : id;
+    setExpandedBatchId(newId);
+    if (newId) {
+      const newBatch = batches.find((batch) => batch.id === newId);
+      if (newBatch) addSales(newBatch);
+    }
   };
 
   if (loading)
@@ -124,8 +143,10 @@ export const BatchTable: React.FC = () => {
               <SaleEntryForm
                 batch={selectedBatch}
                 onClose={() => setSelectedBatch(null)}
-                onSuccess={() => {
-                  // Opcional: recargar ventas del batch
+                onSuccess={async () => {
+                  if (selectedBatch) {
+                    addSales(selectedBatch);
+                  }
                 }}
               />
             )}
@@ -137,7 +158,10 @@ export const BatchTable: React.FC = () => {
               <h4 className="mb-3 text-center text-lg font-semibold text-gray-200">
                 Ventas de esta remesa
               </h4>
-              <BatchSalesTable batch={batch} />
+              <BatchSalesTable
+                batch={batch}
+                sales={batchSales[batch.id] || []}
+              />
             </div>
           )}
         </div>

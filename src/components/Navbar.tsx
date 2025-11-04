@@ -26,11 +26,12 @@ export default function Navbar() {
     <nav className="border-b border-gray-700 bg-gray-900 text-gray-200 shadow-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <GiChicken className="text-2xl text-blue-400" />
-            <span className="text-xl font-bold">Ocosur</span>
-          </div>
-
+          <Link to="/">
+            <div className="flex items-center space-x-2">
+              <GiChicken className="text-2xl text-blue-400" />
+              <span className="text-xl font-bold">Ocosur</span>
+            </div>
+          </Link>
           {/* Links */}
           <div className="hidden space-x-6 md:flex">
             {links.map((link) => (

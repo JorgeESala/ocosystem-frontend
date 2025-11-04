@@ -11,21 +11,16 @@ import {
   Button,
 } from "flowbite-react";
 import { HiExclamation } from "react-icons/hi";
-import {
-  fetchBatchSalesByBatch,
-  DailyBatchSale,
-  Batch,
-  fetchBatchSales,
-} from "../services/api";
+import { DailyBatchSale, fetchBatchSales, type Batch } from "../services/api";
 import { BatchSummary } from "./BatchSummary";
 import SaleEntryForm from "./SaleEntryForm";
 
 interface Props {
+  sales: DailyBatchSale[];
   batch: Batch;
 }
 
-export const BatchSalesTable: React.FC<Props> = ({ batch }) => {
-  const [sales, setSales] = useState<DailyBatchSale[]>([]);
+export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalWaste, setTotalWaste] = useState<number>(0);
@@ -49,9 +44,6 @@ export const BatchSalesTable: React.FC<Props> = ({ batch }) => {
   useEffect(() => {
     const loadSales = async () => {
       try {
-        const data = await fetchBatchSalesByBatch(batch.id);
-        setSales(data);
-
         // Calcula directamente con los datos recién obtenidos
         const totalQuantitySold = sales.reduce(
           (sum, s) => sum + s.quantitySold,

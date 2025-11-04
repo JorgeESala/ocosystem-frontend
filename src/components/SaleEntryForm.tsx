@@ -9,7 +9,12 @@ import {
   ToastToggle,
 } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
-import { Batch, createDailyBatchSale, DailyBatchSale } from "../services/api";
+import {
+  Batch,
+  createDailyBatchSale,
+  DailyBatchSale,
+  updateDailyBatchSale,
+} from "../services/api";
 
 interface SaleEntryFormProps {
   batch: Batch;
@@ -25,6 +30,7 @@ export default function SaleEntryForm({
   onSuccess,
 }: SaleEntryFormProps) {
   const [formData, setFormData] = useState({
+    id: existingSale ? existingSale.id : null,
     batchId: batch.id,
     quantitySold: existingSale ? String(existingSale.quantitySold) : "",
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
@@ -68,14 +74,26 @@ export default function SaleEntryForm({
     }
 
     try {
-      await createDailyBatchSale({
-        batchId: batch.id,
-        quantitySold: Number(formData.quantitySold),
-        kgTotal: Number(formData.kgTotal),
-        saleTotal: formData.saleTotal,
-        kgGut: Number(formData.kgGut),
-        date: formData.date,
-      });
+      if (formData.id) {
+        await updateDailyBatchSale({
+          id: formData.id,
+          batch: batch,
+          quantitySold: Number(formData.quantitySold),
+          kgTotal: Number(formData.kgTotal),
+          saleTotal: Number(formData.saleTotal),
+          kgGut: Number(formData.kgGut),
+          date: formData.date,
+        });
+      } else {
+        await createDailyBatchSale({
+          batchId: batch.id,
+          quantitySold: Number(formData.quantitySold),
+          kgTotal: Number(formData.kgTotal),
+          saleTotal: formData.saleTotal,
+          kgGut: Number(formData.kgGut),
+          date: formData.date,
+        });
+      }
 
       setToastType("success");
       setToastMessage("Venta registrada correctamente");
@@ -114,6 +132,15 @@ export default function SaleEntryForm({
             value={formData.date}
             onChange={handleDateChange}
           />
+          {/* <TextInput
+            name="batchId"
+            placeholder="Id de la remesa"
+            disabled
+            className="hidden"
+            type="number"
+            value={formData.batchId}
+            onChange={handleChange}
+          /> */}
 
           <TextInput
             name="quantitySold"

@@ -17,6 +17,7 @@ export interface Batch {
   avgChickenWeight: number;
 }
 export interface DailyBatchSaleRequest {
+  id?: number;
   batchId: string | number;
   quantitySold: string | number;
   kgTotal: string | number;
@@ -35,6 +36,7 @@ export interface DailyBatchSale {
   date: Date;
 }
 export interface BatchRequest {
+  id?: number;
   branchId: string | number;
   kgTotal: string | number;
   pricePerKg: string | number;
@@ -234,6 +236,12 @@ export const fetchBatchSales = async (): Promise<DailyBatchSale[]> => {
   const res = await axios.get(`${API_URL}/api/batchSales`);
   return res.data;
 };
+export async function fetchBatchSalesById(
+  id: number,
+): Promise<DailyBatchSale[]> {
+  const res = await axios.get(`${API_URL}/api/batchSales/${id}`);
+  return res.data;
+}
 
 export async function fetchWeeklyReport(
   branchId: number,
@@ -325,6 +333,7 @@ export async function fetchComparisonData(
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
 ): Promise<DailyBatchSale[]> => {
+  console.log(batchId);
   const res = await axios.get(`${API_URL}/api/batchSales/${batchId}`);
   return res.data;
 };
