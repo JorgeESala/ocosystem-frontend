@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 
 import {
@@ -229,7 +230,7 @@ export default function ComparisonsGraphs() {
     });
 
     // Convertimos chartMap a arreglo
-    const formatted: any[] = Object.entries(chartMap).map(([date, values]) => ({
+    const formatted = Object.entries(chartMap).map(([date, values]) => ({
       date,
       ...values,
     }));
@@ -278,11 +279,11 @@ export default function ComparisonsGraphs() {
       "Nov",
       "Dic",
     ];
-
+    let week;
     switch (frequency) {
       case "weekly":
         // Semana del año aproximada
-        const week = Math.ceil(
+        week = Math.ceil(
           ((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) /
             86400000 +
             new Date(date.getFullYear(), 0, 1).getDay() +

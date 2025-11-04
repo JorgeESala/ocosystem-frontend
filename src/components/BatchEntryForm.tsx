@@ -92,7 +92,7 @@ export default function BatchEntryForm() {
         pricePerKg: "",
         date: new Date(),
       });
-    } catch (error) {
+    } catch {
       setToastMessage("Ocurrió un error al guardar el lote.");
       setToastType("failure");
     }

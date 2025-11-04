@@ -81,8 +81,8 @@ export default function Reports() {
     const weeksArray: { start: Date; end: Date; label: string }[] = [];
 
     // La primera semana empieza el domingo anterior al primer sábado
-    let weekEnd = new Date(firstSaturday);
-    let weekStart = new Date(weekEnd);
+    const weekEnd = new Date(firstSaturday);
+    const weekStart = new Date(weekEnd);
     weekStart.setDate(weekEnd.getDate() - 6);
 
     while (weekEnd <= endOfMonth) {
