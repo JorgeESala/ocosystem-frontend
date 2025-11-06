@@ -10,6 +10,8 @@ import {
   Legend,
   CartesianGrid,
   ResponsiveContainer,
+  Bar,
+  BarChart,
 } from "recharts";
 
 import {
@@ -26,14 +28,11 @@ import {
   fetchCategories,
   fetchComparisonData,
   Frequency,
-  ReportEntry,
 } from "../services/api";
 
 export default function ComparisonsGraphs() {
-  const [frequency, setFrequency] = useState<
-    "hourly" | "daily" | "weekly" | "monthly" | "yearly"
-  >("daily");
   const [metric, setMetric] = useState<"sales" | "quantity">("sales");
+  const [frequency, setFrequency] = useState<Frequency>("daily");
   const [isContinuous, setIsContinuous] = useState(true);
   const [keys, setKeys] = useState<string[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -52,7 +51,6 @@ export default function ComparisonsGraphs() {
   const [chartData, setChartData] = useState<Record<string, number | string>[]>(
     [],
   );
-  const [reports, setReports] = useState<ReportEntry[]>([]);
 
   type GenerateChartDataParams = {
     selectedBranches: number[];
@@ -65,6 +63,120 @@ export default function ComparisonsGraphs() {
     setChartData: (data: any[]) => void;
     branches: { id: number; name: string }[];
     categories: { id: number; name: string }[];
+  };
+  type GenerateYearlyChartDataParams = {
+    selectedBranches: number[];
+    selectedCategories: number[];
+    startDate: Date | null;
+    endDate: Date | null;
+    metric: "sales" | "quantity";
+    setChartData: (data: any[]) => void;
+    branches: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
+  };
+  const generateYearlyChart = async function ({
+    selectedBranches,
+    selectedCategories,
+    startDate,
+    endDate,
+    metric,
+    setChartData,
+    branches,
+    categories,
+  }: GenerateYearlyChartDataParams) {
+    if (selectedBranches.length === 0 || !startDate || !endDate) {
+      setChartData([]);
+      return;
+    }
+    setFrequency("weekly_custom");
+    const nextYearStartDate: Date = new Date(startDate);
+
+    nextYearStartDate.setFullYear(startDate.getFullYear() + 1);
+    console.log(`next year start: ${nextYearStartDate}`);
+    const nextYearEndDate: Date = new Date(endDate);
+    nextYearEndDate.setFullYear(endDate.getFullYear() + 1);
+    console.log(`next year end: ${nextYearEndDate}`);
+
+    const selectedYearRequest = {
+      branchIds: selectedBranches,
+      startDate,
+      endDate,
+      frequency,
+    };
+    const nextYearRequest = {
+      branchIds: selectedBranches,
+      startDate: nextYearStartDate,
+      endDate: nextYearEndDate,
+      frequency,
+    };
+    const actualReports = await fetchComparisonData(selectedYearRequest);
+    const nextYearReports = await fetchComparisonData(nextYearRequest);
+
+    // No los juntamos todavía
+    const years = [
+      {
+        year: selectedYearRequest.startDate.getFullYear(),
+        data: actualReports,
+      },
+      { year: nextYearRequest.startDate.getFullYear(), data: nextYearReports },
+    ];
+
+    const chartMap: Record<string, any> = {};
+
+    years.forEach(({ year, data }) => {
+      data.forEach((r) => {
+        const dateObj = new Date(r.endDate);
+        const monthIndex = dateObj.getMonth(); // 0..11
+        const yearVal = dateObj.getFullYear();
+
+        // Número de semana dentro del mes (1,2,3,...)
+        const weekOfMonth = Math.floor((dateObj.getDate() - 1) / 7) + 1;
+
+        // Etiqueta para mostrar: "S1 nov"
+        const monthLabel = dateObj.toLocaleString("es-MX", { month: "short" });
+        const label = `S${weekOfMonth} ${monthLabel}`;
+
+        // sortKey numérico que ordena cronológicamente: año*10000 + mes*100 + semana
+        // (por ejemplo: 20241102 -> 2024 noviembre semana 2)
+        const sortKey = yearVal * 10000 + (monthIndex + 1) * 100 + weekOfMonth;
+
+        if (!chartMap[label]) chartMap[label] = { date: label, sortKey };
+
+        const branchName =
+          branches.find((b) => b.id === r.branchId)?.name ??
+          `Sucursal ${r.branchId}`;
+
+        if (selectedCategories.length === 0) {
+          const key = `${branchName} ${year}`;
+          const value = metric === "sales" ? r.totalSales : r.totalSold;
+          chartMap[label][key] = value;
+        } else {
+          const source =
+            metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
+
+          selectedCategories.forEach((categoryId) => {
+            const categoryName =
+              categories.find((c) => c.id === categoryId)?.name ?? "";
+            const key = `${branchName} - ${categoryName} ${year}`;
+            const value = source[categoryName] ?? 0;
+            chartMap[label][key] = value;
+          });
+        }
+      });
+    });
+
+    // Ordenamos por sortKey (cronológico) y luego quitamos sortKey si quieres
+    const formatted = Object.values(chartMap)
+      .sort((a: any, b: any) => a.sortKey - b.sortKey)
+      .map((row: any) => {
+        // opcional: eliminar sortKey antes de setear chartData
+        const { sortKey, ...rest } = row;
+        return rest;
+      });
+
+    setChartData(formatted);
+
+    return;
   };
 
   const generateChartData = async function ({
@@ -93,11 +205,23 @@ export default function ComparisonsGraphs() {
       frequency,
     };
 
+    if (frequency == "weekly_custom") {
+      generateYearlyChart({
+        selectedBranches,
+        selectedCategories,
+        startDate,
+        endDate,
+        metric,
+        setChartData,
+        branches,
+        categories,
+      });
+      return;
+    }
     // 4️⃣ Si la vista es continua: mostrar líneas sucursal-categoría o totales
     if (isContinuous) {
       const fetchedReports = await fetchComparisonData(request);
       // 3️⃣ Obtener los reportes
-      setReports(fetchedReports);
       const chartMap: Record<string, any> = {};
 
       fetchedReports.forEach((r) => {
@@ -128,10 +252,21 @@ export default function ComparisonsGraphs() {
         }
       });
 
-      const formatted = Object.values(chartMap).sort(
-        (a: any, b: any) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime(),
-      );
+      const formatted = Object.values(chartMap)
+        .map((row: any) => {
+          const d = new Date(`${row.date}T00:00:00`);
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const year = d.getFullYear();
+          return {
+            ...row,
+            date: `${day}/${month}/${year}`,
+          };
+        })
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
 
       setChartData(formatted);
       return;
@@ -143,9 +278,7 @@ export default function ComparisonsGraphs() {
         ? "daily"
         : frequency === "monthly"
           ? "weekly"
-          : frequency === "yearly"
-            ? "monthly"
-            : frequency;
+          : frequency;
 
     const innerRequest = {
       branchIds: selectedBranches,
@@ -157,8 +290,7 @@ export default function ComparisonsGraphs() {
     // Petición más detallada (por día, semana o mes)
     const fetchedReports = await fetchComparisonData(innerRequest);
     // 3️⃣ Obtener los reportes
-    setReports(fetchedReports);
-    console.log(reports);
+
     // Map para agrupar por punto del eje X -> { "Semana 1": { "Roneli - Julio": 1000, ... } }
     const chartMap: Record<string, Record<string, number>> = {};
 
@@ -347,7 +479,17 @@ export default function ComparisonsGraphs() {
 
   useEffect(() => {
     if (chartData.length > 0) {
-      setKeys(Object.keys(chartData[0]).filter((k) => k !== "date"));
+      const allKeys = new Set<string>();
+
+      // 🔹 Recorremos todos los objetos (no solo el primero) para incluir todas las posibles claves
+      chartData.forEach((row) => {
+        Object.keys(row).forEach((key) => {
+          if (key !== "date") allKeys.add(key);
+        });
+      });
+
+      // 🔹 Convertimos el Set a array y lo ordenamos alfabéticamente
+      setKeys(Array.from(allKeys).sort());
     }
   }, [chartData]);
 
@@ -379,7 +521,7 @@ export default function ComparisonsGraphs() {
           </option>
           <option value="weekly">Semanal</option>
           <option value="monthly">Mensual</option>
-          <option value="yearly">Anual</option>
+          <option value="weekly_custom">Anual por semana</option>
         </Select>
 
         <Dropdown
@@ -456,8 +598,17 @@ export default function ComparisonsGraphs() {
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" />
+
           <YAxis />
-          <Tooltip />
+          <Tooltip
+            formatter={(value, name) => [value.toLocaleString("en-US"), name]}
+            labelStyle={{ color: "black" }}
+            contentStyle={{
+              border: "none",
+              color: "#eee",
+            }}
+          />
+
           <Legend />
           {keys.map((key, idx) => (
             <Line
@@ -471,6 +622,35 @@ export default function ComparisonsGraphs() {
           ))}
         </LineChart>
       </ResponsiveContainer>
+      {frequency == "weekly_custom" && (
+        <ResponsiveContainer width="100%" height={400} className={"bg-white"}>
+          <BarChart data={chartData} barSize={30}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+
+            <Tooltip
+              formatter={(value, name) => [value.toLocaleString("en-US"), name]}
+              labelStyle={{ color: "black" }}
+              contentStyle={{
+                border: "none",
+                color: "#eee",
+              }}
+            />
+
+            <Legend />
+
+            {keys.map((key, idx) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                fill={`hsl(${(idx * 90) % 360}, 70%, 50%)`} // mismo esquema de color dinámico
+                radius={[4, 4, 0, 0]} // bordes redondeados arriba
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

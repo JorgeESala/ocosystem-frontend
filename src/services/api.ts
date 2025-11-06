@@ -83,7 +83,13 @@ export interface DailyReport {
   quantitiesByProduct: Record<string, number>[];
   expensesByCategory: Record<string, number>[];
 }
-export type Frequency = "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+export type Frequency =
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "weekly_custom"
+  | "monthly"
+  | "yearly";
 
 export interface WeeklyReport {
   branchId: number;
@@ -330,6 +336,7 @@ export async function fetchComparisonData(
     return [];
   }
 }
+
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
 ): Promise<DailyBatchSale[]> => {
