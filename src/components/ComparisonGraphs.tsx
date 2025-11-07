@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Bar,
   BarChart,
+  LabelList,
 } from "recharts";
 
 import {
@@ -313,7 +314,7 @@ export default function ComparisonsGraphs() {
     const getWeekOfMonth = (isoDate: string): string => {
       const d = new Date(isoDate);
       const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-      const firstWeekday = firstDayOfMonth.getDay(); // domingo = 0
+      const firstWeekday = firstDayOfMonth.getDay();
       const adjustedDay = d.getDate() + firstWeekday;
       const weekOfMonth = Math.ceil(adjustedDay / 7);
       return `Semana ${weekOfMonth}`;
@@ -629,24 +630,45 @@ export default function ComparisonsGraphs() {
             <XAxis dataKey="date" />
             <YAxis />
 
-            <Tooltip
-              formatter={(value, name) => [value.toLocaleString("en-US"), name]}
-              labelStyle={{ color: "black" }}
-              contentStyle={{
-                border: "none",
-                color: "#eee",
-              }}
-            />
-
             <Legend />
 
             {keys.map((key, idx) => (
               <Bar
                 key={key}
                 dataKey={key}
-                fill={`hsl(${(idx * 90) % 360}, 70%, 50%)`} // mismo esquema de color dinámico
-                radius={[4, 4, 0, 0]} // bordes redondeados arriba
-              />
+                fill={`hsl(${(idx * 90) % 360}, 70%, 50%)`}
+                radius={[4, 4, 0, 0]}
+              >
+                <LabelList
+                  dataKey={key}
+                  position="top"
+                  content={({ x, y, width, value }) => {
+                    if (
+                      value == null ||
+                      x == null ||
+                      y == null ||
+                      width == null
+                    )
+                      return null;
+
+                    const xNum = Number(x);
+                    const yNum = Number(y);
+                    const widthNum = Number(width);
+
+                    return (
+                      <text
+                        x={xNum + widthNum / 2}
+                        y={yNum - 5}
+                        fill="#333"
+                        fontSize={12}
+                        textAnchor="middle"
+                      >
+                        {value.toLocaleString("en-US")}
+                      </text>
+                    );
+                  }}
+                />
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>
