@@ -93,10 +93,8 @@ export default function ComparisonsGraphs() {
     const nextYearStartDate: Date = new Date(startDate);
 
     nextYearStartDate.setFullYear(startDate.getFullYear() + 1);
-    console.log(`next year start: ${nextYearStartDate}`);
     const nextYearEndDate: Date = new Date(endDate);
     nextYearEndDate.setFullYear(endDate.getFullYear() + 1);
-    console.log(`next year end: ${nextYearEndDate}`);
 
     const selectedYearRequest = {
       branchIds: selectedBranches,
