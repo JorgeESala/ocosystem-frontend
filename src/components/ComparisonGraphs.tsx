@@ -493,6 +493,58 @@ export default function ComparisonsGraphs() {
       setKeys(Array.from(allKeys).sort());
     }
   }, [chartData]);
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            padding: "10px 12px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontWeight: 600,
+              color: "#333",
+              marginBottom: "6px",
+            }}
+          >
+            {label}
+          </p>
+
+          {payload.map((entry: any, idx: number) => (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#333",
+              }}
+            >
+              <div
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  background: entry.color,
+                  borderRadius: "2px",
+                }}
+              ></div>
+              <span style={{ fontWeight: 500 }}>{entry.name}:</span>
+              <span style={{ fontWeight: 600 }}>
+                {entry.value?.toLocaleString("en-US")}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="p-6">
@@ -630,6 +682,7 @@ export default function ComparisonsGraphs() {
             <XAxis dataKey="date" />
             <YAxis />
 
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
 
             {keys.map((key, idx) => (
@@ -650,11 +703,9 @@ export default function ComparisonsGraphs() {
                       width == null
                     )
                       return null;
-
                     const xNum = Number(x);
                     const yNum = Number(y);
                     const widthNum = Number(width);
-
                     return (
                       <text
                         x={xNum + widthNum / 2}
@@ -663,7 +714,8 @@ export default function ComparisonsGraphs() {
                         fontSize={12}
                         textAnchor="middle"
                       >
-                        {value.toLocaleString("en-US")}
+                        {" "}
+                        {value.toLocaleString("en-US")}{" "}
                       </text>
                     );
                   }}
