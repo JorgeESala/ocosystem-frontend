@@ -16,6 +16,7 @@ import {
 } from "recharts";
 
 import {
+  Button,
   Checkbox,
   Datepicker,
   Dropdown,
@@ -453,7 +454,7 @@ export default function ComparisonsGraphs() {
   };
 
   // Filtrar por categorías y calcular el valor a graficar según metric
-  useEffect(() => {
+  function handleGraph() {
     generateChartData({
       selectedBranches,
       selectedCategories,
@@ -466,15 +467,30 @@ export default function ComparisonsGraphs() {
       branches,
       categories,
     });
-  }, [
-    selectedBranches,
-    selectedCategories,
-    startDate,
-    endDate,
-    frequency,
-    isContinuous,
-    metric,
-  ]);
+  }
+
+  // useEffect(() => {
+  //   generateChartData({
+  //     selectedBranches,
+  //     selectedCategories,
+  //     startDate,
+  //     endDate,
+  //     frequency,
+  //     isContinuous,
+  //     metric,
+  //     setChartData,
+  //     branches,
+  //     categories,
+  //   });
+  // }, [
+  //   selectedBranches,
+  //   selectedCategories,
+  //   startDate,
+  //   endDate,
+  //   frequency,
+  //   isContinuous,
+  //   metric,
+  // ]);
 
   useEffect(() => {
     if (chartData.length > 0) {
@@ -642,6 +658,9 @@ export default function ComparisonsGraphs() {
           label="Vista continua"
           onChange={setIsContinuous}
         />
+        <Button onClick={handleGraph} className="blue">
+          Graficar
+        </Button>
       </div>
 
       {/* Gráfico */}
