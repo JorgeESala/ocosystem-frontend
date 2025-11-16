@@ -83,9 +83,14 @@ export interface DailyReport {
   quantitiesByProduct: Record<string, number>[];
   expensesByCategory: Record<string, number>[];
 }
+export interface ReportRow {
+  label: string;
+  [key: string]: number | string;
+}
 export type Frequency =
   | "hourly"
   | "daily"
+  | "daily_custom"
   | "weekly"
   | "weekly_custom"
   | "monthly"
@@ -167,12 +172,28 @@ export interface ReportEntry {
   quantitiesByCategory: Record<string, number>;
   expensesByCategory: Record<string, number>;
 }
+export interface GraphData {
+  branchIds: number[];
+  startDate: string;
+  metric: string;
+  endDate: string;
+  frequency: Frequency;
+  compareWithPreviousYear: boolean;
+}
 
 export interface ComparisonRequest {
   branchIds: number[];
   startDate: Date;
   endDate: Date;
   frequency: Frequency;
+}
+export interface GraphRequest {
+  branchIds: number[];
+  startDate: Date;
+  endDate: Date;
+  metric: string;
+  frequency: Frequency;
+  categories?: string[];
 }
 
 // -------------------- FETCH FUNCTIONS --------------------
@@ -336,11 +357,44 @@ export async function fetchComparisonData(
     return [];
   }
 }
+export async function fetchGraphData(
+  request: GraphRequest,
+): Promise<ReportRow[]> {
+  try {
+    const params = new URLSearchParams();
+    const hasCategories = !!request.categories?.length;
+
+    // Enviar TODAS las sucursales como múltiples parámetros:
+    // branchId=1&branchId=2&branchId=3
+    request.branchIds.forEach((id) => {
+      params.append("branchId", id.toString());
+    });
+
+    params.append("startDate", request.startDate.toISOString());
+    params.append("endDate", request.endDate.toISOString());
+    params.append("frequency", request.frequency);
+    params.append("metric", request.metric);
+    params.append("includeCategories", hasCategories.toString());
+
+    if (request.categories) {
+      request.categories.forEach((cat) => params.append("categories", cat));
+    }
+
+    const res = await fetch(`${API_URL}/api/reports?${params.toString()}`);
+
+    if (!res.ok) throw new Error("Error fetching reports");
+
+    const data: ReportRow[] = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
 
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
 ): Promise<DailyBatchSale[]> => {
-  console.log(batchId);
   const res = await axios.get(`${API_URL}/api/batchSales/${batchId}`);
   return res.data;
 };

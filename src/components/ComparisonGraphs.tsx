@@ -28,8 +28,9 @@ import {
   fetchBranches,
   Category,
   fetchCategories,
-  fetchComparisonData,
   Frequency,
+  ReportRow,
+  fetchGraphData,
 } from "../services/api";
 
 export default function ComparisonsGraphs() {
@@ -39,11 +40,11 @@ export default function ComparisonsGraphs() {
   const [keys, setKeys] = useState<string[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-
+  const [graphData, setGraphData] = useState<ReportRow[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [startDate, setStartDate] = useState<Date | null>(() => {
+  const [startDate, setStartDate] = useState<Date>(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
@@ -54,9 +55,77 @@ export default function ComparisonsGraphs() {
     [],
   );
 
+  const branchBaseColors: Record<string, string> = {
+    Roneli: "#FF6B6B", // rojo coral
+    Express: "#4ECDC4", // turquesa
+    Amanecer: "#FFA500", // naranja fuerte
+    "Express Fcp": "#556270", // gris azulado
+    Saban: "#C44DFF", // morado vibrante
+    CEDIS: "#2ECC71", // verde brillante
+    Esperanza: "#3498DB", // azul brillante
+    "Sucursal 8": "#E67E22", // naranja oscuro
+  };
+
+  function adjustBrightness(hex: string, percent: number) {
+    const num = parseInt(hex.replace("#", ""), 16);
+
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0xff) + percent;
+    let b = (num & 0xff) + percent;
+
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+
+    return (
+      "#" +
+      ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()
+    );
+  }
+  function extractYear(key: string): string | null {
+    const parts = key.trim().split(" ");
+    const last = parts[parts.length - 1];
+    return /^\d{4}$/.test(last) ? last : null;
+  }
+
+  function getCombinedColor(branchName: string, year: string) {
+    const baseColor = branchBaseColors[branchName] || "#999999";
+
+    const yearBrightness: Record<string, number> = {
+      "2025": 0,
+      "2024": -80,
+      "2023": -150,
+    };
+
+    const brightness = yearBrightness[year] ?? 0;
+
+    return adjustBrightness(baseColor, brightness);
+  }
+  function isPastYear(key: string): boolean {
+    const year = extractYear(key);
+    if (!year) return false; // keys sin año = año actual
+
+    const currentYear = new Date().getFullYear();
+    return Number(year) < currentYear;
+  }
+
+  function getColorForKey(key: string) {
+    const year = extractYear(key);
+
+    // quitar el año del final si existe
+    const cleaned = year ? key.replace(year, "").trim() : key;
+
+    // dividir por el primer " - "
+    const branchName = cleaned.split(" - ")[0].trim();
+
+    return year
+      ? getCombinedColor(branchName, year)
+      : branchBaseColors[branchName] || "#999999";
+  }
+
   type GenerateChartDataParams = {
     selectedBranches: number[];
-    selectedCategories: number[];
+    selectedCategories: string[];
     startDate: Date | null;
     endDate: Date | null;
     frequency: Frequency;
@@ -66,118 +135,6 @@ export default function ComparisonsGraphs() {
     branches: { id: number; name: string }[];
     categories: { id: number; name: string }[];
   };
-  type GenerateYearlyChartDataParams = {
-    selectedBranches: number[];
-    selectedCategories: number[];
-    startDate: Date | null;
-    endDate: Date | null;
-    metric: "sales" | "quantity";
-    setChartData: (data: any[]) => void;
-    branches: { id: number; name: string }[];
-    categories: { id: number; name: string }[];
-  };
-  const generateYearlyChart = async function ({
-    selectedBranches,
-    selectedCategories,
-    startDate,
-    endDate,
-    metric,
-    setChartData,
-    branches,
-    categories,
-  }: GenerateYearlyChartDataParams) {
-    if (selectedBranches.length === 0 || !startDate || !endDate) {
-      setChartData([]);
-      return;
-    }
-    setFrequency("weekly_custom");
-    const nextYearStartDate: Date = new Date(startDate);
-
-    nextYearStartDate.setFullYear(startDate.getFullYear() + 1);
-    const nextYearEndDate: Date = new Date(endDate);
-    nextYearEndDate.setFullYear(endDate.getFullYear() + 1);
-
-    const selectedYearRequest = {
-      branchIds: selectedBranches,
-      startDate,
-      endDate,
-      frequency,
-    };
-    const nextYearRequest = {
-      branchIds: selectedBranches,
-      startDate: nextYearStartDate,
-      endDate: nextYearEndDate,
-      frequency,
-    };
-    const actualReports = await fetchComparisonData(selectedYearRequest);
-    const nextYearReports = await fetchComparisonData(nextYearRequest);
-
-    // No los juntamos todavía
-    const years = [
-      {
-        year: selectedYearRequest.startDate.getFullYear(),
-        data: actualReports,
-      },
-      { year: nextYearRequest.startDate.getFullYear(), data: nextYearReports },
-    ];
-
-    const chartMap: Record<string, any> = {};
-
-    years.forEach(({ year, data }) => {
-      data.forEach((r) => {
-        const dateObj = new Date(r.endDate);
-        const monthIndex = dateObj.getMonth(); // 0..11
-        const yearVal = dateObj.getFullYear();
-
-        // Número de semana dentro del mes (1,2,3,...)
-        const weekOfMonth = Math.floor((dateObj.getDate() - 1) / 7) + 1;
-
-        // Etiqueta para mostrar: "S1 nov"
-        const monthLabel = dateObj.toLocaleString("es-MX", { month: "short" });
-        const label = `S${weekOfMonth} ${monthLabel}`;
-
-        // sortKey numérico que ordena cronológicamente: año*10000 + mes*100 + semana
-        // (por ejemplo: 20241102 -> 2024 noviembre semana 2)
-        const sortKey = yearVal * 10000 + (monthIndex + 1) * 100 + weekOfMonth;
-
-        if (!chartMap[label]) chartMap[label] = { date: label, sortKey };
-
-        const branchName =
-          branches.find((b) => b.id === r.branchId)?.name ??
-          `Sucursal ${r.branchId}`;
-
-        if (selectedCategories.length === 0) {
-          const key = `${branchName} ${year}`;
-          const value = metric === "sales" ? r.totalSales : r.totalSold;
-          chartMap[label][key] = value;
-        } else {
-          const source =
-            metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
-
-          selectedCategories.forEach((categoryId) => {
-            const categoryName =
-              categories.find((c) => c.id === categoryId)?.name ?? "";
-            const key = `${branchName} - ${categoryName} ${year}`;
-            const value = source[categoryName] ?? 0;
-            chartMap[label][key] = value;
-          });
-        }
-      });
-    });
-
-    // Ordenamos por sortKey (cronológico) y luego quitamos sortKey si quieres
-    const formatted = Object.values(chartMap)
-      .sort((a: any, b: any) => a.sortKey - b.sortKey)
-      .map((row: any) => {
-        // opcional: eliminar sortKey antes de setear chartData
-        const { sortKey, ...rest } = row;
-        return rest;
-      });
-
-    setChartData(formatted);
-
-    return;
-  };
 
   const generateChartData = async function ({
     selectedBranches,
@@ -185,253 +142,51 @@ export default function ComparisonsGraphs() {
     startDate,
     endDate,
     frequency,
-    isContinuous,
     metric,
     setChartData,
-    branches,
-    categories,
   }: GenerateChartDataParams) {
-    // 1️⃣ Validación básica
     if (selectedBranches.length === 0 || !startDate || !endDate) {
       setChartData([]);
       return;
     }
 
-    // 2️⃣ Armar el request base
     const request = {
       branchIds: selectedBranches,
+      categories: selectedCategories,
       startDate,
       endDate,
+      metric,
       frequency,
     };
 
-    if (frequency == "weekly_custom") {
-      generateYearlyChart({
-        selectedBranches,
-        selectedCategories,
-        startDate,
-        endDate,
-        metric,
-        setChartData,
-        branches,
-        categories,
-      });
-      return;
-    }
-    // 4️⃣ Si la vista es continua: mostrar líneas sucursal-categoría o totales
-    if (isContinuous) {
-      const fetchedReports = await fetchComparisonData(request);
-      // 3️⃣ Obtener los reportes
-      const chartMap: Record<string, any> = {};
-
-      fetchedReports.forEach((r) => {
-        const date = r.startDate.split("T")[0];
-        if (!chartMap[date]) chartMap[date] = { date };
-
-        const branchName =
-          branches.find((b) => b.id === r.branchId)?.name ??
-          `Sucursal ${r.branchId}`;
-
-        if (selectedCategories.length === 0) {
-          // No hay categorías seleccionadas → usar total general por sucursal
-          const key = branchName;
-          const value = metric === "sales" ? r.totalSales : r.totalSold;
-          chartMap[date][key] = value;
-        } else {
-          // Hay categorías seleccionadas → crear línea por sucursal-categoría
-          const source =
-            metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
-
-          selectedCategories.forEach((categoryId) => {
-            const categoryName =
-              categories.find((c) => c.id === categoryId)?.name ?? "";
-            const key = `${branchName} - ${categoryName}`;
-            const value = source[categoryName] ?? 0;
-            chartMap[date][key] = value;
-          });
-        }
-      });
-
-      const formatted = Object.values(chartMap)
-        .map((row: any) => {
-          const d = new Date(`${row.date}T00:00:00`);
-          const day = String(d.getDate()).padStart(2, "0");
-          const month = String(d.getMonth() + 1).padStart(2, "0");
-          const year = d.getFullYear();
-          return {
-            ...row,
-            date: `${day}/${month}/${year}`,
-          };
-        })
-        .sort(
-          (a: any, b: any) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
-
-      setChartData(formatted);
-      return;
-    }
-
-    // 5️⃣ Vista NO continua (comparar sucursales consigo mismas)
-    const innerFrequency: Frequency =
-      frequency === "weekly"
-        ? "daily"
-        : frequency === "monthly"
-          ? "weekly"
-          : frequency;
-
-    const innerRequest = {
-      branchIds: selectedBranches,
-      startDate,
-      endDate,
-      frequency: innerFrequency,
-    };
-
-    // Petición más detallada (por día, semana o mes)
-    const fetchedReports = await fetchComparisonData(innerRequest);
-    // 3️⃣ Obtener los reportes
-
-    // Map para agrupar por punto del eje X -> { "Semana 1": { "Roneli - Julio": 1000, ... } }
-    const chartMap: Record<string, Record<string, number>> = {};
-
-    // Función auxiliar: nombre del día
-    const getDayName = (isoDate: string): string => {
-      const days = [
-        "Domingo",
-        "Lunes",
-        "Martes",
-        "Miércoles",
-        "Jueves",
-        "Viernes",
-        "Sábado",
-      ];
-      const d = new Date(isoDate);
-      return days[d.getDay()];
-    };
-
-    // Función auxiliar: semana del mes
-    const getWeekOfMonth = (isoDate: string): string => {
-      const d = new Date(isoDate);
-      const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
-      const firstWeekday = firstDayOfMonth.getDay();
-      const adjustedDay = d.getDate() + firstWeekday;
-      const weekOfMonth = Math.ceil(adjustedDay / 7);
-      return `Semana ${weekOfMonth}`;
-    };
-
-    // Recorremos todos los reportes detallados
-    fetchedReports.forEach((r) => {
-      const branchName =
-        branches.find((b) => b.id === r.branchId)?.name ??
-        `Sucursal ${r.branchId}`;
-
-      // Clave de grupo: ej. "Roneli - Julio"
-      const groupKey = makeGroupKey(r.startDate, frequency, branchName);
-
-      // Etiqueta del punto en el eje X
-      let pointLabel: string;
-      if (frequency === "monthly") {
-        pointLabel = getWeekOfMonth(r.startDate);
-      } else if (frequency === "weekly") {
-        pointLabel = getDayName(r.startDate);
-      } else {
-        pointLabel = r.startDate.split("T")[0]; // diaria u otra
-      }
-
-      const source =
-        metric === "sales" ? r.salesByCategory : r.quantitiesByCategory;
-
-      // Inicializar fila si no existe
-      if (!chartMap[pointLabel]) chartMap[pointLabel] = {};
-
-      // Total según categorías seleccionadas
-      let total: number;
-      if (selectedCategories.length === 0) {
-        total = metric === "sales" ? r.totalSales : r.totalSold;
-      } else {
-        total = 0;
-        selectedCategories.forEach((catId) => {
-          const categoryName =
-            categories.find((c) => c.id === catId)?.name ?? "";
-          total += source[categoryName] ?? 0;
-        });
-      }
-
-      // Guardar total bajo la clave del grupo
-      chartMap[pointLabel][groupKey] = total;
-    });
-
-    // Convertimos chartMap a arreglo
-    const formatted = Object.entries(chartMap).map(([date, values]) => ({
-      date,
-      ...values,
-    }));
-
-    // Ordenamos eje X
-    if (frequency === "weekly") {
-      const order = [
-        "Domingo",
-        "Lunes",
-        "Martes",
-        "Miércoles",
-        "Jueves",
-        "Viernes",
-        "Sábado",
-      ];
-      formatted.sort((a, b) => order.indexOf(a.date) - order.indexOf(b.date));
-    } else if (frequency === "monthly") {
-      formatted.sort(
-        (a, b) =>
-          parseInt(a.date.replace("Semana ", "")) -
-          parseInt(b.date.replace("Semana ", "")),
-      );
-    }
-
-    setChartData(formatted);
+    const reports = await fetchGraphData(request);
+    setGraphData(reports);
   };
 
   // 🧩 Utilidad: genera el nombre del grupo según la frecuencia
-  function makeGroupKey(
-    dateStr: string,
-    frequency: Frequency,
-    branchName: string,
-  ) {
-    const date = new Date(dateStr);
-    const monthNames = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
-    let week;
-    switch (frequency) {
-      case "weekly":
-        // Semana del año aproximada
-        week = Math.ceil(
-          ((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) /
-            86400000 +
-            new Date(date.getFullYear(), 0, 1).getDay() +
-            1) /
-            7,
-        );
-        return `${branchName} - Semana ${week}`;
-      case "monthly":
-        return `${branchName} - ${monthNames[date.getMonth()]}`;
-      case "yearly":
-        return `${branchName} - ${date.getFullYear()}`;
-      default:
-        return `${branchName} - ${dateStr}`;
-    }
-  }
 
+  useEffect(() => {
+    if (graphData.length === 0) {
+      setKeys([]);
+      return;
+    }
+
+    const allKeys = Array.from(
+      new Set(
+        graphData.flatMap((row) =>
+          Object.keys(row).filter(
+            (key) => key !== "label" && typeof row[key] === "number",
+          ),
+        ),
+      ),
+    );
+
+    setKeys(allKeys);
+  }, [graphData]);
+
+  useEffect(() => {
+    console.log(selectedCategories);
+  }, [selectedCategories]);
   // Cargar sucursales y categorías
   useEffect(() => {
     fetchBranches().then((data) =>
@@ -447,7 +202,7 @@ export default function ComparisonsGraphs() {
       prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
     );
   };
-  const toggleCategory = (id: number) => {
+  const toggleCategory = (id: string) => {
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
@@ -507,58 +262,6 @@ export default function ComparisonsGraphs() {
       setKeys(Array.from(allKeys).sort());
     }
   }, [chartData]);
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "10px 12px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontWeight: 600,
-              color: "#333",
-              marginBottom: "6px",
-            }}
-          >
-            {label}
-          </p>
-
-          {payload.map((entry: any, idx: number) => (
-            <div
-              key={idx}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                color: "#333",
-              }}
-            >
-              <div
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  background: entry.color,
-                  borderRadius: "2px",
-                }}
-              ></div>
-              <span style={{ fontWeight: 500 }}>{entry.name}:</span>
-              <span style={{ fontWeight: 600 }}>
-                {entry.value?.toLocaleString("en-US")}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="p-6">
@@ -576,7 +279,8 @@ export default function ComparisonsGraphs() {
                 | "daily"
                 | "weekly"
                 | "monthly"
-                | "yearly",
+                | "daily_custom"
+                | "weekly_custom",
             )
           }
         >
@@ -589,6 +293,7 @@ export default function ComparisonsGraphs() {
           <option value="weekly">Semanal</option>
           <option value="monthly">Mensual</option>
           <option value="weekly_custom">Anual por semana</option>
+          <option value="daily_custom">Anual por día</option>
         </Select>
 
         <Dropdown
@@ -618,8 +323,8 @@ export default function ComparisonsGraphs() {
             <div key={category.id} className="px-1 py-1">
               <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-gray-100 dark:hover:bg-gray-700">
                 <Checkbox
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
+                  checked={selectedCategories.includes(category.name)}
+                  onChange={() => toggleCategory(category.name)}
                 />
                 <span>{category.name}</span>
               </label>
@@ -664,84 +369,114 @@ export default function ComparisonsGraphs() {
       </div>
 
       {/* Gráfico */}
-      <ResponsiveContainer width="100%" height={400} className={"bg-white"}>
-        <LineChart data={chartData}>
+      <ResponsiveContainer width="100%" height={400} className="bg-white">
+        <LineChart
+          data={graphData}
+          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
+        >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-
+          <XAxis dataKey="label" />
           <YAxis />
           <Tooltip
-            formatter={(value, name) => [value.toLocaleString("en-US"), name]}
+            formatter={(value, name) => [
+              Number(value).toLocaleString("en-US"),
+              name,
+            ]}
             labelStyle={{ color: "black" }}
-            contentStyle={{
-              border: "none",
-              color: "#eee",
-            }}
+            contentStyle={{ border: "none", color: "#333" }}
           />
-
           <Legend />
-          {keys.map((key, idx) => (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={`hsl(${(idx * 90) % 360}, 70%, 50%)`}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          ))}
+
+          {keys.length > 0 &&
+            Object.keys(graphData[0] ?? {})
+              .filter((k) => k !== "label")
+              .map((key) => (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={getColorForKey(key)}
+                  strokeWidth={3}
+                  strokeDasharray={isPastYear(key) ? "5 5" : ""} // solo pasado es punteado
+                  dot={{ r: 3 }}
+                />
+              ))}
         </LineChart>
       </ResponsiveContainer>
-      {frequency == "weekly_custom" && (
-        <ResponsiveContainer width="100%" height={400} className={"bg-white"}>
-          <BarChart data={chartData} barSize={30}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
 
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
+      <ResponsiveContainer width="100%" height={400} className="bg-white">
+        <BarChart
+          data={graphData}
+          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
+          barCategoryGap="0%" // ← elimina los espacios vacíos EN EL GRUPO
+          barGap={0} // ← elimina espacios entre barras del mismo grupo
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="label" />
+          <YAxis />
+          <Tooltip
+            formatter={(value, name) => [
+              Number(value).toLocaleString("en-US"),
+              name,
+            ]}
+            labelStyle={{ color: "black" }}
+            contentStyle={{ border: "none", color: "#333" }}
+          />
+          <Legend />
 
-            {keys.map((key, idx) => (
-              <Bar
-                key={key}
-                dataKey={key}
-                fill={`hsl(${(idx * 90) % 360}, 70%, 50%)`}
-                radius={[4, 4, 0, 0]}
-              >
-                <LabelList
-                  dataKey={key}
-                  position="top"
-                  content={({ x, y, width, value }) => {
-                    if (
-                      value == null ||
-                      x == null ||
-                      y == null ||
-                      width == null
-                    )
-                      return null;
-                    const xNum = Number(x);
-                    const yNum = Number(y);
-                    const widthNum = Number(width);
-                    return (
-                      <text
-                        x={xNum + widthNum / 2}
-                        y={yNum - 5}
-                        fill="#333"
-                        fontSize={12}
-                        textAnchor="middle"
-                      >
-                        {" "}
-                        {value.toLocaleString("en-US")}{" "}
-                      </text>
-                    );
-                  }}
-                />
-              </Bar>
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      )}
+          {Object.keys(graphData[0] ?? {})
+            .filter((k) => k !== "label")
+            .map((key) => {
+              const color = getColorForKey(key); // ← aquí ya decides el color final
+
+              return (
+                <Bar key={key} dataKey={key} fill={color}>
+                  <LabelList
+                    dataKey={key}
+                    content={(props) => {
+                      const { x, y, width, value } = props;
+
+                      // Convertir TODO a número (evita TODOS tus errores)
+                      const numX = Number(x);
+                      const numY = Number(y);
+                      const numWidth = Number(width);
+                      const numValue = Number(value);
+
+                      // Si algo no es número → no dibujar
+                      if (
+                        isNaN(numX) ||
+                        isNaN(numY) ||
+                        isNaN(numWidth) ||
+                        isNaN(numValue)
+                      ) {
+                        return null;
+                      }
+
+                      // No mostrar si la barra es demasiado angosta
+                      if (numWidth < 15) return null;
+
+                      // Ajustar separación para valores grandes
+                      const offset = numValue < 1000 ? 12 : 18;
+
+                      return (
+                        <text
+                          x={numX + numWidth / 2}
+                          y={numY - offset}
+                          textAnchor="middle"
+                          fontSize={12}
+                          fill="#333"
+                          style={{ pointerEvents: "none" }}
+                        >
+                          {numValue.toLocaleString()}
+                        </text>
+                      );
+                    }}
+                  />
+                </Bar>
+              );
+            })}
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
