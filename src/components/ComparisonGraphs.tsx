@@ -397,7 +397,31 @@ export default function ComparisonsGraphs() {
             labelStyle={{ color: "black" }}
             contentStyle={{ border: "none", color: "#333" }}
           />
-          <Legend />
+          <Legend
+            formatter={(value: string) => {
+              // Calculamos el total de esa serie
+              let total = 0;
+              graphData.forEach((row) => {
+                const v = row[value];
+                if (typeof v === "number") total += v;
+              });
+
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>{value}</span>
+                  <span style={{ fontWeight: "bold" }}>
+                    {total.toLocaleString("en-US")}
+                  </span>
+                </div>
+              );
+            }}
+          />
 
           {keys.length > 0 &&
             Object.keys(graphData[0] ?? {})
@@ -415,18 +439,6 @@ export default function ComparisonsGraphs() {
               ))}
         </LineChart>
       </ResponsiveContainer>
-      <div className="my-4 rounded bg-white p-4 text-black shadow">
-        <h3 className="mb-2 text-lg font-semibold">Totales</h3>
-
-        <ul className="space-y-1">
-          {Object.entries(totals).map(([key, total]) => (
-            <li key={key} className="flex justify-between border-b pb-1">
-              <span>{key}</span>
-              <span className="font-bold">{total.toLocaleString("en-US")}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
 
       <ResponsiveContainer width="100%" height={400} className="bg-white">
         <BarChart
