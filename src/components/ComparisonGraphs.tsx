@@ -262,7 +262,18 @@ export default function ComparisonsGraphs() {
       setKeys(Array.from(allKeys).sort());
     }
   }, [chartData]);
+  const totals: Record<string, number> = {};
 
+  if (graphData.length > 0) {
+    const keys = Object.keys(graphData[0]).filter((k) => k !== "label");
+
+    keys.forEach((key) => {
+      totals[key] = graphData.reduce((acc, row) => {
+        const value = row[key];
+        return acc + (typeof value === "number" ? value : 0);
+      }, 0);
+    });
+  }
   return (
     <div className="p-6">
       <h1 className="mb-4 text-center text-xl font-semibold">Comparaciones</h1>
@@ -358,6 +369,7 @@ export default function ComparisonsGraphs() {
         />
 
         <ToggleSwitch
+          disabled={true}
           className="items-center"
           checked={isContinuous}
           label="Vista continua"
@@ -403,6 +415,18 @@ export default function ComparisonsGraphs() {
               ))}
         </LineChart>
       </ResponsiveContainer>
+      <div className="my-4 rounded bg-white p-4 text-black shadow">
+        <h3 className="mb-2 text-lg font-semibold">Totales</h3>
+
+        <ul className="space-y-1">
+          {Object.entries(totals).map(([key, total]) => (
+            <li key={key} className="flex justify-between border-b pb-1">
+              <span>{key}</span>
+              <span className="font-bold">{total.toLocaleString("en-US")}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <ResponsiveContainer width="100%" height={400} className="bg-white">
         <BarChart
