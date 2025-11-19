@@ -153,6 +153,7 @@ export default function ComparisonsGraphs() {
     const request = {
       branchIds: selectedBranches,
       categories: selectedCategories,
+      compareSelf: isContinuous,
       startDate,
       endDate,
       metric,
@@ -369,7 +370,6 @@ export default function ComparisonsGraphs() {
         />
 
         <ToggleSwitch
-          disabled={true}
           className="items-center"
           checked={isContinuous}
           label="Vista continua"

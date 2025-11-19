@@ -189,6 +189,7 @@ export interface ComparisonRequest {
 }
 export interface GraphRequest {
   branchIds: number[];
+  compareSelf: boolean;
   startDate: Date;
   endDate: Date;
   metric: string;
@@ -373,6 +374,7 @@ export async function fetchGraphData(
     params.append("startDate", request.startDate.toISOString());
     params.append("endDate", request.endDate.toISOString());
     params.append("frequency", request.frequency);
+    params.append("compareSelf", (!request.compareSelf).toString());
     params.append("metric", request.metric);
     params.append("includeCategories", hasCategories.toString());
 
