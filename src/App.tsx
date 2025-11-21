@@ -4,6 +4,7 @@ import Reports from "./components/Reports";
 import ComparisonGraphs from "./components/ComparisonGraphs";
 import SalesAndBatches from "./components/SalesAndBatches";
 import Navbar from "./components/Navbar";
+import BusinessDashboard from "./components/BussinesDashboard";
 
 export default function App() {
   return (
@@ -16,6 +17,18 @@ export default function App() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
             <Route path="/salesAndBatches" element={<SalesAndBatches />} />
+            <Route path="/" element={<Home />} />
+
+            {/* Dashboard de cada unidad */}
+            <Route path="/business/:slug" element={<BusinessDashboard />} />
+
+            {/* Sub-secciones */}
+            <Route path="/business/:slug/reports" element={<Reports />} />
+            <Route
+              path="/business/:slug/graphs"
+              element={<ComparisonGraphs />}
+            />
+            <Route path="/business/:slug/sales" element={<SalesAndBatches />} />
           </Routes>
         </main>
       </div>
