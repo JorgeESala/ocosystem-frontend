@@ -5,8 +5,8 @@ export default function Layout() {
     <div>
       <header>
         <nav>
-          <Link to="/reports">Reports</Link> |{" "}
-          <Link to="/comparisons">Comparisons</Link>
+          <Link to="/reports">Reportes</Link> |{" "}
+          <Link to="/graphs">Comparativas</Link>
         </nav>
       </header>
       <main>

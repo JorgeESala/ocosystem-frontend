@@ -185,9 +185,7 @@ export default function ComparisonsGraphs() {
     setKeys(allKeys);
   }, [graphData]);
 
-  useEffect(() => {
-    console.log(selectedCategories);
-  }, [selectedCategories]);
+  useEffect(() => {}, [selectedCategories]);
   // Cargar sucursales y categorías
   useEffect(() => {
     fetchBranches().then((data) =>

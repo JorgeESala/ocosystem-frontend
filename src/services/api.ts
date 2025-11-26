@@ -1,6 +1,29 @@
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 // Tipos
+export interface Expense {
+  id: number;
+  branch: Branch;
+  category: Category;
+  amount: number;
+  date: string;
+  reason: string;
+}
+export interface ExpenseRequest {
+  branchId: number;
+  categoryId: number;
+  amount: number;
+  date: Date;
+  reason: string;
+}
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+}
+export interface Category {
+  id: number;
+  name: string;
+}
 export interface Branch {
   id: number;
   name: string;
@@ -68,7 +91,6 @@ export interface DailyReport {
   branchId: number;
   date: string;
   totalSales: number;
-  totalExpenses: number;
   totalProfit: number;
   totalSold: number;
   totalBought: number;
@@ -81,7 +103,6 @@ export interface DailyReport {
   salesByCategory: Record<string, number>[];
   salesByProduct: Record<string, number>[];
   quantitiesByProduct: Record<string, number>[];
-  expensesByCategory: Record<string, number>[];
 }
 export interface ReportRow {
   label: string;
@@ -101,7 +122,6 @@ export interface WeeklyReport {
   categoryId?: number;
   weekStart: string;
   totalSales: number;
-  totalExpenses: number;
   totalProfit: number;
   totalSold: number;
   totalBought: number;
@@ -112,7 +132,6 @@ export interface WeeklyReport {
   eggsSales?: number;
   salesByCategory?: Record<string, number>;
   salesByProduct?: Record<string, number>;
-  expensesByCategory?: Record<string, number>;
   dailyReports?: DailyReport[];
 }
 
@@ -120,7 +139,6 @@ export interface MonthlyReport {
   branchId: number;
   yearMonth: string;
   totalSales: number;
-  totalExpenses: number;
   totalProfit: number;
   totalSold: number;
   totalBought: number;
@@ -128,7 +146,6 @@ export interface MonthlyReport {
   eggCartons?: number;
   eggsSales?: number;
   salesByCategory: Record<string, number>[];
-  expensesByCategory: Record<string, number>[];
   weeklyReports: WeeklyReport[];
   productReports: ProductReport[];
 }
@@ -138,7 +155,6 @@ export interface MonthlyCategoryReport {
   categoryId: number;
   yearMonth: string;
   totalSales: number;
-  totalExpenses: number;
   totalProfit: number;
   totalSold: number;
   totalBought: number;
@@ -155,7 +171,6 @@ export interface ReportEntry {
   frequency: Frequency;
 
   totalSales: number;
-  totalExpenses: number;
   totalProfit: number;
   totalSold: number;
   totalBought: number;
@@ -170,7 +185,6 @@ export interface ReportEntry {
   salesByProduct?: Record<string, number>;
   quantitiesByProduct: Record<string, number>;
   quantitiesByCategory: Record<string, number>;
-  expensesByCategory: Record<string, number>;
 }
 export interface GraphData {
   branchIds: number[];
@@ -200,9 +214,52 @@ export interface GraphRequest {
 // -------------------- FETCH FUNCTIONS --------------------
 
 // Sucursales
+export const fetchExpenses = async (): Promise<Expense[]> => {
+  const res = await axios.get(`${API_URL}/api/expenses`);
+  return res.data;
+};
 export const fetchBranches = async (): Promise<Branch[]> => {
   const res = await axios.get(`${API_URL}/api/branches`);
   return res.data;
+};
+export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
+  const res = await axios.get(`${API_URL}/api/expense-categories`);
+  return res.data;
+};
+export const createExpense = async function (expense: ExpenseRequest) {
+  const response = await fetch(`${API_URL}/api/expenses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(expense),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al crear el gasto");
+  }
+
+  const data: Expense = await response.json();
+  return data;
+};
+export const updateExpense = async function (
+  expenseId: number,
+  expense: ExpenseRequest,
+) {
+  const response = await fetch(`${API_URL}/api/expenses/${expenseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(expense),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al crear el gasto");
+  }
+
+  const data: Expense = await response.json();
+  return data;
 };
 export const createBatch = async function (batch: BatchRequest) {
   const response = await fetch(`${API_URL}/api/batches`, {

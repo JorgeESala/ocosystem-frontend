@@ -52,8 +52,6 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
         const totalKgSold = sales.reduce((sum, s) => sum + s.kgTotal, 0);
         const totalKgGut = sales.reduce((sum, s) => sum + s.kgGut, 0);
 
-        console.log(totalKgSold);
-
         setTotalWaste(
           totalWaste +
             (batch.avgChickenWeight * totalQuantitySold -

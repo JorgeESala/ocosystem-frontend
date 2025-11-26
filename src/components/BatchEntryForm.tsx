@@ -4,7 +4,6 @@ import {
   Select,
   TextInput,
   Button,
-  Card,
   Datepicker,
   Toast,
   ToastToggle,
@@ -44,7 +43,6 @@ export default function BatchEntryForm() {
     >,
   ) => {
     const { name, value } = e.target;
-    console.log(value);
     setFormData((prev) => ({
       ...prev,
       [name]: name === "branch" ? Number(value) : value,
@@ -99,8 +97,8 @@ export default function BatchEntryForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex items-center justify-center">
+      <div className="w-full max-w-md">
         <h2 className="mb-4 text-center text-2xl font-semibold text-white">
           Registro de Remesa
         </h2>
@@ -203,7 +201,7 @@ export default function BatchEntryForm() {
             Guardar
           </Button>
         </form>
-      </Card>
+      </div>
       {/* Toast */}
       {toastMessage && (
         <Toast className="fixed bottom-4 left-1/2 mt-4 -translate-x-1/2 transform">

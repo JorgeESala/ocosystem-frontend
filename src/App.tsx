@@ -5,6 +5,7 @@ import ComparisonGraphs from "./components/ComparisonGraphs";
 import SalesAndBatches from "./components/SalesAndBatches";
 import Navbar from "./components/Navbar";
 import BusinessDashboard from "./components/BussinesDashboard";
+import Expenses from "./components/Expenses";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
             <Route path="/salesAndBatches" element={<SalesAndBatches />} />
             <Route path="/" element={<Home />} />
+            <Route path="/expenses" element={<Expenses />} />
 
             {/* Dashboard de cada unidad */}
             <Route path="/business/:slug" element={<BusinessDashboard />} />
@@ -28,7 +30,10 @@ export default function App() {
               path="/business/:slug/graphs"
               element={<ComparisonGraphs />}
             />
-            <Route path="/business/:slug/sales" element={<SalesAndBatches />} />
+            <Route
+              path="/business/:slug/salesAndBatches"
+              element={<SalesAndBatches />}
+            />
           </Routes>
         </main>
       </div>
