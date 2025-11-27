@@ -225,29 +225,6 @@ export default function ComparisonsGraphs() {
     });
   }
 
-  // useEffect(() => {
-  //   generateChartData({
-  //     selectedBranches,
-  //     selectedCategories,
-  //     startDate,
-  //     endDate,
-  //     frequency,
-  //     isContinuous,
-  //     metric,
-  //     setChartData,
-  //     branches,
-  //     categories,
-  //   });
-  // }, [
-  //   selectedBranches,
-  //   selectedCategories,
-  //   startDate,
-  //   endDate,
-  //   frequency,
-  //   isContinuous,
-  //   metric,
-  // ]);
-
   useEffect(() => {
     if (chartData.length > 0) {
       const allKeys = new Set<string>();
@@ -263,6 +240,7 @@ export default function ComparisonsGraphs() {
       setKeys(Array.from(allKeys).sort());
     }
   }, [chartData]);
+
   const totals: Record<string, number> = {};
 
   if (graphData.length > 0) {
@@ -275,6 +253,8 @@ export default function ComparisonsGraphs() {
       }, 0);
     });
   }
+  const grandTotal = Object.values(totals).reduce((acc, val) => acc + val, 0);
+
   return (
     <div className="p-6">
       <h1 className="mb-4 text-center text-xl font-semibold">Comparaciones</h1>
@@ -437,6 +417,19 @@ export default function ComparisonsGraphs() {
                   dot={{ r: 3 }}
                 />
               ))}
+          {/* Etiqueta flotante dentro del SVG */}
+          <text
+            x="98%" // posición horizontal (98% ≈ esquina derecha)
+            y="97%" // posición vertical (97% ≈ parte baja)
+            textAnchor="end"
+            dominantBaseline="central"
+            fontSize="14"
+            fill="#000"
+            opacity="0.8"
+            style={{ fontWeight: "bold" }}
+          >
+            TOTAL: {grandTotal.toLocaleString("en-US")}
+          </text>
         </LineChart>
       </ResponsiveContainer>
 
