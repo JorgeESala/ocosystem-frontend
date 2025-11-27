@@ -420,7 +420,7 @@ export default function ComparisonsGraphs() {
           {/* Etiqueta flotante dentro del SVG */}
           <text
             x="98%" // posición horizontal (98% ≈ esquina derecha)
-            y="97%" // posición vertical (97% ≈ parte baja)
+            y="92%" // posición vertical (97% ≈ parte baja)
             textAnchor="end"
             dominantBaseline="central"
             fontSize="14"
