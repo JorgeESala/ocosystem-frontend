@@ -1,4 +1,3 @@
-import React from "react";
 import { Expense } from "../services/api.ts";
 
 interface ExpensesListProps {

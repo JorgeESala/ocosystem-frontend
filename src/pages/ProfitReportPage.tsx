@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ProfitReportForm from "../components/ProfitReportForm";
 import ProfitReportView from "../components/ProfitReportView";
 import { fetchProfitReport } from "../services/api";
@@ -6,7 +6,15 @@ import { fetchProfitReport } from "../services/api";
 export default function ProfitReportPage() {
   const [report, setReport] = useState<any | null>(null);
 
-  const handleGenerate = async ({ start, end, branchIds }) => {
+  const handleGenerate = async ({
+    start,
+    end,
+    branchIds,
+  }: {
+    start: Date;
+    end: Date;
+    branchIds: number[];
+  }) => {
     const report = await fetchProfitReport({
       branchIds: branchIds,
       startDate: start,
