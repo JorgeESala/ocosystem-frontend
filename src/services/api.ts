@@ -1,6 +1,5 @@
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
-// Tipos
 export interface Expense {
   id: number;
   branch: Branch;
@@ -15,6 +14,11 @@ export interface ExpenseRequest {
   amount: number;
   date: Date;
   reason: string;
+}
+export interface FetchExpenseRequest {
+  branchIds: number[];
+  startDate: Date;
+  endDate: Date;
 }
 export interface ExpenseCategory {
   id: number;
@@ -210,14 +214,67 @@ export interface GraphRequest {
   frequency: Frequency;
   categories?: string[];
 }
+export interface profitReportRequest {
+  branchIds: number[];
+  startDate: Date;
+  endDate: Date;
+}
+export interface profitReport {
+  start: string;
+  end: string;
+  totalSales: number;
+  totalExpenses: number;
+  totalChickenCostProRated: number;
+  profit: number;
+  totalSold: number;
+  batchDetails: BatchCostDetail[];
+}
+export interface BatchCostDetail {
+  batchId: number;
+  branchName: string;
+  totalBatchCost: number;
+  chickenQuantity: number;
+  avgChickenWeight: number;
+  pricePerKg: number;
+  aspKg: number;
+  quantitySoldInRange: number;
+  kgSoldInRange: number;
+  computedCostForRange: number;
+}
 
 // -------------------- FETCH FUNCTIONS --------------------
+export async function fetchProfitReport(
+  request: profitReportRequest,
+): Promise<profitReport> {
+  const res = await fetch(
+    `${API_URL}/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate}&end=${request.endDate}`,
+  );
+  if (!res.ok) throw new Error("Error fetching profit report");
+  return res.json();
+}
+export const fetchExpensesByBranchesAndDateRange = async (
+  branchIds: number[],
+  start: Date,
+  end: Date,
+): Promise<Expense[]> => {
+  const res = await axios.post(`${API_URL}/api/expenses/search`, {
+    start: start.toISOString(),
+    end: end.toISOString(),
+    branchIds: branchIds,
+  });
+  return res.data;
+};
 
-// Sucursales
 export const fetchExpenses = async (): Promise<Expense[]> => {
   const res = await axios.get(`${API_URL}/api/expenses`);
   return res.data;
 };
+export const fetchLatestExpenses = async (): Promise<Expense[]> => {
+  const res = await axios.get(`${API_URL}/api/expenses/latest`);
+  return res.data;
+};
+// Sucursales
+
 export const fetchBranches = async (): Promise<Branch[]> => {
   const res = await axios.get(`${API_URL}/api/branches`);
   return res.data;

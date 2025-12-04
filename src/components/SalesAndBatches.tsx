@@ -14,7 +14,7 @@ export default function SalesAndBatches() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white">Entradas y Ventas</h1>
 
-        <Button onClick={() => setOpenModal(true)}>Nuevo lote</Button>
+        <Button onClick={() => setOpenModal(true)}>Nueva Remesa</Button>
       </div>
 
       {/* Tabla */}

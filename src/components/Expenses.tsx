@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
-import { Expense, fetchExpenses } from "../services/api";
+import {
+  Expense,
+  fetchExpensesByBranchesAndDateRange,
+  fetchLatestExpenses,
+} from "../services/api";
 import ExpensesList from "./ExpensesList";
-import { Button } from "flowbite-react";
+import { Button, Datepicker } from "flowbite-react";
 import ExpenseModal from "./ExpenseModal";
+import { useBranches } from "../context/BranchContext";
+import BranchMultiSelect from "./BranchMultiSelect";
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -12,25 +18,62 @@ export default function Expenses() {
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
-  const loadExpenses = async () => {
+  const branches = useBranches();
+
+  // --- filtros ---
+  const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+
+  // Cargar gastos con filtros
+  const loadFilteredExpenses = async () => {
+    if (selectedBranches.length === 0 || !startDate || !endDate) {
+      setError("Selecciona sucursales y un rango de fechas.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const data = await fetchExpenses();
+      const data = await fetchExpensesByBranchesAndDateRange(
+        selectedBranches,
+        startDate,
+        endDate,
+      );
       setExpenses(data);
     } catch (err) {
-      setError("No se pudieron cargar los gastos.");
+      console.error(err);
+      setError("No se pudieron cargar los gastos filtrados.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Cargar gastos iniciales
   useEffect(() => {
-    loadExpenses();
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const loadLatestExpenses = async () => {
+      setIsLoading(true);
+      try {
+        const latestExpenses = await fetchLatestExpenses();
+        setExpenses(latestExpenses);
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron cargar los gastos.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadLatestExpenses();
   }, []);
 
   const handleCreated = (updated: Expense) => {
     setExpenses((prev) => {
       const exists = prev.some((e) => e.id === updated.id);
-
       return exists
         ? prev.map((e) => (e.id === updated.id ? updated : e))
         : [updated, ...prev];
@@ -38,24 +81,14 @@ export default function Expenses() {
   };
 
   const handleCreateClick = () => {
-    setSelectedExpense(null); // modo crear
+    setSelectedExpense(null);
     setShowModal(true);
   };
 
   const handleEditClick = (exp: Expense) => {
-    setSelectedExpense(exp); // modo editar
+    setSelectedExpense(exp);
     setShowModal(true);
   };
-
-  if (isLoading) {
-    return (
-      <div className="py-6 text-center text-gray-400">Cargando gastos...</div>
-    );
-  }
-
-  if (error) {
-    return <div className="py-6 text-center text-red-400">{error}</div>;
-  }
 
   return (
     <div className="mx-auto mt-6 max-w-xl">
@@ -64,10 +97,48 @@ export default function Expenses() {
         <Button onClick={handleCreateClick}>Nuevo gasto</Button>
       </div>
 
-      {/* Lista con clic para editar */}
-      <ExpensesList expenses={expenses} onSelect={handleEditClick} />
+      {/* --- Select de sucursales --- */}
+      {branches && (
+        <BranchMultiSelect
+          branches={branches}
+          selected={selectedBranches}
+          onChange={setSelectedBranches}
+        />
+      )}
 
-      {/* Modal que sirve para crear y editar */}
+      {/* --- Fechas --- */}
+      <div className="mt-4 grid grid-cols-2 gap-3 text-white">
+        <div>
+          <label>Inicio</label>
+          <Datepicker onChange={(d) => setStartDate(d)} />
+        </div>
+
+        <div>
+          <label>Fin</label>
+          <Datepicker onChange={(d) => setEndDate(d)} />
+        </div>
+      </div>
+
+      {/* --- Botón Buscar --- */}
+      <div className="mt-4">
+        <Button fullSized onClick={loadFilteredExpenses}>
+          Buscar
+        </Button>
+      </div>
+
+      {/* Loader / Errores */}
+      {isLoading && (
+        <div className="py-4 text-center text-gray-400">Cargando gastos...</div>
+      )}
+
+      {error && <div className="py-4 text-center text-red-400">{error}</div>}
+
+      {/* Lista */}
+      {!isLoading && !error && (
+        <ExpensesList expenses={expenses} onSelect={handleEditClick} />
+      )}
+
+      {/* Modal */}
       <ExpenseModal
         open={showModal}
         onClose={() => setShowModal(false)}

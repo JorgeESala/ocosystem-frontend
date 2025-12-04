@@ -6,6 +6,7 @@ import SalesAndBatches from "./components/SalesAndBatches";
 import Navbar from "./components/Navbar";
 import BusinessDashboard from "./components/BussinesDashboard";
 import Expenses from "./components/Expenses";
+import ProfitReportPage from "./pages/ProfitReportPage";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/salesAndBatches" element={<SalesAndBatches />} />
             <Route path="/" element={<Home />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/profit" element={<ProfitReportPage />} />
 
             {/* Dashboard de cada unidad */}
             <Route path="/business/:slug" element={<BusinessDashboard />} />
