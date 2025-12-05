@@ -4,7 +4,11 @@ import { useBranches } from "../context/BranchContext";
 import BranchMultiSelect from "./BranchMultiSelect";
 
 interface ProfitReportFormProps {
-  onSubmit: (params: { start: Date; end: Date; branchIds: number[] }) => void;
+  onSubmit: (params: {
+    start: string;
+    end: string;
+    branchIds: number[];
+  }) => void;
 }
 
 export default function ProfitReportForm({ onSubmit }: ProfitReportFormProps) {
@@ -19,8 +23,8 @@ export default function ProfitReportForm({ onSubmit }: ProfitReportFormProps) {
     if (!branchIds || branchIds.length === 0) return;
 
     onSubmit({
-      start: start,
-      end: end,
+      start: start.toISOString().split("T")[0],
+      end: end.toISOString().split("T")[0],
       branchIds: branchIds,
     });
   };

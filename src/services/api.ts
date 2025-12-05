@@ -262,7 +262,7 @@ export async function fetchProfitReport(
   request: profitReportRequest,
 ): Promise<profitReport> {
   const res = await fetch(
-    `${API_URL}/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate.toISOString().split("T")[0]}&end=${request.endDate.toISOString().split("T")[0]}`,
+    `${API_URL}/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate}&end=${request.endDate}`,
   );
   if (!res.ok) throw new Error("Error fetching profit report");
   return res.json();
