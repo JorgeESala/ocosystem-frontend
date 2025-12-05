@@ -12,6 +12,7 @@
     "format:check": "prettier . --check"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
     "axios": "^1.12.2",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",

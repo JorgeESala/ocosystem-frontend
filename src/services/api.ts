@@ -48,14 +48,29 @@ export interface DailyBatchSaleRequest {
   batchId: string | number;
   quantitySold: string | number;
   kgTotal: string | number;
-  saleTotal: string;
+  saleTotal: number;
   kgGut: string | number;
   date: Date | null;
+  employeeId?: number;
 }
-
+export interface Employee {
+  id: number;
+  name: string;
+}
 export interface DailyBatchSale {
   id: number;
   batch: Batch;
+  employee: Employee | null;
+  quantitySold: number;
+  kgTotal: number;
+  saleTotal: number;
+  kgGut: number;
+  date: Date;
+}
+export interface BatchSaleUpdateRequest {
+  id: number;
+  batchId: number;
+  employeeId?: number;
   quantitySold: number;
   kgTotal: number;
   saleTotal: number;
@@ -216,8 +231,8 @@ export interface GraphRequest {
 }
 export interface profitReportRequest {
   branchIds: number[];
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
 }
 export interface profitReport {
   start: string;
@@ -264,13 +279,33 @@ export const fetchExpensesByBranchesAndDateRange = async (
   });
   return res.data;
 };
+export const fetchBatchesByBranchesAndDateRange = async (
+  branchIds: number[],
+  start: Date,
+  end: Date,
+): Promise<Batch[]> => {
+  const res = await axios.post(`${API_URL}/api/batches/search`, {
+    start: start.toISOString(),
+    end: end.toISOString(),
+    branchIds: branchIds,
+  });
+  return res.data;
+};
 
+export const fetchEmployees = async (): Promise<Employee[]> => {
+  const res = await axios.get(`${API_URL}/api/employees`);
+  return res.data;
+};
 export const fetchExpenses = async (): Promise<Expense[]> => {
   const res = await axios.get(`${API_URL}/api/expenses`);
   return res.data;
 };
 export const fetchLatestExpenses = async (): Promise<Expense[]> => {
   const res = await axios.get(`${API_URL}/api/expenses/latest`);
+  return res.data;
+};
+export const fetchLatestBatches = async (): Promise<Batch[]> => {
+  const res = await axios.get(`${API_URL}/api/batches/latest`);
   return res.data;
 };
 // Sucursales
@@ -353,21 +388,33 @@ export const createDailyBatchSale = async function (
   return data;
 };
 
-export const updateDailyBatchSale = async function (batchSale: DailyBatchSale) {
+export const updateDailyBatchSale = async function (
+  batchSale: BatchSaleUpdateRequest,
+) {
+  const payload = {
+    id: batchSale.id,
+    batchId: batchSale.batchId,
+    employeeId: batchSale.employeeId,
+    quantitySold: Number(batchSale.quantitySold),
+    kgTotal: Number(batchSale.kgTotal),
+    saleTotal: Number(batchSale.saleTotal),
+    kgGut: Number(batchSale.kgGut),
+    date: batchSale.date,
+  };
+
   const response = await fetch(`${API_URL}/api/batchSales/${batchSale.id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(batchSale),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error("Error al Agregar la venta");
+    throw new Error("Error al actualizar la venta");
   }
 
-  const data: Batch = await response.json();
-  return data;
+  return response.json();
 };
 
 export const fetchBatches = async (): Promise<Batch[]> => {

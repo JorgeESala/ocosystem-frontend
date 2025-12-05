@@ -15,6 +15,7 @@ import {
   DailyBatchSale,
   updateDailyBatchSale,
 } from "../services/api";
+import { fetchEmployees } from "../services/api";
 
 interface SaleEntryFormProps {
   batch: Batch;
@@ -34,13 +35,17 @@ export default function SaleEntryForm({
     batchId: batch.id,
     quantitySold: existingSale ? String(existingSale.quantitySold) : "",
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
-    saleTotal: existingSale ? String(existingSale.saleTotal) : "",
+    saleTotal: existingSale ? existingSale.saleTotal : "",
     kgGut: existingSale ? String(existingSale.kgGut) : "",
     date: existingSale ? new Date(existingSale.date) : new Date(),
+    employeeId: existingSale?.employee?.id || undefined,
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [employees, setEmployees] = useState<{ id: number; name: string }[]>(
+    [],
+  );
 
   // Disables the scroll when modal is open
   useEffect(() => {
@@ -48,6 +53,14 @@ export default function SaleEntryForm({
     return () => {
       document.body.style.overflow = "";
     };
+  }, []);
+
+  useEffect(() => {
+    async function load() {
+      const data = await fetchEmployees();
+      setEmployees(data);
+    }
+    load();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,21 +90,23 @@ export default function SaleEntryForm({
       if (formData.id) {
         await updateDailyBatchSale({
           id: formData.id,
-          batch: batch,
+          batchId: formData.batchId,
           quantitySold: Number(formData.quantitySold),
           kgTotal: Number(formData.kgTotal),
           saleTotal: Number(formData.saleTotal),
           kgGut: Number(formData.kgGut),
           date: formData.date,
+          employeeId: formData.employeeId || undefined,
         });
       } else {
         await createDailyBatchSale({
-          batchId: batch.id,
+          batchId: formData.batchId,
           quantitySold: Number(formData.quantitySold),
           kgTotal: Number(formData.kgTotal),
-          saleTotal: formData.saleTotal,
+          saleTotal: Number(formData.saleTotal),
           kgGut: Number(formData.kgGut),
           date: formData.date,
+          employeeId: formData.employeeId || undefined,
         });
       }
 
@@ -126,7 +141,7 @@ export default function SaleEntryForm({
         </h3>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Label>Fecha</Label>
+          <Label className="text-left">Fecha</Label>
           <Datepicker
             language="es-MX"
             value={formData.date}
@@ -141,33 +156,52 @@ export default function SaleEntryForm({
             value={formData.batchId}
             onChange={handleChange}
           /> */}
+          <Label className="text-left">Empleado</Label>
+          <select
+            name="employeeId"
+            className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
+            value={formData.employeeId ?? ""}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                employeeId: e.target.value ? Number(e.target.value) : undefined,
+              }))
+            }
+          >
+            <option value="">Seleccione un empleado</option>
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.name}
+              </option>
+            ))}
+          </select>
 
+          <Label className="text-left">Pollos vendidos</Label>
           <TextInput
             name="quantitySold"
-            placeholder="Pollos vendidos"
             type="number"
             value={formData.quantitySold}
             onChange={handleChange}
           />
+          <Label className="text-left">Kilos vendidos</Label>
           <TextInput
             name="kgTotal"
-            placeholder="Kilos vendidos"
             type="number"
             step="any"
             value={formData.kgTotal}
             onChange={handleChange}
           />
+          <Label className="text-left">Efectivo recibido</Label>
           <TextInput
             name="saleTotal"
-            placeholder="Efectivo recibido"
             type="number"
             step="any"
             value={formData.saleTotal}
             onChange={handleChange}
           />
+          <Label className="text-left">Kilos de tripa</Label>
           <TextInput
             name="kgGut"
-            placeholder="Kilos de tripa"
             type="number"
             step="any"
             value={formData.kgGut}

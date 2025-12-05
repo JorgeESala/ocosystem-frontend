@@ -1,9 +1,8 @@
-import React from "react";
 import { Expense } from "../services/api.ts";
 
 interface ExpensesListProps {
   expenses: Expense[];
-  onSelect?: (expense: Expense) => void; // opcional, útil si luego quieres abrir un modal
+  onSelect?: (expense: Expense) => void;
 }
 
 export default function ExpensesList({

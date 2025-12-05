@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -6,12 +6,9 @@ import {
   TableHead,
   TableHeadCell,
   TableRow,
-  Spinner,
-  Alert,
   Button,
 } from "flowbite-react";
-import { HiExclamation } from "react-icons/hi";
-import { DailyBatchSale, fetchBatchSales, type Batch } from "../services/api";
+import { DailyBatchSale, type Batch } from "../services/api";
 import { BatchSummary } from "./BatchSummary";
 import SaleEntryForm from "./SaleEntryForm";
 
@@ -20,10 +17,24 @@ interface Props {
   batch: Batch;
 }
 
+// --- Genera color dinámico del texto ---
+function getMermaColor(value: number, target = 0.25) {
+  const diff = value - target;
+
+  if (Math.abs(diff) < 0.02) return "#E3A008"; // amarillo-400
+
+  if (value < target) {
+    const intensity = Math.min(1, (target - value) / target);
+    const g = Math.floor(180 + intensity * 40);
+    return `rgb(30, ${g}, 30)`; // verde dinámico
+  }
+
+  const intensity = Math.min(1, (value - target) / target);
+  const r = Math.floor(180 + intensity * 40);
+  return `rgb(${r}, 40, 40)`; // rojo dinámico
+}
+
 export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalWaste, setTotalWaste] = useState<number>(0);
   const [selectedSale, setSelectedSale] = useState<DailyBatchSale | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -36,55 +47,6 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
     setIsFormOpen(false);
     setSelectedSale(null);
   };
-
-  const handleSuccess = () => {
-    fetchBatchSales();
-  };
-
-  useEffect(() => {
-    const loadSales = async () => {
-      try {
-        // Calcula directamente con los datos recién obtenidos
-        const totalQuantitySold = sales.reduce(
-          (sum, s) => sum + s.quantitySold,
-          0,
-        );
-        const totalKgSold = sales.reduce((sum, s) => sum + s.kgTotal, 0);
-        const totalKgGut = sales.reduce((sum, s) => sum + s.kgGut, 0);
-
-        setTotalWaste(
-          totalWaste +
-            (batch.avgChickenWeight * totalQuantitySold -
-              totalKgSold -
-              totalKgGut) /
-              totalQuantitySold,
-        );
-      } catch (err) {
-        console.error(err);
-        setError("No se pudieron cargar las ventas de esta remesa.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSales();
-  }, [batch.id]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Spinner size="sm" aria-label="Cargando ventas..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert color="failure" icon={HiExclamation} className="my-2">
-        <span className="font-medium">Error:</span> {error}
-      </Alert>
-    );
-  }
 
   if (sales.length === 0) {
     return <div className="py-2 text-center text-gray-400">Sin ventas</div>;
@@ -109,51 +71,53 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
             </TableRow>
           </TableHead>
           <TableBody className="divide-y text-center">
-            {sales.map((s) => (
-              <TableRow key={s.date.toString()}>
-                <TableCell>
-                  {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
-                </TableCell>
-                <TableCell>{s.quantitySold}</TableCell>
-                <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
-                <TableCell>{s.kgGut.toFixed(2)} kg</TableCell>
-                <TableCell>
-                  ${Number(s.saleTotal).toLocaleString("es-MX")}
-                </TableCell>
-                <TableCell>
-                  {Number(
-                    (s.kgTotal / s.quantitySold).toFixed(3),
-                  ).toLocaleString("es-MX")}{" "}
-                  kg
-                </TableCell>
-                <TableCell>${(s.saleTotal / s.kgTotal).toFixed(3)}</TableCell>
-                <TableCell>
-                  {batch.avgChickenWeight
-                    ? (
-                        (s.quantitySold * batch.avgChickenWeight -
-                          s.kgGut -
-                          s.kgTotal) /
-                        s.quantitySold
-                      ).toFixed(3)
-                    : "Información de la remesa incompleta"}{" "}
-                  kg
-                </TableCell>
-                <TableCell>
-                  <Button size="xs" onClick={() => handleEditSale(s)}>
-                    Editar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {/* <TableRow>
-              <TableCell>MERMA PROMEDIO</TableCell>
-              <TableCell>{totalWaste} kg/pollo</TableCell>
-            </TableRow> */}
+            {sales.map((s) => {
+              const merma = batch.avgChickenWeight
+                ? (s.quantitySold * batch.avgChickenWeight -
+                    s.kgGut -
+                    s.kgTotal) /
+                  s.quantitySold
+                : null;
+
+              return (
+                <TableRow key={s.date.toString()}>
+                  <TableCell>
+                    {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
+                  </TableCell>
+                  <TableCell>{s.quantitySold}</TableCell>
+                  <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
+                  <TableCell>{s.kgGut.toFixed(2)} kg</TableCell>
+                  <TableCell>
+                    ${Number(s.saleTotal).toLocaleString("es-MX")}
+                  </TableCell>
+                  <TableCell>
+                    {(s.kgTotal / s.quantitySold).toFixed(3)} kg
+                  </TableCell>
+                  <TableCell>${(s.saleTotal / s.kgTotal).toFixed(3)}</TableCell>
+
+                  <TableCell>
+                    {merma !== null ? (
+                      <span style={{ color: getMermaColor(merma) }}>
+                        {merma.toFixed(3)} kg
+                      </span>
+                    ) : (
+                      "Información incompleta"
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <Button size="xs" onClick={() => handleEditSale(s)}>
+                      Editar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
-      {/* Mobile: cards */}
+      {/* Mobile no lleva colores aquí, si lo quieres lo agrego */}
       <div className="space-y-2 md:hidden">
         {sales.map((s) => (
           <div
@@ -165,33 +129,27 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
               {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
             </div>
             <div>Pollos Vendidos: {s.quantitySold}</div>
+            <div>Encargado: {s.employee?.name}</div>
             <div>Kilos Vendidos: {s.kgTotal.toFixed(2)} kg</div>
             <div>Kilos de Tripa: {s.kgGut.toFixed(2)} kg</div>
             <div>
               Total Venta: ${Number(s.saleTotal).toLocaleString("es-MX")}
             </div>
-            <div>
-              Promedio de kg: {(s.kgTotal / s.quantitySold).toFixed(3)} kg
-            </div>
-            <div>
-              Precio promedio/kg: $
-              {Number((s.saleTotal / s.kgTotal).toFixed(3)).toLocaleString(
-                "es-MX",
-              )}
-            </div>
+            <div>Promedio: {(s.kgTotal / s.quantitySold).toFixed(3)} kg</div>
+            <div>Precio/kg: ${(s.saleTotal / s.kgTotal).toFixed(3)}</div>
           </div>
         ))}
       </div>
+
       {isFormOpen && selectedSale && (
         <SaleEntryForm
           batch={batch}
           existingSale={selectedSale}
           onClose={handleCloseForm}
-          onSuccess={handleSuccess}
+          onSuccess={() => {}}
         />
       )}
 
-      {/* Summary */}
       <BatchSummary batch={batch} sales={sales} />
     </div>
   );
