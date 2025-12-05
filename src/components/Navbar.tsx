@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { FaStore, FaEgg, FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
-import { GiChicken, GiFeather, GiCarrot, GiPig } from "react-icons/gi";
+import {
+  GiChicken,
+  GiFeather,
+  GiCarrot,
+  GiPig,
+  GiPayMoney,
+  GiReceiveMoney,
+} from "react-icons/gi";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,6 +41,8 @@ export default function Navbar() {
     { to: "Reports", label: "Reportes", icon: FaFileAlt },
     { to: "graphs", label: "Comparativas", icon: FaChartBar },
     { to: "SalesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+    { to: "expenses", label: "Gastos", icon: GiPayMoney },
+    { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   ];
 
   return (

@@ -7,6 +7,9 @@ import {
   Datepicker,
   Toast,
   ToastToggle,
+  Modal,
+  ModalHeader,
+  ModalBody,
 } from "flowbite-react";
 import {
   Branch,
@@ -16,7 +19,15 @@ import {
 } from "../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
 
-export default function BatchEntryForm() {
+export default function BatchEntryForm({
+  open,
+  onClose,
+  onSuccess, // para invalidar el query afuera
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [formData, setFormData] = useState<BatchRequest>({
     branchId: "",
@@ -26,62 +37,53 @@ export default function BatchEntryForm() {
     kgTotal: "",
     pricePerKg: "",
   });
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "failure">("success");
 
-  // 🔹 Cargar sucursales desde la API
+  // Cargar sucursales
   useEffect(() => {
+    if (!open) return;
     fetchBranches().then((data) =>
       setBranches(Array.isArray(data) ? data : []),
     );
-  }, []);
+  }, [open]);
 
-  //   🔹 Manejar cambios en inputs
+  // Manejo de inputs
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "branch" ? Number(value) : value,
+      [name]: name === "branchId" ? Number(value) : value,
     }));
   };
-  useEffect(() => {});
 
-  //   🔹 Enviar formulario
+  // Enviar formulario
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Verificar si algún campo está vacío
-    if (
-      !formData.branchId ||
-      !formData.provider?.trim() ||
-      formData.chickenQuantity === undefined ||
-      formData.kgTotal === undefined ||
-      formData.pricePerKg === undefined ||
-      !formData.date
-    ) {
-      alert("Por favor, completa todos los campos antes de guardar.");
-      return;
-    }
-
-    const batchRequest = {
-      branchId: formData.branchId,
-      provider: formData.provider.trim(),
-      date: formData.date,
-      chickenQuantity: formData.chickenQuantity,
-      kgTotal: formData.kgTotal,
-      pricePerKg: formData.pricePerKg,
-    };
-
     try {
-      await createBatch(batchRequest); // asumimos que es async
-      setToastMessage("Lote guardado correctamente.");
+      await createBatch({
+        branchId: formData.branchId,
+        provider: formData.provider.trim(),
+        date: formData.date,
+        chickenQuantity: formData.chickenQuantity,
+        kgTotal: formData.kgTotal,
+        pricePerKg: formData.pricePerKg,
+      });
+
+      setToastMessage("Remesa guardada correctamente.");
       setToastType("success");
 
-      // Limpiar formulario
+      // invalidar query en componente padre
+      if (onSuccess) onSuccess();
+
+      // limpiar
       setFormData({
         branchId: "",
         provider: "",
@@ -90,121 +92,119 @@ export default function BatchEntryForm() {
         pricePerKg: "",
         date: new Date(),
       });
-    } catch {
-      setToastMessage("Ocurrió un error al guardar el lote.");
+
+      // Cerrar modal después de guardado
+      setTimeout(() => {
+        onClose();
+        setToastMessage(null);
+      }, 600);
+    } catch (err) {
+      setToastMessage("Ocurrió un error al guardar la remesa.");
       setToastType("failure");
     }
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full max-w-md">
-        <h2 className="mb-4 text-center text-2xl font-semibold text-white">
-          Registro de Remesa
-        </h2>
+    <>
+      <Modal show={open} size="md" onClose={onClose} popup>
+        <ModalHeader />
+        <ModalBody>
+          <h2 className="mb-4 text-center text-2xl font-semibold text-white">
+            Registro de Remesa
+          </h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Sucursal */}
-          <div>
-            <Label htmlFor="branchId"> Sucursal</Label>
-            <Select
-              id="branchId"
-              name="branchId"
-              onChange={handleChange}
-              required
-              value={formData.branchId}
-            >
-              <option value="">Selecciona una sucursal</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {/* Fecha */}
-          <div>
-            <Label>Fecha</Label>
-            <Datepicker
-              language="es-MX"
-              id="date"
-              name="date"
-              value={formData.date}
-              onChange={(date: Date | null) =>
-                setFormData({ ...formData, date })
-              }
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Sucursal */}
+            <div>
+              <Label>Sucursal</Label>
+              <Select
+                name="branchId"
+                value={formData.branchId}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Selecciona una sucursal</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-          {/* Proveedor */}
-          <div>
-            <Label htmlFor="provider">Proveedor</Label>
-            <TextInput
-              id="provider"
-              name="provider"
-              type="text"
-              required
-              value={formData.provider}
-              onChange={handleChange}
-              placeholder="Nombre del proveedor"
-            />
-          </div>
+            {/* Fecha */}
+            <div>
+              <Label>Fecha</Label>
+              <Datepicker
+                language="es-MX"
+                value={formData.date}
+                onChange={(date: Date | null) =>
+                  setFormData({ ...formData, date })
+                }
+              />
+            </div>
 
-          {/* Pollos recibidos */}
-          <div>
-            <Label htmlFor="chickenQuantity"> Pollos recibidos </Label>
-            <TextInput
-              id="chickenQuantity"
-              name="chickenQuantity"
-              type="number"
-              required
-              onChange={handleChange}
-              value={formData.chickenQuantity}
-              placeholder="Ej. 50"
-              min="0"
-            />
-          </div>
+            {/* Proveedor */}
+            <div>
+              <Label>Proveedor</Label>
+              <TextInput
+                name="provider"
+                type="text"
+                required
+                value={formData.provider}
+                onChange={handleChange}
+              />
+            </div>
 
-          {/* Total de kilos */}
-          <div>
-            <Label htmlFor="kgTotal">Total de kilos recibidos</Label>
-            <TextInput
-              id="kgTotal"
-              name="kgTotal"
-              type="number"
-              step="any"
-              required
-              onChange={handleChange}
-              value={formData.kgTotal}
-              placeholder="Ej. 150.75"
-              min="0"
-            />
-          </div>
+            {/* Pollos */}
+            <div>
+              <Label>Pollos recibidos</Label>
+              <TextInput
+                name="chickenQuantity"
+                type="number"
+                min="0"
+                required
+                value={formData.chickenQuantity}
+                onChange={handleChange}
+              />
+            </div>
 
-          {/* Precio por kilo */}
-          <div>
-            <Label htmlFor="pricePerKg">Precio por kilo</Label>
-            <TextInput
-              id="pricePerKg"
-              name="pricePerKg"
-              type="number"
-              step="any"
-              required
-              onChange={handleChange}
-              value={formData.pricePerKg}
-              placeholder="Ej. 38.50"
-              min="0"
-            />
-          </div>
+            {/* Kilos */}
+            <div>
+              <Label>Total de kilos recibidos</Label>
+              <TextInput
+                name="kgTotal"
+                type="number"
+                step="any"
+                min="0"
+                required
+                value={formData.kgTotal}
+                onChange={handleChange}
+              />
+            </div>
 
-          <Button type="submit" className="from-green-400 to-blue-600">
-            Guardar
-          </Button>
-        </form>
-      </div>
+            {/* Precio */}
+            <div>
+              <Label>Precio por kilo</Label>
+              <TextInput
+                name="pricePerKg"
+                type="number"
+                step="any"
+                min="0"
+                required
+                value={formData.pricePerKg}
+                onChange={handleChange}
+              />
+            </div>
+
+            <Button type="submit">Guardar</Button>
+          </form>
+        </ModalBody>
+      </Modal>
+
       {/* Toast */}
       {toastMessage && (
-        <Toast className="fixed bottom-4 left-1/2 mt-4 -translate-x-1/2 transform">
+        <Toast className="fixed bottom-4 left-1/2 z-50 mt-4 -translate-x-1/2 transform">
           <div
             className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
               toastType === "success"
@@ -222,6 +222,6 @@ export default function BatchEntryForm() {
           <ToastToggle onClick={() => setToastMessage(null)} />
         </Toast>
       )}
-    </div>
+    </>
   );
 }

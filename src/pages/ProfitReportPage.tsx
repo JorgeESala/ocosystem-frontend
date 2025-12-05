@@ -11,8 +11,8 @@ export default function ProfitReportPage() {
     end,
     branchIds,
   }: {
-    start: Date;
-    end: Date;
+    start: string;
+    end: string;
     branchIds: number[];
   }) => {
     const report = await fetchProfitReport({
