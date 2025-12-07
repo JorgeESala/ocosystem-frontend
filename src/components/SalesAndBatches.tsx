@@ -11,7 +11,7 @@ export default function SalesAndBatches() {
   const queryClient = useQueryClient();
 
   const handleBatchCreated = () => {
-    // ❗ Actualiza automáticamente las remesas
+    // Actualiza automáticamente las remesas
     queryClient.invalidateQueries({ queryKey: ["batches"] });
 
     // Cierra el modal
@@ -37,7 +37,7 @@ export default function SalesAndBatches() {
         <ModalHeader></ModalHeader>
 
         <ModalBody>
-          {/* 🔥 Le pasamos la función que refresca la tabla */}
+          {/* Le pasamos la función que refresca la tabla */}
           <BatchEntryForm
             open={openModal}
             onClose={() => setOpenModal(false)}

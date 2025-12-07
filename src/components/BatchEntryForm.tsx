@@ -14,7 +14,9 @@ import {
 import {
   Branch,
   createBatch,
+  updateBatch,
   fetchBranches,
+  type Batch,
   type BatchRequest,
 } from "../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
@@ -22,13 +24,18 @@ import { HiCheck, HiX } from "react-icons/hi";
 export default function BatchEntryForm({
   open,
   onClose,
-  onSuccess, // para invalidar el query afuera
+  onSuccess,
+  batch,
+  mode = "create",
 }: {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  batch?: Batch;
+  mode?: "create" | "edit";
 }) {
   const [branches, setBranches] = useState<Branch[]>([]);
+
   const [formData, setFormData] = useState<BatchRequest>({
     branchId: "",
     date: new Date(),
@@ -49,57 +56,75 @@ export default function BatchEntryForm({
     );
   }, [open]);
 
-  // Manejo de inputs
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
+  // Cargar datos si estoy editando
+  useEffect(() => {
+    if (mode === "edit" && batch) {
+      setFormData({
+        branchId: batch.branch.id,
+        provider: batch.provider,
+        chickenQuantity: String(batch.chickenQuantity),
+        kgTotal: String(batch.kgTotal),
+        pricePerKg: String(batch.pricePerKg),
+        date: new Date(`${batch.date}T00:00:00`),
+      });
+    }
+  }, [batch, mode]);
+
+  // Manejo inputs
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
+
+    const numericFields = [
+      "branchId",
+      "chickenQuantity",
+      "kgTotal",
+      "pricePerKg",
+    ];
 
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "branchId" ? Number(value) : value,
+      [name]: numericFields.includes(name) ? Number(value) : value,
     }));
   };
 
-  // Enviar formulario
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Guardar
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     try {
-      await createBatch({
-        branchId: formData.branchId,
-        provider: formData.provider.trim(),
-        date: formData.date,
-        chickenQuantity: formData.chickenQuantity,
-        kgTotal: formData.kgTotal,
-        pricePerKg: formData.pricePerKg,
-      });
+      if (mode === "edit" && batch) {
+        await updateBatch(batch.id, {
+          branchId: Number(formData.branchId),
+          provider: formData.provider.trim(),
+          date: formData.date,
+          chickenQuantity: Number(formData.chickenQuantity),
+          kgTotal: Number(formData.kgTotal),
+          pricePerKg: Number(formData.pricePerKg),
+        });
 
-      setToastMessage("Remesa guardada correctamente.");
+        setToastMessage("Remesa actualizada.");
+      } else {
+        await createBatch({
+          branchId: formData.branchId,
+          provider: formData.provider.trim(),
+          date: formData.date,
+          chickenQuantity: formData.chickenQuantity,
+          kgTotal: formData.kgTotal,
+          pricePerKg: formData.pricePerKg,
+        });
+        setToastMessage("Remesa creada.");
+      }
+
       setToastType("success");
 
-      // invalidar query en componente padre
       if (onSuccess) onSuccess();
 
-      // limpiar
-      setFormData({
-        branchId: "",
-        provider: "",
-        chickenQuantity: "",
-        kgTotal: "",
-        pricePerKg: "",
-        date: new Date(),
-      });
-
-      // Cerrar modal después de guardado
       setTimeout(() => {
         onClose();
         setToastMessage(null);
-      }, 600);
+      }, 500);
     } catch (err) {
-      setToastMessage("Ocurrió un error al guardar la remesa.");
+      setToastMessage("Error al guardar la remesa.");
       setToastType("failure");
     }
   };
@@ -110,7 +135,7 @@ export default function BatchEntryForm({
         <ModalHeader />
         <ModalBody>
           <h2 className="mb-4 text-center text-2xl font-semibold text-white">
-            Registro de Remesa
+            {mode === "edit" ? "Editar Remesa" : "Nueva Remesa"}
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -144,7 +169,6 @@ export default function BatchEntryForm({
               />
             </div>
 
-            {/* Proveedor */}
             <div>
               <Label>Proveedor</Label>
               <TextInput
@@ -156,7 +180,6 @@ export default function BatchEntryForm({
               />
             </div>
 
-            {/* Pollos */}
             <div>
               <Label>Pollos recibidos</Label>
               <TextInput
@@ -169,7 +192,6 @@ export default function BatchEntryForm({
               />
             </div>
 
-            {/* Kilos */}
             <div>
               <Label>Total de kilos recibidos</Label>
               <TextInput
@@ -183,7 +205,6 @@ export default function BatchEntryForm({
               />
             </div>
 
-            {/* Precio */}
             <div>
               <Label>Precio por kilo</Label>
               <TextInput
@@ -197,14 +218,15 @@ export default function BatchEntryForm({
               />
             </div>
 
-            <Button type="submit">Guardar</Button>
+            <Button type="submit">
+              {mode === "edit" ? "Guardar cambios" : "Guardar"}
+            </Button>
           </form>
         </ModalBody>
       </Modal>
 
-      {/* Toast */}
       {toastMessage && (
-        <Toast className="fixed bottom-4 left-1/2 z-50 mt-4 -translate-x-1/2 transform">
+        <Toast className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform">
           <div
             className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
               toastType === "success"
