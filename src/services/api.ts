@@ -47,7 +47,7 @@ export interface BatchUpdateRequest {
   branchId: number;
   kgTotal: number;
   pricePerKg: number;
-  date: Date;
+  date: Date | null;
   provider: string;
   chickenQuantity: number;
 }
