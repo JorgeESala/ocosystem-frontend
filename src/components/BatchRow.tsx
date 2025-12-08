@@ -88,7 +88,7 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
           {/* Botón Editar */}
           <Button
             size="xs"
-            color="purple"
+            color="blue"
             onClick={(e) => {
               e.stopPropagation();
               setEditingBatch(batch);

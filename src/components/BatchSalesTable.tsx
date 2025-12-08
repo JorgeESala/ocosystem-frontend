@@ -60,6 +60,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
           <TableHead>
             <TableRow className="text-center">
               <TableHeadCell>Fecha</TableHeadCell>
+              <TableHeadCell>Encargado</TableHeadCell>
               <TableHeadCell>Pollos Vendidos</TableHeadCell>
               <TableHeadCell>Kilos Vendidos</TableHeadCell>
               <TableHeadCell>Kilos de Tripa</TableHeadCell>
@@ -84,6 +85,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                   <TableCell>
                     {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
                   </TableCell>
+                  <TableCell>{s.employee?.name}</TableCell>
                   <TableCell>{s.quantitySold}</TableCell>
                   <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
                   <TableCell>{s.kgGut.toFixed(2)} kg</TableCell>
