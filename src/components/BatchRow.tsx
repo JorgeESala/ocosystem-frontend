@@ -11,11 +11,14 @@ import {
 
 import { BatchSalesTable } from "./BatchSalesTable";
 import SaleEntryForm from "./SaleEntryForm";
+import BatchEntryForm from "./BatchEntryForm";
 
 export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
+  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
 
   const {
     data: sales = [],
@@ -24,13 +27,18 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
   } = useQuery<DailyBatchSale[]>({
     queryKey: ["batchSales", batch.id],
     queryFn: () => fetchBatchSalesByBatch(batch.id),
-    enabled: isOpen, // solo carga cuando se abre
+    enabled: isOpen,
   });
 
   const handleSaleCreated = async () => {
     await queryClient.invalidateQueries({
       queryKey: ["batchSales", batch.id],
     });
+  };
+
+  const handleBatchUpdated = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["batches"] });
+    setEditingBatch(null);
   };
 
   return (
@@ -50,7 +58,6 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
             {new Date(`${batch.date}T00:00:00`).toLocaleDateString("es-MX")}
           </p>
 
-          {/* 🔥 Datos adicionales que faltaban */}
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
             <span>🐔 {batch.chickenQuantity} pollos</span>
             <span>⚖️ {batch.kgTotal} kg</span>
@@ -78,18 +85,41 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
             Agregar venta
           </Button>
 
+          {/* Botón Editar */}
+          <Button
+            size="xs"
+            color="purple"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingBatch(batch);
+            }}
+          >
+            Editar
+          </Button>
+
           <Button size="xs" color="gray" pill>
             {isOpen ? <HiChevronUp /> : <HiChevronDown />}
           </Button>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal agregar venta */}
       {selectedBatch && (
         <SaleEntryForm
           batch={selectedBatch}
           onClose={() => setSelectedBatch(null)}
           onSuccess={handleSaleCreated}
+        />
+      )}
+
+      {/* Modal editar remesa */}
+      {editingBatch && (
+        <BatchEntryForm
+          open={!!editingBatch}
+          batch={editingBatch}
+          mode="edit"
+          onClose={() => setEditingBatch(null)}
+          onSuccess={handleBatchUpdated}
         />
       )}
 

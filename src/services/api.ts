@@ -43,6 +43,14 @@ export interface Batch {
   priceTotal?: number;
   avgChickenWeight: number;
 }
+export interface BatchUpdateRequest {
+  branchId: number;
+  kgTotal: number;
+  pricePerKg: number;
+  date: Date;
+  provider: string;
+  chickenQuantity: number;
+}
 export interface DailyBatchSaleRequest {
   id?: number;
   batchId: string | number;
@@ -77,14 +85,14 @@ export interface BatchSaleUpdateRequest {
   kgGut: number;
   date: Date;
 }
+
 export interface BatchRequest {
-  id?: number;
-  branchId: string | number;
-  kgTotal: string | number;
-  pricePerKg: string | number;
-  date: Date | null;
+  branchId: number | string;
+  chickenQuantity: number | string;
+  kgTotal: number | string;
+  pricePerKg: number | string;
   provider: string;
-  chickenQuantity: string | number;
+  date: Date | null;
 }
 
 export interface Category {
@@ -416,7 +424,10 @@ export const updateDailyBatchSale = async function (
 
   return response.json();
 };
-
+export async function updateBatch(id: number, data: BatchUpdateRequest) {
+  const res = await axios.put(`${API_URL}/api/batches/${id}`, data);
+  return res.data;
+}
 export const fetchBatches = async (): Promise<Batch[]> => {
   const res = await axios.get(`${API_URL}/api/batches`);
   return res.data;
