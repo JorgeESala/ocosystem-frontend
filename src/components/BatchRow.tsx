@@ -24,11 +24,20 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
     data: sales = [],
     isLoading,
     isError,
-  } = useQuery<DailyBatchSale[]>({
+  } = useQuery({
     queryKey: ["batchSales", batch.id],
     queryFn: () => fetchBatchSalesByBatch(batch.id),
-    enabled: isOpen,
+    staleTime: 1000 * 60 * 5,
   });
+
+  const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
+  const chickensRemaining = batch.chickenQuantity - chickensSold;
+
+  function getRemainingColor(value: number) {
+    if (value > 0) return "text-yellow-400"; // faltan
+    if (value === 0) return "text-green-400"; // exacto
+    return "text-red-500"; // se pasaron
+  }
 
   const handleSaleCreated = async () => {
     await queryClient.invalidateQueries({
@@ -60,6 +69,9 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
 
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
             <span>🐔 {batch.chickenQuantity} pollos</span>
+            <span className={getRemainingColor(chickensRemaining)}>
+              🧮 Disponibles: {chickensRemaining}
+            </span>
             <span>⚖️ {batch.kgTotal} kg</span>
             <span>💲{batch.pricePerKg}/kg</span>
             <span>
