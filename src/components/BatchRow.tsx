@@ -3,11 +3,7 @@ import { Button, Spinner, Alert } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  fetchBatchSalesByBatch,
-  type Batch,
-  type DailyBatchSale,
-} from "../services/api";
+import { fetchBatchSalesByBatch, type Batch } from "../services/api";
 
 import { BatchSalesTable } from "./BatchSalesTable";
 import SaleEntryForm from "./SaleEntryForm";
