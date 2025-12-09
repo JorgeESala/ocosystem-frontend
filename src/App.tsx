@@ -9,6 +9,7 @@ import BusinessDashboard from "./components/BussinesDashboard";
 import Expenses from "./components/Expenses";
 import ProfitReportPage from "./pages/ProfitReportPage";
 import AuthPage from "./pages/AuthPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Crear el cliente de React Query (puede ir fuera del componente)
 const queryClient = new QueryClient();
@@ -22,32 +23,100 @@ export default function App() {
           <main className="p-4">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
-              <Route path="/salesAndBatches" element={<SalesAndBatches />} />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/comparisonGraphs"
+                element={
+                  <ProtectedRoute>
+                    <ComparisonGraphs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/salesAndBatches"
+                element={
+                  <ProtectedRoute>
+                    <SalesAndBatches />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/" element={<Home />} />
-              <Route path="/expenses" element={<Expenses />} />
-              <Route path="/profit" element={<ProfitReportPage />} />
+              <Route
+                path="/expenses"
+                element={
+                  <ProtectedRoute>
+                    <Expenses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profit"
+                element={
+                  <ProtectedRoute>
+                    <ProfitReportPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/login" element={<AuthPage mode="login" />} />
               <Route path="/register" element={<AuthPage mode="register" />} />
 
               {/* Dashboard de cada unidad */}
-              <Route path="/business/:slug" element={<BusinessDashboard />} />
+              <Route
+                path="/business/:slug"
+                element={
+                  <ProtectedRoute>
+                    <BusinessDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Sub-secciones */}
-              <Route path="/business/:slug/reports" element={<Reports />} />
+              <Route
+                path="/business/:slug/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/business/:slug/graphs"
-                element={<ComparisonGraphs />}
+                element={
+                  <ProtectedRoute>
+                    <ComparisonGraphs />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/business/:slug/salesAndBatches"
-                element={<SalesAndBatches />}
+                element={
+                  <ProtectedRoute>
+                    <SalesAndBatches />
+                  </ProtectedRoute>
+                }
               />
-              <Route path="/business/:slug/expenses" element={<Expenses />} />
+              <Route
+                path="/business/:slug/expenses"
+                element={
+                  <ProtectedRoute>
+                    <Expenses />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/business/:slug/profit"
-                element={<ProfitReportPage />}
+                element={
+                  <ProtectedRoute>
+                    <ProfitReportPage />
+                  </ProtectedRoute>
+                }
               />
             </Routes>
           </main>

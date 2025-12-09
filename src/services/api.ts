@@ -1,11 +1,18 @@
 import axios from "axios";
+import type { AxiosError } from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 // http.ts
 export const http = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${API_URL}`,
 });
-import type { AxiosError } from "axios";
 
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 export interface Expense {
   id: number;
   branch: Branch;
@@ -370,7 +377,7 @@ export const fetchLatestBatches = async (): Promise<Batch[]> => {
 // Sucursales
 
 export const fetchBranches = async (): Promise<Branch[]> => {
-  const res = await axios.get(`${API_URL}/api/branches`);
+  const res = await http.get(`/api/branches`);
   return res.data;
 };
 export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Label, TextInput, Button, Card, Alert } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser, loginUser } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function AuthPage({
   mode = "login",
