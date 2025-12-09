@@ -5,13 +5,16 @@ import { ThemeInit } from "../.flowbite-react/init";
 import App from "./App.tsx";
 import "./index.css";
 import { BranchProvider } from "./context/BranchContext.tsx";
+import { AuthProvider } from "./context/AuthContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BranchProvider>
-      <ThemeInit />
-      <App />
-    </BranchProvider>
+    <AuthProvider>
+      <BranchProvider>
+        <ThemeInit />
+        <App />
+      </BranchProvider>
+    </AuthProvider>
   </StrictMode>,
 );
 

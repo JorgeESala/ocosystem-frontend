@@ -1,5 +1,11 @@
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
+// http.ts
+export const http = axios.create({
+  baseURL: `${API_URL}/api`,
+});
+import type { AxiosError } from "axios";
+
 export interface Expense {
   id: number;
   branch: Branch;
@@ -264,8 +270,53 @@ export interface BatchCostDetail {
   kgSoldInRange: number;
   computedCostForRange: number;
 }
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 // -------------------- FETCH FUNCTIONS --------------------
+export async function loginUser(
+  data: LoginRequest,
+): Promise<{ token: string }> {
+  try {
+    const res = await http.post("/auth/login", data);
+    return res.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+
+    const msg =
+      error.response?.data?.message ??
+      error.message ??
+      "Error al iniciar sesión";
+
+    throw new Error(msg);
+  }
+}
+
+export async function registerUser(
+  data: RegisterRequest,
+): Promise<{ message: string }> {
+  try {
+    const res = await http.post("/auth/register", data);
+    return res.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+
+    const msg =
+      error.response?.data?.message ??
+      error.message ??
+      "Error al registrar el usuario";
+
+    throw new Error(msg);
+  }
+}
+
 export async function fetchProfitReport(
   request: profitReportRequest,
 ): Promise<profitReport> {

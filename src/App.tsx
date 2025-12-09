@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import BusinessDashboard from "./components/BussinesDashboard";
 import Expenses from "./components/Expenses";
 import ProfitReportPage from "./pages/ProfitReportPage";
+import AuthPage from "./pages/AuthPage";
 
 // Crear el cliente de React Query (puede ir fuera del componente)
 const queryClient = new QueryClient();
@@ -27,6 +28,8 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/profit" element={<ProfitReportPage />} />
+              <Route path="/login" element={<AuthPage mode="login" />} />
+              <Route path="/register" element={<AuthPage mode="register" />} />
 
               {/* Dashboard de cada unidad */}
               <Route path="/business/:slug" element={<BusinessDashboard />} />
