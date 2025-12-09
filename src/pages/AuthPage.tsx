@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Label, TextInput, Button, Card, Alert } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, loginUser } from "../services/api";
+// import { registerUser, loginUser } from "../services/api";
 
 export default function AuthPage({
   mode = "login",
@@ -38,22 +38,22 @@ export default function AuthPage({
           return;
         }
 
-        await registerUser({
-          name: form.email.split("@")[0],
-          email: form.email,
-          password: form.password,
-        });
+        // await registerUser({
+        //   name: form.email.split("@")[0],
+        //   email: form.email,
+        //   password: form.password,
+        // });
 
         navigate("/login");
         return;
       }
 
-      const res = await loginUser({
-        email: form.email,
-        password: form.password,
-      });
+      // const res = await loginUser({
+      //   email: form.email,
+      //   password: form.password,
+      // });
 
-      localStorage.setItem("token", res.token);
+      // localStorage.setItem("token", res.token);
 
       navigate("/");
     } catch (err: unknown) {
