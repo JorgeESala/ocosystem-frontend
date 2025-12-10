@@ -9,6 +9,7 @@ import {
   GiPayMoney,
   GiReceiveMoney,
 } from "react-icons/gi";
+import { MdOutlineLocalGroceryStore } from "react-icons/md";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,6 +35,12 @@ export default function Navbar() {
       slug: "verduras",
       icon: GiCarrot,
       color: "text-orange-400",
+    },
+    {
+      name: "Abarrotes",
+      slug: "abarrotes",
+      icon: MdOutlineLocalGroceryStore,
+      color: "text-blue-300",
     },
   ];
 
