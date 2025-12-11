@@ -32,6 +32,7 @@ import {
   ReportRow,
   fetchGraphData,
 } from "../services/api";
+import BranchMultiSelect from "./BranchMultiSelect";
 
 export default function ComparisonsGraphs() {
   const [metric, setMetric] = useState<"sales" | "quantity">("sales");
@@ -185,7 +186,9 @@ export default function ComparisonsGraphs() {
     setKeys(allKeys);
   }, [graphData]);
 
-  useEffect(() => {}, [selectedCategories]);
+  useEffect(() => {
+    console.log(selectedCategories);
+  }, [selectedCategories]);
   // Cargar sucursales y categorías
   useEffect(() => {
     fetchBranches().then((data) =>
@@ -196,11 +199,6 @@ export default function ComparisonsGraphs() {
     );
   }, []);
 
-  const toggleBranch = (id: number) => {
-    setSelectedBranches((prev) =>
-      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
-    );
-  };
   const toggleCategory = (id: string) => {
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
@@ -257,7 +255,7 @@ export default function ComparisonsGraphs() {
     <div className="p-6">
       <h1 className="mb-4 text-center text-xl font-semibold">Comparaciones</h1>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap items-end gap-2">
         <Select
           id="periods"
           className="bg-indigo"
@@ -286,23 +284,13 @@ export default function ComparisonsGraphs() {
           <option value="daily_custom">Anual por día</option>
         </Select>
 
-        <Dropdown
-          className="!rounded-lg !border !border-gray-700 !bg-gray-700 !text-gray-100 !shadow-sm focus:!ring-2 focus:!ring-blue-500"
-          dismissOnClick={false}
-          label="Sucursales"
-        >
-          {branches.map((branch) => (
-            <div key={branch.id} className="px-1 py-1">
-              <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-gray-100 dark:hover:bg-gray-700">
-                <Checkbox
-                  checked={selectedBranches.includes(branch.id)}
-                  onChange={() => toggleBranch(branch.id)}
-                />
-                <span>{branch.name}</span>
-              </label>
-            </div>
-          ))}
-        </Dropdown>
+        <div className="max-w-60">
+          <BranchMultiSelect
+            branches={branches}
+            selected={selectedBranches}
+            onChange={setSelectedBranches}
+          />
+        </div>
 
         <Dropdown
           className="!rounded-lg !border !border-gray-700 !bg-gray-700 !text-gray-100 !shadow-sm focus:!ring-2 focus:!ring-blue-500"

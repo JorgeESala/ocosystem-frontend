@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FaStore } from "react-icons/fa";
 import { GiBigEgg, GiCarrot, GiFeather, GiPig } from "react-icons/gi";
+import { MdOutlineLocalGroceryStore } from "react-icons/md";
 
 export default function Home() {
   const businesses = [
@@ -23,6 +24,12 @@ export default function Home() {
       slug: "verduras",
       icon: GiCarrot,
       color: "text-orange-400",
+    },
+    {
+      name: "Abarrotes",
+      slug: "abarrotes",
+      icon: MdOutlineLocalGroceryStore,
+      color: "text-blue-300",
     },
   ];
 

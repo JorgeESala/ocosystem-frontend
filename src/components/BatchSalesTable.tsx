@@ -67,7 +67,8 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
               <TableHeadCell>Total Venta</TableHeadCell>
               <TableHeadCell>Promedio de kg</TableHeadCell>
               <TableHeadCell>Precio promedio/kg</TableHeadCell>
-              <TableHeadCell>Merma por pollo</TableHeadCell>
+              <TableHeadCell>Merma sin tripa</TableHeadCell>
+              <TableHeadCell>Merma con tripa</TableHeadCell>
               <TableHeadCell>Acciones</TableHeadCell>
             </TableRow>
           </TableHead>
@@ -78,6 +79,9 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                     s.kgGut -
                     s.kgTotal) /
                   s.quantitySold
+                : null;
+              const mermaConTripa = batch.avgChickenWeight
+                ? batch.avgChickenWeight - s.kgTotal / s.quantitySold
                 : null;
 
               return (
@@ -101,6 +105,15 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                     {merma !== null ? (
                       <span style={{ color: getMermaColor(merma) }}>
                         {merma.toFixed(3)} kg
+                      </span>
+                    ) : (
+                      "Información incompleta"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {mermaConTripa !== null ? (
+                      <span style={{ color: getMermaColor(mermaConTripa) }}>
+                        {mermaConTripa.toFixed(3)} kg
                       </span>
                     ) : (
                       "Información incompleta"

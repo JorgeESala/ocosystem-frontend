@@ -1,11 +1,18 @@
 import { Spinner, Alert } from "flowbite-react";
 import { HiExclamation } from "react-icons/hi";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-import { fetchLatestBatches, type Batch } from "../services/api";
+import {
+  fetchLatestBatches,
+  fetchBatchSalesByBatch,
+  type Batch,
+} from "../services/api";
 import { BatchRow } from "./BatchRow";
 
 export const BatchTable: React.FC = () => {
+  const queryClient = useQueryClient();
+
   const {
     data: batches = [],
     isLoading,
@@ -14,6 +21,19 @@ export const BatchTable: React.FC = () => {
     queryKey: ["batches"],
     queryFn: fetchLatestBatches,
   });
+
+  // --- PREFETCH DE VENTAS POR REMESA ---
+  useEffect(() => {
+    if (batches.length === 0) return;
+
+    batches.forEach((batch) => {
+      queryClient.prefetchQuery({
+        queryKey: ["batchSales", batch.id],
+        queryFn: () => fetchBatchSalesByBatch(batch.id),
+        staleTime: 1000 * 60 * 5, // cache 5 minutos
+      });
+    });
+  }, [batches, queryClient]);
 
   if (isLoading)
     return (
