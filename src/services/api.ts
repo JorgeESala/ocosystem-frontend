@@ -13,6 +13,24 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
+function handleApiError(err: unknown, defaultMessage: string): never {
+  const error = err as AxiosError<{ message?: string }>;
+
+  // Get the status code from the response, defaults to 500 if undefined
+  const statusCode = error.response?.status ?? 500;
+
+  // Get the specific message from the server, or use the default Axios message
+  const serverMessage = error.response?.data?.message ?? error.message;
+
+  // Create a new Error object combining necessary info
+  // We launch the error with the message provided by the server/Axios.
+  const apiError = new Error(serverMessage || defaultMessage);
+
+  // Attach the status code to the error object for easy reading in the component
+  (apiError as any).status = statusCode;
+
+  throw apiError;
+}
 export interface Expense {
   id: number;
   branch: Branch;
@@ -295,14 +313,8 @@ export async function loginUser(
     const res = await http.post("/auth/login", data);
     return res.data;
   } catch (err: unknown) {
-    const error = err as AxiosError<{ message?: string }>;
-
-    const msg =
-      error.response?.data?.message ??
-      error.message ??
-      "Error al iniciar sesión";
-
-    throw new Error(msg);
+    // Do not translate the fallback message in the API layer.
+    handleApiError(err, "Login failed");
   }
 }
 
@@ -313,32 +325,35 @@ export async function registerUser(
     const res = await http.post("/auth/register", data);
     return res.data;
   } catch (err: unknown) {
-    const error = err as AxiosError<{ message?: string }>;
-
-    const msg =
-      error.response?.data?.message ??
-      error.message ??
-      "Error al registrar el usuario";
-
-    throw new Error(msg);
+    // Do not translate the fallback message in the API layer.
+    handleApiError(err, "Registration failed");
   }
 }
 
 export async function fetchProfitReport(
   request: profitReportRequest,
 ): Promise<profitReport> {
-  const res = await fetch(
-    `${API_URL}/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate}&end=${request.endDate}`,
-  );
-  if (!res.ok) throw new Error("Error fetching profit report");
-  return res.json();
+  try {
+    const res = await http.get(
+      `/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate}&end=${request.endDate}`,
+    );
+
+    return res.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg =
+      error.response?.data?.message ||
+      "Error al obtener el reporte de ganancias";
+
+    throw new Error(msg);
+  }
 }
 export const fetchExpensesByBranchesAndDateRange = async (
   branchIds: number[],
   start: Date,
   end: Date,
 ): Promise<Expense[]> => {
-  const res = await axios.post(`${API_URL}/api/expenses/search`, {
+  const res = await http.post(`/api/expenses/search`, {
     start: start.toISOString(),
     end: end.toISOString(),
     branchIds: branchIds,
@@ -350,7 +365,7 @@ export const fetchBatchesByBranchesAndDateRange = async (
   start: Date,
   end: Date,
 ): Promise<Batch[]> => {
-  const res = await axios.post(`${API_URL}/api/batches/search`, {
+  const res = await http.post(`/api/batches/search`, {
     start: start.toISOString(),
     end: end.toISOString(),
     branchIds: branchIds,
@@ -359,19 +374,19 @@ export const fetchBatchesByBranchesAndDateRange = async (
 };
 
 export const fetchEmployees = async (): Promise<Employee[]> => {
-  const res = await axios.get(`${API_URL}/api/employees`);
+  const res = await http.get(`/api/employees`);
   return res.data;
 };
 export const fetchExpenses = async (): Promise<Expense[]> => {
-  const res = await axios.get(`${API_URL}/api/expenses`);
+  const res = await http.get(`/api/expenses`);
   return res.data;
 };
 export const fetchLatestExpenses = async (): Promise<Expense[]> => {
-  const res = await axios.get(`${API_URL}/api/expenses/latest`);
+  const res = await http.get(`/api/expenses/latest`);
   return res.data;
 };
 export const fetchLatestBatches = async (): Promise<Batch[]> => {
-  const res = await axios.get(`${API_URL}/api/batches/latest`);
+  const res = await http.get(`/api/batches/latest`);
   return res.data;
 };
 // Sucursales
@@ -381,24 +396,21 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   return res.data;
 };
 export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
-  const res = await axios.get(`${API_URL}/api/expense-categories`);
+  const res = await http.get(`/api/expense-categories`);
   return res.data;
 };
 export const createExpense = async function (expense: ExpenseRequest) {
-  const response = await fetch(`${API_URL}/api/expenses`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(expense),
-  });
+  try {
+    const response = await http.post(`/api/expenses`, expense);
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg =
+      error.response?.data?.message ||
+      "Error al obtener el reporte de ganancias";
 
-  if (!response.ok) {
-    throw new Error("Error al crear el gasto");
+    throw new Error(msg);
   }
-
-  const data: Expense = await response.json();
-  return data;
 };
 export const updateExpense = async function (
   expenseId: number,
@@ -483,21 +495,21 @@ export const updateDailyBatchSale = async function (
   return response.json();
 };
 export async function updateBatch(id: number, data: BatchUpdateRequest) {
-  const res = await axios.put(`${API_URL}/api/batches/${id}`, data);
+  const res = await http.put(`/api/batches/${id}`, data);
   return res.data;
 }
 export const fetchBatches = async (): Promise<Batch[]> => {
-  const res = await axios.get(`${API_URL}/api/batches`);
+  const res = await http.get(`/api/batches`);
   return res.data;
 };
 export const fetchBatchSales = async (): Promise<DailyBatchSale[]> => {
-  const res = await axios.get(`${API_URL}/api/batchSales`);
+  const res = await http.get(`/api/batchSales`);
   return res.data;
 };
 export async function fetchBatchSalesById(
   id: number,
 ): Promise<DailyBatchSale[]> {
-  const res = await axios.get(`${API_URL}/api/batchSales/${id}`);
+  const res = await http.get(`/api/batchSales/${id}`);
   return res.data;
 }
 
@@ -507,11 +519,10 @@ export async function fetchWeeklyReport(
 ): Promise<WeeklyReport> {
   const isoWithOffset = date.toISOString().replace("Z", "-05:00");
 
-  const res = await fetch(
-    `${API_URL}/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoWithOffset)}`,
+  const res = await http.get(
+    `/api/reports/weekly?branchId=${branchId}&date=${encodeURIComponent(isoWithOffset)}`,
   );
-  if (!res.ok) throw new Error("Error fetching weekly report");
-  return res.json();
+  return res.data;
 }
 
 export async function fetchWeeklyReportByCategory(
@@ -519,16 +530,15 @@ export async function fetchWeeklyReportByCategory(
   categoryId: number,
   date: Date,
 ): Promise<WeeklyReport> {
-  const res = await fetch(
-    `${API_URL}/api/reports/weekly?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
+  const res = await http.get(
+    `/api/reports/weekly?branchId=${branchId}&categoryId=${categoryId}&date=${date}`,
   );
-  if (!res.ok) throw new Error("Error fetching weekly report");
-  return res.json();
+  return res.data;
 }
 
 // Categorías
 export const fetchCategories = async (): Promise<Category[]> => {
-  const res = await axios.get(`${API_URL}/api/categories`);
+  const res = await http.get(`/api/categories`);
   return res.data;
 };
 
@@ -539,7 +549,7 @@ export const fetchMonthlyCategoryReportWithWeeks = async (
   year: number,
   month: number,
 ): Promise<MonthlyCategoryReport> => {
-  const res = await axios.get(`${API_URL}/api/reports/monthly-category`, {
+  const res = await http.get(`/api/reports/monthly-category`, {
     params: { branchId, categoryId, year, month },
   });
   return res.data;
@@ -551,11 +561,10 @@ export async function fetchMonthlyReport(
   year: number,
   month: number,
 ): Promise<MonthlyReport> {
-  const res = await fetch(
+  const res = await http.get(
     `${API_URL}/api/reports/monthly?branchId=${branchId}&year=${year}&month=${month}`,
   );
-  if (!res.ok) throw new Error("Error fetching monthly report");
-  return res.json();
+  return res.data;
 }
 
 export async function fetchComparisonData(
@@ -571,11 +580,9 @@ export async function fetchComparisonData(
         params.append("endDate", request.endDate.toISOString());
         params.append("frequency", request.frequency);
 
-        const res = await fetch(`${API_URL}/api/reports?${params.toString()}`);
+        const res = await http.get(`/api/reports?${params.toString()}`);
 
-        if (!res.ok) throw new Error(`Error fetching branch ${branchId}`);
-
-        const data: ReportEntry[] = await res.json();
+        const data: ReportEntry[] = await res.data;
         // Añadimos branchId a cada entry para identificar la sucursal
         return data.map((entry) => ({ ...entry, branchId }));
       }),
@@ -612,11 +619,9 @@ export async function fetchGraphData(
       request.categories.forEach((cat) => params.append("categories", cat));
     }
 
-    const res = await fetch(`${API_URL}/api/reports?${params.toString()}`);
+    const res = await http.get(`${API_URL}/api/reports?${params.toString()}`);
 
-    if (!res.ok) throw new Error("Error fetching reports");
-
-    const data: ReportRow[] = await res.json();
+    const data: ReportRow[] = await res.data;
     return data;
   } catch (err) {
     console.error(err);
@@ -627,6 +632,6 @@ export async function fetchGraphData(
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
 ): Promise<DailyBatchSale[]> => {
-  const res = await axios.get(`${API_URL}/api/batchSales/${batchId}`);
+  const res = await http.get(`/api/batchSales/${batchId}`);
   return res.data;
 };
