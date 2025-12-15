@@ -5,8 +5,6 @@ import { registerUser, LoginRequest, RegisterRequest } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { HiInformationCircle } from "react-icons/hi";
 
-// --- Type Definitions (Separation of Concerns) ---
-
 /**
  * Interface defining the structure of the authentication form state.
  */
@@ -14,9 +12,6 @@ interface AuthFormState extends LoginRequest, RegisterRequest {
   confirm: string;
 }
 
-/**
- * Interface defining the component's props.
- */
 interface AuthPageProps {
   mode?: "login" | "register";
 }
@@ -118,7 +113,7 @@ export default function AuthPage({ mode = "login" }: AuthPageProps) {
 
   const linkPath = isLogin ? "/register" : "/login";
   const linkText = isLogin ? "Crear cuenta" : "Iniciar sesión";
-  const linkMessage = isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta?";
+  const linkMessage = isLogin ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? ";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900 p-6 text-gray-100">

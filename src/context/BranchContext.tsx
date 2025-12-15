@@ -1,23 +1,17 @@
-// BranchContext.jsx
-import { createContext, useContext, useEffect, useState } from "react";
-import { fetchBranches, type Branch } from "../services/api";
+import { createContext, useContext } from "react";
+import { type Branch } from "../services/api";
 
-const BranchContext = createContext<Branch[]>([]);
-
-export function BranchProvider({ children }: { children: React.ReactNode }) {
-  const [branches, setBranches] = useState([] as Branch[]);
-
-  useEffect(() => {
-    async function loadBranches() {
-      const branches = await fetchBranches();
-      setBranches(branches);
-    }
-    loadBranches();
-  }, []);
-
-  return (
-    <BranchContext.Provider value={branches}>{children}</BranchContext.Provider>
-  );
+interface BranchContextType {
+  branches: Branch[];
+  refreshBranches: () => Promise<void>;
 }
 
-export const useBranches = () => useContext(BranchContext);
+export const BranchContext = createContext<BranchContextType | undefined>(
+  undefined,
+);
+
+export function useBranches() {
+  const ctx = useContext(BranchContext);
+  if (!ctx) throw new Error("useBranches must be used inside BranchProvider");
+  return ctx;
+}

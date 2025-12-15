@@ -1,9 +1,5 @@
 import { Dropdown, Checkbox, Label, Badge, DropdownItem } from "flowbite-react";
-
-interface Branch {
-  id: number;
-  name: string;
-}
+import type { Branch } from "../services/api";
 
 interface Props {
   branches: Branch[];
@@ -52,43 +48,53 @@ export default function BranchMultiSelect({
         )}
       </div>
 
-      {/* Dropdown bonito */}
-      <Dropdown
-        label="Seleccionar sucursales"
-        color="gray"
-        dismissOnClick={false}
-        className="w-56"
-      >
-        {/* Seleccionar todas */}
-        <div
-          className="flex items-center gap-2 border-b border-gray-600 px-3 py-2"
-          onClick={toggleAll}
+      {/* Dropdown flowbite */}
+      <div className="relative">
+        <Dropdown
+          placement="bottom-start"
+          color="gray"
+          dismissOnClick={false}
+          className="absolute z-50 w-56"
+          renderTrigger={() => (
+            <button
+              type="button"
+              className="w-full rounded-lg bg-gray-700 px-4 py-2 text-left text-sm text-white"
+            >
+              Seleccionar sucursales
+            </button>
+          )}
         >
-          <Checkbox
-            checked={selected.length === branches.length}
-            onChange={toggleAll}
-          />
-          <span className="text-sm">Seleccionar todas</span>
-        </div>
-
-        {/* Lista de sucursales */}
-        {branches.map((b) => (
-          <DropdownItem
-            key={b.id}
-            className="flex cursor-pointer items-center gap-2"
-            onClick={() => toggleBranch(b.id)}
+          {/* Seleccionar todas */}
+          <div
+            className="flex items-center gap-2 border-b border-gray-600 px-3 py-2"
+            onClick={toggleAll}
           >
             <Checkbox
-              checked={selected.includes(b.id)}
-              onChange={(e) => {
-                e.stopPropagation();
-                toggleBranch(b.id);
-              }}
+              checked={selected.length === branches.length}
+              onChange={toggleAll}
             />
-            <span>{b.name}</span>
-          </DropdownItem>
-        ))}
-      </Dropdown>
+            <span className="text-sm">Seleccionar todas</span>
+          </div>
+
+          {/* Lista de sucursales */}
+          {branches.map((b) => (
+            <DropdownItem
+              key={b.id}
+              className="flex cursor-pointer items-center gap-2"
+              onClick={() => toggleBranch(b.id)}
+            >
+              <Checkbox
+                checked={selected.includes(b.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleBranch(b.id);
+                }}
+              />
+              <span>{b.name}</span>
+            </DropdownItem>
+          ))}
+        </Dropdown>
+      </div>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function Expenses() {
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
-  const branches = useBranches();
+  const { branches } = useBranches();
 
   // --- filtros ---
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
@@ -119,26 +119,22 @@ export default function Expenses() {
         </div>
       </div>
 
-      {/* --- Botón Buscar --- */}
       <div className="mt-4">
         <Button fullSized onClick={loadFilteredExpenses}>
           Buscar
         </Button>
       </div>
 
-      {/* Loader / Errores */}
       {isLoading && (
         <div className="py-4 text-center text-gray-400">Cargando gastos...</div>
       )}
 
       {error && <div className="py-4 text-center text-red-400">{error}</div>}
 
-      {/* Lista */}
       {!isLoading && !error && (
         <ExpensesList expenses={expenses} onSelect={handleEditClick} />
       )}
 
-      {/* Modal */}
       <ExpenseModal
         open={showModal}
         onClose={() => setShowModal(false)}

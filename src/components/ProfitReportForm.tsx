@@ -14,7 +14,7 @@ interface ProfitReportFormProps {
 export default function ProfitReportForm({ onSubmit }: ProfitReportFormProps) {
   const [start, setStart] = useState<Date>(new Date());
   const [end, setEnd] = useState<Date>(new Date());
-  const branches = useBranches();
+  const { branches } = useBranches();
   const [branchIds, setBranchIds] = useState<number[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {

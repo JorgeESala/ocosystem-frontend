@@ -1,18 +1,32 @@
 import axios from "axios";
 import type { AxiosError } from "axios";
+import { triggerUnauthorized } from "./authEvents";
 const API_URL = import.meta.env.VITE_API_URL;
-// http.ts
+
 export const http = axios.create({
   baseURL: `${API_URL}`,
 });
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
+
+http.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      triggerUnauthorized();
+    }
+    return Promise.reject(err);
+  },
+);
+
 function handleApiError(err: unknown, defaultMessage: string): never {
   const error = err as AxiosError<{ message?: string }>;
 
