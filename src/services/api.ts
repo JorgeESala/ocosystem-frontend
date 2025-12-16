@@ -9,6 +9,7 @@ export const http = axios.create({
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+  console.log("➡️ Request token:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -318,8 +319,25 @@ export interface LoginRequest {
   email: string;
   password: string;
 }
+export interface ChangeCredentialsRequest {
+  name: string;
+  email: string;
+  newPassword: string;
+}
+export interface MeResponse {
+  name: string;
+  email: string;
+}
 
 // -------------------- FETCH FUNCTIONS --------------------
+export async function fetchMe(): Promise<MeResponse> {
+  const res = await http.get("/me");
+  return res.data;
+}
+export async function changeCredentials(data: ChangeCredentialsRequest) {
+  const res = await http.post("/me/change-credentials", data);
+  return res.data;
+}
 export async function loginUser(
   data: LoginRequest,
 ): Promise<{ token: string }> {
@@ -430,54 +448,43 @@ export const updateExpense = async function (
   expenseId: number,
   expense: ExpenseRequest,
 ) {
-  const response = await fetch(`${API_URL}/api/expenses/${expenseId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(expense),
-  });
+  try {
+    const response = await http.put(
+      `${API_URL}/api/expenses/${expenseId}`,
+      expense,
+    );
 
-  if (!response.ok) {
-    throw new Error("Error al crear el gasto");
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg = error.response?.data?.message || "Error al actualizar gasto";
+
+    throw new Error(msg);
   }
-
-  const data: Expense = await response.json();
-  return data;
 };
 export const createBatch = async function (batch: BatchRequest) {
-  const response = await fetch(`${API_URL}/api/batches`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(batch),
-  });
+  try {
+    const response = await http.post(`${API_URL}/api/batches`, batch);
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg = error.response?.data?.message || "Error al crear Remesa";
 
-  if (!response.ok) {
-    throw new Error("Error al crear el batch");
+    throw new Error(msg);
   }
-
-  const data: Batch = await response.json();
-  return data;
 };
 export const createDailyBatchSale = async function (
   batchSale: DailyBatchSaleRequest,
 ) {
-  const response = await fetch(`${API_URL}/api/batchSales`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(batchSale),
-  });
+  try {
+    const response = await http.post(`${API_URL}/api/batchSales`, batchSale);
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg = error.response?.data?.message || "Error al agregar venta";
 
-  if (!response.ok) {
-    throw new Error("Error al Agregar la venta");
+    throw new Error(msg);
   }
-
-  const data: Batch = await response.json();
-  return data;
 };
 
 export const updateDailyBatchSale = async function (
@@ -493,20 +500,18 @@ export const updateDailyBatchSale = async function (
     kgGut: Number(batchSale.kgGut),
     date: batchSale.date,
   };
+  try {
+    const response = await http.put(
+      `${API_URL}/api/batchSales/${batchSale.id}`,
+      payload,
+    );
+    return response.data;
+  } catch (err: unknown) {
+    const error = err as AxiosError<{ message?: string }>;
+    const msg = error.response?.data?.message || "Error al actualizar venta";
 
-  const response = await fetch(`${API_URL}/api/batchSales/${batchSale.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error("Error al actualizar la venta");
+    throw new Error(msg);
   }
-
-  return response.json();
 };
 export async function updateBatch(id: number, data: BatchUpdateRequest) {
   const res = await http.put(`/api/batches/${id}`, data);

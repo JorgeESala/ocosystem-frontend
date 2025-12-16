@@ -10,6 +10,7 @@ import Expenses from "./components/Expenses";
 import ProfitReportPage from "./pages/ProfitReportPage";
 import AuthPage from "./pages/AuthPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ChangeCredentialsPage from "./pages/ChangeCredentialsPage";
 
 // Crear el cliente de React Query (puede ir fuera del componente)
 const queryClient = new QueryClient();
@@ -30,6 +31,11 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/me/change-credentials"
+              element={<ChangeCredentialsPage />}
+            />
+
             <Route
               path="/comparisonGraphs"
               element={
