@@ -55,7 +55,7 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
       >
         <div className="mx-auto flex flex-col items-center">
           <h3 className="text-center text-lg font-semibold text-white">
-            Remesa #{batch.id} — {batch.branch?.name}
+            Remesa #{batch.id} — {batch.branchName}
           </h3>
 
           <p className="text-center text-sm text-gray-400">
