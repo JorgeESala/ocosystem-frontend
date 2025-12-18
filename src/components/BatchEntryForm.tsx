@@ -60,7 +60,7 @@ export default function BatchEntryForm({
   useEffect(() => {
     if (mode === "edit" && batch) {
       setFormData({
-        branchId: batch.branch.id,
+        branchId: batch.branchName,
         provider: batch.provider,
         chickenQuantity: String(batch.chickenQuantity),
         kgTotal: String(batch.kgTotal),
