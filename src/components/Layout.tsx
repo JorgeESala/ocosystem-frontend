@@ -1,15 +1,11 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import SidebarApp from "./SidebarApp";
 
 export default function Layout() {
   return (
-    <div>
-      <header>
-        <nav>
-          <Link to="/reports">Reportes</Link> |{" "}
-          <Link to="/graphs">Comparativas</Link>
-        </nav>
-      </header>
-      <main>
+    <div className="flex">
+      <SidebarApp />
+      <main className="flex-1 bg-gray-100 p-6">
         <Outlet />
       </main>
     </div>
