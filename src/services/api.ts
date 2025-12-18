@@ -25,6 +25,7 @@ http.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+const toISODate = (date: Date): string => date.toISOString().split("T")[0];
 
 function handleApiError(err: unknown, defaultMessage: string): never {
   const error = err as AxiosError<{ message?: string }>;
@@ -78,7 +79,8 @@ export interface Branch {
 }
 export interface Batch {
   id: number;
-  branch: Branch;
+  branchId: number;
+  branchName: string;
   kgTotal: number;
   pricePerKg: number;
   date: Date;
@@ -137,6 +139,11 @@ export interface BatchRequest {
   pricePerKg: number | string;
   provider: string;
   date: Date | null;
+}
+export interface BatchSearchRequest {
+  branchIds: number[];
+  startDate: string;
+  endDate: string;
 }
 
 export interface Category {
@@ -390,16 +397,19 @@ export const fetchExpensesByBranchesAndDateRange = async (
   });
   return res.data;
 };
+
 export const fetchBatchesByBranchesAndDateRange = async (
   branchIds: number[],
-  start: Date,
-  end: Date,
+  startDate: Date,
+  endDate: Date,
 ): Promise<Batch[]> => {
-  const res = await http.post(`/api/batches/search`, {
-    start: start.toISOString(),
-    end: end.toISOString(),
-    branchIds: branchIds,
-  });
+  const payload: BatchSearchRequest = {
+    branchIds,
+    startDate: toISODate(startDate),
+    endDate: toISODate(endDate),
+  };
+
+  const res = await http.post("/api/batches/search", payload);
   return res.data;
 };
 

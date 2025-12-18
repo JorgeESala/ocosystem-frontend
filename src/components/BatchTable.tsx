@@ -6,23 +6,48 @@ import { useEffect } from "react";
 import {
   fetchLatestBatches,
   fetchBatchSalesByBatch,
+  fetchBatchesByBranchesAndDateRange,
   type Batch,
 } from "../services/api";
 import { BatchRow } from "./BatchRow";
 
-export const BatchTable: React.FC = () => {
+interface BatchTableProps {
+  startDate: Date | null;
+  endDate: Date | null;
+  branchIds: number[];
+  enabled: boolean;
+}
+
+export const BatchTable: React.FC<BatchTableProps> = ({
+  startDate,
+  endDate,
+  branchIds,
+  enabled,
+}) => {
   const queryClient = useQueryClient();
 
-  const {
-    data: batches = [],
-    isLoading,
-    error,
-  } = useQuery<Batch[]>({
-    queryKey: ["batches"],
+  const isReady =
+    enabled && startDate !== null && endDate !== null && branchIds.length > 0;
+
+  const latestQuery = useQuery<Batch[]>({
+    queryKey: ["batches", "latest"],
     queryFn: fetchLatestBatches,
+    enabled: !enabled,
   });
 
-  // --- PREFETCH DE VENTAS POR REMESA ---
+  const searchQuery = useQuery<Batch[]>({
+    queryKey: ["batches", "search", branchIds, startDate, endDate],
+    queryFn: () =>
+      fetchBatchesByBranchesAndDateRange(branchIds, startDate!, endDate!),
+    enabled: isReady,
+  });
+
+  const batches = enabled ? (searchQuery.data ?? []) : (latestQuery.data ?? []);
+
+  const isLoading = enabled ? searchQuery.isLoading : latestQuery.isLoading;
+
+  const error = enabled ? searchQuery.error : latestQuery.error;
+
   useEffect(() => {
     if (batches.length === 0) return;
 
@@ -30,7 +55,7 @@ export const BatchTable: React.FC = () => {
       queryClient.prefetchQuery({
         queryKey: ["batchSales", batch.id],
         queryFn: () => fetchBatchSalesByBatch(batch.id),
-        staleTime: 1000 * 60 * 5, // cache 5 minutos
+        staleTime: 1000 * 60 * 5,
       });
     });
   }, [batches, queryClient]);

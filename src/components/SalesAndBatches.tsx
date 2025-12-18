@@ -3,13 +3,23 @@
 import { useState } from "react";
 import { BatchTable } from "./BatchTable";
 import BatchEntryForm from "./BatchEntryForm";
-import { Button, Modal, ModalBody, ModalHeader } from "flowbite-react";
+import {
+  Button,
+  Datepicker,
+  Modal,
+  ModalBody,
+  ModalHeader,
+} from "flowbite-react";
 import { useQueryClient } from "@tanstack/react-query";
 import BranchMultiSelect from "./BranchMultiSelect";
 import { useBranches } from "../context/BranchContext";
 
 export default function SalesAndBatches() {
   const [openModal, setOpenModal] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [hasSearched, setHasSearched] = useState(false);
+
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const queryClient = useQueryClient();
   const { branches } = useBranches();
@@ -19,6 +29,9 @@ export default function SalesAndBatches() {
 
     // Cierra el modal
     setOpenModal(false);
+  };
+  const handleSearch = () => {
+    setHasSearched(true);
   };
   return (
     <div>
@@ -40,14 +53,29 @@ export default function SalesAndBatches() {
           onChange={setSelectedBranches}
         />
 
-        {/* --- Botón Buscar igual al de Gastos --- */}
+        <div>
+          <label>Inicio</label>
+          <Datepicker onChange={(d) => setStartDate(d)} />
+        </div>
+
+        <div>
+          <label>Fin</label>
+          <Datepicker onChange={(d) => setEndDate(d)} />
+        </div>
         <div className="mt-2">
-          <Button fullSized>Buscar</Button>
+          <Button fullSized onClick={handleSearch}>
+            Buscar
+          </Button>
         </div>
       </div>
       {/* --- Tabla --- */}
       <div className="mt-4">
-        <BatchTable />
+        <BatchTable
+          startDate={startDate}
+          endDate={endDate}
+          branchIds={selectedBranches}
+          enabled={hasSearched}
+        />
       </div>
 
       {/* --- Modal --- */}
