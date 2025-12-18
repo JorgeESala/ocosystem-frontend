@@ -80,6 +80,7 @@ export interface Branch {
 export interface Batch {
   id: number;
   branchId: number;
+  branch?: Branch;
   branchName: string;
   kgTotal: number;
   pricePerKg: number;
