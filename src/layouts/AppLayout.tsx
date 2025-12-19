@@ -1,4 +1,3 @@
-// src/layouts/AppLayout.tsx
 import { Outlet } from "react-router-dom";
 import SidebarApp from "../components/SidebarApp";
 // si aún no existe, puedes comentar esa línea
@@ -10,7 +9,7 @@ export default function AppLayout() {
       <SidebarApp />
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-4">
+      <main className="flex-1 overflow-y-auto px-2 pt-14 md:pt-0">
         <Outlet />
       </main>
     </div>

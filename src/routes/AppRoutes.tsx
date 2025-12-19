@@ -1,4 +1,3 @@
-// src/routes/AppRoutes.tsx
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../routes/ProtectedRoutes";
 import AppLayout from "../layouts/AppLayout";
