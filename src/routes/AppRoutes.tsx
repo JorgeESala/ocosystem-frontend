@@ -15,6 +15,7 @@ import SalesAndBatches from "../components/SalesAndBatches";
 import Expenses from "../components/Expenses";
 import BusinessDashboard from "../components/BussinesDashboard";
 import FlockTrackingPage from "../live-chicken/pages/FlockTrackingPage";
+import ExpensesPage from "../live-chicken/pages/ExpensesPage";
 
 export default function AppRoutes() {
   return (
@@ -50,6 +51,10 @@ export default function AppRoutes() {
           <Route
             path="/business/pollo-vivo/salesAndBatches"
             element={<FlockTrackingPage />}
+          />
+          <Route
+            path="/business/pollo-vivo/expenses"
+            element={<ExpensesPage />}
           />
           <Route path="/business/:slug/expenses" element={<Expenses />} />
           <Route path="/business/:slug/profit" element={<ProfitReportPage />} />
