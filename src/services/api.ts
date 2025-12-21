@@ -45,6 +45,7 @@ function handleApiError(err: unknown, defaultMessage: string): never {
 
   throw apiError;
 }
+
 export interface Expense {
   id: number;
   branch: Branch;

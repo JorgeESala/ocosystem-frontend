@@ -14,6 +14,7 @@ import ComparisonGraphs from "../components/ComparisonGraphs";
 import SalesAndBatches from "../components/SalesAndBatches";
 import Expenses from "../components/Expenses";
 import BusinessDashboard from "../components/BussinesDashboard";
+import FlockTrackingPage from "../live-chicken/pages/FlockTrackingPage";
 
 export default function AppRoutes() {
   return (
@@ -45,6 +46,10 @@ export default function AppRoutes() {
           <Route
             path="/business/:slug/salesAndBatches"
             element={<SalesAndBatches />}
+          />
+          <Route
+            path="/business/pollo-vivo/salesAndBatches"
+            element={<FlockTrackingPage />}
           />
           <Route path="/business/:slug/expenses" element={<Expenses />} />
           <Route path="/business/:slug/profit" element={<ProfitReportPage />} />
