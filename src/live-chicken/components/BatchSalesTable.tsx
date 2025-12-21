@@ -60,15 +60,14 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
           <TableHead>
             <TableRow className="text-center">
               <TableHeadCell>Fecha</TableHeadCell>
-              <TableHeadCell>Encargado</TableHeadCell>
+              <TableHeadCell>Chofer</TableHeadCell>
               <TableHeadCell>Pollos Vendidos</TableHeadCell>
               <TableHeadCell>Kilos Vendidos</TableHeadCell>
-              <TableHeadCell>Kilos de Tripa</TableHeadCell>
               <TableHeadCell>Total Venta</TableHeadCell>
               <TableHeadCell>Promedio de kg</TableHeadCell>
               <TableHeadCell>Precio promedio/kg</TableHeadCell>
-              <TableHeadCell>Merma sin tripa</TableHeadCell>
-              <TableHeadCell>Merma con tripa</TableHeadCell>
+              <TableHeadCell>Merma</TableHeadCell>
+              <TableHeadCell>Diferencia de kg</TableHeadCell>
               <TableHeadCell>Acciones</TableHeadCell>
             </TableRow>
           </TableHead>
@@ -80,9 +79,6 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                     s.kgTotal) /
                   s.quantitySold
                 : null;
-              const mermaConTripa = batch.avgChickenWeight
-                ? batch.avgChickenWeight - s.kgTotal / s.quantitySold
-                : null;
 
               return (
                 <TableRow key={s.date.toString()}>
@@ -92,7 +88,6 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                   <TableCell>{s.employee?.name}</TableCell>
                   <TableCell>{s.quantitySold}</TableCell>
                   <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
-                  <TableCell>{s.kgGut.toFixed(2)} kg</TableCell>
                   <TableCell>
                     ${Number(s.saleTotal).toLocaleString("es-MX")}
                   </TableCell>
@@ -110,15 +105,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                       "Información incompleta"
                     )}
                   </TableCell>
-                  <TableCell>
-                    {mermaConTripa !== null ? (
-                      <span style={{ color: getMermaColor(mermaConTripa) }}>
-                        {mermaConTripa.toFixed(3)} kg
-                      </span>
-                    ) : (
-                      "Información incompleta"
-                    )}
-                  </TableCell>
+                  <TableCell>{}</TableCell>
 
                   <TableCell>
                     <Button size="xs" onClick={() => handleEditSale(s)}>
