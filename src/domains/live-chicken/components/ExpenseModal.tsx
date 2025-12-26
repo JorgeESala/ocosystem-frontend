@@ -1,6 +1,6 @@
 import { Modal, ModalHeader, ModalBody } from "flowbite-react";
 import ExpenseForm from "./ExpenseForm";
-import { Expense } from "../../services/api";
+import { Expense } from "../../../services/api";
 
 interface ExpenseModalProps {
   open: boolean;

@@ -10,7 +10,8 @@ import {
   ModalBody,
   ModalHeader,
 } from "flowbite-react";
-import { useQueryClient } from "@tanstack/react-query";
+import type { InboundBatchFormValues } from "../types";
+import { useCreateInboundBatch } from "../api/inboundBatches.queries";
 
 export default function FlockTrackingPage() {
   const [openModal, setOpenModal] = useState(false);
@@ -18,14 +19,23 @@ export default function FlockTrackingPage() {
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [hasSearched, setHasSearched] = useState(false);
 
-  const queryClient = useQueryClient();
-  const handleBatchCreated = () => {
-    // Actualiza automáticamente las remesas
-    queryClient.invalidateQueries({ queryKey: ["batches"] });
+  const createInboundBatchMutation = useCreateInboundBatch();
 
-    // Cierra el modal
+  const handleBatchCreated = async (values: InboundBatchFormValues) => {
+    if (!values.date || !values.supplierId) return;
+
+    await createInboundBatchMutation.mutateAsync({
+      supplierId: values.supplierId,
+      date: values.date.toISOString().split("T")[0], // YYYY-MM-DD
+      realWeight: Number(values.realWeight),
+      declaredWeight: Number(values.declaredWeight),
+      chickenQuantity: Number(values.chickenQuantity),
+      pricePerKg: Number(values.pricePerKg),
+    });
+
     setOpenModal(false);
   };
+
   const handleSearch = () => {
     setHasSearched(true);
   };
@@ -82,7 +92,7 @@ export default function FlockTrackingPage() {
           <BatchEntryForm
             open={openModal}
             onClose={() => setOpenModal(false)}
-            onSuccess={handleBatchCreated}
+            onSubmit={handleBatchCreated}
           />
         </ModalBody>
       </Modal>

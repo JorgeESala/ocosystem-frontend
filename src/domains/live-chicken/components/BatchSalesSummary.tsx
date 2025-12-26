@@ -1,5 +1,5 @@
 import React from "react";
-import { Batch, DailyBatchSale } from "../../services/api";
+import { Batch, DailyBatchSale } from "../../../services/api";
 
 interface Props {
   batch: Batch;
@@ -20,10 +20,9 @@ export const BatchSalesSummary: React.FC<Props> = ({ batch, sales }) => {
 
   return (
     <div className="mt-2 rounded-md bg-gray-100 p-2 dark:bg-gray-700">
-      <div className="grid grid-cols-2 gap-2 text-sm text-white md:grid-cols-7 md:gap-4">
-        <div>Total Pollos Vendidos: {totalQuantitySold}</div>
-        <div>Total Kg Vendidos: {totalKgSold.toFixed(2)} kg</div>
-        <div>Total Tripa: {totalKgGut.toFixed(2)} kg</div>
+      <div className="grid grid-cols-2 gap-2 text-sm text-white md:grid-cols-8 md:gap-4">
+        <div>Pollos Vendidos: {totalQuantitySold}</div>
+        <div>Kg Vendidos: {totalKgSold.toFixed(2)} kg</div>
         <div>
           Total Venta: ${Number(totalSale.toFixed(2)).toLocaleString("es-MX")}
         </div>
@@ -35,7 +34,8 @@ export const BatchSalesSummary: React.FC<Props> = ({ batch, sales }) => {
           {Number((totalSale / totalKgSold).toFixed(3)).toLocaleString("es-MX")}
         </div>
         <div>Merma: {loss.toFixed(4)} kg</div>
-        <div className="mt-1 font-semibold md:col-span-7">
+        <div className="mt-1">Total de diferencia: 25 kg</div>
+        <div className="mt-1 font-semibold">
           Ganancia: ${Number(gain.toFixed(3)).toLocaleString("es-MX")}
         </div>
       </div>

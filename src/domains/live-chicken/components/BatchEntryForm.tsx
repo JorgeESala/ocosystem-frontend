@@ -11,104 +11,95 @@ import {
   ModalHeader,
   ModalBody,
 } from "flowbite-react";
-import { type Batch, type BatchRequest } from "../../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
 
-export default function BatchEntryForm({
-  open,
-  onClose,
-  onSuccess,
-  batch,
-  mode = "create",
-}: {
+import {
+  type Supplier,
+  type InboundBatch,
+  type InboundBatchFormValues,
+} from "@/domains/live-chicken/types";
+import { getSuppliers } from "../api/suppliers.api";
+import { useQuery } from "@tanstack/react-query";
+
+interface Props {
   open: boolean;
-  onClose: () => void;
-  onSuccess?: () => void;
-  batch?: Batch;
   mode?: "create" | "edit";
-}) {
-  const [formData, setFormData] = useState<BatchRequest>({
-    branchId: "",
+  batch?: InboundBatch;
+  onClose: () => void;
+  onSubmit: (values: InboundBatchFormValues) => void;
+}
+
+export default function InboundBatchEntryForm({
+  open,
+  mode = "create",
+  batch,
+  onClose,
+  onSubmit,
+}: Props) {
+  const [formValues, setFormValues] = useState<InboundBatchFormValues>({
+    supplierId: null,
     date: new Date(),
-    provider: "",
+    realWeight: "",
+    declaredWeight: "",
     chickenQuantity: "",
-    kgTotal: "",
     pricePerKg: "",
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "failure">("success");
+  const {
+    data: suppliers = [],
+    isLoading: suppliersLoading,
+    isError: suppliersError,
+  } = useQuery({
+    queryKey: ["suppliers"],
+    queryFn: getSuppliers,
+  });
 
-  // Cargar datos si estoy editando
+  // 🔹 Cargar datos en modo edición
   useEffect(() => {
     if (mode === "edit" && batch) {
-      setFormData({
-        branchId: batch.branchName,
-        provider: batch.provider,
-        chickenQuantity: String(batch.chickenQuantity),
-        kgTotal: String(batch.kgTotal),
-        pricePerKg: String(batch.pricePerKg),
+      setFormValues({
+        supplierId: batch.supplierId,
         date: new Date(`${batch.date}T00:00:00`),
+        realWeight: String(batch.realWeight),
+        declaredWeight: String(batch.declaredWeight),
+        chickenQuantity: String(batch.chickenQuantity),
+        pricePerKg: String(batch.pricePerKg),
       });
     }
   }, [batch, mode]);
 
-  // Manejo inputs
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
 
-    const numericFields = [
-      "branchId",
-      "chickenQuantity",
-      "kgTotal",
-      "pricePerKg",
-    ];
-
-    setFormData((prev) => ({
+    setFormValues((prev) => ({
       ...prev,
-      [name]: numericFields.includes(name) ? Number(value) : value,
+      [name]: name === "supplierId" ? Number(value) : value,
     }));
   };
 
-  // Guardar
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      // if (mode === "edit" && batch) {
-      //   await updateBatch(batch.id, {
-      //     branchId: Number(formData.branchId),
-      //     provider: formData.provider.trim(),
-      //     date: formData.date,
-      //     chickenQuantity: Number(formData.chickenQuantity),
-      //     kgTotal: Number(formData.kgTotal),
-      //     pricePerKg: Number(formData.pricePerKg),
-      //   });
-
-      //   setToastMessage("Remesa actualizada.");
-      // } else {
-      //   await createBatch({
-      //     branchId: formData.branchId,
-      //     provider: formData.provider.trim(),
-      //     date: formData.date,
-      //     chickenQuantity: formData.chickenQuantity,
-      //     kgTotal: formData.kgTotal,
-      //     pricePerKg: formData.pricePerKg,
-      //   });
-      //   setToastMessage("Remesa creada.");
-      // }
-
+      onSubmit(formValues);
       setToastType("success");
-
-      if (onSuccess) onSuccess();
+      setToastMessage(
+        mode === "edit"
+          ? "Remesa actualizada."
+          : "Remesa creada correctamente.",
+      );
 
       setTimeout(() => {
-        onClose();
         setToastMessage(null);
-      }, 500);
-    } catch (err) {
-      setToastMessage("Error al guardar la remesa.");
+        onClose();
+      }, 600);
+    } catch {
       setToastType("failure");
+      setToastMessage("Error al guardar la remesa.");
     }
   };
 
@@ -118,35 +109,45 @@ export default function BatchEntryForm({
         <ModalHeader />
         <ModalBody>
           <h2 className="mb-4 text-center text-2xl font-semibold text-white">
-            {mode === "edit" ? "Editar Remesa" : "Nueva Remesa"}
+            {mode === "edit" ? "Editar remesa" : "Nueva remesa"}
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Sucursal */}
-
             {/* Fecha */}
             <div>
               <Label>Fecha</Label>
               <Datepicker
                 language="es-MX"
-                value={formData.date}
-                onChange={(date: Date | null) =>
-                  setFormData({ ...formData, date })
+                value={formValues.date}
+                onChange={(date) =>
+                  setFormValues((prev) => ({ ...prev, date }))
                 }
               />
             </div>
 
+            {/* Proveedor */}
             <div>
               <Label>Proveedor</Label>
               <Select
-                name="supplier"
+                name="supplierId"
                 required
-                value={formData.provider}
+                disabled={suppliersLoading || suppliersError}
+                value={formValues.supplierId ?? ""}
                 onChange={handleChange}
               >
-                <option>Bachoco</option>
-                <option>Crío</option>
-                <option>Otro</option>
+                <option value="" disabled>
+                  {suppliersLoading
+                    ? "Cargando proveedores..."
+                    : suppliersError
+                      ? "Error al cargar proveedores"
+                      : "Selecciona un proveedor"}
+                </option>
+
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
               </Select>
             </div>
 
@@ -157,20 +158,33 @@ export default function BatchEntryForm({
                 type="number"
                 min="0"
                 required
-                value={formData.chickenQuantity}
+                value={formValues.chickenQuantity}
                 onChange={handleChange}
               />
             </div>
 
             <div>
-              <Label>Total de kilos recibidos</Label>
+              <Label>Peso declarado (kg)</Label>
               <TextInput
-                name="kgTotal"
+                name="declaredWeight"
                 type="number"
                 step="any"
                 min="0"
                 required
-                value={formData.kgTotal}
+                value={formValues.declaredWeight}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <Label>Peso real (kg)</Label>
+              <TextInput
+                name="realWeight"
+                type="number"
+                step="any"
+                min="0"
+                required
+                value={formValues.realWeight}
                 onChange={handleChange}
               />
             </div>
@@ -183,7 +197,7 @@ export default function BatchEntryForm({
                 step="any"
                 min="0"
                 required
-                value={formData.pricePerKg}
+                value={formValues.pricePerKg}
                 onChange={handleChange}
               />
             </div>
@@ -196,9 +210,9 @@ export default function BatchEntryForm({
       </Modal>
 
       {toastMessage && (
-        <Toast className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 transform">
+        <Toast className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
           <div
-            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
               toastType === "success"
                 ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
                 : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"

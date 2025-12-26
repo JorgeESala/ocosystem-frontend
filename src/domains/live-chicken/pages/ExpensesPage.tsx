@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Expense, fetchLatestExpenses } from "../../services/api";
+import { Expense, fetchLatestExpenses } from "../../../services/api";
 import ExpensesList from "../components/ExpensesList";
 import { Button, Datepicker } from "flowbite-react";
 import ExpenseModal from "../components/ExpenseModal";

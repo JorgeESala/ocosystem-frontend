@@ -8,12 +8,7 @@ import {
   TextInput,
 } from "flowbite-react";
 
-import {
-  Expense,
-  ExpenseCategory,
-  fetchExpenseCategories,
-  fetchBranches,
-} from "../../services/api";
+import { Expense, ExpenseCategory } from "../../../services/api";
 
 interface ExpenseFormProps {
   initialData?: Expense;
@@ -42,15 +37,11 @@ export default function ExpenseForm({
 
   // Cargar cat y branch
   useEffect(() => {
-    const loadData = async () => {
-      const [catData] = await Promise.all([
-        fetchExpenseCategories(),
-        fetchBranches(),
-      ]);
-      setCategories(catData);
-    };
-
-    loadData();
+    setCategories([
+      { id: 1, name: "Combustible" },
+      { id: 2, name: "Nomina" },
+      { id: 3, name: "Otro" },
+    ]);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,6 +115,31 @@ export default function ExpenseForm({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
+      </div>
+      {/* Empleado */}
+      <div>
+        <Label>Chofer</Label>
+        <Select required onChange={(e) => setReason(e.target.value)}>
+          <option value="">Seleccione un chofer</option>
+          <option value="1">Jorge</option>
+          <option value="2">Shamir</option>
+          <option value="2">Erick</option>
+          <option value="2">Jorge</option>
+          <option value="2">Samuel</option>
+        </Select>
+      </div>
+      {/* Ruta */}
+      <div>
+        <Label>Ruta</Label>
+        <Select required onChange={(e) => setReason(e.target.value)}>
+          <option value="">Seleccione una ruta</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="2">3</option>
+          <option value="2">4</option>
+          <option value="2">5</option>
+          <option value="2">6</option>
+        </Select>
       </div>
 
       {/* Fecha */}

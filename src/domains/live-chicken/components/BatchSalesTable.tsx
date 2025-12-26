@@ -8,7 +8,7 @@ import {
   TableRow,
   Button,
 } from "flowbite-react";
-import { DailyBatchSale, type Batch } from "../../services/api";
+import { DailyBatchSale, type Batch } from "../../../services/api";
 import { BatchSalesSummary } from "./BatchSalesSummary";
 import SaleEntryForm from "./SaleEntryForm";
 
@@ -67,6 +67,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
               <TableHeadCell>Promedio de kg</TableHeadCell>
               <TableHeadCell>Precio promedio/kg</TableHeadCell>
               <TableHeadCell>Merma</TableHeadCell>
+              <TableHeadCell>Merma / pollo</TableHeadCell>
               <TableHeadCell>Diferencia de kg</TableHeadCell>
               <TableHeadCell>Acciones</TableHeadCell>
             </TableRow>
@@ -105,6 +106,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                       "Información incompleta"
                     )}
                   </TableCell>
+                  <TableCell> </TableCell>
                   <TableCell>{}</TableCell>
 
                   <TableCell>

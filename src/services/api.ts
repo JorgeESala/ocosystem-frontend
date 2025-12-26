@@ -111,7 +111,10 @@ export interface DailyBatchSaleRequest {
 export interface Employee {
   id: number;
   name: string;
+  role: string;
+  position: string;
 }
+
 export interface DailyBatchSale {
   id: number;
   batch: Batch;

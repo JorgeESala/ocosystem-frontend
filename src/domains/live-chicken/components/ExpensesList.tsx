@@ -1,4 +1,4 @@
-import { Expense } from "../../services/api.ts";
+import { Expense } from "../../../services/api.ts";
 
 interface ExpensesListProps {
   expenses: Expense[];

@@ -3,18 +3,21 @@ import { Button, Spinner, Alert } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { fetchBatchSalesByBatch, type Batch } from "../../services/api";
+import { fetchBatchSalesByBatch } from "@/services/api";
 
 import { BatchSalesTable } from "./BatchSalesTable";
 import SaleEntryForm from "./SaleEntryForm";
 import BatchEntryForm from "./BatchEntryForm";
+import type { InboundBatch } from "../types";
 
-export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
+export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
+  batch,
+}) => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
-  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<InboundBatch | null>(null);
+  const [editingBatch, setEditingBatch] = useState<InboundBatch | null>(null);
 
   const {
     data: sales = [],
@@ -59,7 +62,7 @@ export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
           </h3>
 
           <p className="text-center text-sm text-gray-400">
-            {batch.provider} • {batch.date.toLocaleDateString("es-MX")}
+            {/* {batch.supplierName} • {batch.date} */}
           </p>
 
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
@@ -67,15 +70,29 @@ export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
             <span className={getRemainingColor(chickensRemaining)}>
               🧮 Disponibles: {chickensRemaining}
             </span>
-            <span>⚖️ {batch.kgTotal} kg</span>
+            <span>Peso Real {batch.realWeight} kg</span>
+            <span>Peso Declarado {batch.declaredWeight} kg</span>
+            <span>
+              📏 Diferencia de kilos{" "}
+              {Number(batch.declaredWeight - batch.realWeight).toLocaleString(
+                "es-MX",
+              )}{" "}
+              kg
+            </span>
+            <span>
+              Diferencia en💲: $
+              {Number(
+                batch.totalPaid - batch.realWeight * batch.pricePerKg,
+              ).toFixed(3)}
+            </span>
             <span>💲{batch.pricePerKg}/kg</span>
             <span>
               💰 Total: $
-              {Number(batch.priceTotal?.toFixed(2)).toLocaleString("es-MX") ??
+              {Number(batch.totalPaid?.toFixed(2)).toLocaleString("es-MX") ??
                 "-"}
             </span>
             <span>
-              📏 Peso promedio: {batch.avgChickenWeight?.toFixed(2) ?? "-"} kg
+              📏 Peso promedio: {batch.avgWeight?.toFixed(2) ?? "-"} kg
             </span>
           </div>
         </div>
@@ -111,13 +128,13 @@ export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
       </div>
 
       {/* Modal agregar venta */}
-      {selectedBatch && (
+      {/* {selectedBatch && (
         <SaleEntryForm
           batch={selectedBatch}
           onClose={() => setSelectedBatch(null)}
           onSuccess={handleSaleCreated}
         />
-      )}
+      )} */}
 
       {/* Modal editar remesa */}
       {editingBatch && (
@@ -126,12 +143,12 @@ export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
           batch={editingBatch}
           mode="edit"
           onClose={() => setEditingBatch(null)}
-          onSuccess={handleBatchUpdated}
+          onSubmit={handleBatchUpdated}
         />
       )}
 
       {/* Subtabla */}
-      {isOpen && (
+      {/* {isOpen && (
         <div className="border-t border-gray-700 bg-gray-900 p-4">
           <h4 className="mb-3 text-center text-lg font-semibold text-gray-200">
             Ventas de esta remesa
@@ -149,7 +166,7 @@ export const FlockBatchOverview: React.FC<{ batch: Batch }> = ({ batch }) => {
             <BatchSalesTable batch={batch} sales={sales} />
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

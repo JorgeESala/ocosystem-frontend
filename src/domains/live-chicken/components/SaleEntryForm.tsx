@@ -9,7 +9,7 @@ import {
   ToastToggle,
 } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
-import { Batch, DailyBatchSale } from "../../services/api";
+import { Batch, DailyBatchSale } from "@/services/api";
 // import { fetchEmployees } from "../../services/api";
 
 interface SaleEntryFormProps {
