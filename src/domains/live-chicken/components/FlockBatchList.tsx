@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Spinner, Alert } from "flowbite-react";
 import { HiExclamation } from "react-icons/hi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,8 +20,6 @@ export const FlockBatchList: React.FC<FlockBatchListProps> = ({
   endDate,
   enabled,
 }) => {
-  const queryClient = useQueryClient();
-
   const isSearchMode = enabled && !!startDate && !!endDate;
 
   const latestQuery = useLatestInboundBatches(15);

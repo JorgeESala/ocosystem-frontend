@@ -14,7 +14,6 @@ import {
 import { HiCheck, HiX } from "react-icons/hi";
 
 import {
-  type Supplier,
   type InboundBatch,
   type InboundBatchFormValues,
 } from "@/domains/live-chicken/types";

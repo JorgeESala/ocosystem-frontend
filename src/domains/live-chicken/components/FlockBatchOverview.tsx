@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Button, Spinner, Alert } from "flowbite-react";
-import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
+import { Button } from "flowbite-react";
+import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { fetchBatchSalesByBatch } from "@/services/api";
 
-import { BatchSalesTable } from "./BatchSalesTable";
-import SaleEntryForm from "./SaleEntryForm";
 import BatchEntryForm from "./BatchEntryForm";
 import type { InboundBatch } from "../types";
 
@@ -16,14 +14,9 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
-  const [selectedBatch, setSelectedBatch] = useState<InboundBatch | null>(null);
   const [editingBatch, setEditingBatch] = useState<InboundBatch | null>(null);
 
-  const {
-    data: sales = [],
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: sales = [] } = useQuery({
     queryKey: ["batchSales", batch.id],
     queryFn: () => fetchBatchSalesByBatch(batch.id),
     staleTime: 1000 * 60 * 5,
@@ -37,12 +30,6 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
     if (value === 0) return "text-green-400"; // exacto
     return "text-red-500"; // se pasaron
   }
-
-  const handleSaleCreated = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ["batchSales", batch.id],
-    });
-  };
 
   const handleBatchUpdated = async () => {
     await queryClient.invalidateQueries({ queryKey: ["batches"] });
@@ -103,7 +90,6 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
             color="light"
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedBatch(batch);
             }}
           >
             Agregar venta
