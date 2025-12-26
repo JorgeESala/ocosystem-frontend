@@ -39,6 +39,7 @@ export default function ExpensesPage() {
   // Cargar gastos iniciales
   useEffect(() => {
     setIsLoading(false);
+    console.log(startDate, endDate);
   }, []);
 
   useEffect(() => {

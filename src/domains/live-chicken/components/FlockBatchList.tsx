@@ -1,6 +1,5 @@
 import { Spinner, Alert } from "flowbite-react";
 import { HiExclamation } from "react-icons/hi";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { useLatestInboundBatches } from "@/domains/live-chicken/api/inboundBatches.queries";
 import { useInboundBatchesByDateRange } from "@/domains/live-chicken/api/inboundBatches.queries";
