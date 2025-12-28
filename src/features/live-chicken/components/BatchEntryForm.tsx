@@ -5,13 +5,10 @@ import {
   TextInput,
   Button,
   Datepicker,
-  Toast,
-  ToastToggle,
   Modal,
   ModalHeader,
   ModalBody,
 } from "flowbite-react";
-import { HiCheck, HiX } from "react-icons/hi";
 
 import {
   type InboundBatch,
@@ -44,8 +41,6 @@ export default function InboundBatchEntryForm({
     pricePerKg: "",
   });
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "failure">("success");
   const {
     data: suppliers = [],
     isLoading: suppliersLoading,
@@ -190,26 +185,6 @@ export default function InboundBatchEntryForm({
           </form>
         </ModalBody>
       </Modal>
-
-      {toastMessage && (
-        <Toast className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-          <div
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
-              toastType === "success"
-                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-            }`}
-          >
-            {toastType === "success" ? (
-              <HiCheck className="h-5 w-5" />
-            ) : (
-              <HiX className="h-5 w-5" />
-            )}
-          </div>
-          <div className="ml-3 text-sm font-normal">{toastMessage}</div>
-          <ToastToggle onClick={() => setToastMessage(null)} />
-        </Toast>
-      )}
     </>
   );
 }
