@@ -99,7 +99,10 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
                 batch.totalPaid - batch.realWeight * batch.pricePerKg,
               ).toFixed(3)}
             </span>
-            <span>💲{batch.pricePerKg}/kg</span>
+            <span>💲Precio proveedor {batch.pricePerKg}/kg</span>
+            <span>
+              💲Precio real {(batch.totalPaid / batch.realWeight).toFixed(3)}/kg
+            </span>
             <span>
               💰 Total: $
               {Number(batch.totalPaid?.toFixed(2)).toLocaleString("es-MX") ??

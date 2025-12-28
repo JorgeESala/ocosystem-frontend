@@ -8,7 +8,7 @@ import {
   TextInput,
 } from "flowbite-react";
 
-import { Expense, ExpenseCategory } from "../../../services/api";
+import { Expense, ExpenseCategory } from "@/services/api";
 
 interface ExpenseFormProps {
   initialData?: Expense;
