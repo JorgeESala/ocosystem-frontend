@@ -1,8 +1,8 @@
 import { Spinner, Alert } from "flowbite-react";
 import { HiExclamation } from "react-icons/hi";
 
-import { useLatestInboundBatches } from "@/domains/live-chicken/api/inboundBatches.queries";
-import { useInboundBatchesByDateRange } from "@/domains/live-chicken/api/inboundBatches.queries";
+import { useLatestInboundBatches } from "@/features/live-chicken/api/inboundBatches.queries";
+import { useInboundBatchesByDateRange } from "@/features/live-chicken/api/inboundBatches.queries";
 // import { fetchBatchSalesByBatch } from "@/domains/live-chicken/api/inboundBatchSales.api";
 
 import { FlockBatchOverview } from "./FlockBatchOverview";

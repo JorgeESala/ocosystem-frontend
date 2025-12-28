@@ -3,6 +3,7 @@ import type {
   InboundBatch,
   CreateInboundBatchRequest,
   UpdateInboundBatchRequest,
+  UpdateInboundBatchPayload,
 } from "../types";
 
 const BASE_URL = "/api/live-chicken/inbound-batches";
@@ -21,6 +22,7 @@ export const getLatestInboundBatches = async (
 
   return data;
 };
+
 export const getInboundBatchById = async (
   id: number,
 ): Promise<InboundBatch> => {
@@ -49,14 +51,18 @@ export const createInboundBatch = async (
   return data;
 };
 
-export const updateInboundBatch = async (
+export const updateInboundBatch = (
   id: number,
-  payload: UpdateInboundBatchRequest,
-): Promise<InboundBatch> => {
-  const { data } = await http.put<InboundBatch>(`${BASE_URL}/${id}`, payload);
+  data: UpdateInboundBatchPayload,
+) => {
+  const payload: UpdateInboundBatchRequest = {
+    ...data,
+    date: data.date?.toISOString().split("T")[0],
+  };
 
-  return data;
+  return http.put(`${BASE_URL}/${id}`, payload);
 };
+
 export const deleteInboundBatch = async (id: number): Promise<void> => {
   await http.delete(`${BASE_URL}/${id}`);
 };

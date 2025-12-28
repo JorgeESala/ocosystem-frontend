@@ -8,7 +8,7 @@ import {
   getInboundBatchesByDateRange,
 } from "./inboundBatches.api";
 import { inboundBatchKeys } from "./inboundBatch.keys";
-import type { UpdateInboundBatchRequest } from "../types";
+import type { UpdateInboundBatchPayload } from "../types";
 
 export const useInboundBatches = () => {
   return useQuery({
@@ -31,7 +31,7 @@ export const useCreateInboundBatch = () => {
     mutationFn: createInboundBatch,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.lists(),
+        queryKey: inboundBatchKeys.all,
       });
     },
   });
@@ -45,14 +45,12 @@ export const useInboundBatchesByDateRange = (
   const isReady = enabled && !!startDate && !!endDate;
 
   return useQuery({
-    queryKey:
-      startDate && endDate
-        ? inboundBatchKeys.range(startDate, endDate)
-        : inboundBatchKeys.lists(),
+    queryKey: inboundBatchKeys.range(startDate!, endDate!),
     queryFn: () => getInboundBatchesByDateRange(startDate!, endDate!),
     enabled: isReady,
   });
 };
+
 export const useUpdateInboundBatch = () => {
   const queryClient = useQueryClient();
 
@@ -62,7 +60,7 @@ export const useUpdateInboundBatch = () => {
       payload,
     }: {
       id: number;
-      payload: UpdateInboundBatchRequest;
+      payload: UpdateInboundBatchPayload;
     }) => updateInboundBatch(id, payload),
 
     onSuccess: (_, { id }) => {
@@ -82,10 +80,9 @@ export const useDeleteInboundBatch = () => {
 
   return useMutation({
     mutationFn: deleteInboundBatch,
-
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.lists(),
+        queryKey: inboundBatchKeys.all,
       });
     },
   });

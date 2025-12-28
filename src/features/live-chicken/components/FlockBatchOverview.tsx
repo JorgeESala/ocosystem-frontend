@@ -1,26 +1,32 @@
 import { useState } from "react";
-import { Button } from "flowbite-react";
+import { Alert, Button, Spinner } from "flowbite-react";
 import { HiChevronDown, HiChevronUp } from "react-icons/hi";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { fetchBatchSalesByBatch } from "@/services/api";
+import { useInboundBatchSales } from "@/features/live-chicken/api/inboundBatchSales.queries";
 
 import BatchEntryForm from "./BatchEntryForm";
-import type { InboundBatch } from "../types";
+import type { InboundBatch, InboundBatchFormValues } from "../types";
+import InboundBatchSaleEntryForm from "./InboundBatchSaleEntryForm";
+import { useUpdateInboundBatch } from "@/features/live-chicken/api/inboundBatches.queries";
+import { BatchSalesTable } from "./BatchSalesTable";
 
 export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   batch,
 }) => {
   const queryClient = useQueryClient();
+  const updateBatchMutation = useUpdateInboundBatch();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const [editingBatch, setEditingBatch] = useState<InboundBatch | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<InboundBatch | null>(null);
 
-  const { data: sales = [] } = useQuery({
-    queryKey: ["batchSales", batch.id],
-    queryFn: () => fetchBatchSalesByBatch(batch.id),
-    staleTime: 1000 * 60 * 5,
-  });
+  const {
+    data: sales = [],
+    isLoading,
+    isError,
+  } = useInboundBatchSales(batch.id);
 
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
   const chickensRemaining = batch.chickenQuantity - chickensSold;
@@ -31,9 +37,30 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
     return "text-red-500"; // se pasaron
   }
 
-  const handleBatchUpdated = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["batches"] });
-    setEditingBatch(null);
+  const handleBatchUpdate = (values: InboundBatchFormValues) => {
+    if (!editingBatch) return;
+    updateBatchMutation.mutate(
+      {
+        id: editingBatch.id,
+        payload: {
+          supplierId: values.supplierId!,
+          date: values.date,
+          realWeight: Number(values.realWeight),
+          declaredWeight: Number(values.declaredWeight),
+          chickenQuantity: Number(values.chickenQuantity),
+          pricePerKg: Number(values.pricePerKg),
+        },
+      },
+      {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({
+            queryKey: ["batches"],
+          });
+
+          setEditingBatch(null);
+        },
+      },
+    );
   };
 
   return (
@@ -49,7 +76,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           </h3>
 
           <p className="text-center text-sm text-gray-400">
-            {/* {batch.supplierName} • {batch.date} */}
+            {batch.supplierName} • {batch.date}
           </p>
 
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
@@ -90,6 +117,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
             color="light"
             onClick={(e) => {
               e.stopPropagation();
+              setSelectedBatch(batch);
             }}
           >
             Agregar venta
@@ -113,28 +141,32 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
         </div>
       </div>
 
-      {/* Modal agregar venta */}
-      {/* {selectedBatch && (
-        <SaleEntryForm
+      {selectedBatch && (
+        <InboundBatchSaleEntryForm
           batch={selectedBatch}
           onClose={() => setSelectedBatch(null)}
-          onSuccess={handleSaleCreated}
+          onSuccess={async () => {
+            await queryClient.invalidateQueries({
+              queryKey: ["batchSales", selectedBatch.id],
+            });
+            setSelectedBatch(null);
+          }}
         />
-      )} */}
+      )}
 
       {/* Modal editar remesa */}
       {editingBatch && (
         <BatchEntryForm
           open={!!editingBatch}
-          batch={editingBatch}
           mode="edit"
+          batch={editingBatch}
           onClose={() => setEditingBatch(null)}
-          onSubmit={handleBatchUpdated}
+          onSubmit={handleBatchUpdate}
         />
       )}
 
       {/* Subtabla */}
-      {/* {isOpen && (
+      {isOpen && (
         <div className="border-t border-gray-700 bg-gray-900 p-4">
           <h4 className="mb-3 text-center text-lg font-semibold text-gray-200">
             Ventas de esta remesa
@@ -145,14 +177,12 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
               <Spinner />
             </div>
           ) : isError ? (
-            <Alert color="failure" icon={HiExclamation}>
-              Error al cargar ventas.
-            </Alert>
+            <Alert color="failure">Error al cargar ventas.</Alert>
           ) : (
             <BatchSalesTable batch={batch} sales={sales} />
           )}
         </div>
-      )} */}
+      )}
     </div>
   );
 };

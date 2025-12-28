@@ -14,8 +14,8 @@ import ComparisonGraphs from "../components/ComparisonGraphs";
 import SalesAndBatches from "../components/SalesAndBatches";
 import Expenses from "../components/Expenses";
 import BusinessDashboard from "../components/BussinesDashboard";
-import FlockTrackingPage from "../domains/live-chicken/pages/FlockTrackingPage";
-import ExpensesPage from "../domains/live-chicken/pages/ExpensesPage";
+import FlockTrackingPage from "../features/live-chicken/pages/FlockTrackingPage";
+import ExpensesPage from "../features/live-chicken/pages/ExpensesPage";
 
 export default function AppRoutes() {
   return (

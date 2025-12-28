@@ -1,22 +1,22 @@
 import React from "react";
-import { Batch, DailyBatchSale } from "../../../services/api";
+import type { InboundBatch, InboundBatchSale } from "../types";
 
 interface Props {
-  batch: Batch;
-  sales: DailyBatchSale[];
+  batch: InboundBatch;
+  sales: InboundBatchSale[];
 }
 
 export const BatchSalesSummary: React.FC<Props> = ({ batch, sales }) => {
   if (sales.length === 0) return null;
 
   const totalQuantitySold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
-  const totalKgSold = sales.reduce((sum, s) => sum + s.kgTotal, 0);
-  const totalKgGut = sales.reduce((sum, s) => sum + s.kgGut, 0);
+  const totalKgSold = sales.reduce((sum, s) => sum + s.kgSold, 0);
+  const totalDif = sales.reduce((sum, s) => sum + s.kgSent - s.kgSold, 0);
   const totalSale = sales.reduce((sum, s) => sum + s.saleTotal, 0);
-  const avgWeight = batch.avgChickenWeight ? batch.avgChickenWeight : 0;
-
-  const loss = avgWeight * totalQuantitySold - totalKgSold - totalKgGut;
-  const gain = totalSale - avgWeight * totalQuantitySold * batch.pricePerKg;
+  const avgWeight = batch.avgWeight ? batch.avgWeight : 0;
+  const realPricePerKg = batch.totalPaid / batch.realWeight;
+  const loss = batch.realWeight - totalKgSold;
+  const gain = totalSale - avgWeight * totalQuantitySold * realPricePerKg;
 
   return (
     <div className="mt-2 rounded-md bg-gray-100 p-2 dark:bg-gray-700">
@@ -34,9 +34,9 @@ export const BatchSalesSummary: React.FC<Props> = ({ batch, sales }) => {
           {Number((totalSale / totalKgSold).toFixed(3)).toLocaleString("es-MX")}
         </div>
         <div>Merma: {loss.toFixed(4)} kg</div>
-        <div className="mt-1">Total de diferencia: 25 kg</div>
+        <div className="mt-1">Total de diferencia: {totalDif.toFixed(3)}</div>
         <div className="mt-1 font-semibold">
-          Ganancia: ${Number(gain.toFixed(3)).toLocaleString("es-MX")}
+          Ganancia aprox: ${Number(gain.toFixed(3)).toLocaleString("es-MX")}
         </div>
       </div>
     </div>

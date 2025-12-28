@@ -16,7 +16,7 @@ import { HiCheck, HiX } from "react-icons/hi";
 import {
   type InboundBatch,
   type InboundBatchFormValues,
-} from "@/domains/live-chicken/types";
+} from "@/features/live-chicken/types";
 import { getSuppliers } from "../api/suppliers.api";
 import { useQuery } from "@tanstack/react-query";
 
@@ -82,24 +82,7 @@ export default function InboundBatchEntryForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      onSubmit(formValues);
-      setToastType("success");
-      setToastMessage(
-        mode === "edit"
-          ? "Remesa actualizada."
-          : "Remesa creada correctamente.",
-      );
-
-      setTimeout(() => {
-        setToastMessage(null);
-        onClose();
-      }, 600);
-    } catch {
-      setToastType("failure");
-      setToastMessage("Error al guardar la remesa.");
-    }
+    onSubmit(formValues);
   };
 
   return (
