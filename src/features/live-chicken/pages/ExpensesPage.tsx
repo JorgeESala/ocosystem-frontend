@@ -19,7 +19,7 @@ export default function ExpensesPage() {
   ======================= */
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
-
+  console.log(startDate, endDate);
   /* =======================
      Data
   ======================= */
