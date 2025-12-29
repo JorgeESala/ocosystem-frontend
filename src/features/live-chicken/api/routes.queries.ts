@@ -16,6 +16,7 @@ export const useCreateRoute = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: routeKeys.list(),
+        exact: true,
       });
     },
   });

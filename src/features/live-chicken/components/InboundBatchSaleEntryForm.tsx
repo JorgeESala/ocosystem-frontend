@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   Button,
-  Card,
   Datepicker,
   Label,
+  Modal,
+  ModalBody,
+  ModalHeader,
   Select,
   TextInput,
   Toast,
@@ -25,8 +27,8 @@ import {
 
 import { useEmployees } from "@/features/employee/api/employees.queries";
 import { JobPosition } from "@/features/employee/types";
-import { getRoutes } from "../api/routes.api";
-import { useQuery } from "@tanstack/react-query";
+import CreateRouteInlineForm from "./CreateRouteInlineForm";
+import { useRoutes } from "../api/routes.queries";
 
 interface SaleEntryFormProps {
   batch: InboundBatch;
@@ -55,11 +57,11 @@ export default function InboundBatchSaleEntryForm({
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [showCreateRoute, setShowCreateRoute] = useState(false);
 
   /* =========================
      QUERIES / MUTATIONS
      ========================= */
-
   const { data: employees = [] } = useEmployees(JobPosition.DRIVER);
 
   const createMutation = useCreateInboundBatchSale(batch.id);
@@ -71,10 +73,8 @@ export default function InboundBatchSaleEntryForm({
     data: routes = [],
     isLoading: routesLoading,
     isError: routesError,
-  } = useQuery({
-    queryKey: ["routes"],
-    queryFn: getRoutes,
-  });
+  } = useRoutes();
+
   /* =========================
      EFFECTS
      ========================= */
@@ -178,25 +178,12 @@ export default function InboundBatchSaleEntryForm({
      ========================= */
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/25 p-4"
-      onClick={onClose}
-    >
-      <Card
-        className="relative w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-200"
-        >
-          <HiX className="h-6 w-6" />
-        </button>
+    <Modal show={true} onClose={onClose} size="md">
+      <ModalHeader>
+        {isEditMode ? "Editar venta" : "Nueva venta"} – Remesa #{batch.id}
+      </ModalHeader>
 
-        <h3 className="mb-2 text-lg font-semibold text-white">
-          {isEditMode ? "Editar venta" : "Nueva venta"} – Remesa #{batch.id}
-        </h3>
-
+      <ModalBody>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Label>Fecha</Label>
           <Datepicker
@@ -220,29 +207,54 @@ export default function InboundBatchSaleEntryForm({
               </option>
             ))}
           </Select>
-          <div>
-            <Label>Ruta</Label>
-            <Select
-              name="routeId"
-              required
-              disabled={routesLoading || routesError}
-              value={formData.routeId ?? ""}
-              onChange={handleChange}
-            >
-              <option value="" disabled>
-                {routesLoading
-                  ? "Cargando rutas..."
-                  : routesError
-                    ? "Error al cargar rutas"
-                    : "Selecciona una ruta"}
-              </option>
 
-              {routes.map((route) => (
-                <option key={route.id} value={route.id}>
-                  {route.name}
+          <div className="space-y-1">
+            <Label>Ruta</Label>
+
+            <div className="flex gap-2">
+              <Select
+                name="routeId"
+                value={formData.routeId ?? ""}
+                onChange={handleChange}
+              >
+                <option value="">
+                  {routesLoading
+                    ? "Cargando rutas..."
+                    : routesError
+                      ? "Error al cargar rutas"
+                      : "Selecciona una ruta"}
                 </option>
-              ))}
-            </Select>
+
+                {routes.map((route) => (
+                  <option key={route.id} value={route.id}>
+                    {route.name}
+                  </option>
+                ))}
+              </Select>
+
+              <Button
+                size="sm"
+                color="light"
+                type="button"
+                onClick={() => setShowCreateRoute(true)}
+              >
+                + Nueva
+              </Button>
+            </div>
+
+            {showCreateRoute && (
+              <CreateRouteInlineForm
+                onCancel={() => setShowCreateRoute(false)}
+                onCreated={(route) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    routeId: route.id,
+                  }));
+
+                  setShowCreateRoute(false);
+                }}
+              />
+            )}
           </div>
 
           <Label>Pollos vendidos</Label>
@@ -280,18 +292,18 @@ export default function InboundBatchSaleEntryForm({
             onChange={handleChange}
           />
 
-          <div className="mt-2 flex justify-between">
+          <div className="mt-3 flex justify-between">
             <Button type="submit" disabled={createMutation.isPending}>
               Guardar
             </Button>
-            <Button color="gray" onClick={onClose}>
+            <Button color="gray" type="button" onClick={onClose}>
               Cancelar
             </Button>
           </div>
         </form>
 
         {toastMessage && (
-          <Toast className="mt-2">
+          <Toast className="mt-3">
             <div
               className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
                 toastType === "success"
@@ -309,7 +321,7 @@ export default function InboundBatchSaleEntryForm({
             <ToastToggle onClick={() => setToastMessage(null)} />
           </Toast>
         )}
-      </Card>
-    </div>
+      </ModalBody>
+    </Modal>
   );
 }
