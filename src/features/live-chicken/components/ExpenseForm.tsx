@@ -1,99 +1,90 @@
-import React, { useEffect, useState } from "react";
-import {
-  Button,
-  Datepicker,
-  Label,
-  Select,
-  Spinner,
-  TextInput,
-} from "flowbite-react";
-
-import { Expense, ExpenseCategory } from "@/services/api";
+import { useEffect, useState } from "react";
+import { Button, Datepicker, Label, Spinner, TextInput } from "flowbite-react";
+import type {
+  ExpenseCreateRequestDTO,
+  ExpenseResponseDTO,
+  ExpenseUpdateRequestDTO,
+} from "../types";
+import { useCreateExpense, useUpdateExpense } from "../api/expense.queries";
 
 interface ExpenseFormProps {
-  initialData?: Expense;
-  onSaved: (expense: Expense) => void;
+  initialData?: ExpenseResponseDTO;
+  onSaved: () => void;
   onCancel: () => void;
 }
 
 export default function ExpenseForm({
   initialData,
+  onSaved,
   onCancel,
 }: ExpenseFormProps) {
   const isEditing = Boolean(initialData);
 
-  // Campos
-  const [amount, setAmount] = useState(initialData?.amount?.toString() ?? "");
-  const [reason, setReason] = useState(initialData?.reason ?? "");
-  const [date, setDate] = useState<Date>(
-    initialData ? new Date(initialData.date) : new Date(),
-  );
-  const [categoryId, setCategoryId] = useState<string>(
-    initialData?.category?.id?.toString() ?? "",
-  );
+  /* =======================
+     Estado del formulario
+  ======================= */
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [date, setDate] = useState<Date>(new Date());
 
-  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  /* =======================
+     Queries
+  ======================= */
+  const createMutation = useCreateExpense();
+  const updateMutation = useUpdateExpense();
 
-  // Cargar cat y branch
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  const error = createMutation.error || updateMutation.error;
+
+  /* =======================
+     Precargar datos (edit)
+  ======================= */
   useEffect(() => {
-    setCategories([
-      { id: 1, name: "Combustible" },
-      { id: 2, name: "Nomina" },
-      { id: 3, name: "Otro" },
-    ]);
-  }, []);
+    if (initialData) {
+      setAmount(initialData.amount.toString());
+      setReason(initialData.reason);
+      setDate(new Date(initialData.date));
+    }
+  }, [initialData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  /* =======================
+     Submit
+  ======================= */
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // try {
-    //   let saved: Expense;
+    if (!amount || !reason || !date) return;
 
-    //   if (isEditing && initialData) {
-    //     saved = await updateExpense(initialData.id, {
-    //       amount: Number(amount),
-    //       reason,
-    //       date,
-    //       categoryId: Number(categoryId),
-    //       branchId: Number(branchId),
-    //     });
-    //   } else {
-    //     saved = await createExpense({
-    //       amount: Number(amount),
-    //       reason,
-    //       date,
-    //       categoryId: Number(categoryId),
-    //       branchId: Number(branchId),
-    //     });
-    //   }
+    const formattedDate = date;
 
-    //   onSaved(saved);
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+    if (isEditing && initialData) {
+      const dto: ExpenseUpdateRequestDTO = {
+        amount: Number(amount),
+        reason,
+        date: formattedDate,
+      };
+
+      updateMutation.mutate(
+        { id: initialData.id, dto },
+        { onSuccess: onSaved },
+      );
+    } else {
+      const dto: ExpenseCreateRequestDTO = {
+        amount: Number(amount),
+        reason,
+        date: formattedDate,
+      };
+
+      createMutation.mutate(dto, { onSuccess: onSaved });
+    }
   };
 
+  /* =======================
+     Render
+  ======================= */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Categoría */}
-      <div>
-        <Label>Categoría</Label>
-        <Select
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          required
-        >
-          <option value="">Selecciona una categoría</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
-      </div>
-
       {/* Monto */}
       <div>
         <Label>Monto</Label>
@@ -116,31 +107,6 @@ export default function ExpenseForm({
           onChange={(e) => setReason(e.target.value)}
         />
       </div>
-      {/* Empleado */}
-      <div>
-        <Label>Chofer</Label>
-        <Select required onChange={(e) => setReason(e.target.value)}>
-          <option value="">Seleccione un chofer</option>
-          <option value="1">Jorge</option>
-          <option value="2">Shamir</option>
-          <option value="2">Erick</option>
-          <option value="2">Jorge</option>
-          <option value="2">Samuel</option>
-        </Select>
-      </div>
-      {/* Ruta */}
-      <div>
-        <Label>Ruta</Label>
-        <Select required onChange={(e) => setReason(e.target.value)}>
-          <option value="">Seleccione una ruta</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="2">3</option>
-          <option value="2">4</option>
-          <option value="2">5</option>
-          <option value="2">6</option>
-        </Select>
-      </div>
 
       {/* Fecha */}
       <div>
@@ -148,9 +114,15 @@ export default function ExpenseForm({
         <Datepicker
           language="es-MX"
           value={date}
-          onChange={(d: Date | null) => setDate(d || new Date())}
+          onChange={(d) => d && setDate(d)}
         />
       </div>
+
+      {error && (
+        <div className="text-sm text-red-500">
+          Ocurrió un error al guardar el gasto
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button color="gray" type="button" onClick={onCancel}>
@@ -160,7 +132,7 @@ export default function ExpenseForm({
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <div className="flex items-center">
-              <Spinner size="sm" className="me-2" light />
+              <Spinner size="sm" className="me-2" />
               Guardando...
             </div>
           ) : isEditing ? (

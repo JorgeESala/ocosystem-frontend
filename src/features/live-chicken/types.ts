@@ -2,7 +2,7 @@ export interface InboundBatch {
   id: number;
   supplierId: number;
   supplierName: string;
-  date: string; //(YYYY-MM-DD)
+  date: string;
   realWeight: number;
   declaredWeight: number;
   chickenQuantity: number;
@@ -95,4 +95,22 @@ export interface UpdateInboundBatchSalePayload {
   kgSent: number;
   date: Date;
   employeeId: number;
+}
+export interface ExpenseResponseDTO {
+  id: number;
+  reason: string;
+  amount: number;
+  date: string;
+}
+
+export interface ExpenseCreateRequestDTO {
+  reason: string;
+  amount: number;
+  date: Date;
+}
+
+export interface ExpenseUpdateRequestDTO {
+  reason?: string;
+  amount?: number;
+  date?: Date;
 }

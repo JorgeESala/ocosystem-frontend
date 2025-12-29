@@ -1,79 +1,40 @@
-import { useEffect, useState } from "react";
-import { Expense, fetchLatestExpenses } from "../../../services/api";
-import ExpensesList from "../components/ExpensesList";
+import { useState } from "react";
 import { Button, Datepicker } from "flowbite-react";
+
+import ExpensesList from "../components/ExpensesList";
 import ExpenseModal from "../components/ExpenseModal";
+import type { ExpenseResponseDTO } from "../types";
+import { useLatestExpenses } from "../api/expense.queries";
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  /* =======================
+     Modales / selección
+  ======================= */
   const [showModal, setShowModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedExpense, setSelectedExpense] =
+    useState<ExpenseResponseDTO | null>(null);
 
-  // --- filtros ---
+  /* =======================
+     Filtros (UI solamente)
+  ======================= */
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
 
-  // Cargar gastos con filtros
-  const loadFilteredExpenses = async () => {
-    setIsLoading(true);
-    setError(null);
+  /* =======================
+     Data
+  ======================= */
+  const { data: expenses = [], isLoading, isError } = useLatestExpenses();
 
-    // try {
-    //   const data = await fetchExpensesByBranchesAndDateRange(
-    //     selectedBranches,
-    //     startDate,
-    //     endDate,
-    //   );
-    //   setExpenses(data);
-    // } catch (err) {
-    //   console.error(err);
-    //   setError("No se pudieron cargar los gastos filtrados.");
-    // } finally {
-    //   setIsLoading(false);
-    // }
-  };
-
-  // Cargar gastos iniciales
-  useEffect(() => {
-    setIsLoading(false);
-    console.log(startDate, endDate);
-  }, []);
-
-  useEffect(() => {
-    const loadLatestExpenses = async () => {
-      setIsLoading(true);
-      try {
-        const latestExpenses = await fetchLatestExpenses();
-        setExpenses(latestExpenses);
-      } catch (err) {
-        console.error(err);
-        setError("No se pudieron cargar los gastos.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadLatestExpenses();
-  }, []);
-
-  const handleCreated = (updated: Expense) => {
-    setExpenses((prev) => {
-      const exists = prev.some((e) => e.id === updated.id);
-      return exists
-        ? prev.map((e) => (e.id === updated.id ? updated : e))
-        : [updated, ...prev];
-    });
-  };
-
+  /* =======================
+     Handlers
+  ======================= */
   const handleCreateClick = () => {
     setSelectedExpense(null);
     setShowModal(true);
   };
 
-  const handleEditClick = (exp: Expense) => {
-    setSelectedExpense(exp);
+  const handleEditClick = (expense: ExpenseResponseDTO) => {
+    setSelectedExpense(expense);
     setShowModal(true);
   };
 
@@ -98,7 +59,7 @@ export default function ExpensesPage() {
       </div>
 
       <div className="mt-4">
-        <Button fullSized onClick={loadFilteredExpenses}>
+        <Button fullSized disabled>
           Buscar
         </Button>
       </div>
@@ -107,9 +68,13 @@ export default function ExpensesPage() {
         <div className="py-4 text-center text-gray-400">Cargando gastos...</div>
       )}
 
-      {error && <div className="py-4 text-center text-red-400">{error}</div>}
+      {isError && (
+        <div className="py-4 text-center text-red-400">
+          No se pudieron cargar los gastos.
+        </div>
+      )}
 
-      {!isLoading && !error && (
+      {!isLoading && !isError && (
         <ExpensesList expenses={expenses} onSelect={handleEditClick} />
       )}
 
@@ -117,7 +82,6 @@ export default function ExpensesPage() {
         open={showModal}
         onClose={() => setShowModal(false)}
         expenseToEdit={selectedExpense}
-        onCreated={handleCreated}
       />
     </div>
   );

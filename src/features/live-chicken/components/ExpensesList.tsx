@@ -1,9 +1,20 @@
-import { Expense } from "../../../services/api.ts";
+import { formatHumanDate } from "@/utils/date.utils";
+import type { ExpenseResponseDTO } from "../types";
 
 interface ExpensesListProps {
-  expenses: Expense[];
-  onSelect?: (expense: Expense) => void;
+  expenses: ExpenseResponseDTO[];
+  onSelect?: (expense: ExpenseResponseDTO) => void;
 }
+
+/* =======================
+   Utils
+======================= */
+
+const formatCurrency = (amount: number) =>
+  amount.toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+  });
 
 export default function ExpensesList({
   expenses,
@@ -25,17 +36,19 @@ export default function ExpensesList({
           className="cursor-pointer rounded-xl bg-gray-800 p-4 text-white shadow transition hover:bg-gray-700"
           onClick={() => onSelect?.(expense)}
         >
+          {/* Header */}
           <div className="mb-1 flex items-center justify-between">
-            <span className="font-semibold">{expense.branch.name}</span>
-            <span className="font-semibold">{expense.category.name}</span>
-            <span className="text-sm opacity-70">{expense.date}</span>
+            <span className="font-semibold">{expense.reason}</span>
+            <span className="text-sm opacity-70">
+              {formatHumanDate(expense.date)}
+            </span>
           </div>
 
+          {/* Body */}
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold">
-              ${expense.amount.toLocaleString()}
+              {formatCurrency(expense.amount)}
             </span>
-            <span className="text-sm opacity-80">{expense.reason}</span>
           </div>
         </li>
       ))}

@@ -1,18 +1,16 @@
 import { Modal, ModalHeader, ModalBody } from "flowbite-react";
 import ExpenseForm from "./ExpenseForm";
-import { Expense } from "../../../services/api";
+import type { ExpenseResponseDTO } from "../types";
 
 interface ExpenseModalProps {
   open: boolean;
   onClose: () => void;
-  onCreated: (expense: Expense) => void;
-  expenseToEdit?: Expense | null; // null = crear, objeto = editar
+  expenseToEdit?: ExpenseResponseDTO | null; // null = crear
 }
 
 export default function ExpenseModal({
   open,
   onClose,
-  onCreated,
   expenseToEdit = null,
 }: ExpenseModalProps) {
   const isEditing = Boolean(expenseToEdit);
@@ -24,10 +22,7 @@ export default function ExpenseModal({
       <ModalBody>
         <ExpenseForm
           initialData={expenseToEdit ?? undefined}
-          onSaved={(exp) => {
-            onCreated(exp);
-            onClose();
-          }}
+          onSaved={onClose}
           onCancel={onClose}
         />
       </ModalBody>
