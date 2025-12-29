@@ -4,6 +4,7 @@ import {
   Card,
   Datepicker,
   Label,
+  Select,
   TextInput,
   Toast,
   ToastToggle,
@@ -24,6 +25,8 @@ import {
 
 import { useEmployees } from "@/features/employee/api/employees.queries";
 import { JobPosition } from "@/features/employee/types";
+import { getRoutes } from "../api/routes.api";
+import { useQuery } from "@tanstack/react-query";
 
 interface SaleEntryFormProps {
   batch: InboundBatch;
@@ -41,6 +44,7 @@ export default function InboundBatchSaleEntryForm({
   const isEditMode = !!existingSale;
 
   const [formData, setFormData] = useState({
+    routeId: null as number | null,
     quantitySold: "",
     kgSold: "",
     kgSent: "",
@@ -63,7 +67,14 @@ export default function InboundBatchSaleEntryForm({
     batch.id,
     existingSale?.id ?? 0,
   );
-
+  const {
+    data: routes = [],
+    isLoading: routesLoading,
+    isError: routesError,
+  } = useQuery({
+    queryKey: ["routes"],
+    queryFn: getRoutes,
+  });
   /* =========================
      EFFECTS
      ========================= */
@@ -71,6 +82,7 @@ export default function InboundBatchSaleEntryForm({
   useEffect(() => {
     if (existingSale) {
       setFormData({
+        routeId: Number(existingSale.routeId),
         quantitySold: String(existingSale.quantitySold),
         kgSold: String(existingSale.kgSold),
         kgSent: String(existingSale.kgSent),
@@ -133,6 +145,7 @@ export default function InboundBatchSaleEntryForm({
       });
     } else {
       const payload: CreateInboundBatchSalePayload = {
+        routeId: Number(formData.routeId),
         batchId: batch.id,
         quantitySold: Number(formData.quantitySold),
         kgSold: Number(formData.kgSold),
@@ -195,9 +208,8 @@ export default function InboundBatchSaleEntryForm({
           />
 
           <Label>Chofer</Label>
-          <select
+          <Select
             name="employeeId"
-            className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
             value={formData.employeeId ?? ""}
             onChange={handleChange}
           >
@@ -207,7 +219,31 @@ export default function InboundBatchSaleEntryForm({
                 {emp.name}
               </option>
             ))}
-          </select>
+          </Select>
+          <div>
+            <Label>Ruta</Label>
+            <Select
+              name="routeId"
+              required
+              disabled={routesLoading || routesError}
+              value={formData.routeId ?? ""}
+              onChange={handleChange}
+            >
+              <option value="" disabled>
+                {routesLoading
+                  ? "Cargando rutas..."
+                  : routesError
+                    ? "Error al cargar rutas"
+                    : "Selecciona una ruta"}
+              </option>
+
+              {routes.map((route) => (
+                <option key={route.id} value={route.id}>
+                  {route.name}
+                </option>
+              ))}
+            </Select>
+          </div>
 
           <Label>Pollos vendidos</Label>
           <TextInput

@@ -47,6 +47,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
             <TableRow className="text-center">
               <TableHeadCell>Fecha</TableHeadCell>
               <TableHeadCell>Chofer</TableHeadCell>
+              <TableHeadCell>Ruta</TableHeadCell>
               <TableHeadCell>Pollos vendidos</TableHeadCell>
               <TableHeadCell>Kg enviados</TableHeadCell>
               <TableHeadCell>Kg vendidos</TableHeadCell>
@@ -74,6 +75,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                   </TableCell>
 
                   <TableCell>{s.employeeName}</TableCell>
+                  <TableCell>{s.routeName}</TableCell>
 
                   <TableCell>{s.quantitySold}</TableCell>
 

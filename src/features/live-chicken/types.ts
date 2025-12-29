@@ -16,6 +16,8 @@ export interface InboundBatchSale {
   quantitySold: number;
   saleTotal: number;
   kgSold: number;
+  routeId: number;
+  routeName: string;
   kgSent: number;
   date: string;
   employeeId: number;
@@ -33,6 +35,7 @@ export interface UpdateInboundBatchSaleRequest {
 }
 
 export interface CreateInboundBatchSaleRequest {
+  routeId: number;
   batchId: number;
   quantitySold: number;
   saleTotal: number;
@@ -82,6 +85,10 @@ export type UpdateInboundBatchPayload = Omit<
 };
 
 export interface Supplier {
+  id: number;
+  name: string;
+}
+export interface Route {
   id: number;
   name: string;
 }
