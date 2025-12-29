@@ -7,3 +7,10 @@ export const getRoutes = async (): Promise<Route[]> => {
   const { data } = await http.get<Route[]>(BASE_URL);
   return data;
 };
+
+export const createRoute = async (payload: {
+  name: string;
+}): Promise<Route> => {
+  const { data } = await http.post("/routes", payload);
+  return data;
+};
