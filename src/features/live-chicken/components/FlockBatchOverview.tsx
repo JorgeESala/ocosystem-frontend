@@ -4,29 +4,44 @@ import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useInboundBatchSales } from "@/features/live-chicken/api/inboundBatchSales.queries";
+import { useUpdateInboundBatch } from "@/features/live-chicken/api/inboundBatches.queries";
 
 import BatchEntryForm from "./BatchEntryForm";
-import type { InboundBatch, InboundBatchFormValues } from "../types";
-import InboundBatchSaleEntryForm from "./InboundBatchSaleEntryForm";
-import { useUpdateInboundBatch } from "@/features/live-chicken/api/inboundBatches.queries";
 import { BatchSalesTable } from "./BatchSalesTable";
+
+import type {
+  InboundBatch,
+  InboundBatchFormValues,
+  InboundBatchSale,
+} from "../types";
+import BatchEntryModal from "./BatchEntryModal";
 
 export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   batch,
 }) => {
   const queryClient = useQueryClient();
   const updateBatchMutation = useUpdateInboundBatch();
+  type EntryType = "SALE" | "LOSS";
+  type EntryMode = "create" | "edit";
+
+  const [entryType, setEntryType] = useState<EntryType>("SALE");
+  const [entryMode, setEntryMode] = useState<EntryMode>("create");
+
+  const [saleToEdit, setSaleToEdit] = useState<InboundBatchSale | undefined>();
 
   const [isOpen, setIsOpen] = useState(false);
-
   const [editingBatch, setEditingBatch] = useState<InboundBatch | null>(null);
-  const [selectedBatch, setSelectedBatch] = useState<InboundBatch | null>(null);
+  const [entryBatch, setEntryBatch] = useState<InboundBatch | null>(null);
 
   const {
     data: sales = [],
     isLoading,
     isError,
   } = useInboundBatchSales(batch.id);
+  const closeEntryModal = () => {
+    setEntryBatch(null);
+    setSaleToEdit(undefined);
+  };
 
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
   const chickensRemaining = batch.chickenQuantity - chickensSold;
@@ -36,9 +51,9 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
     if (value === 0) return "text-green-400"; // exacto
     return "text-red-500"; // se pasaron
   }
-
   const handleBatchUpdate = (values: InboundBatchFormValues) => {
     if (!editingBatch) return;
+
     updateBatchMutation.mutate(
       {
         id: editingBatch.id,
@@ -53,10 +68,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
       },
       {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({
-            queryKey: ["batches"],
-          });
-
+          await queryClient.invalidateQueries({ queryKey: ["batches"] });
           setEditingBatch(null);
         },
       },
@@ -122,13 +134,14 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
             color="light"
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedBatch(batch);
+              setEntryType("SALE");
+              setEntryMode("create");
+              setEntryBatch(batch);
             }}
           >
-            Agregar venta
+            Agregar salida
           </Button>
 
-          {/* Botón Editar */}
           <Button
             size="xs"
             color="blue"
@@ -146,23 +159,27 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
         </div>
       </div>
 
-      {selectedBatch && (
-        <InboundBatchSaleEntryForm
-          batch={selectedBatch}
-          onClose={() => setSelectedBatch(null)}
+      {/* Modal de entradas (ventas / bajas) */}
+      {entryBatch && (
+        <BatchEntryModal
+          batch={entryBatch}
+          type={entryType}
+          mode={entryMode}
+          saleToEdit={saleToEdit}
+          onClose={closeEntryModal}
           onSuccess={async () => {
             await queryClient.invalidateQueries({
-              queryKey: ["batchSales", selectedBatch.id],
+              queryKey: ["batchSales", entryBatch.id],
             });
-            setSelectedBatch(null);
+            closeEntryModal();
           }}
         />
       )}
 
-      {/* Modal editar remesa */}
+      {/* Editar remesa */}
       {editingBatch && (
         <BatchEntryForm
-          open={!!editingBatch}
+          open
           mode="edit"
           batch={editingBatch}
           onClose={() => setEditingBatch(null)}
@@ -178,13 +195,20 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           </h4>
 
           {isLoading ? (
-            <div className="flex justify-center py-4">
-              <Spinner />
-            </div>
+            <Spinner />
           ) : isError ? (
-            <Alert color="failure">Error al cargar ventas.</Alert>
+            <Alert color="failure">Error al cargar ventas</Alert>
           ) : (
-            <BatchSalesTable batch={batch} sales={sales} />
+            <BatchSalesTable
+              batch={batch}
+              sales={sales}
+              onEditSale={(sale) => {
+                setEntryType("SALE");
+                setEntryMode("edit");
+                setSaleToEdit(sale);
+                setEntryBatch(batch);
+              }}
+            />
           )}
         </div>
       )}

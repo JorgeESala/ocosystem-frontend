@@ -64,7 +64,7 @@ export default function FlockTrackingPage() {
           <Datepicker onChange={(d) => setEndDate(d)} />
         </div>
         <div className="mt-2">
-          <Button fullSized onClick={handleSearch}>
+          <Button disabled fullSized onClick={handleSearch}>
             Buscar
           </Button>
         </div>
