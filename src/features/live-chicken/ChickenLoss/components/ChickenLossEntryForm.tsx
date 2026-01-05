@@ -111,7 +111,7 @@ export default function ChickenLossEntryForm({
         <TextInput
           type="number"
           step="0.01"
-          value={weight}
+          value={Number(weight.toFixed(2))}
           onChange={(e) => {
             setIsManualWeight(true);
             setWeight(Number(e.target.value));
@@ -121,7 +121,12 @@ export default function ChickenLossEntryForm({
 
       <div>
         <Label>Monto de la baja</Label>
-        <TextInput type="number" step="0.01" value={lossAmount} readOnly />
+        <TextInput
+          type="number"
+          step="0.001"
+          value={Number(lossAmount.toFixed(3))}
+          readOnly
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

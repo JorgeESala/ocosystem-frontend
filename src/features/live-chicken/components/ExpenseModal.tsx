@@ -5,7 +5,7 @@ import type { ExpenseResponseDTO } from "../types";
 interface ExpenseModalProps {
   open: boolean;
   onClose: () => void;
-  expenseToEdit?: ExpenseResponseDTO | null; // null = crear
+  expenseToEdit?: ExpenseResponseDTO | null;
 }
 
 export default function ExpenseModal({
