@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Datepicker, Label, Spinner, TextInput } from "flowbite-react";
 
 import {
@@ -8,29 +8,52 @@ import {
 import type { ChickenLoss } from "@/features/live-chicken/ChickenLoss/types/chickenLoss.types";
 
 interface ChickenLossEntryFormProps {
-  batchId: number;
+  batch: {
+    id: number;
+    avgWeight: number;
+    pricePerKg: number;
+  };
   initialData?: ChickenLoss;
   onSuccess: () => void;
 }
 
 export default function ChickenLossEntryForm({
-  batchId,
+  batch,
   initialData,
   onSuccess,
 }: ChickenLossEntryFormProps) {
   const isEditing = Boolean(initialData);
 
-  const [quantity, setQuantity] = useState<number>(initialData?.quantity ?? 0);
-  const [weight, setWeight] = useState<number>(initialData?.weight ?? 0);
-  const [lossAmount, setLossAmount] = useState<number>(
-    initialData?.lossAmount ?? 0,
-  );
+  const [quantity, setQuantity] = useState(initialData?.quantity ?? 1);
+
+  const [isManualWeight, setIsManualWeight] = useState(false);
+
+  const [weight, setWeight] = useState<number>(() => {
+    if (initialData) return initialData.weight;
+    return batch.avgWeight;
+  });
+
+  const [lossAmount, setLossAmount] = useState<number>(() => {
+    if (initialData) return initialData.lossAmount;
+    return batch.avgWeight * batch.pricePerKg;
+  });
+
   const [date, setDate] = useState<Date>(initialData?.date ?? new Date());
 
   const createMutation = useCreateChickenLoss();
   const updateMutation = useUpdateChickenLoss();
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  useEffect(() => {
+    if (isManualWeight) return;
+
+    const newWeight = batch.avgWeight * quantity;
+    setWeight(newWeight);
+  }, [quantity, batch.avgWeight, isManualWeight]);
+
+  useEffect(() => {
+    setLossAmount(weight * batch.pricePerKg);
+  }, [weight, batch.pricePerKg]);
 
   const handleSubmit = () => {
     if (isEditing && initialData) {
@@ -42,7 +65,7 @@ export default function ChickenLossEntryForm({
             quantity,
             weight,
             lossAmount,
-            batchId,
+            batchId: batch.id,
             date,
           },
         },
@@ -54,7 +77,7 @@ export default function ChickenLossEntryForm({
           quantity,
           weight,
           lossAmount,
-          batchId,
+          batchId: batch.id,
           date,
         },
         { onSuccess },
@@ -77,7 +100,7 @@ export default function ChickenLossEntryForm({
         <Label>Cantidad de bajas</Label>
         <TextInput
           type="number"
-          min={0}
+          min={1}
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
         />
@@ -89,18 +112,16 @@ export default function ChickenLossEntryForm({
           type="number"
           step="0.01"
           value={weight}
-          onChange={(e) => setWeight(Number(e.target.value))}
+          onChange={(e) => {
+            setIsManualWeight(true);
+            setWeight(Number(e.target.value));
+          }}
         />
       </div>
 
       <div>
         <Label>Monto de la baja</Label>
-        <TextInput
-          type="number"
-          step="0.01"
-          value={lossAmount}
-          onChange={(e) => setLossAmount(Number(e.target.value))}
-        />
+        <TextInput type="number" step="0.01" value={lossAmount} readOnly />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

@@ -48,7 +48,7 @@ export default function BatchEntryModal({
           />
         ) : (
           <ChickenLossEntryForm
-            batchId={batch.id}
+            batch={batch}
             initialData={mode === "edit" ? lossToEdit : undefined}
             onSuccess={onSuccess}
           />
