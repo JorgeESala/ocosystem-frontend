@@ -1,3 +1,5 @@
+import type { ChickenLoss } from "./ChickenLoss/types/chickenLoss.types";
+
 export interface InboundBatch {
   id: number;
   supplierId: number;
@@ -121,3 +123,25 @@ export interface ExpenseUpdateRequestDTO {
   amount?: number;
   date?: Date;
 }
+export type BatchMovement =
+  | {
+      type: "SALE";
+      id: number;
+      date: Date;
+      quantity: number;
+      weight: number;
+      kgSent: number;
+      amount: number;
+      employeeName?: string;
+      routeName?: string;
+      original: InboundBatchSale;
+    }
+  | {
+      type: "LOSS";
+      id: number;
+      date: Date;
+      quantity: number;
+      weight: number;
+      amount: number;
+      original: ChickenLoss;
+    };

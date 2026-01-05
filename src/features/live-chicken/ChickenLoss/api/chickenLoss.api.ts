@@ -18,7 +18,7 @@ const mapToCreateDTO = (
   model: Omit<ChickenLoss, "id">,
 ): ChickenLossCreateDTO => ({
   ...model,
-  date: model.date.toISOString().split("T")[0], // LocalDate safe
+  date: model.date.toISOString().split("T")[0],
 });
 const BASE_URL = "/api/live-chicken/chicken-losses";
 const mapToUpdateDTO = (model: ChickenLoss): ChickenLossUpdateDTO => ({
@@ -34,6 +34,15 @@ const mapToUpdateDTO = (model: ChickenLoss): ChickenLossUpdateDTO => ({
 // =====================
 export const fetchChickenLosses = async (): Promise<ChickenLoss[]> => {
   const res = await http.get<ChickenLossResponseDTO[]>(BASE_URL);
+  return res.data.map(mapToModel);
+};
+
+export const fetchChickenLossesByBatchId = async (
+  id: number,
+): Promise<ChickenLoss[]> => {
+  const res = await http.get<ChickenLossResponseDTO[]>(
+    `${BASE_URL}/by-batch/${id}`,
+  );
   return res.data.map(mapToModel);
 };
 

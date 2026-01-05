@@ -3,6 +3,7 @@ import {
   fetchChickenLosses,
   createChickenLoss,
   updateChickenLoss,
+  fetchChickenLossesByBatchId,
 } from "../api/chickenLoss.api";
 import { CHICKEN_LOSS_KEYS } from "./chickenLoss.keys";
 import { ChickenLoss } from "../types/chickenLoss.types";
@@ -14,6 +15,12 @@ export const useChickenLosses = () =>
   useQuery({
     queryKey: CHICKEN_LOSS_KEYS.list(),
     queryFn: fetchChickenLosses,
+  });
+
+export const useChickenLossesByBatchId = (batchId: number) =>
+  useQuery({
+    queryKey: CHICKEN_LOSS_KEYS.byBatch(batchId),
+    queryFn: () => fetchChickenLossesByBatchId(batchId),
   });
 
 // =====================

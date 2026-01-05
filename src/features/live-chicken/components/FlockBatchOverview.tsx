@@ -10,11 +10,14 @@ import BatchEntryForm from "./BatchEntryForm";
 import { BatchSalesTable } from "./BatchSalesTable";
 
 import type {
+  BatchMovement,
   InboundBatch,
   InboundBatchFormValues,
   InboundBatchSale,
 } from "../types";
 import BatchEntryModal from "./BatchEntryModal";
+import { useChickenLossesByBatchId } from "../ChickenLoss/api/chickenLoss.queries";
+import type { ChickenLoss } from "../ChickenLoss/types/chickenLoss.types";
 
 export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   batch,
@@ -28,6 +31,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   const [entryMode, setEntryMode] = useState<EntryMode>("create");
 
   const [saleToEdit, setSaleToEdit] = useState<InboundBatchSale | undefined>();
+  const [lossToEdit, setLossToEdit] = useState<ChickenLoss | undefined>();
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<InboundBatch | null>(null);
@@ -38,10 +42,37 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
     isLoading,
     isError,
   } = useInboundBatchSales(batch.id);
+
+  const { data: losses = [] } = useChickenLossesByBatchId(batch.id);
+
   const closeEntryModal = () => {
     setEntryBatch(null);
     setSaleToEdit(undefined);
+    setLossToEdit(undefined);
   };
+  const movements: BatchMovement[] = [
+    ...sales.map((s) => ({
+      type: "SALE" as const,
+      id: s.id,
+      date: new Date(s.date),
+      quantity: s.quantitySold,
+      weight: s.kgSold,
+      kgSent: s.kgSent,
+      amount: s.saleTotal,
+      employeeName: s.employeeName,
+      routeName: s.routeName,
+      original: s,
+    })),
+    ...losses.map((l) => ({
+      type: "LOSS" as const,
+      id: l.id,
+      date: l.date,
+      quantity: l.quantity,
+      weight: l.weight,
+      amount: l.lossAmount,
+      original: l,
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
   const chickensRemaining = batch.chickenQuantity - chickensSold;
@@ -166,6 +197,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           type={entryType}
           mode={entryMode}
           saleToEdit={saleToEdit}
+          lossToEdit={lossToEdit}
           onClose={closeEntryModal}
           onSuccess={async () => {
             await queryClient.invalidateQueries({
@@ -191,7 +223,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
       {isOpen && (
         <div className="border-t border-gray-700 bg-gray-900 p-4">
           <h4 className="mb-3 text-center text-lg font-semibold text-gray-200">
-            Ventas de esta remesa
+            Ventas y bajas de esta remesa
           </h4>
 
           {isLoading ? (
@@ -201,11 +233,17 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           ) : (
             <BatchSalesTable
               batch={batch}
-              sales={sales}
+              movements={movements}
               onEditSale={(sale) => {
                 setEntryType("SALE");
                 setEntryMode("edit");
                 setSaleToEdit(sale);
+                setEntryBatch(batch);
+              }}
+              onEditLoss={(loss) => {
+                setEntryType("LOSS");
+                setEntryMode("edit");
+                setLossToEdit(loss);
                 setEntryBatch(batch);
               }}
             />
