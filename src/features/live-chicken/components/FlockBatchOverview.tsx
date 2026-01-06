@@ -76,7 +76,8 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
-  const chickensRemaining = batch.chickenQuantity - chickensSold;
+  const chickensLost = losses.reduce((sum, s) => sum + s.quantity, 0);
+  const chickensRemaining = batch.chickenQuantity - chickensSold - chickensLost;
 
   function getRemainingColor(value: number) {
     if (value > 0) return "text-yellow-400"; // faltan
