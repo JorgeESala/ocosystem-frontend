@@ -18,6 +18,7 @@ import type {
 import BatchEntryModal from "./BatchEntryModal";
 import { useChickenLossesByBatchId } from "../ChickenLoss/api/chickenLoss.queries";
 import type { ChickenLoss } from "../ChickenLoss/types/chickenLoss.types";
+import { formatHumanDate } from "@/utils/date.utils";
 
 export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
   batch,
@@ -119,13 +120,16 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           </h3>
 
           <p className="text-center text-sm text-gray-400">
-            {batch.supplierName} • {batch.date}
+            {batch.supplierName} • {formatHumanDate(batch.date, "short")}
           </p>
 
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
             <span>🐔 {batch.chickenQuantity} pollos</span>
             <span className={getRemainingColor(chickensRemaining)}>
               🧮 Disponibles: {chickensRemaining}
+            </span>
+            <span>
+              📏 Peso promedio: {batch.avgWeight?.toFixed(2) ?? "-"} kg
             </span>
             <span>Peso Real {batch.realWeight} kg</span>
             <span>Peso Declarado {batch.declaredWeight} kg</span>
@@ -152,9 +156,6 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
               💰 Total: $
               {Number(batch.totalPaid?.toFixed(2)).toLocaleString("es-MX") ??
                 "-"}
-            </span>
-            <span>
-              📏 Peso promedio: {batch.avgWeight?.toFixed(2) ?? "-"} kg
             </span>
           </div>
         </div>

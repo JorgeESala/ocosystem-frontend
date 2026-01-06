@@ -108,7 +108,7 @@ export const BatchSalesTable: React.FC<Props> = ({
               return (
                 <TableRow
                   key={`LOSS-${m.id}`}
-                  className="bg-red-900/40 text-red-200"
+                  className="!bg-red-900 text-red-200"
                 >
                   <TableCell>{m.date.toLocaleDateString("es-MX")}</TableCell>
 

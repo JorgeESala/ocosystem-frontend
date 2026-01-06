@@ -399,14 +399,14 @@ export default function ComparisonsGraphs() {
                   dataKey={key}
                   stroke={getColorForKey(key)}
                   strokeWidth={3}
-                  strokeDasharray={isPastYear(key) ? "5 5" : ""} // solo pasado es punteado
+                  strokeDasharray={isPastYear(key) ? "5 5" : ""}
                   dot={{ r: 3 }}
                 />
               ))}
           {/* Etiqueta flotante dentro del SVG */}
           <text
-            x="98%" // posición horizontal (98% ≈ esquina derecha)
-            y="92%" // posición vertical (97% ≈ parte baja)
+            x="98%"
+            y="92%"
             textAnchor="end"
             dominantBaseline="central"
             fontSize="14"
@@ -451,7 +451,7 @@ export default function ComparisonsGraphs() {
                     content={(props) => {
                       const { x, y, width, value } = props;
 
-                      // Convertir TODO a número (evita TODOS tus errores)
+                      // Convertir TODO a número
                       const numX = Number(x);
                       const numY = Number(y);
                       const numWidth = Number(width);
