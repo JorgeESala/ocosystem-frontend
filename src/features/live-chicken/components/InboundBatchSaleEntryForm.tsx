@@ -104,6 +104,7 @@ export default function InboundBatchSaleEntryForm({
       quantitySold: Number(formData.quantitySold),
       kgSold: Number(formData.kgSold),
       kgSent: Number(formData.kgSent),
+      routeId: Number(formData.routeId),
       saleTotal: Number(formData.saleTotal),
       date: formData.date,
       employeeId: formData.employeeId,
@@ -124,7 +125,6 @@ export default function InboundBatchSaleEntryForm({
       });
     } else {
       const payload: CreateInboundBatchSalePayload = {
-        routeId: Number(formData.routeId),
         ...common,
       };
 

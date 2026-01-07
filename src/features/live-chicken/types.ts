@@ -98,6 +98,7 @@ export interface Route {
 export interface UpdateInboundBatchSalePayload {
   id: number;
   batchId: number;
+  routeId: number;
   quantitySold: number;
   saleTotal: number;
   kgSold: number;
