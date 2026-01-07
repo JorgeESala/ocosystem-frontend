@@ -184,9 +184,16 @@ export default function ReportPage() {
             onChange={(e) => setSelectedBranch(Number(e.target.value))}
           >
             <option value="">Selecciona un concepto</option>
+            <option value="">Agua</option>
+            <option value="">Luz</option>
+            <option value="">Internet</option>
+            <option value="">Renta</option>
+            <option value="">Gasolina</option>
+            <option value="">Gas</option>
+            <option value="">Vehiculos</option>
             <option value="">Alimento</option>
-            <option value="">Combustible</option>
-            <option value="">Vehiculo</option>
+            <option value="">Créditos</option>
+            <option value="">Limpieza</option>
             <option value="">Otro</option>
           </Select>
         </div>
