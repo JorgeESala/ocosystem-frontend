@@ -55,7 +55,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
     ...sales.map((s) => ({
       type: "SALE" as const,
       id: s.id,
-      date: new Date(s.date),
+      date: new Date(`${s.date}T00:00:00`),
       quantity: s.quantitySold,
       weight: s.kgSold,
       kgSent: s.kgSent,
