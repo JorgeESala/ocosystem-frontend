@@ -29,10 +29,15 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
   const chickensRemaining = batch.chickenQuantity - chickensSold;
 
-  function getRemainingColor(value: number) {
-    if (value > 0) return "text-yellow-400"; // faltan
-    if (value === 0) return "text-green-400"; // exacto
-    return "text-red-500"; // se pasaron
+  function getRemainingStyle(remaining: number, total: number) {
+    if (total <= 0) return { color: "hsl(0, 80%, 50%)" };
+
+    const ratio = Math.max(0, Math.min(remaining / total, 1));
+    const hue = ratio * 120; // 0 = rojo, 120 = verde
+
+    return {
+      color: `hsl(${hue}, 80%, 45%)`,
+    };
   }
 
   const handleSaleCreated = async () => {
@@ -65,7 +70,12 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
 
           <div className="mt-1 flex flex-wrap justify-center gap-3 text-sm text-gray-300">
             <span>🐔 {batch.chickenQuantity} pollos</span>
-            <span className={getRemainingColor(chickensRemaining)}>
+            <span
+              style={getRemainingStyle(
+                chickensRemaining,
+                batch.chickenQuantity,
+              )}
+            >
               🧮 Disponibles: {chickensRemaining}
             </span>
             <span>⚖️ {batch.kgTotal} kg</span>
