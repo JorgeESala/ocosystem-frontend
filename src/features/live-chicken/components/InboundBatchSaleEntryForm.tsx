@@ -66,7 +66,7 @@ export default function InboundBatchSaleEntryForm({
   useEffect(() => {
     if (existingSale) {
       setFormData({
-        routeId: Number(existingSale.routeId),
+        routeId: existingSale.routeId ?? null,
         quantitySold: String(existingSale.quantitySold),
         kgSold: String(existingSale.kgSold),
         kgSent: String(existingSale.kgSent),
@@ -76,23 +76,32 @@ export default function InboundBatchSaleEntryForm({
       });
     }
   }, [existingSale]);
+  const parseSelectNumber = (value: string): number | null =>
+    value === "" ? null : Number(value);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "routeId" || name === "employeeId"
+          ? parseSelectNumber(value)
+          : value,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (
+      formData.employeeId == null ||
       !formData.quantitySold ||
       !formData.kgSold ||
       !formData.kgSent ||
-      !formData.saleTotal ||
-      !formData.employeeId
+      !formData.saleTotal
     ) {
       setToastType("error");
       setToastMessage("Completa todos los campos");
@@ -104,10 +113,12 @@ export default function InboundBatchSaleEntryForm({
       quantitySold: Number(formData.quantitySold),
       kgSold: Number(formData.kgSold),
       kgSent: Number(formData.kgSent),
-      routeId: Number(formData.routeId),
       saleTotal: Number(formData.saleTotal),
       date: formData.date,
-      employeeId: formData.employeeId,
+      employeeId: Number(formData.employeeId),
+      ...(formData.routeId != null && {
+        routeId: Number(formData.routeId),
+      }),
     };
 
     if (isEditMode) {
