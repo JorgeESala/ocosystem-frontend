@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button, Datepicker } from "flowbite-react";
 
 import ExpensesList from "../components/ExpensesList";
-import ExpenseModal from "../components/ExpenseModal";
 import type { ExpenseResponseDTO } from "../types";
 import { useLatestExpenses } from "../api/expense.queries";
+import ExpenseEntryModal from "../Expenses/components/ExpenseEntryModal";
 
 export default function ExpensesPage() {
   /* =======================
@@ -78,11 +78,16 @@ export default function ExpensesPage() {
         <ExpensesList expenses={expenses} onSelect={handleEditClick} />
       )}
 
-      <ExpenseModal
+      <ExpenseEntryModal
         open={showModal}
         onClose={() => setShowModal(false)}
         expenseToEdit={selectedExpense}
       />
+      {/* <ExpenseModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        expenseToEdit={selectedExpense}
+      /> */}
     </div>
   );
 }

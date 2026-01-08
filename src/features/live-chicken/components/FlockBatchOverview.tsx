@@ -15,7 +15,7 @@ import type {
   InboundBatchFormValues,
   InboundBatchSale,
 } from "../types";
-import BatchEntryModal from "./BatchEntryModal";
+import BatchEntryModal from "./BatchMovementModal";
 import { useChickenLossesByBatchId } from "../ChickenLoss/api/chickenLoss.queries";
 import type { ChickenLoss } from "../ChickenLoss/types/chickenLoss.types";
 import { formatHumanDate } from "@/utils/date.utils";
