@@ -81,7 +81,7 @@ export default function ExpensesPage() {
       <ExpenseEntryModal
         open={showModal}
         onClose={() => setShowModal(false)}
-        expenseToEdit={selectedExpense}
+        expenseToEdit={null}
       />
       {/* <ExpenseModal
         open={showModal}
