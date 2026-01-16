@@ -289,13 +289,7 @@ export default function ReportPage() {
                 maximumFractionDigits: 2,
               })}
             </Card>
-            {/* <Card>
-              Gastos: $
-              {Number(report.totalExpenses ?? 0).toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Card> */}
+
             <Card>
               Utilidad: $
               {Number(report.totalProfit ?? 0).toLocaleString("es-MX", {

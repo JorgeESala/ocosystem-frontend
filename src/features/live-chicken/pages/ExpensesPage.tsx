@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Button, Datepicker } from "flowbite-react";
 
-import ExpensesList from "../components/ExpensesList";
-import type { ExpenseResponseDTO } from "../types";
-import { useLatestExpenses } from "../api/expense.queries";
+import ExpensesList from "../Expenses/components/ExpensesList";
 import ExpenseEntryModal from "../Expenses/components/ExpenseEntryModal";
+import {
+  useExpenseById,
+  useLatestExpenses,
+} from "../Expenses/api/expense.queries";
 
 export default function ExpensesPage() {
   /* =======================
      Modales / selección
   ======================= */
   const [showModal, setShowModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] =
-    useState<ExpenseResponseDTO | null>(null);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
+    null,
+  );
 
   /* =======================
      Filtros (UI solamente)
@@ -20,22 +23,23 @@ export default function ExpensesPage() {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   console.log(startDate, endDate);
-  console.log(selectedExpense);
   /* =======================
      Data
   ======================= */
   const { data: expenses = [], isLoading, isError } = useLatestExpenses();
+  const { data: expenseToEdit, isLoading: loadingExpense } =
+    useExpenseById(selectedExpenseId);
 
   /* =======================
      Handlers
   ======================= */
   const handleCreateClick = () => {
-    setSelectedExpense(null);
+    setSelectedExpenseId(null);
     setShowModal(true);
   };
 
-  const handleEditClick = (expense: ExpenseResponseDTO) => {
-    setSelectedExpense(expense);
+  const handleEditClick = (expenseId: number) => {
+    setSelectedExpenseId(expenseId);
     setShowModal(true);
   };
 
@@ -78,17 +82,15 @@ export default function ExpensesPage() {
       {!isLoading && !isError && (
         <ExpensesList expenses={expenses} onSelect={handleEditClick} />
       )}
-
       <ExpenseEntryModal
         open={showModal}
-        onClose={() => setShowModal(false)}
-        expenseToEdit={null}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedExpenseId(null);
+        }}
+        expenseToEdit={expenseToEdit}
+        loading={loadingExpense}
       />
-      {/* <ExpenseModal
-        open={showModal}
-        onClose={() => setShowModal(false)}
-        expenseToEdit={selectedExpense}
-      /> */}
     </div>
   );
 }

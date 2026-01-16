@@ -1,6 +1,6 @@
 // features/employees/employees.queries.ts
 import { useQuery } from "@tanstack/react-query";
-import { getEmployees, getEmployeeById } from "./employees.api";
+import { getEmployees, getEmployeeById, driverApi } from "./employees.api";
 import { employeesKeys } from "./employees.keys";
 import { JobPosition } from "../types";
 
@@ -18,3 +18,8 @@ export const useEmployee = (id: number) => {
     enabled: !!id,
   });
 };
+export const useDrivers = () =>
+  useQuery({
+    queryKey: ["employees", "drivers"],
+    queryFn: driverApi.getDrivers,
+  });

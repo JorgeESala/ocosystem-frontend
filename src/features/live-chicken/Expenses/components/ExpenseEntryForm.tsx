@@ -1,134 +1,153 @@
 import { useEffect, useState } from "react";
-import { Button, Label, Select, TextInput } from "flowbite-react";
+import { Button, Label, Select } from "flowbite-react";
+import { ExpenseCategoryCode } from "@/core/api/types";
 import BaseExpenseFields from "./BaseExpenseFields";
+import FoodFields from "./FoodFields";
+import FuelFields from "./FuelFields";
+import VehicleFields from "./VehicleFields";
+import {
+  VehicleExpenseCategory,
+  type ExpenseDetailResponseDTO,
+} from "../types/expense.types";
+import { parseLocalDate } from "@/utils/date.utils";
+type ExpenseFormState = {
+  date: Date;
+  amount: string;
+  reason: string;
 
-type ExpenseCategory = "GENERIC" | "FUEL" | "FOOD" | "VEHICLE";
+  food: {
+    cedisId: string;
+    weight: string;
+  };
 
-interface ExpenseEntryFormProps {
-  mode: "create" | "edit";
-  initialData?: any; // demo
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+  fuel: {
+    vehicleId: string;
+    employeeId: string;
+    routeId: string;
+  };
+
+  vehicle: {
+    vehicleId: string;
+    employeeId: string;
+    category: VehicleExpenseCategory;
+  };
+};
 
 export default function ExpenseEntryForm({
+  onSubmit,
+  onCancel,
   mode,
   initialData,
-  onSuccess,
-  onCancel,
-}: ExpenseEntryFormProps) {
-  const [category, setCategory] = useState<ExpenseCategory>("FUEL");
+}: {
+  onSubmit: (payload: { categoryCode: ExpenseCategoryCode; form: any }) => void;
+
+  onCancel: () => void;
+  mode: string;
+  initialData: ExpenseDetailResponseDTO | undefined;
+}) {
+  const [categoryCode, setCategoryCode] = useState<ExpenseCategoryCode>(
+    ExpenseCategoryCode.FUEL,
+  );
+  const [form, setForm] = useState<ExpenseFormState>({
+    date: new Date(),
+    amount: "",
+    reason: "",
+
+    food: {
+      cedisId: "",
+      weight: "",
+    },
+
+    fuel: {
+      vehicleId: "",
+      employeeId: "",
+      routeId: "",
+    },
+
+    vehicle: {
+      vehicleId: "",
+      employeeId: "",
+      category: VehicleExpenseCategory.MAINTENANCE,
+    },
+  });
 
   useEffect(() => {
-    if (initialData?.category) {
-      setCategory(initialData.category);
-    }
+    if (!initialData) return;
+
+    setCategoryCode(initialData.categoryCode);
+
+    setForm({
+      date: parseLocalDate(initialData.date),
+      amount: initialData.amount.toString(),
+      reason: initialData.reason ?? "",
+
+      food: {
+        cedisId: initialData.food?.cedisId.toString() ?? "",
+        weight: initialData.food?.weight?.toString() ?? "",
+      },
+
+      fuel: {
+        vehicleId: initialData.fuel?.vehicleId?.toString() ?? "",
+        employeeId: initialData.fuel?.employeeId?.toString() ?? "",
+        routeId: initialData.fuel?.routeId?.toString() ?? "",
+      },
+
+      vehicle: {
+        vehicleId: initialData.vehicle?.vehicleId?.toString() ?? "",
+        employeeId: initialData.vehicle?.employeeId?.toString() ?? "",
+        category:
+          initialData.vehicle?.category ?? VehicleExpenseCategory.MAINTENANCE,
+      },
+    });
   }, [initialData]);
 
   return (
     <div className="space-y-4">
-      {/* Selector solo en CREATE */}
-      {mode === "create" && (
-        <div>
-          <Label>Categoría</Label>
-          <Select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-          >
-            <option value="FUEL">Combustible</option>
-            <option value="FOOD">Alimento</option>
-            <option value="VEHICLE">Vehículo</option>
-            <option value="GENERIC">Agua</option>
-            <option value="LIGHT">Luz</option>
-            <option value="INTERNET">Internet</option>
-            <option value="RENT">Renta</option>
-            <option value="CREDIT">Créditos</option>
-            <option value="CLEANING">Limpieza</option>
-            <option value="OTHER">Otro</option>
-          </Select>
-        </div>
+      {/* Categoría */}
+      <div>
+        <Label>Categoría</Label>
+        <Select
+          value={categoryCode}
+          onChange={(e) =>
+            setCategoryCode(e.target.value as ExpenseCategoryCode)
+          }
+        >
+          <option value="FUEL">Combustible</option>
+          <option value="FOOD">Alimento</option>
+          <option value="VEHICLE">Vehículo</option>
+          <option value="WATER">Agua</option>
+          <option value="ELECTRICITY">Luz</option>
+          <option value="INTERNET">Internet</option>
+          <option value="RENT">Renta</option>
+          <option value="OTHER">Otro</option>
+        </Select>
+      </div>
+
+      <BaseExpenseFields form={form} setForm={setForm} />
+
+      {categoryCode === "FOOD" && <FoodFields form={form} setForm={setForm} />}
+
+      {categoryCode === "FUEL" && <FuelFields form={form} setForm={setForm} />}
+
+      {categoryCode === "VEHICLE" && (
+        <VehicleFields form={form} setForm={setForm} />
       )}
-
-      <BaseExpenseFields />
-
-      {category === "FUEL" && <FuelFields />}
-      {category === "FOOD" && <FoodFields />}
-      {category === "VEHICLE" && <VehicleFields />}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button color="gray" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button onClick={onSuccess}>
+        <Button
+          onClick={() =>
+            onSubmit({
+              categoryCode,
+              form,
+            })
+          }
+        >
           {mode === "edit" ? "Guardar cambios" : "Registrar gasto"}
         </Button>
       </div>
-    </div>
-  );
-}
-function FuelFields() {
-  return (
-    <div className="space-y-3 border-t pt-3">
-      <Label>Vehículo</Label>
-      <Select>
-        <option>Seleccione un vehiculo</option>
-        <option>Foton Miller</option>
-        <option>Np 300</option>
-        <option>Foton 150</option>
-        <option>Robust</option>
-      </Select>
-
-      <Label>Chofer</Label>
-      <Select>
-        <option value="">Samuel</option>
-        <option value="">Erick</option>
-        <option value="">Jorge</option>
-        <option value="">Shamir</option>
-        <option value="">Marco</option>
-      </Select>
-      <Label>Ruta</Label>
-      <Select>
-        <option value="">Express FCP</option>
-        <option value="">Via corta</option>
-        <option value="">Foraneo</option>
-        <option value="">Chunhuas</option>
-      </Select>
-    </div>
-  );
-}
-function FoodFields() {
-  return (
-    <div className="space-y-3 border-t pt-3">
-      <Label>Kilos</Label>
-      <TextInput type="number" />
-    </div>
-  );
-}
-function VehicleFields() {
-  return (
-    <div className="space-y-3 border-t pt-3">
-      <Label>Vehículo</Label>
-      <Select>
-        <option>Seleccione un vehiculo</option>
-        <option>Foton Miller</option>
-        <option>Np 300</option>
-        <option>Foton 150</option>
-        <option>Robust</option>
-      </Select>
-
-      <Label>Tipo de gasto</Label>
-      <Select>
-        <option>Mantenimiento</option>
-        <option>Reparación</option>
-      </Select>
-      <Label>Chofer</Label>
-      <Select>
-        <option value="">Samuel</option>
-        <option value="">Erick</option>
-        <option value="">Jorge</option>
-        <option value="">Shamir</option>
-        <option value="">Marco</option>
-      </Select>
     </div>
   );
 }

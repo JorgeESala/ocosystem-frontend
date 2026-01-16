@@ -42,14 +42,6 @@ export const formatUiDate = (
 };
 
 /* =======================
-   Helpers
-======================= */
-
-/* =======================
-   LocalDate helpers
-======================= */
-
-/* =======================
    Human readable dates
 ======================= */
 
@@ -96,3 +88,8 @@ export const formatHumanDate = (
 
 const startOfDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+export const parseLocalDate = (date: string): Date => {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
