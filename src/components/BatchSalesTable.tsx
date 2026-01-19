@@ -37,6 +37,7 @@ function getMermaColor(value: number, target = 0.25) {
 export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
   const [selectedSale, setSelectedSale] = useState<DailyBatchSale | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const isCedis = batch.branchId === 6;
 
   const handleEditSale = (sale: DailyBatchSale) => {
     setSelectedSale(sale);
@@ -60,7 +61,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
           <TableHead>
             <TableRow className="text-center">
               <TableHeadCell>Fecha</TableHeadCell>
-              <TableHeadCell>Encargado</TableHeadCell>
+              <TableHeadCell>{isCedis ? "Cliente" : "Encargado"}</TableHeadCell>
               <TableHeadCell>Pollos Vendidos</TableHeadCell>
               <TableHeadCell>Kilos Vendidos</TableHeadCell>
               <TableHeadCell>Kilos de Tripa</TableHeadCell>
@@ -89,7 +90,9 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                   <TableCell>
                     {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
                   </TableCell>
-                  <TableCell>{s.employee?.name}</TableCell>
+                  <TableCell>
+                    {isCedis ? s.client?.name : s.employee?.name}
+                  </TableCell>
                   <TableCell>{s.quantitySold}</TableCell>
                   <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
                   <TableCell>{s.kgGut.toFixed(2)} kg</TableCell>

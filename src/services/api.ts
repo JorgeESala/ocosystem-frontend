@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { AxiosError } from "axios";
 import { triggerUnauthorized } from "./authEvents";
+import type { Client } from "@/features/processed/client/types/client.types";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const http = axios.create({
@@ -107,6 +108,7 @@ export interface DailyBatchSaleRequest {
   kgGut: string | number;
   date: Date | null;
   employeeId?: number;
+  clientId?: number;
 }
 export interface Employee {
   id: number;
@@ -119,6 +121,7 @@ export interface DailyBatchSale {
   id: number;
   batch: Batch;
   employee: Employee | null;
+  client?: Client;
   quantitySold: number;
   kgTotal: number;
   saleTotal: number;
@@ -129,6 +132,7 @@ export interface BatchSaleUpdateRequest {
   id: number;
   batchId: number;
   employeeId?: number;
+  clientId?: number;
   quantitySold: number;
   kgTotal: number;
   saleTotal: number;
@@ -506,6 +510,7 @@ export const updateDailyBatchSale = async function (
     id: batchSale.id,
     batchId: batchSale.batchId,
     employeeId: batchSale.employeeId,
+    clientId: batchSale.clientId,
     quantitySold: Number(batchSale.quantitySold),
     kgTotal: Number(batchSale.kgTotal),
     saleTotal: Number(batchSale.saleTotal),

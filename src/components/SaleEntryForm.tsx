@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
 import {
   Button,
   Card,
   Datepicker,
   Label,
+  Select,
   TextInput,
   Toast,
   ToastToggle,
@@ -16,6 +19,8 @@ import {
   updateDailyBatchSale,
 } from "../services/api";
 import { fetchEmployees } from "../services/api";
+import { useClients } from "@/features/processed/client/api/client.queries";
+import CreateClientInlineForm from "./CreateClientInlineForm";
 
 interface SaleEntryFormProps {
   batch: Batch;
@@ -33,6 +38,7 @@ export default function SaleEntryForm({
   const [formData, setFormData] = useState({
     id: existingSale ? existingSale.id : null,
     batchId: batch.id,
+    clientId: existingSale?.client?.id ?? undefined,
     quantitySold: existingSale ? String(existingSale.quantitySold) : "",
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
     saleTotal: existingSale ? existingSale.saleTotal : "",
@@ -46,6 +52,14 @@ export default function SaleEntryForm({
   const [employees, setEmployees] = useState<{ id: number; name: string }[]>(
     [],
   );
+  const [showCreateClient, setShowCreateClient] = useState(false);
+
+  const {
+    data: clients = [],
+    isLoading: isLoadingClients,
+    isError: isErrorClients,
+  } = useClients();
+  const queryClient = useQueryClient();
 
   // Disables the scroll when modal is open
   useEffect(() => {
@@ -63,9 +77,16 @@ export default function SaleEntryForm({
     load();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        value === "" ? undefined : name.endsWith("Id") ? Number(value) : value,
+    }));
   };
 
   const handleDateChange = (date: Date | null) => {
@@ -97,6 +118,7 @@ export default function SaleEntryForm({
           kgGut: Number(formData.kgGut),
           date: formData.date,
           employeeId: formData.employeeId || undefined,
+          clientId: formData.clientId || undefined,
         });
       } else {
         await createDailyBatchSale({
@@ -107,9 +129,11 @@ export default function SaleEntryForm({
           kgGut: Number(formData.kgGut),
           date: formData.date,
           employeeId: formData.employeeId || undefined,
+          clientId: formData.clientId || undefined,
         });
       }
-
+      queryClient.invalidateQueries({ queryKey: ["batchSales", batch.id] });
+      await queryClient.invalidateQueries({ queryKey: ["clients"] });
       setToastType("success");
       setToastMessage("Venta registrada correctamente");
       onSuccess?.();
@@ -147,17 +171,10 @@ export default function SaleEntryForm({
             value={formData.date}
             onChange={handleDateChange}
           />
-          {/* <TextInput
-            name="batchId"
-            placeholder="Id de la remesa"
-            disabled
-            className="hidden"
-            type="number"
-            value={formData.batchId}
-            onChange={handleChange}
-          /> */}
-          <Label className="text-left">Empleado</Label>
+
+          <Label className="text-left">Encargado</Label>
           <select
+            required
             name="employeeId"
             className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
             value={formData.employeeId ?? ""}
@@ -168,7 +185,7 @@ export default function SaleEntryForm({
               }))
             }
           >
-            <option value="">Seleccione un empleado</option>
+            <option value="">Seleccione un encargado</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.name}
@@ -176,15 +193,60 @@ export default function SaleEntryForm({
             ))}
           </select>
 
+          <Label>Cliente</Label>
+
+          <div className="flex gap-2">
+            <Select
+              name="clientId"
+              value={formData.clientId ?? ""}
+              onChange={handleChange}
+            >
+              <option value="">
+                {isLoadingClients
+                  ? "Cargando clientes..."
+                  : isErrorClients
+                    ? "Error al cargar clientes"
+                    : "Selecciona un cliente"}
+              </option>
+
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </Select>
+
+            <Button
+              size="sm"
+              color="light"
+              type="button"
+              onClick={() => setShowCreateClient(true)}
+            >
+              + Nuevo
+            </Button>
+          </div>
+
+          {showCreateClient && (
+            <CreateClientInlineForm
+              onCancel={() => setShowCreateClient(false)}
+              onCreated={(client) => {
+                setFormData((prev) => ({ ...prev, clientId: client.id }));
+                setShowCreateClient(false);
+              }}
+            />
+          )}
+
           <Label className="text-left">Pollos vendidos</Label>
           <TextInput
             name="quantitySold"
             type="number"
             value={formData.quantitySold}
             onChange={handleChange}
+            required
           />
           <Label className="text-left">Kilos vendidos</Label>
           <TextInput
+            required
             name="kgTotal"
             type="number"
             step="any"
