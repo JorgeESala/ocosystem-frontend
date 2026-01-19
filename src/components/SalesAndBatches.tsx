@@ -16,7 +16,9 @@ import { useBranches } from "../context/BranchContext";
 
 export default function SalesAndBatches() {
   const [openModal, setOpenModal] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [startDate, setStartDate] = useState<Date | null>(
+    new Date(new Date().setDate(new Date().getDate() - 30)),
+  );
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -55,7 +57,7 @@ export default function SalesAndBatches() {
 
         <div>
           <label>Inicio</label>
-          <Datepicker onChange={(d) => setStartDate(d)} />
+          <Datepicker value={startDate} onChange={(d) => setStartDate(d)} />
         </div>
 
         <div>
