@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export const http = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // opcional, si usas cookies
+  withCredentials: true,
 });
 
 // REQUEST interceptor

@@ -7,8 +7,6 @@ import {
   SidebarCollapse,
 } from "flowbite-react";
 import {
-  FaStore,
-  FaEgg,
   FaChartBar,
   FaFileAlt,
   FaBoxes,
@@ -16,17 +14,11 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
-import {
-  GiFeather,
-  GiCarrot,
-  GiPig,
-  GiPayMoney,
-  GiReceiveMoney,
-} from "react-icons/gi";
-import { MdOutlineLocalGroceryStore } from "react-icons/md";
+import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
+import { BUSINESSES } from "@/business/business.config";
 
 export default function SidebarApp() {
   const { isAuthenticated, logout } = useAuth();
@@ -38,21 +30,17 @@ export default function SidebarApp() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const effectiveCollapsed = !isMobile && collapsed;
+  const { user } = useAuth();
+
+  const allowedBusinesses = BUSINESSES.filter((b) =>
+    user?.allowedBusinesses.includes(b.key),
+  );
 
   const handleLogout = () => {
     logout();
     setMobileOpen(false);
     navigate("/");
   };
-
-  const businesses = [
-    { name: "Sucursales", slug: "sucursales", icon: FaStore },
-    { name: "Pollo vivo", slug: "pollo-vivo", icon: GiFeather },
-    { name: "Cerdo", slug: "cerdo", icon: GiPig },
-    { name: "Huevo", slug: "huevo", icon: FaEgg },
-    { name: "Verduras", slug: "verduras", icon: GiCarrot },
-    { name: "Abarrotes", slug: "abarrotes", icon: MdOutlineLocalGroceryStore },
-  ];
 
   const businessMenu = [
     { to: "reports", label: "Reportes", icon: FaFileAlt },
@@ -126,7 +114,7 @@ export default function SidebarApp() {
           >
             <SidebarItems>
               <SidebarItemGroup>
-                {businesses.map((b) => {
+                {allowedBusinesses.map((b) => {
                   const Icon = b.icon;
 
                   // 🔹 Collapsed desktop

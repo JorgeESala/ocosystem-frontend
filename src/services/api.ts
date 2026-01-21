@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosError } from "axios";
 import { triggerUnauthorized } from "./authEvents";
 import type { Client } from "@/features/processed/client/types/client.types";
+import type { LoginResponse } from "@/auth/auth.dto";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const http = axios.create({
@@ -351,15 +352,14 @@ export async function changeCredentials(data: ChangeCredentialsRequest) {
   const res = await http.post("/me/change-credentials", data);
   return res.data;
 }
-export async function loginUser(
-  data: LoginRequest,
-): Promise<{ token: string }> {
+
+export async function loginUser(data: LoginRequest): Promise<LoginResponse> {
   try {
-    const res = await http.post("/auth/login", data);
+    const res = await http.post<LoginResponse>("/auth/login", data);
     return res.data;
   } catch (err: unknown) {
-    // Do not translate the fallback message in the API layer.
     handleApiError(err, "Login failed");
+    throw err;
   }
 }
 
