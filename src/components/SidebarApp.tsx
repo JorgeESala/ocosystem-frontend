@@ -6,19 +6,11 @@ import {
   SidebarItem,
   SidebarCollapse,
 } from "flowbite-react";
-import {
-  FaChartBar,
-  FaFileAlt,
-  FaBoxes,
-  FaSignOutAlt,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
-import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
+import { FaSignOutAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { BUSINESSES } from "@/business/business.config";
+import { BASE_MENU, BUSINESSES } from "@/business/business.config";
 
 export default function SidebarApp() {
   const { isAuthenticated, logout } = useAuth();
@@ -41,14 +33,6 @@ export default function SidebarApp() {
     setMobileOpen(false);
     navigate("/");
   };
-
-  const businessMenu = [
-    { to: "reports", label: "Reportes", icon: FaFileAlt },
-    { to: "graphs", label: "Comparativas", icon: FaChartBar },
-    { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
-    { to: "expenses", label: "Gastos", icon: GiPayMoney },
-    { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
-  ];
 
   return (
     <>
@@ -115,6 +99,7 @@ export default function SidebarApp() {
             <SidebarItems>
               <SidebarItemGroup>
                 {allowedBusinesses.map((b) => {
+                  const menu = b.menu ?? BASE_MENU;
                   const Icon = b.icon;
 
                   // 🔹 Collapsed desktop
@@ -132,7 +117,7 @@ export default function SidebarApp() {
                   // 🔹 Expanded accordion
                   return (
                     <SidebarCollapse key={b.slug} icon={Icon} label={b.name}>
-                      {businessMenu.map((m) => {
+                      {menu.map((m) => {
                         const MIcon = m.icon;
 
                         return (

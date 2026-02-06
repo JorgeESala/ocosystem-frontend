@@ -3,6 +3,7 @@ import ComparisonsGraphs from "@/components/ComparisonGraphs";
 import Expenses from "@/components/Expenses";
 import Reports from "@/components/Reports";
 import SalesAndBatches from "@/components/SalesAndBatches";
+import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
 import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
 import FlockTrackingPage from "@/features/live-chicken/pages/FlockTrackingPage";
 import ReportPage from "@/features/live-chicken/Reports/ReportPage";
@@ -28,6 +29,7 @@ export default function BusinessRoutes() {
           <Route path="salesAndBatches" element={<FlockTrackingPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="reports" element={<ReportPage />} />
+          <Route path="accounting" element={<AccountsPage />} />
         </>
       )}
 

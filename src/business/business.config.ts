@@ -4,12 +4,38 @@ import { MdOutlineLocalGroceryStore } from "react-icons/md";
 import type { BusinessType } from "./business.types";
 import type { IconType } from "react-icons";
 
+export interface BusinessMenuItem {
+  to: string;
+  label: string;
+  icon: IconType;
+}
+
 export interface BusinessConfig {
   key: BusinessType;
   name: string;
   slug: string;
   icon: IconType;
+  menu?: BusinessMenuItem[]; // 👈 opcional
 }
+
+import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
+import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
+
+export const BASE_MENU = [
+  { to: "reports", label: "Reportes", icon: FaFileAlt },
+  { to: "graphs", label: "Comparativas", icon: FaChartBar },
+  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+  { to: "expenses", label: "Gastos", icon: GiPayMoney },
+  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+];
+const LIVE_CHICKEN_MENU = [
+  { to: "reports", label: "Reportes", icon: FaFileAlt },
+  { to: "graphs", label: "Comparativas", icon: FaChartBar },
+  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+  { to: "expenses", label: "Registrar gasto", icon: GiPayMoney }, // ✏️
+  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney }, // ➕
+  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+];
 
 export const BUSINESSES: BusinessConfig[] = [
   {
@@ -23,6 +49,7 @@ export const BUSINESSES: BusinessConfig[] = [
     name: "Pollo vivo",
     slug: "pollo-vivo",
     icon: GiFeather,
+    menu: LIVE_CHICKEN_MENU,
   },
   {
     key: "PIG",
