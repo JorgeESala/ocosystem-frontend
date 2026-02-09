@@ -8,12 +8,15 @@ import {
   TextInput,
   Select,
   Textarea,
+  Datepicker,
 } from "flowbite-react";
 import { useState, useEffect } from "react";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { useCreatePayment } from "../payments/api/payments.queries";
 import type { PaymentMethod } from "../payments/types";
-
+import { formatDateToISO } from "@/utils/date.utils";
+import { useDrivers } from "@/features/employee/api/employees.queries";
+import { useRoutes } from "../../api/routes.queries";
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -22,21 +25,24 @@ interface Props {
 
 export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
   const createPayment = useCreatePayment();
+  const { data: drivers } = useDrivers();
+  const { data: routes } = useRoutes();
 
   const [amount, setAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("TRANSFER");
+  const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("DEPOSIT");
   const [folio, setFolio] = useState("");
   const [notes, setNotes] = useState("");
+  const [driverId, setDriverId] = useState("");
+  const [routeId, setRouteId] = useState("");
 
   // reset when opening
   useEffect(() => {
     if (open && account) {
-      setAmount(account.balance.toString());
-      setPaymentDate(new Date().toISOString().substring(0, 10));
+      setPaymentDate(new Date());
       setFolio("");
       setNotes("");
-      setPaymentMethod("TRANSFER");
+      setPaymentMethod("DEPOSIT");
     }
   }, [open, account]);
 
@@ -45,17 +51,21 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
   const handleSubmit = () => {
     const value = Number(amount);
     if (!value || value <= 0) return;
+    if (!paymentDate) return;
 
     createPayment.mutate(
       {
+        accountsPaymentId: account.id,
         payerId: account.debtorId,
         receiverId: account.creditorId,
 
         amount: value,
-        paymentDate,
+        paymentDate: formatDateToISO(paymentDate),
         paymentMethod,
         folio,
         notes,
+        driverId: Number(driverId),
+        routeId: Number(routeId),
       },
       {
         onSuccess: () => {
@@ -93,10 +103,11 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
           {/* Date */}
           <div>
             <Label>Fecha del pago</Label>
-            <TextInput
-              type="date"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+            <Datepicker
+              required
+              value={paymentDate ?? undefined}
+              onChange={(date) => setPaymentDate(date)}
+              language="es"
             />
           </div>
 
@@ -109,25 +120,58 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
                 setPaymentMethod(e.target.value as PaymentMethod)
               }
             >
-              <option value="TRANSFER">Transferencia</option>
               <option value="DEPOSIT">Depósito</option>
               <option value="CASH">Efectivo</option>
+              <option value="TRANSFER">Transferencia</option>
               <option value="CHECK">Cheque</option>
+              <option value="OTHER">Otro</option>
             </Select>
           </div>
 
           {/* Folio */}
           <div>
-            <Label>Folio / referencia</Label>
+            <Label>Folio / referencia (Sólo para depósito)</Label>
             <TextInput
               value={folio}
               onChange={(e) => setFolio(e.target.value)}
             />
           </div>
 
+          {/* Driver */}
+          <div>
+            <Label>Chofer (Opcional)</Label>
+            <Select
+              value={driverId}
+              onChange={(e) => setDriverId(e.target.value)}
+            >
+              <option value="">Seleccione un chofer</option>
+              {drivers?.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* Route */}
+          <div>
+            <Label>Ruta (Opcional)</Label>
+            <Select
+              value={routeId}
+              onChange={(e) => setRouteId(e.target.value)}
+            >
+              <option value="">Seleccione una ruta</option>
+              {routes?.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+
           {/* Notes */}
           <div>
-            <Label>Notas (opcional)</Label>
+            <Label>Notas (Opcional)</Label>
             <Textarea
               rows={3}
               value={notes}

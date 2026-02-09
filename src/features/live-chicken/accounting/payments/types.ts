@@ -1,9 +1,10 @@
 // enums (ajústalos si ya existen globales)
-export type PaymentMethod = "CASH" | "TRANSFER" | "DEPOSIT" | "CHECK";
+export type PaymentMethod = "CASH" | "TRANSFER" | "DEPOSIT" | "CHECK" | "OTHER";
 
 // ---------- Requests ----------
 
 export interface CreatePaymentRequest {
+  accountsPaymentId: number;
   payerId: number;
   receiverId: number;
 
@@ -13,6 +14,8 @@ export interface CreatePaymentRequest {
 
   folio?: string;
   notes?: string;
+  driverId?: number;
+  routeId?: number;
 }
 
 // ---------- Responses ----------

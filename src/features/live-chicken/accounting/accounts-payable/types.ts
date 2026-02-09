@@ -22,7 +22,9 @@ export interface CreateAccountsPayableRequest {
   sourceType: AccountsPayableSourceType;
   sourceId?: number;
 
+  solicitorId?: number;
   notes?: string;
+  date: string;
 }
 
 // -------- Responses --------
@@ -41,6 +43,12 @@ export interface AccountsPayableResponse {
 
   sourceType?: AccountsPayableSourceType;
   sourceId?: number;
+  solicitorName?: string;
+  solicitorId?: number;
+  date: string;
+}
 
-  createdAt: string;
+export interface CreditSolicitor {
+  id: number;
+  name: string;
 }

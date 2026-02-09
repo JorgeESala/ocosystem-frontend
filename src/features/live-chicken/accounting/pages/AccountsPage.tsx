@@ -19,10 +19,10 @@ export const AccountsPage = () => {
   // --- modo de vista ---
   // true = Me deben (CEDIS es acreedor)
   // false = Debo (CEDIS es deudor)
-  const [meDeben, setMeDeben] = useState(true);
+  const [receivable, setReceivable] = useState(true);
 
   // --- query params ---
-  const queryParams = meDeben
+  const queryParams = receivable
     ? {
         creditorId: CEDIS_ID,
       }
@@ -38,34 +38,37 @@ export const AccountsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Cuentas</h1>
 
-        <Button onClick={() => setOpenCreateModal(true)}>+ Crear deuda</Button>
+        <Button onClick={() => setOpenCreateModal(true)}>Crear Cuenta</Button>
       </div>
 
       {/* Selector de vista */}
       <div className="flex gap-2">
         <Button
-          color={meDeben ? "blue" : "gray"}
-          onClick={() => setMeDeben(true)}
+          color={receivable ? "blue" : "gray"}
+          onClick={() => setReceivable(true)}
         >
-          Me deben
+          Por cobrar
         </Button>
 
         <Button
-          color={!meDeben ? "blue" : "gray"}
-          onClick={() => setMeDeben(false)}
+          color={!receivable ? "blue" : "gray"}
+          onClick={() => setReceivable(false)}
         >
-          Debo
+          Por pagar
         </Button>
       </div>
 
       {/* Tabla */}
-      <div className="rounded-lg bg-white p-4 shadow">
+      <div className="rounded-lg bg-gray-800 shadow">
         {isLoading ? (
           <p className="text-sm text-gray-500">Cargando...</p>
         ) : (
           <AccountsOpenTable
             data={data}
-            onPay={(account) => setSelectedAccount(account)}
+            onPay={(account) => {
+              console.log(account);
+              setSelectedAccount(account);
+            }}
           />
         )}
       </div>

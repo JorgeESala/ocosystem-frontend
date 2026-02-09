@@ -12,6 +12,7 @@ export const createAccountsPayable = (
     payload,
   );
 };
+
 export const fetchOpenAccounts = (params: {
   debtorId?: number;
   creditorId?: number;

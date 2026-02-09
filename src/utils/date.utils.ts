@@ -10,6 +10,10 @@ export const toLocalDateString = (date: Date): string => {
 
 export type UiDateFormat = "short" | "long" | "relative";
 
+export const formatDateToISO = (date: Date) => {
+  return date.toISOString().substring(0, 10);
+};
+
 export const formatUiDate = (
   date: Date,
   format: UiDateFormat = "short",
