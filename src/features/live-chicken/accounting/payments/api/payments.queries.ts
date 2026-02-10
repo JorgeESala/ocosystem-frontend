@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPayment } from "./payments.api";
+import { createCompensationPaymentFromAP, createPayment } from "./payments.api";
 import { paymentKeys } from "./payments.keys";
 import { accountsPayableKeys } from "../../accounts-payable/api/accounts-payable.keys";
 
@@ -19,6 +19,19 @@ export const useCreatePayment = () => {
       // refresca las cuentas abiertas
       queryClient.invalidateQueries({
         queryKey: accountsPayableKeys.all,
+      });
+    },
+  });
+};
+
+export const useCreateCompensationPaymentFromAP = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createCompensationPaymentFromAP,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.all,
       });
     },
   });
