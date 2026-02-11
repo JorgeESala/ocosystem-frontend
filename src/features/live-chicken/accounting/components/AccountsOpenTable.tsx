@@ -14,9 +14,10 @@ import { formatHumanDate } from "@/utils/date.utils";
 interface Props {
   data: AccountsPayableResponse[];
   onPay: (account: AccountsPayableResponse) => void;
+  onViewHistory: (account: AccountsPayableResponse) => void;
 }
 
-export const AccountsOpenTable = ({ data, onPay }: Props) => {
+export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
   if (!data.length) {
     return <div className="text-sm text-gray-500">No hay cuentas abiertas</div>;
   }
@@ -29,7 +30,7 @@ export const AccountsOpenTable = ({ data, onPay }: Props) => {
         <TableHeadCell>Total</TableHeadCell>
         <TableHeadCell>Saldo</TableHeadCell>
         <TableHeadCell>Creada</TableHeadCell>
-        <TableHeadCell />
+        <TableHeadCell> Acciones</TableHeadCell>
       </TableHead>
 
       <TableBody>
@@ -50,9 +51,26 @@ export const AccountsOpenTable = ({ data, onPay }: Props) => {
 
             <TableCell>{formatHumanDate(row.date)}</TableCell>
 
-            <TableCell>
-              <Button size="xs" onClick={() => onPay(row)}>
+            <TableCell className="flex gap-2">
+              <Button
+                size="xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPay(row);
+                }}
+              >
                 Pagar
+              </Button>
+
+              <Button
+                size="xs"
+                color="gray"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewHistory(row);
+                }}
+              >
+                Historial
               </Button>
             </TableCell>
           </TableRow>

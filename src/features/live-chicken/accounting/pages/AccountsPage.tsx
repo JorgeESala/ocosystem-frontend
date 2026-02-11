@@ -6,12 +6,27 @@ import { RegisterPaymentModal } from "../components/RegisterPaymentModal";
 import { AccountsOpenTable } from "../components/AccountsOpenTable";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { useOpenAccounts } from "../accounts-payable/api/accounts-payable.queries";
+import { AccountsPayableHistoryDrawer } from "../components/AccountsPayableHistoryDrawer";
 
 export const AccountsPage = () => {
   // --- UI state ---
   const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [selectedAccount, setSelectedAccount] =
+  const [selectedAccountForPay, setSelectedAccountForPay] =
     useState<AccountsPayableResponse | null>(null);
+
+  const [selectedAccountForHistory, setSelectedAccountForHistory] =
+    useState<AccountsPayableResponse | null>(null);
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const handlePay = (account: AccountsPayableResponse) => {
+    setSelectedAccountForPay(account);
+  };
+
+  const handleViewHistory = (account: AccountsPayableResponse) => {
+    setSelectedAccountForHistory(account);
+    setHistoryOpen(true);
+  };
 
   // --- contexto actual (luego puede venir de auth) ---
   const CEDIS_ID = 2;
@@ -65,12 +80,15 @@ export const AccountsPage = () => {
         ) : (
           <AccountsOpenTable
             data={data}
-            onPay={(account) => {
-              console.log(account);
-              setSelectedAccount(account);
-            }}
+            onPay={handlePay}
+            onViewHistory={handleViewHistory}
           />
         )}
+        <AccountsPayableHistoryDrawer
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          account={selectedAccountForHistory}
+        />
       </div>
 
       {/* Modal crear deuda */}
@@ -81,9 +99,9 @@ export const AccountsPage = () => {
 
       {/* Modal registrar pago */}
       <RegisterPaymentModal
-        open={!!selectedAccount}
-        account={selectedAccount ?? undefined}
-        onClose={() => setSelectedAccount(null)}
+        open={!!selectedAccountForPay}
+        account={selectedAccountForPay ?? undefined}
+        onClose={() => setSelectedAccountForPay(null)}
       />
     </div>
   );

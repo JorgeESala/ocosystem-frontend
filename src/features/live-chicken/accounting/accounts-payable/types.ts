@@ -52,3 +52,28 @@ export interface CreditSolicitor {
   id: number;
   name: string;
 }
+// movements.types.ts
+
+export type AccountsPayableMovementType =
+  | "PAYMENT"
+  | "COMPENSATION"
+  | "ADJUSTMENT"
+  | "OTHER";
+
+export const movementTypeLabels: Record<AccountsPayableMovementType, string> = {
+  PAYMENT: "Pago",
+  COMPENSATION: "Compensación",
+  ADJUSTMENT: "Ajuste",
+  OTHER: "Otro",
+};
+
+export interface AccountsPayableMovementResponse {
+  id: number;
+  movementType: AccountsPayableMovementType;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  notes?: string;
+  createdAt: string;
+  movementDate: string;
+}
