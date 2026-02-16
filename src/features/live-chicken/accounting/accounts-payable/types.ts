@@ -78,4 +78,6 @@ export interface AccountsPayableMovementResponse {
   notes?: string;
   createdAt: string;
   movementDate: string;
+  compensationPaymentId?: number;
+  paymentId?: number;
 }

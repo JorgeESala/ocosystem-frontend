@@ -87,8 +87,8 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
           paymentMethod,
           folio,
           notes,
-          driverId: Number(driverId),
-          routeId: Number(routeId),
+          driverId: driverId ? Number(driverId) : undefined,
+          routeId: routeId ? Number(routeId) : undefined,
         },
         {
           onSuccess: () => {
