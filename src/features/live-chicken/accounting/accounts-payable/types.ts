@@ -80,4 +80,7 @@ export interface AccountsPayableMovementResponse {
   movementDate: string;
   compensationPaymentId?: number;
   paymentId?: number;
+  driverName?: string;
+  routeName?: string;
+  folio?: string;
 }

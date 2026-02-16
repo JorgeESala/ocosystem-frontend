@@ -97,6 +97,19 @@ export const AccountsPayableHistoryDrawer = ({
                     Saldo después: {formatMXN(movement.balanceAfter)}
                   </p>
 
+                  {movement.driverName && movement.routeName && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      <span className="font-medium">
+                        {movement.driverName} {movement.routeName}
+                      </span>
+                    </p>
+                  )}
+                  {movement.folio && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Folio:{" "}
+                      <span className="font-medium">{movement.folio}</span>
+                    </p>
+                  )}
                   {movement.notes && (
                     <p className="mt-1 text-xs">{movement.notes}</p>
                   )}
