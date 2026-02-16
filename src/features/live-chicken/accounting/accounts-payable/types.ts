@@ -58,13 +58,15 @@ export type AccountsPayableMovementType =
   | "PAYMENT"
   | "COMPENSATION"
   | "ADJUSTMENT"
-  | "OTHER";
+  | "OTHER"
+  | "REVERSAL";
 
 export const movementTypeLabels: Record<AccountsPayableMovementType, string> = {
   PAYMENT: "Pago",
   COMPENSATION: "Compensación",
   ADJUSTMENT: "Ajuste",
   OTHER: "Otro",
+  REVERSAL: "Reversa",
 };
 
 export interface AccountsPayableMovementResponse {
