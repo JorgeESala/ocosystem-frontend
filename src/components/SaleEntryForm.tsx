@@ -197,7 +197,11 @@ export default function SaleEntryForm({
             multiple={false}
             onFilesSelect={(files) => handleExcelUpload(files[0])}
             className="p-3 text-sm"
-            text="Arrastra un archivo excel aquí"
+            text={
+              isProcessingExcel
+                ? "Procesando archivo..."
+                : "Arrastra un archivo excel aquí"
+            }
           />
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
