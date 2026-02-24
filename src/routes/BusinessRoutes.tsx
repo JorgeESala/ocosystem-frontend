@@ -3,6 +3,7 @@ import ComparisonsGraphs from "@/components/ComparisonGraphs";
 import Expenses from "@/components/Expenses";
 import Reports from "@/components/Reports";
 import SalesAndBatches from "@/components/SalesAndBatches";
+import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
 import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
 import FlockTrackingPage from "@/features/live-chicken/pages/FlockTrackingPage";
@@ -14,6 +15,7 @@ export default function BusinessRoutes() {
   const { slug } = useParams();
 
   const isLiveChicken = slug === "pollo-vivo";
+  const isBranches = slug === "sucursales";
 
   return (
     <Routes>
@@ -21,7 +23,7 @@ export default function BusinessRoutes() {
       <Route index element={<BusinessDashboard />} />
 
       {/* ===================== */}
-      {/* 🐔 LIVE CHICKEN OVERRIDES */}
+      {/* 🐔 LIVE CHICKEN */}
       {/* ===================== */}
 
       {isLiveChicken && (
@@ -30,6 +32,16 @@ export default function BusinessRoutes() {
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="reports" element={<ReportPage />} />
           <Route path="accounting" element={<AccountsPage />} />
+        </>
+      )}
+
+      {/* ===================== */}
+      {/* 🏢 BRANCHES */}
+      {/* ===================== */}
+
+      {isBranches && (
+        <>
+          <Route path="upload-reports" element={<UploadSalesReportPage />} />
         </>
       )}
 

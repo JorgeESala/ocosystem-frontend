@@ -28,6 +28,15 @@ export const BASE_MENU = [
   { to: "expenses", label: "Gastos", icon: GiPayMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
+const BRANCHES_MENU = [
+  { to: "reports", label: "Reportes", icon: FaFileAlt },
+  { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
+  { to: "graphs", label: "Comparativas", icon: FaChartBar },
+  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+  { to: "expenses", label: "Gastos", icon: GiPayMoney },
+  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+];
+
 const LIVE_CHICKEN_MENU = [
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
@@ -43,6 +52,7 @@ export const BUSINESSES: BusinessConfig[] = [
     name: "Sucursales",
     slug: "sucursales",
     icon: FaStore,
+    menu: BRANCHES_MENU,
   },
   {
     key: "LIVE_CHICKEN",

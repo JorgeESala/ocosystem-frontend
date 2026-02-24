@@ -16,6 +16,7 @@ import Expenses from "../components/Expenses";
 import ProtectedBusinessRoute from "./ProtectedBusinessRoute";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import BusinessRoutes from "./BusinessRoutes";
+
 export default function AppRoutes() {
   return (
     <Routes>

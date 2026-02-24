@@ -159,7 +159,8 @@ export interface Category {
   id: number;
   name: string;
 }
-export interface Measurement_unit {
+export interface MeasurementUnit {
+  id: number;
   name: string;
   code: string;
 }
@@ -167,7 +168,7 @@ export interface Product {
   barcode: string;
   name: string;
   category: Category;
-  measurement_unit: Measurement_unit;
+  measurement_unit: MeasurementUnit;
 }
 export interface ProductReport {
   product: Product;
@@ -443,6 +444,7 @@ export const fetchBranches = async (): Promise<Branch[]> => {
   const res = await http.get(`/api/branches`);
   return res.data;
 };
+
 export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
   const res = await http.get(`/api/expense-categories`);
   return res.data;

@@ -3,9 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Button,
-  Card,
   Datepicker,
   Label,
+  Modal,
+  ModalBody,
+  ModalHeader,
   Select,
   TextInput,
   Toast,
@@ -21,6 +23,8 @@ import {
 import { fetchEmployees } from "../services/api";
 import { useClients } from "@/features/processed/client/api/client.queries";
 import CreateClientInlineForm from "./CreateClientInlineForm";
+import { ExcelDropzone } from "@/features/branches/report-reader/components/ExcelDropzone";
+import { http } from "@/shared/api/http";
 
 interface SaleEntryFormProps {
   batch: Batch;
@@ -47,6 +51,7 @@ export default function SaleEntryForm({
     employeeId: existingSale?.employee?.id || undefined,
   });
 
+  const [isProcessingExcel, setIsProcessingExcel] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [employees, setEmployees] = useState<{ id: number; name: string }[]>(
@@ -143,157 +148,201 @@ export default function SaleEntryForm({
       setToastMessage("Error al registrar la venta");
     }
   };
+  const handleExcelUpload = async (file: File) => {
+    try {
+      setIsProcessingExcel(true);
 
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("batchId", String(batch.id));
+
+      const { data } = await http.post(
+        "/api/batchSales/extract-from-excel",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      // 👇 Se llena automáticamente el formulario
+      setFormData((prev) => ({
+        ...prev,
+        ...data,
+      }));
+
+      setToastType("success");
+      setToastMessage("Datos cargados correctamente desde Excel");
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error.response?.data?.message || "Error al procesar el Excel";
+
+      setToastType("error");
+      setToastMessage(message);
+    } finally {
+      setIsProcessingExcel(false);
+    }
+  };
   return (
-    <div
-      className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-gray-900/25 p-4"
-      onClick={onClose} // closes the modal when the bg is clicked
-    >
-      <Card
-        className="relative w-full max-w-md"
-        onClick={(e) => e.stopPropagation()} // prevents the modal from closing when clicked
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-200"
-        >
-          <HiX className="h-6 w-6" />
-        </button>
+    <Modal show={true} onClose={onClose} size="md" popup>
+      <ModalHeader>Nueva venta - Remesa #{batch.id}</ModalHeader>
 
-        <h3 className="mb-2 text-lg font-semibold text-white">
-          Nueva venta - Remesa #{batch.id}
-        </h3>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Label className="text-left">Fecha</Label>
-          <Datepicker
-            language="es-MX"
-            value={formData.date}
-            onChange={handleDateChange}
+      <ModalBody>
+        <div className="space-y-3">
+          {/* Excel uploader */}
+          <ExcelDropzone
+            multiple={false}
+            onFilesSelect={(files) => handleExcelUpload(files[0])}
+            className="p-3 text-sm"
+            text="Arrastra un archivo excel aquí"
           />
 
-          <Label className="text-left">Encargado</Label>
-          <select
-            required
-            name="employeeId"
-            className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
-            value={formData.employeeId ?? ""}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                employeeId: e.target.value ? Number(e.target.value) : undefined,
-              }))
-            }
-          >
-            <option value="">Seleccione un encargado</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.name}
-              </option>
-            ))}
-          </select>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <Label>Fecha</Label>
+            <Datepicker
+              language="es-MX"
+              value={formData.date}
+              onChange={handleDateChange}
+            />
 
-          <Label>Cliente</Label>
-
-          <div className="flex gap-2">
-            <Select
-              name="clientId"
-              value={formData.clientId ?? ""}
-              onChange={handleChange}
+            <Label>Encargado</Label>
+            <select
+              required
+              name="employeeId"
+              className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
+              value={formData.employeeId ?? ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  employeeId: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                }))
+              }
             >
-              <option value="">
-                {isLoadingClients
-                  ? "Cargando clientes..."
-                  : isErrorClients
-                    ? "Error al cargar clientes"
-                    : "Selecciona un cliente"}
-              </option>
-
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
+              <option value="">Seleccione un encargado</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name}
                 </option>
               ))}
-            </Select>
+            </select>
 
-            <Button
-              size="sm"
-              color="light"
-              type="button"
-              onClick={() => setShowCreateClient(true)}
-            >
-              + Nuevo
-            </Button>
-          </div>
+            <Label>Cliente</Label>
 
-          {showCreateClient && (
-            <CreateClientInlineForm
-              onCancel={() => setShowCreateClient(false)}
-              onCreated={(client) => {
-                setFormData((prev) => ({ ...prev, clientId: client.id }));
-                setShowCreateClient(false);
-              }}
-            />
-          )}
+            <div className="flex gap-2">
+              <Select
+                name="clientId"
+                value={formData.clientId ?? ""}
+                onChange={handleChange}
+              >
+                <option value="">
+                  {isLoadingClients
+                    ? "Cargando clientes..."
+                    : isErrorClients
+                      ? "Error al cargar clientes"
+                      : "Selecciona un cliente"}
+                </option>
 
-          <Label className="text-left">Pollos vendidos</Label>
-          <TextInput
-            name="quantitySold"
-            type="number"
-            value={formData.quantitySold}
-            onChange={handleChange}
-            required
-          />
-          <Label className="text-left">Kilos vendidos</Label>
-          <TextInput
-            required
-            name="kgTotal"
-            type="number"
-            step="any"
-            value={formData.kgTotal}
-            onChange={handleChange}
-          />
-          <Label className="text-left">Efectivo recibido</Label>
-          <TextInput
-            name="saleTotal"
-            type="number"
-            step="any"
-            value={formData.saleTotal}
-            onChange={handleChange}
-          />
-          <Label className="text-left">Kilos de tripa</Label>
-          <TextInput
-            name="kgGut"
-            type="number"
-            step="any"
-            value={formData.kgGut}
-            onChange={handleChange}
-          />
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </Select>
 
-          <div className="mt-2 flex justify-between">
-            <Button type="submit">Guardar</Button>
-            <Button type="button" color="gray" onClick={onClose}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-
-        {toastMessage && (
-          <Toast className="mt-2">
-            <div
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${toastType === "success" ? "bg-green-100 text-green-500" : "bg-red-100 text-red-500"}`}
-            >
-              {toastType === "success" ? (
-                <HiCheck className="h-5 w-5" />
-              ) : (
-                <HiX className="h-5 w-5" />
-              )}
+              <Button
+                size="sm"
+                color="light"
+                type="button"
+                onClick={() => setShowCreateClient(true)}
+              >
+                + Nuevo
+              </Button>
             </div>
-            <div className="ml-3 text-sm font-normal">{toastMessage}</div>
-            <ToastToggle onClick={() => setToastMessage(null)} />
-          </Toast>
-        )}
-      </Card>
-    </div>
+
+            {showCreateClient && (
+              <CreateClientInlineForm
+                onCancel={() => setShowCreateClient(false)}
+                onCreated={(client) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    clientId: client.id,
+                  }));
+                  setShowCreateClient(false);
+                }}
+              />
+            )}
+
+            <Label>Pollos vendidos</Label>
+            <TextInput
+              name="quantitySold"
+              type="number"
+              value={formData.quantitySold}
+              onChange={handleChange}
+              required
+            />
+
+            <Label>Kilos vendidos</Label>
+            <TextInput
+              required
+              name="kgTotal"
+              type="number"
+              step="any"
+              value={formData.kgTotal}
+              onChange={handleChange}
+            />
+
+            <Label>Efectivo recibido</Label>
+            <TextInput
+              name="saleTotal"
+              type="number"
+              step="any"
+              value={formData.saleTotal}
+              onChange={handleChange}
+            />
+
+            <Label>Kilos de tripa</Label>
+            <TextInput
+              name="kgGut"
+              type="number"
+              step="any"
+              value={formData.kgGut}
+              onChange={handleChange}
+            />
+
+            <div className="mt-2 flex justify-between">
+              <Button type="submit">Guardar</Button>
+              <Button type="button" color="gray" onClick={onClose}>
+                Cancelar
+              </Button>
+            </div>
+          </form>
+
+          {toastMessage && (
+            <Toast>
+              <div
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                  toastType === "success"
+                    ? "bg-green-100 text-green-500"
+                    : "bg-red-100 text-red-500"
+                }`}
+              >
+                {toastType === "success" ? (
+                  <HiCheck className="h-5 w-5" />
+                ) : (
+                  <HiX className="h-5 w-5" />
+                )}
+              </div>
+              <div className="ml-3 text-sm font-normal">{toastMessage}</div>
+              <ToastToggle onClick={() => setToastMessage(null)} />
+            </Toast>
+          )}
+        </div>
+      </ModalBody>
+    </Modal>
   );
 }
