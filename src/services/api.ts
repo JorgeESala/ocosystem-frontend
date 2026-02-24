@@ -1,7 +1,7 @@
 import type { AxiosError } from "axios";
 import type { Client } from "@/features/processed/client/types/client.types";
 import type { LoginResponse } from "@/auth/auth.dto";
-import { API_URL, http } from "@/shared/api/http";
+import { http } from "@/shared/api/http";
 
 const toISODate = (date: Date): string => date.toISOString().split("T")[0];
 
@@ -443,10 +443,7 @@ export const updateExpense = async function (
   expense: ExpenseRequest,
 ) {
   try {
-    const response = await http.put(
-      `${API_URL}/api/expenses/${expenseId}`,
-      expense,
-    );
+    const response = await http.put(`/api/expenses/${expenseId}`, expense);
 
     return response.data;
   } catch (err: unknown) {
@@ -458,7 +455,7 @@ export const updateExpense = async function (
 };
 export const createBatch = async function (batch: BatchRequest) {
   try {
-    const response = await http.post(`${API_URL}/api/batches`, batch);
+    const response = await http.post(`/api/batches`, batch);
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -471,7 +468,7 @@ export const createDailyBatchSale = async function (
   batchSale: DailyBatchSaleRequest,
 ) {
   try {
-    const response = await http.post(`${API_URL}/api/batchSales`, batchSale);
+    const response = await http.post(`/api/batchSales`, batchSale);
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -496,10 +493,7 @@ export const updateDailyBatchSale = async function (
     date: batchSale.date,
   };
   try {
-    const response = await http.put(
-      `${API_URL}/api/batchSales/${batchSale.id}`,
-      payload,
-    );
+    const response = await http.put(`/api/batchSales/${batchSale.id}`, payload);
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -576,7 +570,7 @@ export async function fetchMonthlyReport(
   month: number,
 ): Promise<MonthlyReport> {
   const res = await http.get(
-    `${API_URL}/api/reports/monthly?branchId=${branchId}&year=${year}&month=${month}`,
+    `/api/reports/monthly?branchId=${branchId}&year=${year}&month=${month}`,
   );
   return res.data;
 }
@@ -633,7 +627,7 @@ export async function fetchGraphData(
       request.categories.forEach((cat) => params.append("categories", cat));
     }
 
-    const res = await http.get(`${API_URL}/api/reports?${params.toString()}`);
+    const res = await http.get(`/api/reports?${params.toString()}`);
 
     const data: ReportRow[] = await res.data;
     return data;
