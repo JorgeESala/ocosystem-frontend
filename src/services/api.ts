@@ -1,32 +1,8 @@
-import axios from "axios";
 import type { AxiosError } from "axios";
-import { triggerUnauthorized } from "./authEvents";
 import type { Client } from "@/features/processed/client/types/client.types";
 import type { LoginResponse } from "@/auth/auth.dto";
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_URL, http } from "@/shared/api/http";
 
-export const http = axios.create({
-  baseURL: `${API_URL}`,
-});
-
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-http.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      triggerUnauthorized();
-    }
-    return Promise.reject(err);
-  },
-);
 const toISODate = (date: Date): string => date.toISOString().split("T")[0];
 
 function handleApiError(err: unknown, defaultMessage: string): never {
