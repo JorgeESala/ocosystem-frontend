@@ -6,10 +6,14 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Select,
 } from "flowbite-react";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
+import { useState } from "react";
+import { useSolicitors } from "../accounts-payable/api/solicitor.queries";
+import { useUpdateAccountsPayableSolicitor } from "../accounts-payable/api/accounts-payable.queries";
 
 interface Props {
   data: AccountsPayableResponse[];
@@ -18,6 +22,24 @@ interface Props {
 }
 
 export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedSolicitorId, setSelectedSolicitorId] = useState<number | null>(
+    null,
+  );
+
+  const { data: solicitors = [] } = useSolicitors();
+  const updateSolicitorMutation = useUpdateAccountsPayableSolicitor();
+
+  const handleSaveSolicitor = (id: number) => {
+    updateSolicitorMutation.mutate({
+      id,
+      solicitorId: selectedSolicitorId ?? null,
+    });
+
+    setEditingId(null);
+    setSelectedSolicitorId(null);
+  };
+
   if (!data.length) {
     return <div className="text-sm text-gray-500">No hay cuentas abiertas</div>;
   }
@@ -41,7 +63,60 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
             </TableCell>
 
             <TableCell>
-              {row.solicitorName ? row.solicitorName : "N/A"}
+              {editingId === row.id ? (
+                <div className="flex items-center gap-2">
+                  <Select
+                    className="rounded border border-gray-600 bg-gray-800 text-sm"
+                    value={selectedSolicitorId ?? ""}
+                    onChange={(e) =>
+                      setSelectedSolicitorId(
+                        e.target.value ? Number(e.target.value) : null,
+                      )
+                    }
+                  >
+                    <option value="">Seleccionar...</option>
+                    {solicitors.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Button
+                    className="text-green-500"
+                    size="xs"
+                    onClick={() => handleSaveSolicitor(row.id)}
+                  >
+                    ✔
+                  </Button>
+
+                  <Button
+                    size="xs"
+                    color="gray"
+                    onClick={() => {
+                      setEditingId(null);
+                      setSelectedSolicitorId(null);
+                    }}
+                  >
+                    ✖
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>{row.solicitorName ? row.solicitorName : "N/A"}</span>
+
+                  <button
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setEditingId(row.id);
+                      setSelectedSolicitorId(row.solicitorId ?? null);
+                    }}
+                  >
+                    {row.solicitorName ? "✎" : "+"}
+                  </button>
+                </div>
+              )}
             </TableCell>
             <TableCell>{formatMXN(row.totalAmount)}</TableCell>
 

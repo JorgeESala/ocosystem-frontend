@@ -24,3 +24,11 @@ export const fetchOpenAccounts = (params: {
     },
   );
 };
+export const updateAccountsPayableSolicitor = (
+  id: number,
+  solicitorId: number | null,
+) => {
+  return http.patch(`/api/accounting/accounts-payable/${id}/solicitor`, {
+    solicitorId,
+  });
+};
