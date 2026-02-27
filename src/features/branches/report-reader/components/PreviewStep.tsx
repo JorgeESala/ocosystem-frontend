@@ -18,7 +18,7 @@ import { formatHumanDate } from "@/utils/date.utils";
 interface PreviewStepProps {
   data: SalesImportPreviewDTO;
   onBack: () => void;
-  onConfirm: (payload: ConfirmPayload) => void;
+  onConfirm: (payload: ConfirmPayload) => Promise<void>;
 }
 
 interface ConfirmPayload {
@@ -50,7 +50,7 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
     isLoading: isLoadingUnit,
     isError: isErrorUnit,
   } = useMeasurementUnits();
-
+  const [isConfirming, setIsConfirming] = useState(false);
   if (isLoadingUnit) return <p>Cargando unidades...</p>;
   if (isErrorUnit) return <p>Error al cargar unidades</p>;
   if (isLoadingCat) return <p>Cargando categorías...</p>;
@@ -60,13 +60,20 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
     (p) => !p.name || p.name.trim() === "",
   );
 
-  const handleConfirm = () => {
-    onConfirm({
-      previewId: data.previewId,
-      newProducts: editedProducts,
-    });
-  };
+  const handleConfirm = async () => {
+    try {
+      setIsConfirming(true);
 
+      await onConfirm({
+        previewId: data.previewId,
+        newProducts: editedProducts,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsConfirming(false);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* 🔹 Resumen General */}
@@ -117,12 +124,14 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
             Productos nuevos detectados
           </h3>
 
-          <Table>
+          <Table className="w-full table-fixed">
             <TableHead>
-              <TableHeadCell>Código</TableHeadCell>
-              <TableHeadCell>Nombre</TableHeadCell>
-              <TableHeadCell>Unidad de medida</TableHeadCell>
-              <TableHeadCell>Categoría</TableHeadCell>
+              <TableHeadCell className="w-[15%]">Código</TableHeadCell>
+              <TableHeadCell className="w-[45%]">Nombre</TableHeadCell>
+              <TableHeadCell className="w-[20%]">
+                Unidad de medida
+              </TableHeadCell>
+              <TableHeadCell className="w-[20%]">Categoría</TableHeadCell>
             </TableHead>
 
             <TableBody>
@@ -131,7 +140,7 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
                   <TableCell>{product.barcode}</TableCell>
                   <TableCell>
                     <input
-                      className="w-full rounded border px-2 py-1"
+                      className="w-full rounded border"
                       value={product.name}
                       onChange={(e) =>
                         setEditedProducts((prev) =>
@@ -210,10 +219,17 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
 
         <Button
           color="blue"
-          disabled={hasInvalidProducts}
+          disabled={hasInvalidProducts || isConfirming}
           onClick={handleConfirm}
         >
-          Confirmar e insertar
+          {isConfirming ? (
+            <span className="flex items-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Procesando...
+            </span>
+          ) : (
+            "Confirmar e insertar"
+          )}
         </Button>
       </div>
     </div>

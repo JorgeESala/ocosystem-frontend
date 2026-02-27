@@ -31,14 +31,12 @@ export const UploadSalesReportPage = () => {
         <PreviewStep
           data={previewData}
           onBack={() => setStep("UPLOAD")}
-          onConfirm={(payload) =>
-            confirmMutation.mutate(payload, {
-              onSuccess: () => {
-                setStep("UPLOAD");
-                setPreviewData(null);
-              },
-            })
-          }
+          onConfirm={async (payload) => {
+            await confirmMutation.mutateAsync(payload);
+
+            setStep("UPLOAD");
+            setPreviewData(null);
+          }}
         />
       )}
     </div>
