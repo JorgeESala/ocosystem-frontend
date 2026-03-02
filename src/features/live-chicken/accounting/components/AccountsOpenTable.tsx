@@ -113,7 +113,7 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                       setSelectedSolicitorId(row.solicitorId ?? null);
                     }}
                   >
-                    {row.solicitorName ? <FaRegEdit /> : <FaPlus />}
+                    {row.solicitorName ? <FaRegEdit size={16} /> : <FaPlus />}
                   </button>
                 </div>
               )}
