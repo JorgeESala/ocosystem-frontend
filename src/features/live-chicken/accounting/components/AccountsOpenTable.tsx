@@ -7,6 +7,7 @@ import {
   TableRow,
   TableCell,
   Select,
+  Tooltip,
 } from "flowbite-react";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -14,7 +15,10 @@ import { formatHumanDate } from "@/utils/date.utils";
 import { useState } from "react";
 import { useSolicitors } from "../accounts-payable/api/solicitor.queries";
 import { useUpdateAccountsPayableSolicitor } from "../accounts-payable/api/accounts-payable.queries";
-
+import { FiCheck } from "react-icons/fi";
+import { RxCross2 } from "react-icons/rx";
+import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
+import { FaRegFileLines } from "react-icons/fa6";
 interface Props {
   data: AccountsPayableResponse[];
   onPay: (account: AccountsPayableResponse) => void;
@@ -82,12 +86,8 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                     ))}
                   </Select>
 
-                  <Button
-                    className="text-green-500"
-                    size="xs"
-                    onClick={() => handleSaveSolicitor(row.id)}
-                  >
-                    ✔
+                  <Button size="xs" onClick={() => handleSaveSolicitor(row.id)}>
+                    <FiCheck size={16} />
                   </Button>
 
                   <Button
@@ -98,7 +98,7 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                       setSelectedSolicitorId(null);
                     }}
                   >
-                    ✖
+                    <RxCross2 size={16} />
                   </Button>
                 </div>
               ) : (
@@ -113,7 +113,7 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                       setSelectedSolicitorId(row.solicitorId ?? null);
                     }}
                   >
-                    {row.solicitorName ? "✎" : "+"}
+                    {row.solicitorName ? <FaRegEdit /> : <FaPlus />}
                   </button>
                 </div>
               )}
@@ -127,26 +127,29 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
             <TableCell>{formatHumanDate(row.date)}</TableCell>
 
             <TableCell className="flex gap-2">
-              <Button
-                size="xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPay(row);
-                }}
-              >
-                Pagar
-              </Button>
-
-              <Button
-                size="xs"
-                color="gray"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewHistory(row);
-                }}
-              >
-                Historial
-              </Button>
+              <Tooltip content="Registrar pago">
+                <Button
+                  size="xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPay(row);
+                  }}
+                >
+                  <FaMoneyBillWave size={20} />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Mostrar información">
+                <Button
+                  size="xs"
+                  color="gray"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewHistory(row);
+                  }}
+                >
+                  <FaRegFileLines size={20} />
+                </Button>
+              </Tooltip>
             </TableCell>
           </TableRow>
         ))}

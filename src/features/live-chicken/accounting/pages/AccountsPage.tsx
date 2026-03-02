@@ -51,7 +51,7 @@ export const AccountsPage = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Cuentas</h1>
+        <h1 className="text-2xl font-semibold text-white">Cuentas</h1>
 
         <Button onClick={() => setOpenCreateModal(true)}>Crear Cuenta</Button>
       </div>

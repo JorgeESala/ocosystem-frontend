@@ -50,6 +50,11 @@ export const AccountsPayableHistoryDrawer = ({
                 {formatMXN(account.balance)}
               </strong>
             </p>
+            {account.note && (
+              <p className="text-sm">
+                Notas: <strong className="text-blue-600">{account.note}</strong>
+              </p>
+            )}
           </div>
         )}
 

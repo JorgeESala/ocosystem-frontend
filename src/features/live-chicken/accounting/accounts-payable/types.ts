@@ -46,6 +46,7 @@ export interface AccountsPayableResponse {
   solicitorName?: string;
   solicitorId?: number;
   date: string;
+  note: string;
 }
 
 export interface CreditSolicitor {
