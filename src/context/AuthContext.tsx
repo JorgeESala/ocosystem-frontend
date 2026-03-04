@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { loginUser, type LoginRequest } from "../services/api";
-import { setUnauthorizedHandler } from "../services/authEvents";
 import { useNavigate } from "react-router-dom";
 import type { AuthUser } from "../auth/auth.types";
 
@@ -46,7 +45,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    setUnauthorizedHandler(logout);
+    const handleUnauthorized = () => {
+      logout();
+    };
+
+    window.addEventListener("unauthorized", handleUnauthorized);
+
+    return () => {
+      window.removeEventListener("unauthorized", handleUnauthorized);
+    };
   }, []);
 
   return (
