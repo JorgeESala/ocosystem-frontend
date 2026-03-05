@@ -29,7 +29,7 @@ import type {
   ExtractExcelResponse,
   ReportBatchSale,
 } from "@/features/branches/batch/batch-sale/types";
-import { normalizeDate, stringToDate } from "@/utils/date.utils";
+import { stringToDate } from "@/utils/date.utils";
 
 interface SaleEntryFormProps {
   batch: Batch;
