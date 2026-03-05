@@ -16,7 +16,7 @@ export interface SalesImportPreviewDTO {
 }
 export interface FileImportPreviewDTO {
   fileName: string;
-  date: string; // viene como ISO string del backend
+  date: string;
   ticketCount: number;
   totalAmount: number;
 }

@@ -25,6 +25,11 @@ import { useClients } from "@/features/processed/client/api/client.queries";
 import CreateClientInlineForm from "./CreateClientInlineForm";
 import { ExcelDropzone } from "@/features/branches/report-reader/components/ExcelDropzone";
 import { http } from "@/shared/api/http";
+import type {
+  ExtractExcelResponse,
+  ReportBatchSale,
+} from "@/features/branches/batch/batch-sale/types";
+import { normalizeDate, stringToDate } from "@/utils/date.utils";
 
 interface SaleEntryFormProps {
   batch: Batch;
@@ -47,7 +52,7 @@ export default function SaleEntryForm({
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
     saleTotal: existingSale ? existingSale.saleTotal : "",
     kgGut: existingSale ? String(existingSale.kgGut) : "",
-    date: existingSale ? new Date(existingSale.date) : new Date(),
+    date: existingSale ? existingSale.date : new Date(),
     employeeId: existingSale?.employee?.id || undefined,
   });
 
@@ -58,7 +63,8 @@ export default function SaleEntryForm({
     [],
   );
   const [showCreateClient, setShowCreateClient] = useState(false);
-
+  const [detectedBatches, setDetectedBatches] = useState<ReportBatchSale[]>([]);
+  const [showBatchSelector, setShowBatchSelector] = useState(false);
   const {
     data: clients = [],
     isLoading: isLoadingClients,
@@ -149,14 +155,14 @@ export default function SaleEntryForm({
     }
   };
   const handleExcelUpload = async (file: File) => {
-    try {
-      setIsProcessingExcel(true);
+    setIsProcessingExcel(true);
 
+    try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("batchId", String(batch.id));
 
-      const { data } = await http.post(
+      const { data } = await http.post<ExtractExcelResponse>(
         "/api/batchSales/extract-from-excel",
         formData,
         {
@@ -166,25 +172,56 @@ export default function SaleEntryForm({
         },
       );
 
-      // 👇 Se llena automáticamente el formulario
-      setFormData((prev) => ({
-        ...prev,
-        ...data,
-      }));
+      const { batches } = data;
 
-      setToastType("success");
-      setToastMessage("Datos cargados correctamente desde Excel");
+      if (!batches?.length) {
+        throw new Error("El archivo no contiene datos válidos");
+      }
+
+      // Caso 1: solo una remesa → autocompletar
+      if (batches.length === 1) {
+        handleBatchSelect(batches[0]);
+
+        setToastType("success");
+        setToastMessage("Datos cargados correctamente desde Excel");
+        return;
+      }
+
+      // Caso 2: múltiples remesas → pedir selección
+      setDetectedBatches(batches);
+      setShowBatchSelector(true);
     } catch (error: any) {
       console.error(error);
 
       const message =
-        error.response?.data?.message || "Error al procesar el Excel";
+        error.response?.data?.message ||
+        error.message ||
+        "Error al procesar el Excel";
 
       setToastType("error");
       setToastMessage(message);
     } finally {
       setIsProcessingExcel(false);
     }
+  };
+
+  const handleBatchSelect = (batch: ReportBatchSale) => {
+    console.log("Batch " + batch.date);
+    setFormData((prev) => ({
+      ...prev,
+      quantitySold: String(batch.quantitySold),
+      kgTotal: String(batch.kgTotal),
+      saleTotal: batch.saleTotal,
+      kgGut: String(batch.kgGut),
+      date: stringToDate(batch.date),
+      employeeId: batch.employeeId ?? undefined,
+      clientId: batch.clientId ?? undefined,
+    }));
+
+    setShowBatchSelector(false);
+
+    setToastType("success");
+    setToastMessage("Remesa cargada correctamente");
   };
   return (
     <Modal show={true} onClose={onClose} size="md" popup>
@@ -203,7 +240,27 @@ export default function SaleEntryForm({
                 : "Arrastra un archivo excel aquí"
             }
           />
+          {showBatchSelector && (
+            <div className="rounded-lg border border-yellow-500 bg-yellow-900/20 p-3">
+              <p className="mb-2 text-sm font-semibold text-white">
+                Se detectaron múltiples remesas en el archivo
+              </p>
 
+              <div className="flex flex-col gap-2">
+                {detectedBatches.map((batch, index) => (
+                  <Button
+                    key={index}
+                    color="light"
+                    type="button"
+                    onClick={() => handleBatchSelect(batch)}
+                  >
+                    Remesa {index + 1} — {batch.quantitySold} pollos — $
+                    {batch.saleTotal}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <Label>Fecha</Label>
             <Datepicker

@@ -9,7 +9,7 @@ import {
   VehicleExpenseCategory,
   type ExpenseDetailResponseDTO,
 } from "../types/expense.types";
-import { parseLocalDate } from "@/utils/date.utils";
+import { stringToDate } from "@/utils/date.utils";
 type ExpenseFormState = {
   date: Date;
   amount: string;
@@ -77,7 +77,7 @@ export default function ExpenseEntryForm({
     setCategoryCode(initialData.categoryCode);
 
     setForm({
-      date: parseLocalDate(initialData.date),
+      date: stringToDate(initialData.date),
       amount: initialData.amount.toString(),
       reason: initialData.reason ?? "",
 
