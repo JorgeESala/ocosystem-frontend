@@ -4,6 +4,7 @@ import { type Branch } from "../services/api";
 interface BranchContextType {
   branches: Branch[];
   refreshBranches: () => Promise<void>;
+  loading: boolean;
 }
 
 export const BranchContext = createContext<BranchContextType | undefined>(

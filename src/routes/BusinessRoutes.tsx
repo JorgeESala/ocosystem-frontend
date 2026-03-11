@@ -1,8 +1,8 @@
 import BusinessDashboard from "@/components/BussinesDashboard";
 import ComparisonsGraphs from "@/components/ComparisonGraphs";
 import Expenses from "@/components/Expenses";
-import Reports from "@/components/Reports";
 import SalesAndBatches from "@/components/SalesAndBatches";
+import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
 import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
@@ -42,6 +42,7 @@ export default function BusinessRoutes() {
       {isBranches && (
         <>
           <Route path="upload-reports" element={<UploadSalesReportPage />} />
+          <Route path="reports" element={<BranchReportsPage />} />
         </>
       )}
 
@@ -53,7 +54,7 @@ export default function BusinessRoutes() {
         <>
           <Route path="salesAndBatches" element={<SalesAndBatches />} />
           <Route path="expenses" element={<Expenses />} />
-          <Route path="reports" element={<Reports />} />
+          <Route path="reports" element={<ReportPage />} />
         </>
       )}
 

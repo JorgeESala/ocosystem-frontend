@@ -8,6 +8,19 @@ export const toLocalDateString = (date: Date): string => {
    UI date formatting
 ======================= */
 
+export const toApiDateRange = (start: Date, end: Date) => {
+  const s = new Date(start);
+  const e = new Date(end);
+
+  s.setHours(0, 0, 0, 0);
+  e.setHours(23, 59, 59, 999);
+
+  return {
+    startDate: s.toISOString(),
+    endDate: e.toISOString(),
+  };
+};
+
 export type UiDateFormat = "short" | "long" | "relative";
 
 export const formatDateToISO = (date: Date) => {
@@ -97,6 +110,25 @@ export const stringToDate = (date: string): Date => {
   const [year, month, day] = date.split("-").map(Number);
   return new Date(year, month - 1, day);
 };
-// export function normalizeDate(date: Date) {
-//   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-// }
+export const getLastDays = (days: number) => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - days);
+  return { start, end };
+};
+export const getDayName = (dateString: string): string => {
+  const date = new Date(dateString + "T00:00:00"); // Añadimos la hora para evitar desfases de zona horaria
+  return new Intl.DateTimeFormat("es-MX", { weekday: "long" }).format(date);
+};
+
+export const formatFullDate = (dateString: string): string => {
+  const date = new Date(dateString + "T00:00:00");
+  const dayName = getDayName(dateString);
+  const dayNumber = date.getDate();
+  const month = new Intl.DateTimeFormat("es-MX", { month: "short" }).format(
+    date,
+  );
+
+  // Capitalizamos la primera letra
+  return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}, ${dayNumber} ${month}`;
+};

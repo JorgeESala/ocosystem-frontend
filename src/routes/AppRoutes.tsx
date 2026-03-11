@@ -9,13 +9,13 @@ import ChangeCredentialsPage from "../pages/ChangeCredentialsPage";
 import ProfitReportPage from "../pages/ProfitReportPage";
 
 // Components / Sections
-import Reports from "../components/Reports";
 import ComparisonGraphs from "../components/ComparisonGraphs";
 import SalesAndBatches from "../components/SalesAndBatches";
 import Expenses from "../components/Expenses";
 import ProtectedBusinessRoute from "./ProtectedBusinessRoute";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import BusinessRoutes from "./BusinessRoutes";
+import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 
 export default function AppRoutes() {
   return (
@@ -38,7 +38,7 @@ export default function AppRoutes() {
           <Route path="/forbidden" element={<ForbiddenPage />} />
 
           {/* ⚠️ PROVISIONAL (luego se elimina) */}
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports" element={<BranchReportsPage />} />
           <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
           <Route path="/salesAndBatches" element={<SalesAndBatches />} />
           <Route path="/expenses" element={<Expenses />} />
