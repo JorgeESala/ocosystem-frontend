@@ -23,7 +23,7 @@ export const StrategyInsights = ({
         {/* Metric 1: Attach Rate */}
         <div className="rounded-lg border-l-4 border-blue-500 bg-gray-900/40 p-4">
           <p className="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
-            Índice de Ticket Lleno
+            Meta de ticket promedio
           </p>
           <div className="flex items-end justify-between">
             <h4 className="text-2xl font-black text-white">

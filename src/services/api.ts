@@ -103,7 +103,7 @@ export interface DailyBatchSale {
   kgTotal: number;
   saleTotal: number;
   kgGut: number;
-  date: Date;
+  date: string;
 }
 export interface BatchSaleUpdateRequest {
   id: number;

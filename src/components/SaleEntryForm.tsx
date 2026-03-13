@@ -52,7 +52,7 @@ export default function SaleEntryForm({
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
     saleTotal: existingSale ? existingSale.saleTotal : "",
     kgGut: existingSale ? String(existingSale.kgGut) : "",
-    date: existingSale ? existingSale.date : new Date(),
+    date: existingSale ? stringToDate(existingSale.date) : new Date(),
     employeeId: existingSale?.employee?.id || undefined,
   });
 

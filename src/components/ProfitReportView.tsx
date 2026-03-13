@@ -44,7 +44,7 @@ export default function ProfitReportView({ report }: { report: ProfitReport }) {
         </div>
 
         <div className="rounded-xl bg-gray-800 p-4">
-          <p className="text-sm text-gray-400">Ganancia</p>
+          <p className="text-sm text-gray-400">Utilidad neta</p>
           <p
             className={`text-2xl font-bold ${
               Number(report.profit) >= 0 ? "text-green-400" : "text-red-400"

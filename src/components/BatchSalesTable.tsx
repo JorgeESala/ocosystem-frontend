@@ -86,7 +86,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                 : null;
 
               return (
-                <TableRow key={s.date.toString()}>
+                <TableRow key={s.id}>
                   <TableCell>
                     {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
                   </TableCell>

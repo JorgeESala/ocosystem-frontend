@@ -150,7 +150,7 @@ export const SalesDashboard = () => {
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">
-            Panel de Inteligencia: Sucursales
+            Panel inteligente: Sucursales
           </h1>
           <p className="text-gray-400">
             Análisis de rendimiento, producción y control de mermas.
@@ -294,7 +294,7 @@ export const SalesDashboard = () => {
 
               <Card className="border-none bg-gray-800 shadow-xl">
                 <h3 className="text-md mb-2 font-semibold text-gray-200">
-                  Mix Comercial
+                  Ventas por categoría
                 </h3>
                 <div className="flex flex-col">
                   <div className="h-52 w-full">
