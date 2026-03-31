@@ -24,10 +24,11 @@ export const BranchAccountsPage = () => {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   // --- Data Fetching ---
-  // IMPORTANTE: Si selectedBranches está vacío, el backend debería traer todas
-  // o podrías poner una condición aquí para no disparar la query si prefieres.
+
   const { data = [], isLoading: loadingAccounts } = useOpenAccounts({
-    debtorOriginalIds: selectedBranches.length > 0 ? selectedBranches : undefined,
+    debtorOriginalIds:
+      selectedBranches.length > 0 ? selectedBranches : undefined,
+    debtorEntityType: "BRANCH",
   });
 
   // Handlers para la tabla
