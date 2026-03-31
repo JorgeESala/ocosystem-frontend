@@ -27,7 +27,7 @@ export const BranchAccountsPage = () => {
   // IMPORTANTE: Si selectedBranches está vacío, el backend debería traer todas
   // o podrías poner una condición aquí para no disparar la query si prefieres.
   const { data = [], isLoading: loadingAccounts } = useOpenAccounts({
-    debtorIds: selectedBranches.length > 0 ? selectedBranches : undefined,
+    debtorOriginalIds: selectedBranches.length > 0 ? selectedBranches : undefined,
   });
 
   // Handlers para la tabla

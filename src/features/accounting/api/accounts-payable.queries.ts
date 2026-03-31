@@ -22,25 +22,23 @@ export const useCreateAccountsPayable = () => {
 
 export const useOpenAccounts = (params: {
   debtorId?: number;
-  debtorIds?: number[]; // Soportamos la lista de sucursales
+  debtorIds?: number[];
   creditorId?: number;
+  debtorOriginalIds?: number[];
+  debtorEntityType?: string;
 }) => {
   const { slug } = useParams<{ slug: string }>();
 
   return useQuery({
-    // La queryKey ahora rastrea cambios en el array debtorIds
+    // La queryKey ya recibe el objeto params completo,
+    // así que los nuevos filtros ya están "protegidos" en el caché.
     queryKey: accountsPayableKeys.open(slug!, params),
 
     queryFn: () => fetchOpenAccounts(params).then((r) => r.data),
 
-    // Solo se dispara si tenemos el slug del tenant
     enabled: !!slug,
-
-    // Mantenemos los datos anteriores mientras cargamos los nuevos para evitar parpadeos
     placeholderData: (previousData) => previousData,
-
-    // Opcional: Refrescar cada vez que el usuario vuelve a la pestaña
-    staleTime: 1000 * 60 * 5, // 5 minutos de validez
+    staleTime: 1000 * 60 * 5,
   });
 };
 

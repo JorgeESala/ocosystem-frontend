@@ -17,6 +17,9 @@ export const fetchOpenAccounts = (params: {
   debtorId?: number;
   debtorIds?: number[];
   creditorId?: number;
+  // --- Nuevos filtros ---
+  entityId?: number;
+  entityType?: string;
 }) => {
   return http.get<AccountsPayableResponse[]>(
     "/api/read/accounts-payable/open",
@@ -26,10 +29,9 @@ export const fetchOpenAccounts = (params: {
         const searchParams = new URLSearchParams();
 
         Object.entries(p).forEach(([key, value]) => {
-          if (value === undefined || value === null) return;
+          if (value === undefined || value === null || value === "") return;
 
           if (Array.isArray(value)) {
-            // Si es array, añadimos cada uno con la misma llave
             value.forEach((v) => searchParams.append(key, v.toString()));
           } else {
             searchParams.append(key, value.toString());
