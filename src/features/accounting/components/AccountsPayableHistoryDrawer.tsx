@@ -10,8 +10,8 @@ import { formatHumanDate } from "@/utils/date.utils";
 import {
   movementTypeLabels,
   type AccountsPayableResponse,
-} from "../accounts-payable/types";
-import { useAccountsPayableMovements } from "../accounts-payable/api/movements.queries";
+} from "../../live-chicken/accounting/accounts-payable/types";
+import { useAccountsPayableMovements } from "../api/movements.queries";
 
 interface Props {
   open: boolean;

@@ -11,17 +11,18 @@ import {
   Datepicker,
 } from "flowbite-react";
 import { useState, useEffect } from "react";
-import type { AccountsPayableResponse } from "../accounts-payable/types";
+import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
+
+import type { PaymentMethod } from "../types/payment.types";
+import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
+import { useDrivers } from "@/features/employee/api/employees.queries";
+import { useRoutes } from "../../live-chicken/api/routes.queries";
+import { useOpenAccounts } from "../api/accounts-payable.queries";
+import { formatMXN } from "@/utils/moneyNumbers";
 import {
   useCreateCompensationPaymentFromAP,
   useCreatePayment,
-} from "../payments/api/payments.queries";
-import type { PaymentMethod } from "../payments/types";
-import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
-import { useDrivers } from "@/features/employee/api/employees.queries";
-import { useRoutes } from "../../api/routes.queries";
-import { useOpenAccounts } from "../accounts-payable/api/accounts-payable.queries";
-import { formatMXN } from "@/utils/moneyNumbers";
+} from "@/features/accounting/api/payments.queries";
 interface Props {
   open: boolean;
   onClose: () => void;

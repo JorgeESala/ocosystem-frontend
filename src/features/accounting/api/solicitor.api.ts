@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import { CreditSolicitor } from "../types";
+import { CreditSolicitor } from "../../live-chicken/accounting/accounts-payable/types";
 
 export const fetchSolicitors = (params?: {
   accountingEntityId?: number;

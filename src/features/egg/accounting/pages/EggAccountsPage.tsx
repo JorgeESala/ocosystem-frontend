@@ -4,11 +4,11 @@ import { Button } from "flowbite-react";
 import { CreateAccountsPayableModal } from "../../../accounting/components/CreateAccountsPayableModal";
 import { RegisterPaymentModal } from "../../../accounting/components/RegisterPaymentModal";
 import { AccountsOpenTable } from "../../../accounting/components/AccountsOpenTable";
-import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { useOpenAccounts } from "../../../accounting/api/accounts-payable.queries";
 import { AccountsPayableHistoryDrawer } from "../../../accounting/components/AccountsPayableHistoryDrawer";
+import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 
-export const AccountsPage = () => {
+export const EggAccountsPage = () => {
   // --- UI state ---
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [selectedAccountForPay, setSelectedAccountForPay] =

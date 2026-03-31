@@ -1,9 +1,9 @@
 import { http } from "@/shared/api/http";
-import { CreatePaymentRequest, PaymentResponse } from "../types";
+import type { CreatePaymentRequest } from "../types/payment.types";
 import type {
   CompensationPaymentAPRequest,
   CompensationPaymentResponse,
-} from "../../types";
+} from "../types/accounting-entity.types";
 
 export const createPayment = (payload: CreatePaymentRequest) => {
   return http.post<PaymentResponse>("/api/accounting/payments", payload);

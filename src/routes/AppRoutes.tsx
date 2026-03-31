@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams } from "react-router-dom";
 import ProtectedRoute from "../routes/ProtectedRoutes";
 import AppLayout from "../layouts/AppLayout";
 
@@ -16,7 +16,11 @@ import ProtectedBusinessRoute from "./ProtectedBusinessRoute";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import BusinessRoutes from "./BusinessRoutes";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
-
+function BusinessRoutesWrapper() {
+  const { slug } = useParams();
+  // Al cambiar la key, React destruye el componente viejo y monta uno nuevo
+  return <BusinessRoutes key={slug} />;
+}
 export default function AppRoutes() {
   return (
     <Routes>
@@ -49,7 +53,10 @@ export default function AppRoutes() {
             path="/business/:slug/*"
             element={
               <ProtectedBusinessRoute>
-                <BusinessRoutes />
+                {/* Usamos el hook 'useLocation' o pasamos el slug como key 
+          para forzar el re-render total al cambiar de negocio 
+      */}
+                <BusinessRoutesWrapper />
               </ProtectedBusinessRoute>
             }
           />

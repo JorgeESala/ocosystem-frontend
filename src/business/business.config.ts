@@ -15,7 +15,7 @@ export interface BusinessConfig {
   name: string;
   slug: string;
   icon: IconType;
-  menu?: BusinessMenuItem[]; // 👈 opcional
+  menu?: BusinessMenuItem[];
 }
 
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
@@ -35,14 +35,23 @@ const BRANCHES_MENU = [
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
   { to: "expenses", label: "Gastos", icon: GiPayMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
 ];
 
 const LIVE_CHICKEN_MENU = [
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
-  { to: "expenses", label: "Registrar gasto", icon: GiPayMoney }, // ✏️
-  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney }, // ➕
+  { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
+  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
+  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+];
+const EGG_MENU = [
+  { to: "reports", label: "Reportes", icon: FaFileAlt },
+  { to: "graphs", label: "Comparativas", icon: FaChartBar },
+  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+  { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
+  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
 
@@ -72,6 +81,7 @@ export const BUSINESSES: BusinessConfig[] = [
     name: "Huevo",
     slug: "huevo",
     icon: FaEgg,
+    menu: EGG_MENU,
   },
   {
     key: "VEGETABLES",

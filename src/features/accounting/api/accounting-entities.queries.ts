@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchAccountingEntities } from "./accounting-entities.api";
 import { accountingEntityKeys } from "./accounting-entities.keys";
-import type { AccountingEntityType } from "../../types";
+import type { AccountingEntityType } from "../types/accounting-entity.types";
 
 export const useAccountingEntities = (entityType?: AccountingEntityType) => {
   return useQuery({

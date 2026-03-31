@@ -1,4 +1,3 @@
-// enums (ajústalos si ya existen globales)
 export type PaymentMethod = "CASH" | "TRANSFER" | "DEPOSIT" | "CHECK" | "OTHER";
 
 // ---------- Requests ----------

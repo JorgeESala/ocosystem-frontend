@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCompensationPaymentFromAP, createPayment } from "./payments.api";
 import { paymentKeys } from "./payments.keys";
-import { accountsPayableKeys } from "../../accounts-payable/api/accounts-payable.keys";
+import { accountsPayableKeys } from "./accounts-payable.keys";
 
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();

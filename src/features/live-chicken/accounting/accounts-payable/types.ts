@@ -1,6 +1,4 @@
-// enums (puedes ajustarlos si ya existen globalmente)
-
-import type { AccountingEntityType } from "../types";
+import type { AccountingEntityType } from "../../../accounting/types/accounting-entity.types";
 
 export type AccountsPayableSourceType =
   | "BATCH"
@@ -13,15 +11,11 @@ export type AccountsPayableSourceType =
 export interface CreateAccountsPayableRequest {
   creditorType: AccountingEntityType;
   creditorEntityId: number;
-
   debtorType: AccountingEntityType;
   debtorEntityId: number;
-
   amount: number;
-
   sourceType: AccountsPayableSourceType;
   sourceId?: number;
-
   solicitorId?: number;
   notes?: string;
   date: string;

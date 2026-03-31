@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import type { AccountsPayableMovementResponse } from "../types";
+import type { AccountsPayableMovementResponse } from "../../live-chicken/accounting/accounts-payable/types";
 
 export const getMovementsByAccountId = async (
   accountId: number,

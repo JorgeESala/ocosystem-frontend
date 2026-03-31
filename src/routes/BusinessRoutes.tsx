@@ -10,56 +10,70 @@ import FlockTrackingPage from "@/features/live-chicken/pages/FlockTrackingPage";
 import ReportPage from "@/features/live-chicken/Reports/ReportPage";
 import ProfitReportPage from "@/pages/ProfitReportPage";
 import { Routes, Route, useParams } from "react-router-dom";
-
+import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
+import ForbiddenPage from "@/pages/ForbiddenPage";
+import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
-  const isLiveChicken = slug === "pollo-vivo";
-  const isBranches = slug === "sucursales";
+  // 1. Centralizamos la lógica de qué rutas mostrar
+  // En lugar de múltiples bloques, usamos un switch o un objeto de configuración
 
+  if (slug === "pollo-vivo") {
+    return (
+      <Routes>
+        <Route index element={<BusinessDashboard />} />
+        <Route path="salesAndBatches" element={<FlockTrackingPage />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="reports" element={<ReportPage />} />
+        <Route path="accounting" element={<AccountsPage />} />
+        {/* Rutas compartidas que también quieres en Pollo Vivo */}
+        <Route path="graphs" element={<ComparisonsGraphs />} />
+        <Route path="profit" element={<ProfitReportPage />} />
+      </Routes>
+    );
+  }
+
+  if (slug === "sucursales") {
+    return (
+      <Routes>
+        <Route index element={<BusinessDashboard />} />
+        <Route path="upload-reports" element={<UploadSalesReportPage />} />
+        <Route path="reports" element={<BranchReportsPage />} />
+        <Route path="accounting" element={<BranchAccountsPage />} />
+        <Route path="salesAndBatches" element={<SalesAndBatches />} />
+        <Route path="expenses" element={<Expenses />} />
+
+        {/* Rutas compartidas */}
+        <Route path="graphs" element={<ComparisonsGraphs />} />
+        <Route path="profit" element={<ProfitReportPage />} />
+      </Routes>
+    );
+  }
+  if (slug === "huevo") {
+    return (
+      <Routes>
+        <Route index element={<BusinessDashboard />} />
+        <Route path="upload-reports" element={<UploadSalesReportPage />} />
+        <Route path="reports" element={<BranchReportsPage />} />
+        <Route path="accounting" element={<EggAccountsPage />} />
+        <Route path="salesAndBatches" element={<SalesAndBatches />} />
+        <Route path="expenses" element={<Expenses />} />
+
+        {/* Rutas compartidas */}
+        <Route path="graphs" element={<ComparisonsGraphs />} />
+        <Route path="profit" element={<ProfitReportPage />} />
+      </Routes>
+    );
+  }
+
+  // Fallback para otros negocios genéricos
   return (
     <Routes>
-      {/* DASHBOARD */}
       <Route index element={<BusinessDashboard />} />
-
-      {/* ===================== */}
-      {/* 🐔 LIVE CHICKEN */}
-      {/* ===================== */}
-
-      {isLiveChicken && (
-        <>
-          <Route path="salesAndBatches" element={<FlockTrackingPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
-          <Route path="reports" element={<ReportPage />} />
-          <Route path="accounting" element={<AccountsPage />} />
-        </>
-      )}
-
-      {/* ===================== */}
-      {/* 🏢 BRANCHES */}
-      {/* ===================== */}
-
-      {isBranches && (
-        <>
-          <Route path="upload-reports" element={<UploadSalesReportPage />} />
-          <Route path="reports" element={<BranchReportsPage />} />
-        </>
-      )}
-
-      {/* ===================== */}
-      {/* 🌍 GENERALES */}
-      {/* ===================== */}
-
-      {!isLiveChicken && (
-        <>
-          <Route path="salesAndBatches" element={<SalesAndBatches />} />
-          <Route path="expenses" element={<Expenses />} />
-          <Route path="reports" element={<ReportPage />} />
-        </>
-      )}
-
-      <Route path="graphs" element={<ComparisonsGraphs />} />
-      <Route path="profit" element={<ProfitReportPage />} />
+      <Route path="salesAndBatches" element={<SalesAndBatches />} />
+      <Route path="expenses" element={<Expenses />} />
+      <Route path="*" element={<ForbiddenPage />} />
     </Routes>
   );
 }

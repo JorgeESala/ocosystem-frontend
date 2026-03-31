@@ -1,4 +1,4 @@
-import type { AccountingEntity } from "../../types";
+import type { AccountingEntity } from "../../../../accounting/types/accounting-entity.types";
 
 export const formatAccountingEntityLabel = (entity: AccountingEntity) => {
   return `${ACCOUNTING_ENTITY_TYPE_LABEL[entity.entityType]} - ${entity.name}`;

@@ -9,12 +9,12 @@ import {
   Select,
   Tooltip,
 } from "flowbite-react";
-import type { AccountsPayableResponse } from "../accounts-payable/types";
+import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
 import { useState } from "react";
-import { useSolicitors } from "../accounts-payable/api/solicitor.queries";
-import { useUpdateAccountsPayableSolicitor } from "../accounts-payable/api/accounts-payable.queries";
+import { useSolicitors } from "../api/solicitor.queries";
+import { useUpdateAccountsPayableSolicitor } from "../api/accounts-payable.queries";
 import { FiCheck } from "react-icons/fi";
 import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
