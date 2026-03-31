@@ -150,7 +150,7 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
           {/* Context */}
           <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
             <p className="mt-1">
-              Saldo pendiente: <strong>${account.balance.toFixed(2)}</strong>
+              Saldo pendiente: <strong>{formatMXN(account.balance)}</strong>
             </p>
           </div>
 

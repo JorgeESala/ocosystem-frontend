@@ -17,6 +17,7 @@ import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useCreatePayment } from "@/features/accounting/api/payments.queries";
 import type { PaymentMethod } from "@/features/accounting/types/payment.types";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
+import { formatMXN } from "@/utils/moneyNumbers";
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -98,7 +99,7 @@ export const RegisterBranchPaymentModal = ({
           {/* Context */}
           <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
             <p className="mt-1">
-              Saldo pendiente: <strong>${account.balance.toFixed(2)}</strong>
+              Saldo pendiente: <strong>{formatMXN(account.balance)}</strong>
             </p>
           </div>
 
