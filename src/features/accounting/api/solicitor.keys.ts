@@ -1,9 +1,9 @@
 export const solicitorKeys = {
-  all: (business: string) => ["credit-solicitors", business] as const,
+  all: ["credit-solicitors"] as const,
 
   lists: (business: string) =>
-    [...solicitorKeys.all(business), "list"] as const,
+    [...solicitorKeys.all, business, "list"] as const,
 
-  listByEntity: (business: string, accountingEntityId: number) =>
-    [...solicitorKeys.lists(business), { accountingEntityId }] as const,
+  listByEntity: (business: string, params?: Record<string, any>) =>
+    [...solicitorKeys.lists(business), "by-entity", params] as const,
 };
