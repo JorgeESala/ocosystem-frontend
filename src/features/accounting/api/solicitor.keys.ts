@@ -5,5 +5,5 @@ export const solicitorKeys = {
     [...solicitorKeys.all(business), "list"] as const,
 
   listByEntity: (business: string, accountingEntityId: number) =>
-    [...solicitorKeys.lists(business), accountingEntityId] as const,
+    [...solicitorKeys.lists(business), { accountingEntityId }] as const,
 };
