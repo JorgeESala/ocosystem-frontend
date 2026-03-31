@@ -13,7 +13,6 @@ import {
 import { useState, useEffect } from "react";
 
 import { formatDateToISO } from "@/utils/date.utils";
-import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useCreatePayment } from "@/features/accounting/api/payments.queries";
 import type { PaymentMethod } from "@/features/accounting/types/payment.types";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
@@ -33,8 +32,6 @@ export const RegisterBranchPaymentModal = ({
 
   const createPayment = useCreatePayment();
 
-  const { data: drivers } = useDrivers();
-
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("DEPOSIT");
@@ -44,7 +41,7 @@ export const RegisterBranchPaymentModal = ({
   const [routeId, setRouteId] = useState("");
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
 
-  const DEFAULT_CEDIS_ID = 3;
+  // const DEFAULT_CEDIS_ID = 3;
 
   // reset when opening
   useEffect(() => {
