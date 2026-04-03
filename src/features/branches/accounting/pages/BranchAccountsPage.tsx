@@ -148,7 +148,7 @@ export const BranchAccountsPage = () => {
             <span className="text-sm text-gray-400">días activo</span>
           </div>
           <p className="mt-1 text-[10px] text-gray-500 italic">
-            Basado en el documento más antiguo.
+            Basado en la cuenta más antigua.
           </p>
         </div>
       </div>
