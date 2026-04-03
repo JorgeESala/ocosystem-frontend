@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "flowbite-react";
 
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { useOpenAccounts } from "@/features/accounting/api/accounts-payable.queries";
 import { AccountsPayableHistoryDrawer } from "@/features/accounting/components/AccountsPayableHistoryDrawer";
-import { AccountsOpenTable } from "@/features/accounting/components/AccountsOpenTable";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import { useBranches } from "@/context/BranchContext";
 import { RegisterBranchPaymentModal } from "../components/RegisterBranchPaymentModal";
 import { CreateBranchAccountsPayableModal } from "../components/CreateBranchAccountsPayableModal";
+import { BranchesAccountsOpenTable } from "../components/BranchesAccountsOpenTable";
 
 export const BranchAccountsPage = () => {
   // --- Estado de Selección ---
@@ -30,6 +30,9 @@ export const BranchAccountsPage = () => {
       selectedBranches.length > 0 ? selectedBranches : undefined,
     debtorEntityType: "BRANCH",
   });
+  const totalDebt = useMemo(() => {
+    return data.reduce((acc, curr) => acc + (curr.balance || 0), 0);
+  }, [data]);
 
   // Handlers para la tabla
   const handlePay = (account: AccountsPayableResponse) =>
@@ -58,6 +61,49 @@ export const BranchAccountsPage = () => {
         >
           Crear Nueva Cuenta
         </Button>
+      </div>
+
+      {/* --- NUEVA SECCIÓN: RESUMEN DE DEUDA --- */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
+          <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
+            Total Pendiente{" "}
+            {selectedBranches.length > 0 ? "(Filtrado)" : "(Consolidado)"}
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-white">
+              {new Intl.NumberFormat("es-MX", {
+                style: "currency",
+                currency: "MXN",
+              }).format(totalDebt)}
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
+          <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
+            Documentos Abiertos
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-blue-400">
+              {data.length}
+            </span>
+            <span className="text-sm text-nowrap text-gray-400">
+              cuentas/remesas
+            </span>
+          </div>
+        </div>
+
+        {/* Card decorativa o informativa adicional */}
+        <div className="hidden rounded-lg border border-gray-800 bg-blue-600/5 p-5 shadow-sm md:block">
+          <p className="text-xs font-medium tracking-wider text-blue-400 uppercase">
+            Estado de Flujo
+          </p>
+          <p className="mt-2 text-sm text-gray-400">
+            Visualizando deudas pendientes para{" "}
+            {selectedBranches.length || branches?.length || 0} sucursales.
+          </p>
+        </div>
       </div>
 
       {/* Barra de Filtros */}
@@ -98,9 +144,8 @@ export const BranchAccountsPage = () => {
             </p>
           </div>
         ) : (
-          <AccountsOpenTable
+          <BranchesAccountsOpenTable
             data={data}
-            // showBranchColumn={true}
             onPay={handlePay}
             onViewHistory={handleViewHistory}
           />

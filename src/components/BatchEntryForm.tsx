@@ -20,6 +20,7 @@ import {
   type BatchRequest,
 } from "../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
+import { useCedis } from "@/core/cedis/api/cedis.queries";
 
 export default function BatchEntryForm({
   open,
@@ -35,9 +36,9 @@ export default function BatchEntryForm({
   mode?: "create" | "edit";
 }) {
   const [branches, setBranches] = useState<Branch[]>([]);
-
   const [formData, setFormData] = useState<BatchRequest>({
     branchId: "",
+    cedisId: "",
     date: new Date(),
     provider: "",
     chickenQuantity: "",
@@ -47,6 +48,12 @@ export default function BatchEntryForm({
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "failure">("success");
+  const { data: cedis = [], isLoading } = useCedis();
+  useEffect(() => {
+    if (!isLoading && cedis.length > 0 && !formData.cedisId) {
+      setFormData((prev) => ({ ...prev, cedisId: "1" }));
+    }
+  }, [cedis, isLoading]);
 
   // Cargar sucursales
   useEffect(() => {
@@ -60,7 +67,8 @@ export default function BatchEntryForm({
   useEffect(() => {
     if (mode === "edit" && batch) {
       setFormData({
-        branchId: batch.branchName,
+        branchId: batch.branchId,
+        cedisId: batch.cedisId,
         provider: batch.provider,
         chickenQuantity: String(batch.chickenQuantity),
         kgTotal: String(batch.kgTotal),
@@ -106,6 +114,7 @@ export default function BatchEntryForm({
       } else {
         await createBatch({
           branchId: formData.branchId,
+          cedisId: Number(formData.cedisId),
           provider: formData.provider.trim(),
           date: formData.date,
           chickenQuantity: formData.chickenQuantity,
@@ -152,6 +161,30 @@ export default function BatchEntryForm({
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Cedis */}
+            <div>
+              <Label>Cedis</Label>
+              <Select
+                name="cedisId"
+                value={formData.cedisId || "1"}
+                onChange={handleChange}
+                required
+                disabled={isLoading || cedis.length === 0}
+              >
+                {isLoading ? (
+                  <option value="">Cargando opciones...</option>
+                ) : (
+                  <option value="">Selecciona un cedis</option>
+                )}
+
+                {cedis.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </Select>
