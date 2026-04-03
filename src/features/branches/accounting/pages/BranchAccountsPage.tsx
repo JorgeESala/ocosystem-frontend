@@ -42,6 +42,47 @@ export const BranchAccountsPage = () => {
     setHistoryOpen(true);
   };
 
+  const getAntiquityColor = (
+    days: number,
+  ): { text: string; bg: string; border: string } => {
+    if (days <= 3) {
+      return {
+        text: "text-green-400",
+        bg: "bg-green-500/5",
+        border: "border-green-800/50",
+      };
+    }
+    if (days <= 7) {
+      return {
+        text: "text-yellow-400",
+        bg: "bg-yellow-500/5",
+        border: "border-yellow-800/50",
+      };
+    }
+    if (days <= 14) {
+      return {
+        text: "text-orange-400",
+        bg: "bg-orange-500/5",
+        border: "border-gray-800",
+      };
+    }
+    return {
+      text: "text-red-400",
+      bg: "bg-red-500/10",
+      border: "border-red-800",
+    };
+  };
+  const oldestDays = useMemo(() => {
+    if (data.length === 0) return 0;
+    const dates = data.map((d) => new Date(d.date).getTime());
+    const oldest = Math.min(...dates);
+    const diffTime = Math.abs(Date.now() - oldest);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, [data]);
+  const antiquityStyle = useMemo(
+    () => getAntiquityColor(oldestDays),
+    [oldestDays],
+  );
   return (
     <div className="space-y-6 p-6">
       {/* Header con Título y Botón de Acción Principal */}
@@ -94,14 +135,20 @@ export const BranchAccountsPage = () => {
           </div>
         </div>
 
-        {/* Card decorativa o informativa adicional */}
-        <div className="hidden rounded-lg border border-gray-800 bg-blue-600/5 p-5 shadow-sm md:block">
-          <p className="text-xs font-medium tracking-wider text-blue-400 uppercase">
-            Estado de Flujo
+        <div
+          className={`rounded-lg border p-5 shadow-sm transition-colors duration-300 ${antiquityStyle.border} ${antiquityStyle.bg}`}
+        >
+          <p
+            className={`text-xs font-medium tracking-wider uppercase ${antiquityStyle.text}`}
+          >
+            Alerta de Antigüedad
           </p>
-          <p className="mt-2 text-sm text-gray-400">
-            Visualizando deudas pendientes para{" "}
-            {selectedBranches.length || branches?.length || 0} sucursales.
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-white">{oldestDays}</span>
+            <span className="text-sm text-gray-400">días activo</span>
+          </div>
+          <p className="mt-1 text-[10px] text-gray-500 italic">
+            Basado en el documento más antiguo.
           </p>
         </div>
       </div>
