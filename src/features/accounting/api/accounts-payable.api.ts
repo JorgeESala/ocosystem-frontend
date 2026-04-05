@@ -17,6 +17,8 @@ export const fetchOpenAccounts = (params: {
   debtorId?: number;
   debtorIds?: number[];
   creditorId?: number;
+  creditorOriginalIds?: number[];
+  creditorEntityType?: string;
   // --- Nuevos filtros ---
   entityId?: number;
   entityType?: string;

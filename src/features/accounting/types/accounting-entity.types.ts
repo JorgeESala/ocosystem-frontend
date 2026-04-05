@@ -1,4 +1,4 @@
-export type AccountingEntityType = "BRANCH" | "CEDIS" | "SUPPLIER";
+export type AccountingEntityType = "BRANCH" | "CEDIS" | "SUPPLIER" | "EGGCEDIS";
 
 export interface AccountingEntity {
   id: number;

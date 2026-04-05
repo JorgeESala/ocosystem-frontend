@@ -7,6 +7,7 @@ import { AccountsOpenTable } from "../../../accounting/components/AccountsOpenTa
 import { useOpenAccounts } from "../../../accounting/api/accounts-payable.queries";
 import { AccountsPayableHistoryDrawer } from "../../../accounting/components/AccountsPayableHistoryDrawer";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
+import { CreateEggAccountsPayableModal } from "../components/CreateEggAccountsPayableModal";
 
 export const EggAccountsPage = () => {
   // --- UI state ---
@@ -29,20 +30,21 @@ export const EggAccountsPage = () => {
   };
 
   // --- contexto actual (luego puede venir de auth) ---
-  const CEDIS_ID = 2;
+  const EGG_CEDIS_ORIGINAL_ID = 1;
 
   // --- modo de vista ---
-  // true = Me deben (CEDIS es acreedor)
-  // false = Debo (CEDIS es deudor)
+  // true = Me deben
+  // false = Debo
   const [receivable, setReceivable] = useState(true);
-
   // --- query params ---
   const queryParams = receivable
     ? {
-        creditorId: CEDIS_ID,
+        creditorOriginalIds: [EGG_CEDIS_ORIGINAL_ID],
+        creditorEntityType: "EGGCEDIS",
       }
     : {
-        debtorId: CEDIS_ID,
+        debtorOriginalIds: [EGG_CEDIS_ORIGINAL_ID],
+        debtorEntityType: "EGGCEDIS",
       };
 
   const { data = [], isLoading } = useOpenAccounts(queryParams);
@@ -92,7 +94,7 @@ export const EggAccountsPage = () => {
       </div>
 
       {/* Modal crear deuda */}
-      <CreateAccountsPayableModal
+      <CreateEggAccountsPayableModal
         open={openCreateModal}
         onClose={() => setOpenCreateModal(false)}
       />
