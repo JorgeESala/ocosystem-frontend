@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "flowbite-react";
 
-import { CreateAccountsPayableModal } from "../../../accounting/components/CreateAccountsPayableModal";
 import { RegisterPaymentModal } from "../../../accounting/components/RegisterPaymentModal";
 import { AccountsOpenTable } from "../../../accounting/components/AccountsOpenTable";
 import { useOpenAccounts } from "../../../accounting/api/accounts-payable.queries";
