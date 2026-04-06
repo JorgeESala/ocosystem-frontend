@@ -6,6 +6,7 @@ import {
   HiLightningBolt,
   HiTrash,
   HiOutlineOfficeBuilding,
+  HiChartBar,
 } from "react-icons/hi";
 import {
   XAxis,
@@ -144,6 +145,23 @@ export const SalesDashboard = () => {
   const products = data?.products || [];
   const categories = data?.categories || [];
   const dailySales = data?.dailySales || [];
+  const diffDays = useMemo(() => {
+    if (!dates.start || !dates.end) return 1;
+
+    // Limpiamos horas para comparar solo días naturales
+    const startDate = new Date(dates.start).setHours(0, 0, 0, 0);
+    const endDate = new Date(dates.end).setHours(0, 0, 0, 0);
+
+    const diffInMs = Math.abs(endDate - startDate);
+    const days = Math.ceil(diffInMs / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir el día final
+
+    return days > 0 ? days : 1;
+  }, [dates]);
+
+  const dailySlaughteredAvg = useMemo(() => {
+    const total = summary?.totalSlaughtered || 0;
+    return total / diffDays;
+  }, [summary, diffDays]);
   return (
     <div className="min-h-screen bg-gray-900 p-6 text-gray-100">
       {/* Header & Filters */}
@@ -184,25 +202,37 @@ export const SalesDashboard = () => {
         </Alert>
       ) : (
         <>
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {/* KPI: Pollo Beneficiado (Total) */}
             <KPICard
               title="Pollo Beneficiado"
               value={`${summary?.totalSlaughtered?.toLocaleString() || 0} pzas`}
               color="pink"
               icon={HiLightningBolt}
             />
+
+            {/* KPI: Promedio Diario (Dinamizado por el DatePicker) */}
+            <KPICard
+              title="Promedio Diario"
+              value={`${dailySlaughteredAvg.toLocaleString(undefined, { maximumFractionDigits: 1 })} pzas/día`}
+              color="orange"
+              icon={HiChartBar}
+            />
+
             <KPICard
               title="Venta Real"
               value={`$${processedData.totalVentaReal.toLocaleString()}`}
               color="blue"
               icon={HiCurrencyDollar}
             />
+
             <KPICard
               title="Ticket Promedio"
               value={`$${processedData.ticketPromedioReal.toFixed(2)}`}
               color="green"
               icon={HiTrendingUp}
             />
+
             <KPICard
               title="Pérdida Neta (Merma)"
               value={`${processedData.totalPerdidaNeta.toLocaleString()}`}
