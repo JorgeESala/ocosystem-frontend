@@ -106,6 +106,19 @@ export interface DailyBatchSale {
   kgGut: number;
   date: string;
 }
+export interface BranchesBatchSale {
+  id: number;
+  batch: Batch;
+  employeeId?: number;
+  employeeName: string;
+  clientId?: number;
+  clientName: string;
+  quantitySold: number;
+  kgTotal: number;
+  saleTotal: number;
+  kgGut: number;
+  date: string;
+}
 export interface BatchSaleUpdateRequest {
   id: number;
   batchId: number;

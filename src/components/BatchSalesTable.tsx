@@ -8,12 +8,12 @@ import {
   TableRow,
   Button,
 } from "flowbite-react";
-import { DailyBatchSale, type Batch } from "../services/api";
+import { type Batch, type BranchesBatchSale } from "../services/api";
 import { BatchSummary } from "./BatchSummary";
 import SaleEntryForm from "./SaleEntryForm";
 
 interface Props {
-  sales: DailyBatchSale[];
+  sales: BranchesBatchSale[];
   batch: Batch;
 }
 
@@ -35,11 +35,13 @@ function getMermaColor(value: number, target = 0.25) {
 }
 
 export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
-  const [selectedSale, setSelectedSale] = useState<DailyBatchSale | null>(null);
+  const [selectedSale, setSelectedSale] = useState<BranchesBatchSale | null>(
+    null,
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isCedis = batch.branchId === 6;
 
-  const handleEditSale = (sale: DailyBatchSale) => {
+  const handleEditSale = (sale: BranchesBatchSale) => {
     setSelectedSale(sale);
     setIsFormOpen(true);
   };
@@ -91,7 +93,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
                     {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
                   </TableCell>
                   <TableCell>
-                    {isCedis ? s.client?.name : s.employee?.name}
+                    {isCedis ? s.clientName : s.employeeName}
                   </TableCell>
                   <TableCell>{s.quantitySold}</TableCell>
                   <TableCell>{s.kgTotal.toFixed(2)} kg</TableCell>
@@ -147,7 +149,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
               {new Date(`${s.date}T00:00:00`).toLocaleDateString("es-MX")}
             </div>
             <div>Pollos Vendidos: {s.quantitySold}</div>
-            <div>Encargado: {s.employee?.name}</div>
+            <div>Encargado: {s.employeeName || "No asignado"}</div>
             <div>Kilos Vendidos: {s.kgTotal.toFixed(2)} kg</div>
             <div>Kilos de Tripa: {s.kgGut.toFixed(2)} kg</div>
             <div>

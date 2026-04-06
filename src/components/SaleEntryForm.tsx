@@ -17,8 +17,8 @@ import { HiCheck, HiX } from "react-icons/hi";
 import {
   Batch,
   createDailyBatchSale,
-  DailyBatchSale,
   updateDailyBatchSale,
+  type BranchesBatchSale,
 } from "../services/api";
 import { fetchEmployees } from "../services/api";
 import { useClients } from "@/features/processed/client/api/client.queries";
@@ -33,7 +33,7 @@ import { stringToDate } from "@/utils/date.utils";
 
 interface SaleEntryFormProps {
   batch: Batch;
-  existingSale?: DailyBatchSale;
+  existingSale?: BranchesBatchSale;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -47,13 +47,13 @@ export default function SaleEntryForm({
   const [formData, setFormData] = useState({
     id: existingSale ? existingSale.id : null,
     batchId: batch.id,
-    clientId: existingSale?.client?.id ?? undefined,
+    clientId: existingSale?.clientId ?? undefined,
     quantitySold: existingSale ? String(existingSale.quantitySold) : "",
     kgTotal: existingSale ? String(existingSale.kgTotal) : "",
     saleTotal: existingSale ? existingSale.saleTotal : "",
     kgGut: existingSale ? String(existingSale.kgGut) : "",
     date: existingSale ? stringToDate(existingSale.date) : new Date(),
-    employeeId: existingSale?.employee?.id || undefined,
+    employeeId: existingSale?.employeeId || undefined,
   });
 
   const [isProcessingExcel, setIsProcessingExcel] = useState(false);

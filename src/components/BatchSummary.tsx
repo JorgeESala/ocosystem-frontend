@@ -1,9 +1,9 @@
 import React from "react";
-import { Batch, DailyBatchSale } from "../services/api";
+import { Batch, type BranchesBatchSale } from "../services/api";
 
 interface Props {
   batch: Batch;
-  sales: DailyBatchSale[];
+  sales: BranchesBatchSale[];
 }
 
 export const BatchSummary: React.FC<Props> = ({ batch, sales }) => {
