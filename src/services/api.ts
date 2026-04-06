@@ -654,7 +654,7 @@ export async function fetchGraphData(
 
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
-): Promise<DailyBatchSale[]> => {
+): Promise<BranchesBatchSale[]> => {
   const res = await http.get(`/api/batchSales/${batchId}`);
   return res.data;
 };
