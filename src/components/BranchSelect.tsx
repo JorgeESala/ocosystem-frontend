@@ -1,11 +1,11 @@
-import { useBranches } from "@/context/BranchContext";
+import { useBranches } from "@/features/branches/branch/branch.queries";
 import { Select } from "flowbite-react";
 interface BranchSelectProps {
   value: number | "";
   onChange: (value: number | "") => void;
 }
 export const BranchSelect = ({ value, onChange }: BranchSelectProps) => {
-  const { branches, loading } = useBranches();
+  const { data: branches, isLoading } = useBranches();
 
   return (
     <Select
@@ -16,12 +16,12 @@ export const BranchSelect = ({ value, onChange }: BranchSelectProps) => {
         // Si selecciona el placeholder, mandamos cadena vacía para que 'enabled' lo detecte
         onChange(val === "" ? "" : Number(val));
       }}
-      disabled={loading}
+      disabled={isLoading}
       className="w-48"
     >
       <option value="">Selecciona sucursal...</option>
-      {!loading &&
-        branches.map((b) => (
+      {!isLoading &&
+        branches?.map((b) => (
           <option key={b.id} value={b.id}>
             {b.name}
           </option>

@@ -1,7 +1,7 @@
 import { Button, Datepicker, Label } from "flowbite-react";
 import { useState } from "react";
-import { useBranches } from "../context/BranchContext";
 import BranchMultiSelect from "./BranchMultiSelect";
+import { useBranches } from "@/features/branches/branch/branch.queries";
 
 interface ProfitReportFormProps {
   onSubmit: (params: {
@@ -14,7 +14,7 @@ interface ProfitReportFormProps {
 export default function ProfitReportForm({ onSubmit }: ProfitReportFormProps) {
   const [start, setStart] = useState<Date>(new Date());
   const [end, setEnd] = useState<Date>(new Date());
-  const { branches } = useBranches();
+  const { data: branches } = useBranches();
   const [branchIds, setBranchIds] = useState<number[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,11 +38,13 @@ export default function ProfitReportForm({ onSubmit }: ProfitReportFormProps) {
 
       {/* Sucursal */}
       <div>
-        <BranchMultiSelect
-          branches={branches}
-          selected={branchIds}
-          onChange={setBranchIds}
-        />
+        {branches && (
+          <BranchMultiSelect
+            branches={branches}
+            selected={branchIds}
+            onChange={setBranchIds}
+          />
+        )}
       </div>
 
       {/* Fecha inicio */}

@@ -12,7 +12,7 @@ import {
 } from "flowbite-react";
 import { useQueryClient } from "@tanstack/react-query";
 import BranchMultiSelect from "./BranchMultiSelect";
-import { useBranches } from "../context/BranchContext";
+import { useBranches } from "@/features/branches/branch/branch.queries";
 
 export default function SalesAndBatches() {
   const [openModal, setOpenModal] = useState(false);
@@ -24,7 +24,7 @@ export default function SalesAndBatches() {
 
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const queryClient = useQueryClient();
-  const { branches } = useBranches();
+  const { data: branches } = useBranches();
   const handleBatchCreated = () => {
     // Actualiza automáticamente las remesas
     queryClient.invalidateQueries({ queryKey: ["batches"] });
@@ -48,12 +48,15 @@ export default function SalesAndBatches() {
         </div>
 
         {/* --- MultiSelect centrado y con altura limitada --- */}
-
-        <BranchMultiSelect
-          branches={branches}
-          selected={selectedBranches}
-          onChange={setSelectedBranches}
-        />
+        <div>
+          {branches && (
+            <BranchMultiSelect
+              branches={branches}
+              selected={selectedBranches}
+              onChange={setSelectedBranches}
+            />
+          )}
+        </div>
 
         <div>
           <label>Inicio</label>

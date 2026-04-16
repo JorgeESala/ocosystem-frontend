@@ -5,15 +5,15 @@ import type { AccountsPayableResponse } from "@/features/live-chicken/accounting
 import { useOpenAccounts } from "@/features/accounting/api/accounts-payable.queries";
 import { AccountsPayableHistoryDrawer } from "@/features/accounting/components/AccountsPayableHistoryDrawer";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
-import { useBranches } from "@/context/BranchContext";
 import { RegisterBranchPaymentModal } from "../components/RegisterBranchPaymentModal";
 import { CreateBranchAccountsPayableModal } from "../components/CreateBranchAccountsPayableModal";
 import { BranchesAccountsOpenTable } from "../components/BranchesAccountsOpenTable";
+import { useBranches } from "../../branch/branch.queries";
 
 export const BranchAccountsPage = () => {
   // --- Estado de Selección ---
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
-  const { branches, loading: loadingBranches } = useBranches();
+  const { data: branches, isLoading: loadingBranches } = useBranches();
 
   // --- UI State (Modales) ---
   const [openCreateModal, setOpenCreateModal] = useState(false);

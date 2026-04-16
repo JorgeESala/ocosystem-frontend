@@ -7,8 +7,8 @@ import {
 import ExpensesList from "./ExpensesList";
 import { Button, Datepicker } from "flowbite-react";
 import ExpenseModal from "./ExpenseModal";
-import { useBranches } from "../context/BranchContext";
 import BranchMultiSelect from "./BranchMultiSelect";
+import { useBranches } from "@/features/branches/branch/branch.queries";
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -18,8 +18,7 @@ export default function Expenses() {
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
-  const { branches } = useBranches();
-
+  const { data: branches } = useBranches();
   // --- filtros ---
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const [startDate, setStartDate] = useState<Date | null>(new Date());
@@ -110,12 +109,12 @@ export default function Expenses() {
       <div className="mt-4 grid grid-cols-2 gap-3 text-white">
         <div>
           <label>Inicio</label>
-          <Datepicker onChange={(d) => setStartDate(d)} />
+          <Datepicker onChange={(d) => setStartDate(d)} language="es-Mx" />
         </div>
 
         <div>
           <label>Fin</label>
-          <Datepicker onChange={(d) => setEndDate(d)} />
+          <Datepicker onChange={(d) => setEndDate(d)} language="es-Mx" />
         </div>
       </div>
 
