@@ -6,7 +6,7 @@ import ChickenLossEntryForm from "../ChickenLoss/components/ChickenLossEntryForm
 
 import type { BatchEntryModalProps } from "../ChickenLoss/types/chickenLoss.types";
 
-export default function BatchEntryModal({
+export default function BatchMovementModal({
   batch,
   type,
   mode,

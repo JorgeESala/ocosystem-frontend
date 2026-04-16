@@ -4,8 +4,9 @@ import { Card } from "flowbite-react";
 export const KPICard = ({ title, value, icon: Icon, color }: any) => {
   const colorMap: any = {
     blue: "bg-blue-900/30 text-blue-400",
-    green: "bg-green-900/30 text-green-400",
     purple: "bg-purple-900/30 text-purple-400",
+    green: "bg-green-900/30 text-green-400",
+    orange: "bg-orange-900/30 text-orange-400",
     yellow: "bg-yellow-900/30 text-yellow-400",
     pink: "bg-pink-900/30 text-pink-400",
     red: "bg-red-900/30 text-red-400",

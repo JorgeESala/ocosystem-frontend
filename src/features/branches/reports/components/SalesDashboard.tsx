@@ -158,10 +158,19 @@ export const SalesDashboard = () => {
     return days > 0 ? days : 1;
   }, [dates]);
 
+  // const dailySlaughteredAvg = useMemo(() => {
+  //   const total = summary?.totalSlaughtered || 0;
+  //   return total / diffDays;
+  // }, [summary, diffDays]);
   const dailySlaughteredAvg = useMemo(() => {
     const total = summary?.totalSlaughtered || 0;
-    return total / diffDays;
-  }, [summary, diffDays]);
+
+    // Extraemos las fechas únicas del array de ventas que ya tienes en memoria
+    // Suponiendo que 'data' son tus registros de ventas/beneficio
+    const diasConVentas = data?.dailySales?.length || 0;
+
+    return diasConVentas > 0 ? total / diasConVentas : 0;
+  }, [summary, data]);
   return (
     <div className="min-h-screen bg-gray-900 p-6 text-gray-100">
       {/* Header & Filters */}
@@ -211,9 +220,9 @@ export const SalesDashboard = () => {
               icon={HiLightningBolt}
             />
 
-            {/* KPI: Promedio Diario (Dinamizado por el DatePicker) */}
+            {/* KPI: Promedio Diario  */}
             <KPICard
-              title="Promedio Diario"
+              title="Promedio Beneficiado"
               value={`${dailySlaughteredAvg.toLocaleString(undefined, { maximumFractionDigits: 1 })} pzas/día`}
               color="orange"
               icon={HiChartBar}

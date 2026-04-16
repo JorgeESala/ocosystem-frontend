@@ -46,3 +46,17 @@ export interface VehicleResponseDTO {
   name: string;
   fuelType: FuelType;
 }
+export interface Supplier {
+  id: number;
+  name: string;
+  contactInfo?: string;
+}
+export interface Route {
+  id: number;
+  name: string;
+  description?: string;
+}
+export interface Client {
+  id: number;
+  name: string;
+}

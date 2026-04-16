@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { FlockBatchList } from "../components/FlockBatchList";
-import BatchEntryForm from "../components/InboundBatchEntryForm";
 import {
   Button,
   Datepicker,
@@ -10,10 +8,9 @@ import {
   ModalBody,
   ModalHeader,
 } from "flowbite-react";
-import type { InboundBatchFormValues } from "../types";
-import { useCreateInboundBatch } from "../api/inboundBatches.queries";
+import { useCreateInboundBatch } from "@/features/live-chicken/api/inboundBatches.queries";
 
-export default function FlockTrackingPage() {
+export default function EggBatchAndSalesPage() {
   const [openModal, setOpenModal] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
@@ -71,7 +68,7 @@ export default function FlockTrackingPage() {
       </div>
       {/* --- Tabla --- */}
       <div className="mt-4">
-        <FlockBatchList
+        <EggBatchList
           startDate={startDate}
           endDate={endDate}
           enabled={hasSearched}
@@ -89,7 +86,7 @@ export default function FlockTrackingPage() {
         <ModalHeader></ModalHeader>
 
         <ModalBody>
-          <BatchEntryForm
+          <EggBatchEntryForm
             open={openModal}
             onClose={() => setOpenModal(false)}
             onSubmit={handleBatchCreated}

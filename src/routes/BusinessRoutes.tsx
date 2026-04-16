@@ -13,6 +13,7 @@ import { Routes, Route, useParams } from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
+import { BatchPage } from "@/features/batch/pages/BatchPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -57,7 +58,10 @@ export default function BusinessRoutes() {
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />
         <Route path="accounting" element={<EggAccountsPage />} />
-        <Route path="salesAndBatches" element={<SalesAndBatches />} />
+        <Route
+          path="salesAndBatches"
+          element={<BatchPage unitType={"EGG"} />}
+        />
         <Route path="expenses" element={<Expenses />} />
 
         {/* Rutas compartidas */}

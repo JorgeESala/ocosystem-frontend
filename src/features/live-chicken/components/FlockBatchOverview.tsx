@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useInboundBatchSales } from "@/features/live-chicken/api/inboundBatchSales.queries";
 import { useUpdateInboundBatch } from "@/features/live-chicken/api/inboundBatches.queries";
 
-import BatchEntryForm from "./BatchEntryForm";
+import InboundBatchEntryForm from "./InboundBatchEntryForm";
 import { BatchSalesTable } from "./BatchSalesTable";
 
 import type {
@@ -15,7 +15,7 @@ import type {
   InboundBatchFormValues,
   InboundBatchSale,
 } from "../types";
-import BatchEntryModal from "./BatchMovementModal";
+import BatchMovementModal from "./BatchMovementModal";
 import { useChickenLossesByBatchId } from "../ChickenLoss/api/chickenLoss.queries";
 import type { ChickenLoss } from "../ChickenLoss/types/chickenLoss.types";
 import { formatHumanDate } from "@/utils/date.utils";
@@ -194,7 +194,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
 
       {/* Modal de entradas (ventas / bajas) */}
       {entryBatch && (
-        <BatchEntryModal
+        <BatchMovementModal
           batch={entryBatch}
           type={entryType}
           mode={entryMode}
@@ -212,7 +212,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
 
       {/* Editar remesa */}
       {editingBatch && (
-        <BatchEntryForm
+        <InboundBatchEntryForm
           open
           mode="edit"
           batch={editingBatch}

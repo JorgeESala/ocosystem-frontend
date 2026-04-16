@@ -19,6 +19,7 @@ interface Props {
   onEditSale: (sale: InboundBatchSale) => void;
   onEditLoss: (loss: ChickenLoss) => void;
 }
+
 export const BatchSalesTable: React.FC<Props> = ({
   movements,
   batch,
