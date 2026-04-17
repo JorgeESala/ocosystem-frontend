@@ -63,7 +63,7 @@ export interface Batch {
   kgTotal: number;
   pricePerKg: number;
   date: Date;
-  cedisId: number;
+  supplierId: number;
   provider: string;
   chickenQuantity: number;
   priceTotal?: number;
@@ -138,7 +138,7 @@ export interface BatchRequest {
   pricePerKg: number | string;
   provider: string;
   date: Date | null;
-  cedisId: number | string;
+  supplierId: number | string;
 }
 export interface BatchSearchRequest {
   branchIds: number[];

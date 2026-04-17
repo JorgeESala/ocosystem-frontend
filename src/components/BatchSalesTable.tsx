@@ -141,7 +141,7 @@ export const BatchSalesTable: React.FC<Props> = ({ sales, batch }) => {
       <div className="space-y-2 md:hidden">
         {sales.map((s) => (
           <div
-            key={s.date.toString()}
+            key={s.id}
             className="rounded-md bg-gray-800 p-2 text-white shadow"
           >
             <div>

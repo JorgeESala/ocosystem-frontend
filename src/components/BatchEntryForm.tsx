@@ -20,7 +20,7 @@ import {
   type BatchRequest,
 } from "../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
-import { useCedis } from "@/core/cedis/api/cedis.queries";
+import { useBranchSuppliers } from "@/features/branches/branchsupplier/branch.supplier.queries";
 
 export default function BatchEntryForm({
   open,
@@ -38,7 +38,7 @@ export default function BatchEntryForm({
   const [branches, setBranches] = useState<Branch[]>([]);
   const [formData, setFormData] = useState<BatchRequest>({
     branchId: "",
-    cedisId: "",
+    supplierId: "",
     date: new Date(),
     provider: "",
     chickenQuantity: "",
@@ -48,12 +48,17 @@ export default function BatchEntryForm({
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "failure">("success");
-  const { data: cedis = [], isLoading } = useCedis();
+  const { data: branchSuppliers = [], isLoading: loadingSuppliers } =
+    useBranchSuppliers();
   useEffect(() => {
-    if (!isLoading && cedis.length > 0 && !formData.cedisId) {
-      setFormData((prev) => ({ ...prev, cedisId: "1" }));
+    if (
+      !loadingSuppliers &&
+      branchSuppliers.length > 0 &&
+      !formData.supplierId
+    ) {
+      setFormData((prev) => ({ ...prev, supplierId: "1" }));
     }
-  }, [cedis, isLoading]);
+  }, [branchSuppliers, loadingSuppliers]);
 
   // Cargar sucursales
   useEffect(() => {
@@ -68,7 +73,7 @@ export default function BatchEntryForm({
     if (mode === "edit" && batch) {
       setFormData({
         branchId: batch.branchId,
-        cedisId: batch.cedisId,
+        supplierId: batch.supplierId,
         provider: batch.provider,
         chickenQuantity: String(batch.chickenQuantity),
         kgTotal: String(batch.kgTotal),
@@ -114,7 +119,7 @@ export default function BatchEntryForm({
       } else {
         await createBatch({
           branchId: formData.branchId,
-          cedisId: Number(formData.cedisId),
+          supplierId: Number(formData.supplierId),
           provider: formData.provider.trim(),
           date: formData.date,
           chickenQuantity: formData.chickenQuantity,
@@ -170,19 +175,19 @@ export default function BatchEntryForm({
             <div>
               <Label>Cedis</Label>
               <Select
-                name="cedisId"
-                value={formData.cedisId || "1"}
+                name="supplierId"
+                value={formData.supplierId || "1"}
                 onChange={handleChange}
                 required
-                disabled={isLoading || cedis.length === 0}
+                disabled={loadingSuppliers || branchSuppliers.length === 0}
               >
-                {isLoading ? (
+                {loadingSuppliers ? (
                   <option value="">Cargando opciones...</option>
                 ) : (
                   <option value="">Selecciona un cedis</option>
                 )}
 
-                {cedis.map((c) => (
+                {branchSuppliers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
