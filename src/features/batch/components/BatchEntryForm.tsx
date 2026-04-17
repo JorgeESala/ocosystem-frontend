@@ -27,7 +27,7 @@ interface BatchEntryFormData {
   weight: number;
   pricePerKg: number;
   purchaseMode: "KILO" | "BOX";
-  totalPaid: number;
+  totalAmount: number;
 }
 
 export const BatchEntryForm: React.FC<{
@@ -47,7 +47,7 @@ export const BatchEntryForm: React.FC<{
         quantity: 0,
         weight: 0,
         pricePerKg: 0,
-        totalPaid: 0,
+        totalAmount: 0,
       },
     });
 
@@ -55,12 +55,12 @@ export const BatchEntryForm: React.FC<{
   const watchMode = watch("purchaseMode");
   const watchBoxes = watch("boxes") || 0;
   const watchCartons = watch("cartons") || 0;
-  const watchTotalPaid = watch("totalPaid") || 0;
+  const watchTotalAmount = watch("totalAmount") || 0;
 
   // Cálculo de costo informativo para el usuario
   const totalCartons = Number(watchBoxes) * 12 + Number(watchCartons);
   const pricePerCarton =
-    totalCartons > 0 ? (Number(watchTotalPaid) / totalCartons).toFixed(2) : 0;
+    totalCartons > 0 ? (Number(watchTotalAmount) / totalCartons).toFixed(2) : 0;
 
   const { mutate: createBatch, isPending } = useCreateBatch();
   const { data: suppliers = [] } = useSuppliers();
@@ -75,9 +75,9 @@ export const BatchEntryForm: React.FC<{
       entryDate: data.entryDate,
       weight: Number(data.weight || 0),
       pricePerKg: Number(data.pricePerKg || 0),
-      // Mapeo crucial: si es modo BOX, enviamos el totalPaid como manualTotalAmount
-      manualTotalAmount:
-        data.purchaseMode === "BOX" ? Number(data.totalPaid) : null,
+      // Mapeo crucial: si es modo BOX, enviamos el totalAmount como TotalAmount
+      totalAmount:
+        data.purchaseMode === "BOX" ? Number(data.totalAmount) : null,
       boxQuantity: Number(data.boxes || 0),
       cartonQuantity: Number(data.cartons || 0),
       quantity: Number(data.quantity || 0),
@@ -109,7 +109,7 @@ export const BatchEntryForm: React.FC<{
           initialData.totalAmount > 0 && initialData.metadata.price_per_kg === 0
             ? "BOX"
             : "KILO",
-        totalPaid: initialData.totalAmount || 0,
+        totalAmount: initialData.totalAmount || 0,
       });
     } else {
       reset({
@@ -174,6 +174,7 @@ export const BatchEntryForm: React.FC<{
                 name="entryDate"
                 render={({ field }) => (
                   <Datepicker
+                    language="es-MX"
                     value={
                       field.value
                         ? new Date(field.value + "T12:00:00")
@@ -186,6 +187,19 @@ export const BatchEntryForm: React.FC<{
                 )}
               />
             </div>
+            {/* Seccion de inventario fisico - Siempre util para Huevo */}
+            {unitType === "EGG" && (
+              <>
+                <div className="col-span-1">
+                  <Label>Cajas</Label>
+                  <TextInput type="number" {...register("boxes")} />
+                </div>
+                <div className="col-span-1">
+                  <Label>Casilleros</Label>
+                  <TextInput type="number" {...register("cartons")} />
+                </div>
+              </>
+            )}
 
             {/* 3. Lógica DINÁMICA */}
             {watchMode === "KILO" ? (
@@ -215,7 +229,7 @@ export const BatchEntryForm: React.FC<{
                 <TextInput
                   type="number"
                   step="0.01"
-                  {...register("totalPaid", { required: true })}
+                  {...register("totalAmount", { required: true })}
                   placeholder="Monto total de la factura"
                 />
                 {totalCartons > 0 && (
@@ -225,33 +239,6 @@ export const BatchEntryForm: React.FC<{
                 )}
               </div>
             )}
-
-            {/* Seccion de inventario fisico - Siempre util para Huevo */}
-            {unitType === "EGG" && (
-              <>
-                <div className="col-span-1">
-                  <Label>Cajas</Label>
-                  <TextInput type="number" {...register("boxes")} />
-                </div>
-                <div className="col-span-1">
-                  <Label>Casilleros</Label>
-                  <TextInput type="number" {...register("cartons")} />
-                </div>
-              </>
-            )}
-
-            {/* Peso opcional en modo BOX
-            {watchMode === "BOX" && (
-              <div className="col-span-2">
-                <Label>Peso Total (Opcional)</Label>
-                <TextInput
-                  type="number"
-                  step="0.001"
-                  {...register("weight")}
-                  placeholder="Kg totales"
-                />
-              </div>
-            )} */}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
