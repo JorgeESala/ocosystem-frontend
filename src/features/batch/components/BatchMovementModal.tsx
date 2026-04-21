@@ -19,7 +19,8 @@ import {
   useCreateAdjustment,
   useUpdateBatchAdjustment,
 } from "../api/batch.adjustments.queries";
-import { useDrivers } from "@/features/employee/api/employees.queries";
+import { useEmployeesByPositions } from "@/features/employee/api/employees.queries";
+import { JobPosition } from "@/features/employee/types";
 
 export const BatchMovementModal: React.FC<{
   batch: Batch;
@@ -86,7 +87,8 @@ export const BatchMovementModal: React.FC<{
   const { mutate: updateSale } = useUpdateBatchSale();
   const { mutate: updateAdjustment } = useUpdateBatchAdjustment();
 
-  const { data: employees = [], isLoading: loadingEmployees } = useDrivers();
+  const { data: employees = [], isLoading: loadingEmployees } =
+    useEmployeesByPositions([JobPosition.DRIVER, JobPosition.OFFICE]);
   const { data: clients = [], isLoading: loadingClients } = useClients();
   const { mutate: createClient } = useCreateClient();
 
