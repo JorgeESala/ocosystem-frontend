@@ -117,12 +117,7 @@ export const BatchMovementModal: React.FC<{
         saleTotal: Number(data.saleTotal),
         boxes: Number(data.boxes || 0),
         cartons: Number(data.cartons || 0),
-        quantity:
-          batch.type === "EGG"
-            ? Number(data.quantity || 0) +
-              Number(data.boxes || 0) * 360 +
-              Number(data.cartons || 0) * 30
-            : Number(data.quantity || 0),
+        quantity: Number(data.quantity || 0),
         weight: Number(data.weight || 0),
       };
 
