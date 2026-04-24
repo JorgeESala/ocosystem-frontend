@@ -113,6 +113,12 @@ export const EggAccountsPage = () => {
         open={!!selectedAccountForPay}
         account={selectedAccountForPay ?? undefined}
         onClose={() => setSelectedAccountForPay(null)}
+        cedisList={[
+          EGG_CEDIS_ORIGINAL_ID,
+          EGG_CEDIS_CHUNHUHUB_ID,
+          EGG_CEDIS_MORELOS_ID,
+        ]}
+        creditorEntity="EGGCEDIS"
       />
     </div>
   );

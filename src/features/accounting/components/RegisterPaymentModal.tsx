@@ -27,9 +27,17 @@ interface Props {
   open: boolean;
   onClose: () => void;
   account?: AccountsPayableResponse;
+  cedisList?: number[] | undefined;
+  creditorEntity?: string | undefined;
 }
 
-export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
+export const RegisterPaymentModal = ({
+  open,
+  onClose,
+  account,
+  cedisList,
+  creditorEntity,
+}: Props) => {
   type PaymentKind = "NORMAL" | "COMPENSATION";
 
   const createPayment = useCreatePayment();
@@ -48,10 +56,9 @@ export const RegisterPaymentModal = ({ open, onClose, account }: Props) => {
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
   const [selectedAPId, setSelectedAPId] = useState("");
 
-  const CEDIS_ID = account?.creditorId;
-
   const { data: payableAccounts = [] } = useOpenAccounts({
-    debtorId: CEDIS_ID,
+    debtorOriginalIds: cedisList,
+    debtorEntityType: creditorEntity,
   });
 
   const validPayables = payableAccounts.filter((ap) => ap.balance > 0);

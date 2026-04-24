@@ -23,6 +23,7 @@ export const useCreateAccountsPayable = () => {
 export const useOpenAccounts = (params: {
   debtorId?: number;
   debtorIds?: number[];
+  creditorIds?: number[];
   creditorId?: number;
   debtorOriginalIds?: number[];
   debtorEntityType?: string;
