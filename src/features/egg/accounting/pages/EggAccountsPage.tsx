@@ -30,6 +30,8 @@ export const EggAccountsPage = () => {
 
   // --- contexto actual (luego puede venir de auth) ---
   const EGG_CEDIS_ORIGINAL_ID = 1;
+  const EGG_CEDIS_CHUNHUHUB_ID = 3;
+  const EGG_CEDIS_MORELOS_ID = 2;
 
   // --- modo de vista ---
   // true = Me deben
@@ -38,11 +40,19 @@ export const EggAccountsPage = () => {
   // --- query params ---
   const queryParams = receivable
     ? {
-        creditorOriginalIds: [EGG_CEDIS_ORIGINAL_ID],
+        creditorOriginalIds: [
+          EGG_CEDIS_ORIGINAL_ID,
+          EGG_CEDIS_CHUNHUHUB_ID,
+          EGG_CEDIS_MORELOS_ID,
+        ],
         creditorEntityType: "EGGCEDIS",
       }
     : {
-        debtorOriginalIds: [EGG_CEDIS_ORIGINAL_ID],
+        debtorOriginalIds: [
+          EGG_CEDIS_ORIGINAL_ID,
+          EGG_CEDIS_CHUNHUHUB_ID,
+          EGG_CEDIS_MORELOS_ID,
+        ],
         debtorEntityType: "EGGCEDIS",
       };
 

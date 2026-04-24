@@ -73,7 +73,7 @@ export const BatchMovementModal: React.FC<{
           quantity:
             batch.type === "EGG"
               ? initialData.quantity % 30
-              : initialData.quantity, // Si es pollo, quantity son "cabezas"
+              : initialData.quantity,
         }
       : undefined,
   });

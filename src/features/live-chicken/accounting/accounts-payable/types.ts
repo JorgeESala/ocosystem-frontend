@@ -20,7 +20,11 @@ export interface CreateAccountsPayableRequest {
   notes?: string;
   date: string;
 }
-
+export interface PoultryDetails {
+  chickenQuantity: number;
+  weight: number;
+  pricePerKg: number;
+}
 // -------- Responses --------
 
 export interface AccountsPayableResponse {
@@ -41,6 +45,8 @@ export interface AccountsPayableResponse {
   solicitorId?: number;
   date: string;
   note: string;
+
+  details?: PoultryDetails | any;
 }
 
 export interface CreditSolicitor {
