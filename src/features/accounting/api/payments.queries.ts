@@ -33,6 +33,10 @@ export const useCreateCompensationPaymentFromAP = () => {
       queryClient.invalidateQueries({
         queryKey: paymentKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: accountsPayableKeys.all,
+      });
     },
   });
 };
