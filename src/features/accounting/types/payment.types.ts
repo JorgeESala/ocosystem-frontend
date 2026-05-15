@@ -12,7 +12,7 @@ export interface CreatePaymentRequest {
   paymentMethod: PaymentMethod;
 
   folio?: string;
-  notes?: string;
+  note?: string;
   driverId?: number;
   routeId?: number;
 }
@@ -25,5 +25,5 @@ export interface PaymentResponse {
   paymentDate: string; // yyyy-MM-dd
   paymentMethod: PaymentMethod;
   folio?: string;
-  notes?: string;
+  note?: string;
 }

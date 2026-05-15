@@ -36,7 +36,7 @@ export const RegisterBranchPaymentModal = ({
   const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("DEPOSIT");
   const [folio, setFolio] = useState("");
-  const [notes, setNotes] = useState("");
+  const [note, setNote] = useState("");
   const [driverId, setDriverId] = useState("");
   const [routeId, setRouteId] = useState("");
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
@@ -49,7 +49,7 @@ export const RegisterBranchPaymentModal = ({
       setPaymentKind("NORMAL");
       setPaymentDate(new Date());
       setFolio("");
-      setNotes("");
+      setNote("");
       setPaymentMethod("DEPOSIT");
       setAmount("");
       setDriverId("");
@@ -74,7 +74,7 @@ export const RegisterBranchPaymentModal = ({
           paymentDate: formatDateToISO(paymentDate),
           paymentMethod,
           folio,
-          notes,
+          note,
           driverId: driverId ? Number(driverId) : undefined,
           routeId: routeId ? Number(routeId) : undefined,
         },
@@ -157,8 +157,8 @@ export const RegisterBranchPaymentModal = ({
                 <Label>Notas (Opcional)</Label>
                 <Textarea
                   rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
                 />
               </div>
             </>

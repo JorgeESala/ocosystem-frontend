@@ -2,27 +2,29 @@ import React, { useState } from "react";
 import { Spinner, Alert } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import type { Batch, BatchPageProps } from "../types.batch";
-import { BusinessUnitBatchOverview } from "../components/BusinessUnitBatchOverview";
+
+import { UNIT_CONFIG } from "../config/unitConfig";
 import { BatchEntryForm } from "../components/BatchEntryForm";
 
 export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
-  // TanStack Query: Obtenemos las remesas de la unidad actual (EGG, etc.)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const { data: batches = [], isLoading, isError } = useBatches(unitType);
 
-  if (isLoading) {
+  // Obtenemos la configuración según el unitType
+  const config = UNIT_CONFIG[unitType];
+  const BatchOverview = config.overviewComponent;
+
+  if (isLoading)
     return (
       <div className="flex h-64 items-center justify-center">
         <Spinner size="xl" />
       </div>
     );
-  }
 
   if (isError) {
     return (
       <Alert color="failure" className="my-4">
-        Error al cargar las remesas de {unitType}. Verifica la conexión con el
-        servidor.
+        Error al cargar las remesas de {config.label}.
       </Alert>
     );
   }
@@ -32,11 +34,9 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
       <header className="flex items-center justify-between border-b border-gray-700 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            Remesas de {unitType === "EGG" ? "Huevo" : "Pollo Vivo"}
+            Remesas de {config.label}
           </h1>
-          <p className="text-gray-400">
-            Control de inventario y salidas por remesa
-          </p>
+          <p className="text-gray-400">{config.description}</p>
         </div>
         <button
           onClick={() => setIsBatchModalOpen(true)}
@@ -53,7 +53,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
           </div>
         ) : (
           batches.map((batch: Batch) => (
-            <BusinessUnitBatchOverview key={batch.id} batch={batch} />
+            <BatchOverview key={batch.id} batch={batch} />
           ))
         )}
       </div>

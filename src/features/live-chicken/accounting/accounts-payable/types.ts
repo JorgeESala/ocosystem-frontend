@@ -6,6 +6,16 @@ export type AccountsPayableSourceType =
   | "ADJUSTMENT"
   | "OTHER";
 
+export interface PoultryDetails {
+  chickenQuantity: number;
+  weight: number;
+  pricePerKg: number;
+}
+
+export interface EggDetails {
+  eggQuantity: number;
+  pricePerEgg: number;
+}
 // -------- Requests --------
 
 export interface CreateAccountsPayableRequest {
@@ -17,28 +27,27 @@ export interface CreateAccountsPayableRequest {
   sourceType: AccountsPayableSourceType;
   sourceId?: number;
   solicitorId?: number;
-  notes?: string;
+  note?: string;
   date: string;
-}
-export interface PoultryDetails {
-  chickenQuantity: number;
-  weight: number;
-  pricePerKg: number;
-}
-// -------- Responses --------
 
+  // Campos planos para que matcheen con el DTO de Java
+  chickenQuantity?: number;
+  weight?: number;
+  pricePerKg?: number;
+
+  eggQuantity?: number;
+  pricePerEgg?: number;
+}
+
+// -------- Responses --------
 export interface AccountsPayableResponse {
   id: number;
-
   creditorId: number;
   creditorName: string;
-
   debtorId: number;
   debtorName: string;
-
   totalAmount: number;
   balance: number;
-
   sourceType?: AccountsPayableSourceType;
   sourceId?: number;
   solicitorName?: string;
@@ -46,7 +55,8 @@ export interface AccountsPayableResponse {
   date: string;
   note: string;
 
-  details?: PoultryDetails | any;
+  // El backend manda un objeto dinámico aquí
+  details?: PoultryDetails | EggDetails;
 }
 
 export interface CreditSolicitor {
@@ -76,7 +86,7 @@ export interface AccountsPayableMovementResponse {
   amount: number;
   balanceBefore: number;
   balanceAfter: number;
-  notes?: string;
+  note?: string;
   createdAt: string;
   movementDate: string;
   compensationPaymentId?: number;

@@ -1,26 +1,28 @@
+import React, { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import {
-  Button,
-  Datepicker,
-  Label,
   Modal,
-  ModalBody,
   ModalHeader,
-  Select,
-  Spinner,
+  ModalBody,
+  Label,
   TextInput,
+  Select,
+  Button,
+  Radio,
+  Datepicker,
 } from "flowbite-react";
-import { HiCurrencyDollar, HiPlus } from "react-icons/hi";
+import { HiCurrencyDollar, HiUser, HiIdentification } from "react-icons/hi";
+import { UNIT_CONFIG } from "../config/unitConfig";
 import { useCreateBatchSale, useUpdateBatchSale } from "../api/batch.queries";
-import type { Batch } from "../types.batch";
-import { Controller, useForm } from "react-hook-form";
-import { toLocalDateString } from "@/utils/date.utils";
-import { useClients, useCreateClient } from "@/core/client/api/client.queries";
 import {
   useCreateAdjustment,
   useUpdateBatchAdjustment,
 } from "../api/batch.adjustments.queries";
-import { useEmployeesByPositions } from "@/features/employee/api/employees.queries";
-import { JobPosition } from "@/features/employee/types";
+import { useEmployees } from "@/features/employee/api/employees.queries";
+import { useClients } from "@/core/client/api/client.queries";
+import type { Batch } from "../types.batch";
+import { toLocalDateString } from "@/utils/date.utils";
+import { calculateEggUnits } from "@/utils/egg.utils";
 
 export const BatchMovementModal: React.FC<{
   batch: Batch;
@@ -28,293 +30,259 @@ export const BatchMovementModal: React.FC<{
   initialData?: any;
 }> = ({ batch, onClose, initialData }) => {
   const isEditing = !!initialData;
-  // 1. Agregamos "movementType" al formulario
-  const { register, handleSubmit, control, setValue, watch } = useForm<any>({
-    defaultValues: isEditing
-      ? {
-          movementType: initialData.type,
-          saleDate: initialData.date,
-          boxes:
-            initialData.type === "SALE"
-              ? initialData.quantity || 0
-              : Math.floor(initialData.quantity / 360),
-          cartons:
-            initialData.type === "SALE"
-              ? 0
-              : Math.floor((initialData.quantity % 360) / 30),
-          quantity: initialData.type === "SALE" ? 0 : initialData.quantity % 30,
-          weight: initialData.weight,
-          saleTotal: initialData.saleTotal, // Solo si es venta
-          reason: initialData.reason,
-          employeeId: String(initialData.employeeId || ""),
-          clientId: String(initialData.clientId || ""),
-        }
-      : {
-          movementType: "SALE",
-          saleDate: toLocalDateString(new Date()),
-          boxes: 0,
-          cartons: 0,
-          quantity: 0,
-        },
-    values: initialData
-      ? {
-          ...initialData,
-          movementType: initialData.type,
-          saleDate: initialData.date,
-          clientId: String(initialData.clientId || ""),
-          employeeId: String(initialData.employeeId || ""),
-          // Lógica de desglose unificada para Huevo
-          boxes:
-            batch.type === "EGG" ? Math.floor(initialData.quantity / 360) : 0,
-          cartons:
-            batch.type === "EGG"
-              ? Math.floor((initialData.quantity % 360) / 30)
-              : 0,
-          quantity:
-            batch.type === "EGG"
-              ? initialData.quantity % 30
-              : initialData.quantity,
-        }
-      : undefined,
-  });
+  const config = UNIT_CONFIG[batch.type];
+  const MovementFields = config.movementFormFields;
+
+  const getInitialValues = () => {
+    if (!isEditing) {
+      return {
+        movementType: "SALE",
+        saleDate: toLocalDateString(new Date()),
+        pricePerKg: batch.metadata?.pricePerKg || 0,
+      };
+    }
+
+    const baseValues = {
+      ...initialData,
+      movementType: initialData.type,
+      saleDate: initialData.date,
+    };
+
+    // SI ES HUEVO: Desglosamos la cantidad total en las unidades visibles
+    if (batch.type === "EGG") {
+      const { boxes, cartons, pieces } = calculateEggUnits(
+        initialData.quantity || 0,
+      );
+      return {
+        ...baseValues,
+        boxes,
+        cartons,
+        quantity: pieces, // 'quantity' en el form de huevo representa las piezas sueltas
+      };
+    }
+
+    return baseValues;
+  };
+
+  const { register, handleSubmit, watch, control, setValue, reset } =
+    useForm<any>({
+      defaultValues: getInitialValues(),
+    });
 
   const watchMovementType = watch("movementType");
+  const watchWeight = watch("weight");
+  const watchPrice = watch("pricePerKg");
 
-  // Hooks de mutación
-  const { mutate: recordSale, isPending: isSavingSale } = useCreateBatchSale();
-  const { mutate: recordAdjustment, isPending: isSavingAdjustment } =
-    useCreateAdjustment();
-  const { mutate: updateSale } = useUpdateBatchSale();
-  const { mutate: updateAdjustment } = useUpdateBatchAdjustment();
-
-  const { data: employees = [], isLoading: loadingEmployees } =
-    useEmployeesByPositions([JobPosition.DRIVER, JobPosition.OFFICE]);
-  const { data: clients = [], isLoading: loadingClients } = useClients();
-  const { mutate: createClient } = useCreateClient();
-
-  const handleQuickAddClient = () => {
-    const name = window.prompt("Nombre del nuevo cliente:");
-    if (name && name.trim().length > 0) {
-      createClient(
-        { name },
-        {
-          onSuccess: (newClient: any) =>
-            setValue("clientId", String(newClient.id)),
-        },
-      );
+  // Lógica de cálculo automático (Opcional, pero muy Senior)
+  useEffect(() => {
+    if (watchWeight && watchPrice && watchMovementType === "SALE") {
+      const total = Number(watchWeight) * Number(watchPrice);
+      setValue("saleTotal", total.toFixed(2));
     }
-  };
+  }, [watchWeight, watchPrice, watchMovementType, setValue]);
+
+  const { mutate: recordSale } = useCreateBatchSale();
+  const { mutate: updateSale } = useUpdateBatchSale();
+  const { mutate: recordAdjustment } = useCreateAdjustment();
+  const { mutate: updateAdjustment } = useUpdateBatchAdjustment();
+  const { data: employees = [], isLoading: isLoadingEmployees } =
+    useEmployees();
+  const { data: clients = [] } = useClients();
+  useEffect(() => {
+    if (isEditing && !isLoadingEmployees && employees.length > 0) {
+      // Volvemos a setear los valores iniciales.
+      // reset() comparará y llenará los campos, incluyendo el select de empleados ahora que existen las opciones.
+      reset(getInitialValues());
+    }
+  }, [employees, isLoadingEmployees, isEditing, reset]);
   const onSubmit = (data: any) => {
-    const isSale = data.movementType === "SALE";
+    const payload = {
+      ...data,
+      batchId: batch.id,
+      // Aseguramos que los números viajen como tales
+      saleTotal: Number(data.saleTotal || 0),
+      weight: Number(data.weight || 0),
+      quantity: Number(data.quantity || 0),
+    };
 
-    if (isSale) {
-      // Definimos el payload de Venta
-      const salePayload = {
-        batchId: batch.id,
-        employeeId: Number(data.employeeId),
-        clientId: Number(data.clientId),
-        saleDate: data.saleDate,
-        saleTotal: Number(data.saleTotal),
-        boxes: Number(data.boxes || 0),
-        cartons: Number(data.cartons || 0),
-        quantity: Number(data.quantity || 0),
-        weight: Number(data.weight || 0),
-      };
-
+    if (data.movementType === "SALE") {
       if (isEditing) {
+        // Mandamos el ID y el payload al PUT
         updateSale(
-          { id: initialData.id, data: salePayload },
+          { id: initialData.id, data: payload },
           { onSuccess: onClose },
         );
       } else {
-        recordSale(salePayload, { onSuccess: onClose });
+        recordSale(payload, { onSuccess: onClose });
       }
     } else {
-      // Definimos el payload de Ajuste (Aquí reason NO es undefined)
-      const adjustmentPayload = {
-        batchId: batch.id,
-        quantity:
-          Number(data.quantity || 0) +
-          Number(data.boxes || 0) * 360 +
-          Number(data.cartons || 0) * 30,
-        weight: Number(data.weight || 0),
-        reason: data.reason === "OTRO" ? data.otherReason : data.reason,
-        adjustmentDate: data.saleDate,
-      };
+      const adjustmentPayload = { ...payload, adjustmentDate: data.saleDate };
 
       if (isEditing) {
         updateAdjustment(
-          { id: initialData.id, data: adjustmentPayload },
-          { onSuccess: onClose },
+          {
+            batchId: batch.id, // ID del lote (padre)
+            id: initialData.id, // ID del ajuste (hijo)
+            data: adjustmentPayload,
+          },
+          {
+            onSuccess: onClose,
+          },
         );
       } else {
         recordAdjustment(adjustmentPayload, { onSuccess: onClose });
       }
     }
   };
+
   return (
     <Modal show={true} onClose={onClose} size="lg">
-      <ModalHeader>
-        {isEditing ? "Editar" : "Registrar"}{" "}
-        {watch("movementType") === "SALE" ? " Venta" : " Baja"}
+      <ModalHeader className="border-b border-gray-700 bg-gray-800 text-white">
+        <span className="flex items-center gap-2">
+          {isEditing ? "Editar" : "Registrar"}{" "}
+          {watchMovementType === "SALE" ? "Venta" : "Baja"}
+        </span>
       </ModalHeader>
       <ModalBody className="bg-gray-800">
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="grid grid-cols-2 gap-4"
         >
-          {/* SECTOR DE TIPO DE MOVIMIENTO */}
-          <div className="col-span-2 flex gap-4 rounded-lg bg-gray-700/50 p-3">
+          {/* 1. Tipo de Movimiento (Radios con estilo) */}
+          <div className="col-span-2 flex justify-center gap-6 rounded-lg bg-gray-700/30 p-4">
             <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                value="SALE"
+              <Radio
                 {...register("movementType")}
-                id="typeSale"
+                value="SALE"
+                id="type-sale"
+                disabled={isEditing} // <--- Deshabilitar en edición
               />
-              <Label htmlFor="typeSale" className="cursor-pointer">
-                Venta
+              <Label
+                htmlFor="type-sale"
+                className={`text-white ${isEditing ? "opacity-50" : ""}`}
+              >
+                Venta / Salida
               </Label>
             </div>
-            <div className="flex items-center gap-2 text-red-400">
-              <input
-                type="radio"
-                value="ADJUSTMENT"
+            <div className="flex items-center gap-2">
+              <Radio
                 {...register("movementType")}
-                id="typeAdj"
+                value="ADJUSTMENT"
+                id="type-adj"
+                disabled={isEditing} // <--- Deshabilitar en edición
               />
-              <Label htmlFor="typeAdj" className="cursor-pointer text-red-400">
-                Baja / Merma
+              <Label
+                htmlFor="type-adj"
+                className={`text-white ${isEditing ? "opacity-50" : ""}`}
+              >
+                Baja / Ajuste
               </Label>
             </div>
           </div>
 
+          {/* 2. Fecha con Controller para Datepicker */}
           <div className="col-span-2 lg:col-span-1">
-            <Label>Fecha</Label>
+            <Label className="mb-2 block">Fecha de Movimiento</Label>
             <Controller
               control={control}
               name="saleDate"
               render={({ field }) => (
-                <Datepicker
-                  language="es-Mx"
-                  value={
-                    field.value
-                      ? new Date(field.value + "T12:00:00")
-                      : new Date()
-                  }
-                  onChange={(date) =>
-                    date && field.onChange(toLocalDateString(date))
-                  }
-                />
+                <div className="relative">
+                  <Datepicker
+                    {...field}
+                    language="es-MX"
+                    value={
+                      field.value
+                        ? new Date(field.value + "T12:00:00")
+                        : new Date()
+                    }
+                    onChange={(date) => {
+                      if (date) {
+                        // Convertimos el objeto Date a string YYYY-MM-DD antes de guardarlo en el formulario
+                        field.onChange(toLocalDateString(date));
+                      }
+                    }}
+                    inline={false} // Para que se comporte como un popover
+                  />
+                </div>
               )}
             />
           </div>
 
-          {/* CAMPOS CONDICIONALES DE VENTA */}
-          {watchMovementType === "SALE" ? (
+          {/* 3. Datos de Persona (Ventas) */}
+          {watchMovementType === "SALE" && (
             <>
-              <div className="col-span-1">
-                <Label>Empleado</Label>
-                {!loadingEmployees ? (
-                  <Select {...register("employeeId", { required: true })}>
-                    <option value="">Seleccionar...</option>
-                    {employees.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <div className="h-10 animate-pulse rounded bg-gray-700" /> // Skeleton loader
-                )}
+              <div className="col-span-2 lg:col-span-1">
+                <Label className="mb-2 block">Vendedor / Empleado</Label>
+                <Select
+                  {...register("employeeId", { required: true })}
+                  icon={HiUser}
+                >
+                  <option value="">Seleccionar empleado...</option>
+                  {employees.map((e: any) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
-
-              <div className="col-span-1">
-                <div className="mb-1 flex items-center justify-between">
-                  <Label>Cliente</Label>
-                  <button
-                    type="button"
-                    onClick={handleQuickAddClient}
-                    className="flex items-center gap-1 text-[10px] font-bold text-blue-400 uppercase hover:text-blue-300"
-                  >
-                    <HiPlus size={12} /> Nuevo
-                  </button>
-                </div>
-                {!loadingClients ? (
-                  <Select {...register("clientId", { required: true })}>
-                    <option value="">Seleccionar Cliente...</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <div className="h-10 animate-pulse rounded bg-gray-700" /> // Skeleton loader
-                )}
+              <div className="col-span-2 lg:col-span-1">
+                <Label className="mb-2 block">Cliente</Label>
+                <Select {...register("clientId")} icon={HiIdentification}>
+                  <option value="">Cliente Mostrador / Venta Directa</option>
+                  {clients.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </>
-          ) : (
-            /* CAMPOS CONDICIONALES DE BAJA */
-            <div className="col-span-1">
-              <Label>Motivo de la Baja</Label>
-              <Select {...register("reason")}>
-                <option value="ROTURA">Huevo Roto</option>
-                <option value="CADUCADO">Huevo Caducado</option>
+          )}
+
+          {/* 4. Motivo (Bajas) */}
+          {watchMovementType === "ADJUSTMENT" && (
+            <div className="col-span-2 lg:col-span-1">
+              <Label className="mb-2 block">Motivo del Ajuste</Label>
+              <Select {...register("reason", { required: true })}>
+                <option value="">Seleccione motivo...</option>
+                <option value="MERMA">Merma por Peso (Deshidratación)</option>
+                <option value="MUERTE">Muerte / Descarte</option>
+                <option value="ROTURA">Rotura / Daño</option>
                 <option value="CONSUMO">Consumo Interno</option>
-                <option value="OTRO">Otro</option>
               </Select>
             </div>
           )}
 
-          <hr className="col-span-2 border-gray-700" />
+          <hr className="col-span-2 my-2 border-gray-700" />
 
-          {/* DESGLOSE FÍSICO (Común para ambos) */}
-          {batch.type === "EGG" && (
-            <>
-              <div>
-                <Label>Cajas</Label>
-                <TextInput type="number" {...register("boxes")} />
-              </div>
-              <div>
-                <Label>Casilleros</Label>
-                <TextInput type="number" {...register("cartons")} />
-              </div>
-            </>
-          )}
-
-          <div>
-            <Label>{batch.type === "EGG" ? "Piezas Sueltas" : "Cabezas"}</Label>
-            <TextInput type="number" {...register("quantity")} />
+          {/* 5. CAMPOS DINÁMICOS (Aquí se inyecta EggMovementFields o ChickenMovementFields) */}
+          <div className="col-span-2 grid grid-cols-2 gap-4">
+            <MovementFields register={register} watch={watch} batch={batch} />
           </div>
 
-          <div>
-            <Label>Peso Kg (Opcional)</Label>
-            <TextInput type="number" step="0.01" {...register("weight")} />
-          </div>
-
-          {/* TOTAL SOLO PARA VENTAS */}
+          {/* 6. Total de Venta */}
           {watchMovementType === "SALE" && (
-            <div className="col-span-2">
-              <Label>Total de Venta ($)</Label>
+            <div className="col-span-2 rounded-lg border border-blue-500/30 bg-blue-900/20 p-4">
+              <Label className="mb-2 block font-bold text-blue-300">
+                Total a Cobrar ($)
+              </Label>
               <TextInput
                 type="number"
+                step="0.01"
                 {...register("saleTotal", { required: true })}
                 icon={HiCurrencyDollar}
+                className="text-lg font-bold"
               />
             </div>
           )}
 
-          <div className="col-span-2 flex justify-end gap-2 border-t border-gray-700 pt-4">
+          <div className="col-span-2 flex justify-end gap-3 border-t border-gray-700 pt-6">
             <Button color="gray" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSavingSale || isSavingAdjustment}>
-              {isSavingSale || isSavingAdjustment ? (
-                <Spinner size="sm" />
-              ) : (
-                "Confirmar Movimiento"
-              )}
+            <Button color="blue" type="submit" className="px-6">
+              {isEditing ? "Guardar Cambios" : "Confirmar Movimiento"}
             </Button>
           </div>
         </form>
