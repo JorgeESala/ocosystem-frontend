@@ -29,7 +29,7 @@ export const CreateBranchAccountsPayableModal = ({ open, onClose }: Props) => {
   const [creditorId, setCreditorId] = useState<number>(FCP_CEDIS_ID);
   const [debtorId, setDebtorId] = useState<number>();
   const [amount, setAmount] = useState("");
-  const [notes, setNotes] = useState("");
+  const [note, setNote] = useState("");
   const [solicitorId, setSolicitorId] = useState<number>();
   const [debtDate, setDate] = useState<Date | null>(new Date());
 
@@ -50,7 +50,7 @@ export const CreateBranchAccountsPayableModal = ({ open, onClose }: Props) => {
         solicitorId: solicitorId ? Number(solicitorId) : undefined,
         sourceType: "ADJUSTMENT",
         amount: Number(amount),
-        notes,
+        note,
         date: formatDateToISO(debtDate),
       },
       {
@@ -130,8 +130,8 @@ export const CreateBranchAccountsPayableModal = ({ open, onClose }: Props) => {
             <Label>Notas (opcional)</Label>
             <Textarea
               rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
             />
           </div>
         </div>
