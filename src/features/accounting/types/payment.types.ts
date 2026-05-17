@@ -1,4 +1,9 @@
-export type PaymentMethod = "CASH" | "TRANSFER" | "DEPOSIT" | "CHECK" | "OTHER";
+export type PaymentMethod =
+  | "CASH"
+  | "BANK_TRANSFER"
+  | "DEPOSIT"
+  | "CHECK"
+  | "OTHER";
 
 // ---------- Requests ----------
 

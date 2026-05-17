@@ -137,7 +137,7 @@ export const RegisterBranchPaymentModal = ({
                 >
                   <option value="DEPOSIT">Depósito</option>
                   <option value="CASH">Efectivo</option>
-                  <option value="TRANSFER">Transferencia</option>
+                  <option value="BANK_TRANSFER">Transferencia</option>
                   <option value="CHECK">Cheque</option>
                   <option value="OTHER">Otro</option>
                 </Select>
