@@ -151,6 +151,10 @@ export const ChickenFooterStats: React.FC<{ batch: BatchResponseDTO }> = ({
               <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
                 Total Venta - [Kg Salidos × Costo por Kg]
               </p>
+              <p className="mt-1 text-[10px] leading-tight text-gray-500">
+                Ej. Real: {formatMXN(totalSales)} - ({kgOut.toFixed(2)} kg ×{" "}
+                {formatMXN(costPerKg)}/kg) = {formatMXN(realProfit)}.
+              </p>
             </div>
           </div>
         </div>
