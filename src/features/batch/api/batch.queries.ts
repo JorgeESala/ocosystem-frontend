@@ -94,18 +94,16 @@ export const useUpdateBatchSale = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       api.updateBatchSale(id, data),
+
     onSuccess: (_, variables) => {
-      // Usamos el batchId que viene en el objeto 'data' para invalidar el detalle
       const bId = Number(variables.data.batchId);
 
-      // Refrescar el detalle unificado
       queryClient.invalidateQueries({
         queryKey: batchKeys.fullDetail(bId),
       });
 
-      // Refrescar la lista general (para stocks actualizados)
       queryClient.invalidateQueries({
-        queryKey: batchKeys.all,
+        queryKey: batchKeys.lists(), // Más específico que .all
       });
     },
   });

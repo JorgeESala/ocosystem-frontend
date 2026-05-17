@@ -7,13 +7,13 @@ import type {
   UpdateInboundBatchSalePayload,
 } from "@/features/live-chicken/types";
 
-const BASE_URL = "/api/inbound-batches";
+const BASE_URL = "/api/v1/batch-sales";
 
 export const getInboundBatchSales = async (
   batchId: number,
 ): Promise<InboundBatchSale[]> => {
   const { data } = await http.get<InboundBatchSale[]>(
-    `${BASE_URL}/${batchId}/sales`,
+    `${BASE_URL}/batch/${batchId}`,
   );
   return data;
 };

@@ -32,17 +32,24 @@ export const useUpdateBatchAdjustment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      api.updateBatchAdjustment(id, data),
+    // Desestructuramos el objeto que recibe la mutación
+    mutationFn: ({
+      batchId,
+      id,
+      data,
+    }: {
+      batchId: number;
+      id: number;
+      data: any;
+    }) => api.updateBatchAdjustment(batchId, id, data),
+
     onSuccess: (_, variables) => {
-      const bId = Number(variables.data.batchId);
-
+      const { batchId } = variables;
       queryClient.invalidateQueries({
-        queryKey: batchKeys.fullDetail(bId),
+        queryKey: batchKeys.details(batchId),
       });
-
       queryClient.invalidateQueries({
-        queryKey: batchKeys.all,
+        queryKey: batchKeys.lists(),
       });
     },
   });

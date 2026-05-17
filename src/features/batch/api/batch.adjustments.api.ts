@@ -1,13 +1,5 @@
 import { http } from "@/shared/api/http";
-
-export interface BatchAdjustment {
-  id?: number;
-  batchId: number;
-  weight: number;
-  quantity: number;
-  reason: string;
-  adjustmentDate: string;
-}
+import type { BatchAdjustment } from "../types.batch";
 
 export const createAdjustment = async (adjustment: BatchAdjustment) => {
   const { data } = await http.post<BatchAdjustment>(
@@ -16,7 +8,14 @@ export const createAdjustment = async (adjustment: BatchAdjustment) => {
   );
   return data;
 };
-export const updateBatchAdjustment = async (id: number, data: any) => {
-  const response = await http.put(`/api/v1/batch-adjustments/${id}`, data);
+export const updateBatchAdjustment = async (
+  batchId: number,
+  id: number,
+  data: any,
+) => {
+  const response = await http.put(
+    `/api/v1/batches/${batchId}/adjustments/${id}`,
+    data,
+  );
   return response.data;
 };

@@ -6,7 +6,7 @@ import type {
   UpdateInboundBatchPayload,
 } from "../types";
 
-const BASE_URL = "/api/live-chicken/inbound-batches";
+const BASE_URL = "/api/v1/batches";
 
 export const getInboundBatches = async (): Promise<InboundBatch[]> => {
   const { data } = await http.get<InboundBatch[]>(BASE_URL);
@@ -16,7 +16,7 @@ export const getInboundBatches = async (): Promise<InboundBatch[]> => {
 export const getLatestInboundBatches = async (
   limit = 15,
 ): Promise<InboundBatch[]> => {
-  const { data } = await http.get<InboundBatch[]>(`${BASE_URL}/latest`, {
+  const { data } = await http.get<InboundBatch[]>(`${BASE_URL}`, {
     params: { limit },
   });
 

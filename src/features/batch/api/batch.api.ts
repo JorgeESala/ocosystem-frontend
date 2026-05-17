@@ -18,7 +18,7 @@ export const createBatchSale = async (payload: any) => {
   return data;
 };
 export const updateBatchSale = async (id: number, data: any) => {
-  const response = await http.put(`/api/v1/batch-sales/${id}`, data);
+  const response = await http.put(`${API_BASE}/batch-sales/${id}`, data);
   return response.data;
 };
 
@@ -37,7 +37,7 @@ export const getBatchFullDetail = async (
   id: number,
 ): Promise<BatchDetailView> => {
   const { data } = await http.get<BatchDetailView>(
-    `/api/v1/batches/${id}/detail`,
+    `${API_BASE}/batches/${id}/detail`,
   );
   return data;
 };

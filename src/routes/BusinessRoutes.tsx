@@ -6,7 +6,6 @@ import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPa
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
 import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
-import FlockTrackingPage from "@/features/live-chicken/pages/FlockTrackingPage";
 import ReportPage from "@/features/live-chicken/Reports/ReportPage";
 import ProfitReportPage from "@/pages/ProfitReportPage";
 import { Routes, Route, useParams } from "react-router-dom";
@@ -24,7 +23,10 @@ export default function BusinessRoutes() {
     return (
       <Routes>
         <Route index element={<BusinessDashboard />} />
-        <Route path="salesAndBatches" element={<FlockTrackingPage />} />
+        <Route
+          path="salesAndBatches"
+          element={<BatchPage unitType={"LIVE_CHICKEN"} />}
+        />
         <Route path="expenses" element={<ExpensesPage />} />
         <Route path="reports" element={<ReportPage />} />
         <Route path="accounting" element={<AccountsPage />} />

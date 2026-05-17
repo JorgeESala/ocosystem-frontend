@@ -115,8 +115,8 @@ export const AccountsPayableHistoryDrawer = ({
                       <span className="font-medium">{movement.folio}</span>
                     </p>
                   )}
-                  {movement.notes && (
-                    <p className="mt-1 text-xs">{movement.notes}</p>
+                  {movement.note && (
+                    <p className="mt-1 text-xs">{movement.note}</p>
                   )}
                 </div>
               );

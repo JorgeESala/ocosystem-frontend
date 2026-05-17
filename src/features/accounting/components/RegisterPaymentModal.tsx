@@ -50,7 +50,7 @@ export const RegisterPaymentModal = ({
   const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("DEPOSIT");
   const [folio, setFolio] = useState("");
-  const [notes, setNotes] = useState("");
+  const [note, setnote] = useState("");
   const [driverId, setDriverId] = useState("");
   const [routeId, setRouteId] = useState("");
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
@@ -69,7 +69,7 @@ export const RegisterPaymentModal = ({
       setPaymentKind("NORMAL");
       setPaymentDate(new Date());
       setFolio("");
-      setNotes("");
+      setnote("");
       setPaymentMethod("DEPOSIT");
       setAmount("");
       setDriverId("");
@@ -94,7 +94,7 @@ export const RegisterPaymentModal = ({
           paymentDate: formatDateToISO(paymentDate),
           paymentMethod,
           folio,
-          notes,
+          note,
           driverId: driverId ? Number(driverId) : undefined,
           routeId: routeId ? Number(routeId) : undefined,
         },
@@ -114,7 +114,7 @@ export const RegisterPaymentModal = ({
           amount: value,
           date: formatDateToISO(paymentDate),
           folio,
-          note: notes,
+          note,
         },
         { onSuccess: onClose },
       );
@@ -245,13 +245,13 @@ export const RegisterPaymentModal = ({
                 </Select>
               </div>
 
-              {/* Notes */}
+              {/* note */}
               <div>
                 <Label>Notas (Opcional)</Label>
                 <Textarea
                   rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={note}
+                  onChange={(e) => setnote(e.target.value)}
                 />
               </div>
             </>
@@ -313,8 +313,8 @@ export const RegisterPaymentModal = ({
                 <Label>Notas (Opcional)</Label>
                 <Textarea
                   rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={note}
+                  onChange={(e) => setnote(e.target.value)}
                 />
               </div>
             </>
