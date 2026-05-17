@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   Modal,
@@ -11,7 +11,13 @@ import {
   Radio,
   Datepicker,
 } from "flowbite-react";
-import { HiCurrencyDollar, HiUser, HiIdentification } from "react-icons/hi";
+import {
+  HiCurrencyDollar,
+  HiUser,
+  HiIdentification,
+  HiX,
+  HiPlus,
+} from "react-icons/hi";
 import { UNIT_CONFIG } from "../config/unitConfig";
 import { useCreateBatchSale, useUpdateBatchSale } from "../api/batch.queries";
 import {
@@ -19,7 +25,7 @@ import {
   useUpdateBatchAdjustment,
 } from "../api/batch.adjustments.queries";
 import { useEmployees } from "@/features/employee/api/employees.queries";
-import { useClients } from "@/core/client/api/client.queries";
+import { useClients, useCreateClient } from "@/core/client/api/client.queries";
 import type { Batch } from "../types.batch";
 import { toLocalDateString } from "@/utils/date.utils";
 import { calculateEggUnits } from "@/utils/egg.utils";
@@ -33,6 +39,11 @@ export const BatchMovementModal: React.FC<{
   const config = UNIT_CONFIG[batch.type];
   const MovementFields = config.movementFormFields;
 
+  // --- ESTADOS PARA CREACIÓN RÁPIDA DE CLIENTE ---
+  const [isAddingClient, setIsAddingClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const { mutate: createClient, isPending: isCreatingClient } =
+    useCreateClient();
   const getInitialValues = () => {
     if (!isEditing) {
       return {
@@ -88,6 +99,19 @@ export const BatchMovementModal: React.FC<{
   const { data: employees = [], isLoading: isLoadingEmployees } =
     useEmployees();
   const { data: clients = [] } = useClients();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Filtrar clientes en tiempo real según lo que escriba el usuario
+  const filteredClients = clients.filter((c: any) =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  // Obtener el nombre del cliente seleccionado actualmente para mostrarlo en el input
+  const selectedClientId = watch("clientId");
+  const selectedClient = clients.find(
+    (c: any) => c.id === Number(selectedClientId),
+  );
   useEffect(() => {
     if (isEditing && !isLoadingEmployees && employees.length > 0) {
       // Volvemos a setear los valores iniciales.
@@ -133,6 +157,27 @@ export const BatchMovementModal: React.FC<{
         recordAdjustment(adjustmentPayload, { onSuccess: onClose });
       }
     }
+  };
+  const handleQuickClientSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim()) return;
+
+    // Payload limpio alineado a tu entidad de Spring Boot
+    const payload = {
+      name: newClientName.trim(),
+      isInternalBranch: false,
+      accountingEntity: null,
+    };
+
+    createClient(payload, {
+      onSuccess: (savedClient: any) => {
+        // 1. Cerramos el mini-formulario
+        setIsAddingClient(false);
+        setNewClientName("");
+        // 2. Auto-seleccionamos el cliente recién creado en el formulario de React Hook Form
+        setValue("clientId", savedClient.id);
+      },
+    });
   };
 
   return (
@@ -226,16 +271,162 @@ export const BatchMovementModal: React.FC<{
                   ))}
                 </Select>
               </div>
-              <div className="col-span-2 lg:col-span-1">
-                <Label className="mb-2 block">Cliente</Label>
-                <Select {...register("clientId")} icon={HiIdentification}>
-                  <option value="">Cliente Mostrador / Venta Directa</option>
-                  {clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+              {/* CONTENEDOR DEL SELECTOR DE CLIENTE CON BUSCADOR INTERNO */}
+              <div className="relative col-span-2 lg:col-span-1">
+                <div className="mb-2 flex items-center justify-between">
+                  <Label>Cliente</Label>
+                  {!isAddingClient && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingClient(true);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-1 text-xs font-medium text-blue-400 transition-colors hover:text-blue-300"
+                    >
+                      <HiPlus className="h-3 w-3" /> Nuevo Cliente
+                    </button>
+                  )}
+                </div>
+
+                {!isAddingClient ? (
+                  <div className="relative">
+                    {/* Input de búsqueda simulando el Select */}
+                    <div className="relative flex items-center">
+                      <HiIdentification className="absolute left-3 z-10 h-5 w-5 text-gray-500" />
+                      <input
+                        type="text"
+                        className="w-full rounded-lg border border-gray-600 bg-gray-700 py-2 pr-10 pl-10 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Escribe para buscar cliente..."
+                        value={
+                          isDropdownOpen
+                            ? searchTerm
+                            : selectedClient?.name ||
+                              "Cliente Mostrador / Venta Directa"
+                        }
+                        onFocus={() => {
+                          setIsDropdownOpen(true);
+                          setSearchTerm(""); // Limpia al enfocar para mostrar todos al inicio
+                        }}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setIsDropdownOpen(true);
+                        }}
+                      />
+                      {/* Flecha indicadora de menú */}
+                      <div
+                        className="absolute right-3 flex cursor-pointer items-center text-gray-400"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Menú Desplegable Flotante (Dropdown) Filtrado */}
+                    {isDropdownOpen && (
+                      <>
+                        {/* Capa invisible trasera para cerrar el menú si dan clic afuera */}
+                        <div
+                          className="fixed inset-0 z-20"
+                          onClick={() => setIsDropdownOpen(false)}
+                        />
+
+                        <ul className="absolute top-full left-0 z-30 mt-1 max-h-60 w-full divide-y divide-gray-800 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-1 shadow-xl">
+                          {/* Opción default (Venta directa) */}
+                          <li
+                            className={`cursor-pointer rounded px-3 py-2 text-xs text-gray-300 hover:bg-blue-600 hover:text-white ${!selectedClientId ? "bg-blue-600/20 text-blue-400" : ""}`}
+                            onClick={() => {
+                              setValue("clientId", ""); // Mandamos vacío al form
+                              setIsDropdownOpen(false);
+                            }}
+                          >
+                            Cliente Mostrador / Venta Directa
+                          </li>
+
+                          {/* Opciones filtradas */}
+                          {filteredClients.length > 0 ? (
+                            filteredClients.map((c: any) => (
+                              <li
+                                key={c.id}
+                                className={`cursor-pointer rounded px-3 py-2 text-xs text-gray-300 hover:bg-blue-600 hover:text-white ${Number(selectedClientId) === c.id ? "bg-blue-600/20 font-semibold text-blue-400" : ""}`}
+                                onClick={() => {
+                                  setValue("clientId", c.id); // Registramos el ID en el React Hook Form
+                                  setIsDropdownOpen(false); // Cerramos menú
+                                }}
+                              >
+                                {c.name}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-3 py-2 text-center text-xs text-gray-500 italic">
+                              No se encontraron clientes coincidentes
+                            </li>
+                          )}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  /* Mini-formulario inline de creación ultra rápida (Mantenemos tu lógica anterior) */
+                  <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/30 p-1.5">
+                    <input
+                      type="text"
+                      className="flex-1 rounded-lg border border-gray-600 bg-gray-700 px-3 py-1.5 text-xs text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Nombre del nuevo cliente..."
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      disabled={isCreatingClient}
+                      required
+                      autoFocus
+                    />
+                    <Button
+                      size="xs"
+                      color="blue"
+                      type="button"
+                      onClick={handleQuickClientSubmit}
+                      disabled={isCreatingClient || !newClientName.trim()}
+                    >
+                      {isCreatingClient ? "..." : "Guardar"}
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingClient(false);
+                        setNewClientName("");
+                      }}
+                      className="p-1 text-gray-500 hover:text-gray-400"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                {/* Input oculto para que React Hook Form mantenga el valor registrado nativamente si es necesario */}
+                <input type="hidden" {...register("clientId")} />
               </div>
             </>
           )}
