@@ -15,7 +15,6 @@ import {
   HiCurrencyDollar,
   HiUser,
   HiIdentification,
-  HiX,
   HiPlus,
 } from "react-icons/hi";
 import { UNIT_CONFIG } from "../config/unitConfig";
