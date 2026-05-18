@@ -3,11 +3,12 @@ import { Button, Spinner, Alert } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { fetchBatchSalesByBatch, type Batch } from "../services/api";
+import { fetchBatchSalesByBatch, type Batch } from "../../../services/api";
 
 import { BatchSalesTable } from "./BatchSalesTable";
-import SaleEntryForm from "./SaleEntryForm";
+import SaleEntryForm from "../../../components/SaleEntryForm";
 import BatchEntryForm from "./BatchEntryForm";
+import { useUpdateSaleOfficeStatus } from "./api/sales.queries";
 
 export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
   const queryClient = useQueryClient();
@@ -39,7 +40,20 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
       color: `hsl(${hue}, 80%, 45%)`,
     };
   }
+  const { mutateAsync: updateOfficeStatus } = useUpdateSaleOfficeStatus(
+    batch.id,
+  );
 
+  const handleToggleOfficeStatus = async (
+    saleId: number,
+    currentStatus: boolean,
+  ) => {
+    // Convertimos el string id a number para que haga match con tu nueva interfaz
+    await updateOfficeStatus({
+      saleId: Number(saleId),
+      officeReceived: !currentStatus,
+    });
+  };
   const handleSaleCreated = async () => {
     await queryClient.invalidateQueries({
       queryKey: ["batchSales", batch.id],
@@ -157,7 +171,11 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
               Error al cargar ventas.
             </Alert>
           ) : (
-            <BatchSalesTable batch={batch} sales={sales} />
+            <BatchSalesTable
+              batch={batch}
+              sales={sales}
+              onToggleOfficeStatus={handleToggleOfficeStatus}
+            />
           )}
         </div>
       )}

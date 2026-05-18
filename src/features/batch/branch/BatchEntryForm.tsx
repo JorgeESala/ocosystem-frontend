@@ -18,7 +18,7 @@ import {
   fetchBranches,
   type Batch,
   type BatchRequest,
-} from "../services/api";
+} from "../../../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useBranchSuppliers } from "@/features/branches/branchsupplier/branch.supplier.queries";
 

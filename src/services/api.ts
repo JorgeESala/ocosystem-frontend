@@ -115,6 +115,7 @@ export interface BranchesBatchSale {
   clientName: string;
   quantitySold: number;
   kgTotal: number;
+  officeReceived?: boolean;
   saleTotal: number;
   kgGut: number;
   date: string;

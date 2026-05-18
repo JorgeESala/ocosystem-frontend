@@ -1,5 +1,5 @@
 import React from "react";
-import { Batch, type BranchesBatchSale } from "../services/api";
+import { Batch, type BranchesBatchSale } from "../../../services/api";
 
 interface Props {
   batch: Batch;

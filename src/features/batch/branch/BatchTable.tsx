@@ -8,7 +8,7 @@ import {
   fetchBatchSalesByBatch,
   fetchBatchesByBranchesAndDateRange,
   type Batch,
-} from "../services/api";
+} from "../../../services/api";
 import { BatchRow } from "./BatchRow";
 
 interface BatchTableProps {

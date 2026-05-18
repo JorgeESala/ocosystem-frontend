@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BatchTable } from "./BatchTable";
-import BatchEntryForm from "./BatchEntryForm";
+import { BatchTable } from "../features/batch/branch/BatchTable";
+import BatchEntryForm from "../features/batch/branch/BatchEntryForm";
 import {
   Button,
   Datepicker,
