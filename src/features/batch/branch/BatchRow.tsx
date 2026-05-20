@@ -48,7 +48,6 @@ export const BatchRow: React.FC<{ batch: Batch }> = ({ batch }) => {
     saleId: number,
     currentStatus: boolean,
   ) => {
-    // Convertimos el string id a number para que haga match con tu nueva interfaz
     await updateOfficeStatus({
       saleId: Number(saleId),
       officeReceived: !currentStatus,

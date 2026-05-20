@@ -17,13 +17,18 @@ import { EggHeaderStats } from "../components/egg/EggHeaderStats";
 import { EggFooterStats } from "../components/egg/EggFooterStats";
 import { ChickenMovementsTable } from "../components/live-chicken/ChickenMovementsTable";
 import { EggMovementsTable } from "../components/egg/EggMovementsTable";
-
 interface UnitConfigValue {
   label: string;
   description: string;
   overviewComponent: React.FC<{ batch: any }>;
   renderMovementQuantity: (movement: any) => React.ReactNode;
-  movementFormFields: React.FC<{ register: any; watch: any; batch: Batch }>;
+  // 🔥 Agregamos setValue aquí:
+  movementFormFields: React.FC<{
+    register: any;
+    watch: any;
+    setValue: any;
+    batch: Batch;
+  }>;
   entryFormFields: React.FC<{ register: any; watch: any; control: any }>;
   HeaderStats: React.FC<{ batch: BatchResponseDTO }>;
   FooterStats: React.FC<{ batch: BatchResponseDTO }>;

@@ -448,7 +448,12 @@ export const BatchMovementModal: React.FC<{
 
           {/* 5. CAMPOS DINÁMICOS (Aquí se inyecta EggMovementFields o ChickenMovementFields) */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
-            <MovementFields register={register} watch={watch} batch={batch} />
+            <MovementFields
+              register={register}
+              watch={watch}
+              setValue={setValue} // 👈 ¡Listo! Ya no marcará error de TypeScript
+              batch={batch}
+            />
           </div>
 
           {/* 6. Total de Venta */}
