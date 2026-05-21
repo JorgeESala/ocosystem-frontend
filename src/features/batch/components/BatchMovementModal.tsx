@@ -347,7 +347,7 @@ export const BatchMovementModal: React.FC<{
                           <li
                             className={`cursor-pointer rounded px-3 py-2 text-xs text-gray-300 hover:bg-blue-600 hover:text-white ${!selectedClientId ? "bg-blue-600/20 text-blue-400" : ""}`}
                             onClick={() => {
-                              setValue("clientId", ""); // Mandamos vacío al form
+                              setValue("clientId", "");
                               setIsDropdownOpen(false);
                             }}
                           >

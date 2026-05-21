@@ -30,7 +30,6 @@ export interface CreateAccountsPayableRequest {
   note?: string;
   date: string;
 
-  // Campos planos para que matcheen con el DTO de Java
   chickenQuantity?: number;
   weight?: number;
   pricePerKg?: number;
