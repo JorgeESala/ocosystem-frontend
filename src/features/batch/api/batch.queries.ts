@@ -77,6 +77,21 @@ export const useCreateBatch = () => {
   });
 };
 
+export const useUpdateBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      api.updateBatch(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: batchKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: batchKeys.details(variables.id),
+      });
+    },
+  });
+};
+
 export const useBatchFullDetail = (
   batchId: number,
   options?: { enabled?: boolean },

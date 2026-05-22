@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Modal,
   Button,
@@ -9,9 +9,9 @@ import {
   ModalBody,
   Datepicker,
 } from "flowbite-react";
-import type { Batch, BusinessUnitType } from "../types.batch";
+import type { BatchResponseDTO, BusinessUnitType } from "../types.batch";
 import { useSuppliers } from "@/core/supplier/supplier.queries";
-import { useCreateBatch } from "../api/batch.queries";
+import { useCreateBatch, useUpdateBatch } from "../api/batch.queries";
 import { Controller, useForm } from "react-hook-form";
 import { toLocalDateString } from "@/utils/date.utils";
 import { useCedis } from "@/core/cedis/api/cedis.queries";
@@ -21,21 +21,55 @@ export const BatchEntryForm: React.FC<{
   open: boolean;
   onClose: () => void;
   unitType: BusinessUnitType;
-  initialData?: Batch;
+  initialData?: BatchResponseDTO;
 }> = ({ open, onClose, unitType, initialData }) => {
   const config = UNIT_CONFIG[unitType];
   const EntryFields = config.entryFormFields;
-
-  const { register, handleSubmit, reset, control, watch } = useForm<any>({
-    defaultValues: {
-      entryDate: toLocalDateString(new Date()),
-      cedisId: "1",
-    },
-  });
-
+  const isEditing = !!initialData;
   const { mutate: createBatch, isPending } = useCreateBatch();
+  const { mutate: updateBatch, isPending: isUpdating } = useUpdateBatch();
   const { data: suppliers = [] } = useSuppliers();
   const { data: allCedis = [] } = useCedis();
+
+  const getMetadataNumber = (...keys: string[]) => {
+    const metadata = initialData?.metadata ?? {};
+    const key = keys.find((item) => metadata[item] !== undefined);
+    return key ? Number(metadata[key] || 0) : 0;
+  };
+
+  const getInitialValues = () => {
+    const initialPieces = Number(initialData?.initialQuantity || 0);
+    const boxesFromQuantity = Math.floor(initialPieces / 360);
+    const cartonsFromQuantity = Math.floor((initialPieces % 360) / 30);
+    const cedisId =
+      initialData?.debtorEntityId ??
+      allCedis.find((cedis) => cedis.name === initialData?.cedisName)?.id ??
+      1;
+
+    return {
+      entryDate: initialData?.entryDate ?? toLocalDateString(new Date()),
+      supplierId: initialData?.supplierId ? String(initialData.supplierId) : "",
+      cedisId: String(cedisId),
+      quantity: initialData?.initialQuantity ?? "",
+      weight: getMetadataNumber("declared_weight", "weight"),
+      realWeight: initialData?.weightReal ?? getMetadataNumber("realWeight"),
+      pricePerKg: getMetadataNumber("pricePerKg", "price_per_kg"),
+      boxes:
+        getMetadataNumber("boxQuantity", "box_quantity") || boxesFromQuantity,
+      cartons:
+        getMetadataNumber("cartonQuantity", "carton_quantity") ||
+        cartonsFromQuantity,
+      totalAmount: initialData?.totalAmount ?? "",
+    };
+  };
+
+  const { register, handleSubmit, reset, control, watch } = useForm<any>({
+    defaultValues: getInitialValues(),
+  });
+
+  useEffect(() => {
+    reset(getInitialValues());
+  }, [allCedis, initialData, reset]);
 
   const onSubmit = (data: any) => {
     // Payload genérico: enviamos todo, el backend filtrará por Strategy
@@ -53,12 +87,19 @@ export const BatchEntryForm: React.FC<{
       pricePerKg: Number(data.pricePerKg || 0),
     };
 
-    createBatch(payload, {
+    const mutationOptions = {
       onSuccess: () => {
         reset();
         onClose();
       },
-    });
+    };
+
+    if (isEditing && initialData) {
+      updateBatch({ id: initialData.id, data: payload }, mutationOptions);
+      return;
+    }
+
+    createBatch(payload, mutationOptions);
   };
 
   return (
@@ -123,8 +164,14 @@ export const BatchEntryForm: React.FC<{
             <Button color="gray" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? <Spinner size="sm" /> : "Registrar Remesa"}
+            <Button type="submit" disabled={isPending || isUpdating}>
+              {isPending || isUpdating ? (
+                <Spinner size="sm" />
+              ) : initialData ? (
+                "Guardar Cambios"
+              ) : (
+                "Registrar Remesa"
+              )}
             </Button>
           </div>
         </form>

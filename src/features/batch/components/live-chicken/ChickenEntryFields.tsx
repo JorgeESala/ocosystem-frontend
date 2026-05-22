@@ -14,11 +14,11 @@ export const ChickenEntryFields: React.FC<{ register: any }> = ({
     </div>
     <div className="col-span-1">
       <Label>Peso Declarado (Nota)</Label>
-      <TextInput type="number" step="0.1" {...register("weight")} />
+      <TextInput type="number" step="0.01" {...register("weight")} />
     </div>
     <div className="col-span-1">
       <Label>Peso Real (Báscula)</Label>
-      <TextInput type="number" step="0.1" {...register("realWeight")} />
+      <TextInput type="number" step="0.01" {...register("realWeight")} />
     </div>
   </>
 );

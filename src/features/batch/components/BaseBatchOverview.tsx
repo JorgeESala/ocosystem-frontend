@@ -6,13 +6,14 @@ import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { Spinner } from "flowbite-react";
 import { BatchMovementModal } from "./BatchMovementModal";
 import { UNIT_CONFIG } from "../config/unitConfig";
+import { BatchEntryForm } from "./BatchEntryForm";
 export const BaseBatchOverview: React.FC<{
   batch: BatchResponseDTO;
   statsComponent: React.ReactNode;
   footerComponent: React.ReactNode;
 }> = ({ batch, statsComponent, footerComponent }) => {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
-  // const [isEditBatchOpen, setIsEditBatchOpen] = useState(false); // Estado para editar la remesa
+  const [isEditBatchOpen, setIsEditBatchOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
 
@@ -38,6 +39,11 @@ export const BaseBatchOverview: React.FC<{
             <span className="rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
               {batch.supplierName}
             </span>
+            {batch.cedisName && (
+              <span className="rounded bg-emerald-900/40 px-2 py-0.5 text-xs text-emerald-300">
+                CEDIS: {batch.cedisName}
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500">
             {formatHumanDate(batch.entryDate, "long")}
@@ -53,9 +59,9 @@ export const BaseBatchOverview: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // setIsEditBatchOpen(true);
+              setIsEditBatchOpen(true);
             }}
-            className="rounded-lg bg-gray-600/20 px-3 py-1 text-sm font-medium text-gray-400 transition-all hover:bg-blue-600 hover:text-white"
+            className="rounded-lg bg-blue-600/10 px-3 py-1 text-sm font-medium text-blue-400 transition-all hover:bg-blue-600 hover:text-white"
           >
             Editar
           </button>
@@ -111,9 +117,14 @@ export const BaseBatchOverview: React.FC<{
           }}
         />
       )}
-
-      {/* Aquí iría el modal de Editar la remesa inicial */}
-      {/* {isEditBatchOpen && <BatchEntryModal initialData={batch} ... />} */}
+      {isEditBatchOpen && (
+        <BatchEntryForm
+          open={isEditBatchOpen}
+          unitType={batch.type}
+          initialData={batch}
+          onClose={() => setIsEditBatchOpen(false)}
+        />
+      )}
     </div>
   );
 };

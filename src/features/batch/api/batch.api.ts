@@ -13,6 +13,11 @@ export const createBatch = async (payload: any) => {
   return data;
 };
 
+export const updateBatch = async (id: number, payload: any) => {
+  const { data } = await http.put(`${API_BASE}/batches/${id}`, payload);
+  return data;
+};
+
 export const createBatchSale = async (payload: any) => {
   const { data } = await http.post(`${API_BASE}/batch-sales`, payload);
   return data;

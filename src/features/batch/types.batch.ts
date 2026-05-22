@@ -5,6 +5,8 @@ export interface Batch {
   type: BusinessUnitType;
   supplierId: number;
   supplierName: string;
+  debtorEntityId?: number;
+  cedisName?: string;
   entryDate: string;
   totalAmount: number;
   metadata: Record<string, any>;
@@ -20,6 +22,8 @@ export interface BatchResponseDTO {
   id: number;
   supplierId: number;
   supplierName: string;
+  debtorEntityId?: number;
+  cedisName?: string;
   entryDate: string;
   totalAmount: number;
   type: BusinessUnitType;
