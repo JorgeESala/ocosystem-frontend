@@ -1,6 +1,5 @@
 import BusinessDashboard from "@/components/BussinesDashboard";
 import ComparisonsGraphs from "@/components/ComparisonGraphs";
-import Expenses from "@/components/Expenses";
 import SalesAndBatches from "@/components/SalesAndBatches";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
@@ -13,6 +12,7 @@ import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchA
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
+import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -45,7 +45,7 @@ export default function BusinessRoutes() {
         <Route path="reports" element={<BranchReportsPage />} />
         <Route path="accounting" element={<BranchAccountsPage />} />
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
-        <Route path="expenses" element={<Expenses />} />
+        <Route path="expenses" element={<BranchExpensesPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
@@ -64,7 +64,7 @@ export default function BusinessRoutes() {
           path="salesAndBatches"
           element={<BatchPage unitType={"EGG"} />}
         />
-        <Route path="expenses" element={<Expenses />} />
+        <Route path="expenses" element={<BranchExpensesPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
@@ -78,7 +78,7 @@ export default function BusinessRoutes() {
     <Routes>
       <Route index element={<BusinessDashboard />} />
       <Route path="salesAndBatches" element={<SalesAndBatches />} />
-      <Route path="expenses" element={<Expenses />} />
+      <Route path="expenses" element={<BranchExpensesPage />} />
       <Route path="*" element={<ForbiddenPage />} />
     </Routes>
   );

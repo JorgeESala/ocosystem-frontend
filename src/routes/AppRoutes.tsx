@@ -11,11 +11,11 @@ import ProfitReportPage from "../pages/ProfitReportPage";
 // Components / Sections
 import ComparisonGraphs from "../components/ComparisonGraphs";
 import SalesAndBatches from "../components/SalesAndBatches";
-import Expenses from "../components/Expenses";
 import ProtectedBusinessRoute from "./ProtectedBusinessRoute";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import BusinessRoutes from "./BusinessRoutes";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
+import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 function BusinessRoutesWrapper() {
   const { slug } = useParams();
   // Al cambiar la key, React destruye el componente viejo y monta uno nuevo
@@ -45,7 +45,7 @@ export default function AppRoutes() {
           <Route path="/reports" element={<BranchReportsPage />} />
           <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
           <Route path="/salesAndBatches" element={<SalesAndBatches />} />
-          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/expenses" element={<BranchExpensesPage />} />
           <Route path="/profit" element={<ProfitReportPage />} />
 
           {/* 🏢 BUSINESS */}

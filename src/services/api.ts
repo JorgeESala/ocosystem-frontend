@@ -24,13 +24,15 @@ function handleApiError(err: unknown, defaultMessage: string): never {
   throw apiError;
 }
 
-export interface Expense {
+export interface BranchesExpense {
   id: number;
-  branch: Branch;
-  category: Category;
+  branchId: number;
+  branchName: string;
+  expenseCategoryName: string;
   amount: number;
   date: string;
   reason: string;
+  businessUnitName: string;
 }
 export interface ExpenseRequest {
   branchId: number;
@@ -390,7 +392,7 @@ export const fetchExpensesByBranchesAndDateRange = async (
   branchIds: number[],
   start: Date,
   end: Date,
-): Promise<Expense[]> => {
+): Promise<BranchesExpense[]> => {
   const res = await http.post(`/api/expenses/search`, {
     start: start.toISOString(),
     end: end.toISOString(),
@@ -418,11 +420,11 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
   const res = await http.get(`/api/employees`);
   return res.data;
 };
-export const fetchExpenses = async (): Promise<Expense[]> => {
+export const fetchExpenses = async (): Promise<BranchesExpense[]> => {
   const res = await http.get(`/api/expenses`);
   return res.data;
 };
-export const fetchLatestExpenses = async (): Promise<Expense[]> => {
+export const fetchLatestExpenses = async (): Promise<BranchesExpense[]> => {
   const res = await http.get(`/api/expenses/latest`);
   return res.data;
 };

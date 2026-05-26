@@ -1,5 +1,5 @@
 import { Dropdown, Checkbox, Label, Badge, DropdownItem } from "flowbite-react";
-import type { Branch } from "../services/api";
+import type { Branch } from "@/features/branches/branch/types";
 
 interface Props {
   branches: Branch[];
