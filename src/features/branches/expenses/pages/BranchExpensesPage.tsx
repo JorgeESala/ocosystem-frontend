@@ -2,13 +2,17 @@ import { useState } from "react";
 import { Alert, Button, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchExpenseModal from "../components/BranchExpenseModal";
+import BranchExpenseBreakdowns from "../components/BranchExpenseBreakdowns";
+import BranchExpenseSummary from "../components/BranchExpenseSummary";
 import BranchExpensesFilters from "../components/BranchExpensesFilters";
-import BranchExpensesList from "../components/BranchExpensesList";
+import BranchExpensesTable from "../components/BranchExpensesTable";
 import {
   useBranchExpensesSearch,
   useLatestBranchExpenses,
 } from "../api/branch-expenses.queries";
 import type { BranchExpenseFilters, BranchExpenseResponseDTO } from "../types";
+import { buildBranchExpenseSummary } from "../utils/expense-summary";
+import { formatHumanDate } from "@/utils/date.utils";
 
 export default function BranchExpensesPage() {
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
@@ -39,6 +43,24 @@ export default function BranchExpensesPage() {
   const hasExpenses = expenses.length > 0;
   const showSpinner = (loadingBranches || isLoading) && !hasExpenses;
   const showFullError = isError && !hasExpenses;
+  const summary = buildBranchExpenseSummary(expenses);
+
+  const selectedBranchNames = selectedBranchIds
+    .map((id) => branches.find((branch) => branch.id === id)?.name)
+    .filter(Boolean) as string[];
+  const selectedBranchLabel =
+    selectedBranchNames.length === 0
+      ? "Todas las sucursales"
+      : selectedBranchNames.length === 1
+        ? selectedBranchNames[0]
+        : `${selectedBranchNames.slice(0, 2).join(", ")}${
+            selectedBranchNames.length > 2
+              ? ` +${selectedBranchNames.length - 2}`
+              : ""
+          }`;
+  const scopeLabel = usingFilters
+    ? `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")} | ${selectedBranchLabel}`
+    : "Ultimos gastos cargados";
 
   const handleSearch = () => {
     if (selectedBranchIds.length === 0 || !startDate || !endDate) {
@@ -62,8 +84,6 @@ export default function BranchExpensesPage() {
     setValidationError(null);
   };
 
-  const handleCreated = (_expense: BranchExpenseResponseDTO) => undefined;
-
   const handleCreateClick = () => {
     setSelectedExpense(null);
     setShowModal(true);
@@ -75,13 +95,13 @@ export default function BranchExpensesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <header className="flex flex-col gap-3 border-b border-gray-800 pb-4 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">
             Gastos de sucursales
           </h1>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-400">
             Control de gastos por sucursal, tipo de gasto y unidad de negocio.
           </p>
         </div>
@@ -107,6 +127,31 @@ export default function BranchExpensesPage() {
         </Alert>
       )}
 
+      <BranchExpenseSummary
+        totalAmount={summary.totalAmount}
+        expenseCount={summary.expenseCount}
+        averageAmount={summary.averageAmount}
+        scopeLabel={scopeLabel}
+        topBranch={summary.topBranch?.label}
+        topBusinessUnit={summary.topBusinessUnit?.label}
+        topExpenseCategory={summary.topExpenseCategory?.label}
+      />
+
+      <BranchExpenseBreakdowns
+        byBranch={summary.byBranch}
+        byBusinessUnit={summary.byBusinessUnit}
+        byExpenseCategory={summary.byExpenseCategory}
+      />
+
+      {isError && hasExpenses && (
+        <Alert
+          color="warning"
+          className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
+        >
+          No se pudo refrescar el origen. Se muestran los gastos ya cargados.
+        </Alert>
+      )}
+
       {showSpinner ? (
         <div className="flex justify-center py-10">
           <Spinner size="lg" />
@@ -116,7 +161,7 @@ export default function BranchExpensesPage() {
           No se pudieron cargar los gastos.
         </Alert>
       ) : (
-        <BranchExpensesList expenses={expenses} onSelect={handleEditClick} />
+        <BranchExpensesTable expenses={expenses} onSelect={handleEditClick} />
       )}
 
       <BranchExpenseModal
@@ -126,7 +171,7 @@ export default function BranchExpensesPage() {
           setSelectedExpense(null);
         }}
         expenseToEdit={selectedExpense}
-        onCreated={handleCreated}
+        onCreated={() => undefined}
       />
     </div>
   );

@@ -6,13 +6,13 @@ import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/U
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
 import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
 import ReportPage from "@/features/live-chicken/Reports/ReportPage";
-import ProfitReportPage from "@/pages/ProfitReportPage";
 import { Routes, Route, useParams } from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
+import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -32,7 +32,7 @@ export default function BusinessRoutes() {
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<ProfitReportPage />} />
+        <Route path="profit" element={<BranchProfitReportPage />} />
       </Routes>
     );
   }
@@ -49,7 +49,7 @@ export default function BusinessRoutes() {
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<ProfitReportPage />} />
+        <Route path="profit" element={<BranchProfitReportPage />} />
       </Routes>
     );
   }
@@ -68,7 +68,7 @@ export default function BusinessRoutes() {
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<ProfitReportPage />} />
+        <Route path="profit" element={<BranchProfitReportPage />} />
       </Routes>
     );
   }

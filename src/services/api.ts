@@ -302,10 +302,10 @@ export interface profitReport {
   end: string;
   totalSales: number;
   totalExpenses: number;
-  totalChickenCostProRated: number;
+  totalChickenCostsProRated: number;
   profit: number;
-  totalSold: number;
   batchDetails: BatchCostDetail[];
+  cashDetails: BusinessUnitCashDetail[];
 }
 export interface BatchCostDetail {
   batchId: number;
@@ -318,6 +318,13 @@ export interface BatchCostDetail {
   quantitySoldInRange: number;
   kgSoldInRange: number;
   computedCostForRange: number;
+  totalSalesInRange: number;
+}
+export interface BusinessUnitCashDetail {
+  businessUnitName: string;
+  totalSales: number;
+  totalExpenses: number;
+  expectedCash: number;
 }
 export interface RegisterRequest {
   name: string;
@@ -374,9 +381,15 @@ export async function fetchProfitReport(
   request: profitReportRequest,
 ): Promise<profitReport> {
   try {
-    const res = await http.get(
-      `/api/reports/profit?branchIds=${request.branchIds}&start=${request.startDate}&end=${request.endDate}`,
-    );
+    const params = new URLSearchParams();
+
+    request.branchIds.forEach((branchId) => {
+      params.append("branchIds", branchId.toString());
+    });
+    params.append("start", request.startDate);
+    params.append("end", request.endDate);
+
+    const res = await http.get(`/api/reports/profit?${params.toString()}`);
 
     return res.data;
   } catch (err: unknown) {

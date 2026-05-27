@@ -1,8 +1,9 @@
 import { Button, Datepicker, Label } from "flowbite-react";
+import { HiOutlineRefresh, HiSearch } from "react-icons/hi";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import type { Branch } from "@/features/branches/branch/types";
 
-interface BranchExpensesFiltersProps {
+interface BranchProfitFiltersProps {
   branches: Branch[];
   selectedBranchIds: number[];
   onSelectedBranchIdsChange: (ids: number[]) => void;
@@ -14,7 +15,7 @@ interface BranchExpensesFiltersProps {
   onClear: () => void;
 }
 
-export default function BranchExpensesFilters({
+export default function BranchProfitFilters({
   branches,
   selectedBranchIds,
   onSelectedBranchIdsChange,
@@ -24,7 +25,7 @@ export default function BranchExpensesFilters({
   onEndDateChange,
   onSearch,
   onClear,
-}: BranchExpensesFiltersProps) {
+}: BranchProfitFiltersProps) {
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -37,7 +38,8 @@ export default function BranchExpensesFilters({
           </h2>
         </div>
         <p className="text-sm text-slate-400">
-          Combina una o varias sucursales con el periodo que quieres revisar.
+          Selecciona una o varias sucursales para revisar utilidad, costo de
+          pollo y efectivo esperado.
         </p>
       </div>
 
@@ -63,16 +65,22 @@ export default function BranchExpensesFilters({
             language="es-MX"
             value={endDate}
             onChange={onEndDateChange}
+            minDate={startDate ?? undefined}
           />
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
         <Button color="gray" onClick={onClear}>
+          <HiOutlineRefresh className="mr-2 h-4 w-4" />
           Limpiar
         </Button>
-        <Button onClick={onSearch}>Buscar</Button>
+        <Button onClick={onSearch}>
+          <HiSearch className="mr-2 h-4 w-4" />
+          Generar reporte
+        </Button>
       </div>
     </section>
   );
 }
+
