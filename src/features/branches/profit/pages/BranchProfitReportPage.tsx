@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Alert, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
+import { useBranchExpensesSearch } from "@/features/branches/expenses/api/branch-expenses.queries";
 import { formatHumanDate, getLastDays } from "@/utils/date.utils";
 import BranchProfitBatchTable from "../components/BranchProfitBatchTable";
+import BranchProfitExpenseAudit from "../components/BranchProfitExpenseAudit";
 import BranchProfitBranchBreakdown from "../components/BranchProfitBranchBreakdown";
 import BranchProfitCashBreakdown from "../components/BranchProfitCashBreakdown";
 import BranchProfitEmptyState from "../components/BranchProfitEmptyState";
@@ -24,6 +26,8 @@ export default function BranchProfitReportPage() {
 
   const reportQuery = useBranchProfitReport(activeFilters);
   const report = reportQuery.data ?? null;
+  const expensesQuery = useBranchExpensesSearch(activeFilters);
+  const expenses = expensesQuery.data ?? [];
   const summary = useMemo(() => buildBranchProfitSummary(report), [report]);
 
   const showSpinner = (loadingBranches || reportQuery.isLoading) && !report;
@@ -121,10 +125,17 @@ export default function BranchProfitReportPage() {
             selectedBranchLabel={selectedBranchLabel}
           />
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <BranchProfitBranchBreakdown items={summary.byBranch} />
-            <BranchProfitCashBreakdown items={summary.byBusinessUnit} />
-          </div>
+          <BranchProfitCashBreakdown items={summary.byBusinessUnit} />
+
+          <BranchProfitBranchBreakdown items={summary.byBranch} />
+
+          <BranchProfitExpenseAudit
+            expenses={expenses}
+            totalSales={summary.totalSales}
+            isLoading={expensesQuery.isLoading}
+            isError={expensesQuery.isError}
+            scopeLabel={scopeLabel}
+          />
 
           <BranchProfitBatchTable batches={report.batchDetails} />
 

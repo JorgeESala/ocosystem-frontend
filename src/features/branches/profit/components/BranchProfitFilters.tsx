@@ -26,6 +26,19 @@ export default function BranchProfitFilters({
   onSearch,
   onClear,
 }: BranchProfitFiltersProps) {
+  const endDateTheme = {
+    root: {
+      base: "relative",
+    },
+    popup: {
+      root: {
+        base: "absolute top-10 right-0 left-auto z-50 block pt-2",
+        inline: "relative top-0 z-auto",
+        inner: "inline-block rounded-lg bg-white p-4 shadow-lg dark:bg-gray-700",
+      },
+    },
+  };
+
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -66,6 +79,7 @@ export default function BranchProfitFilters({
             value={endDate}
             onChange={onEndDateChange}
             minDate={startDate ?? undefined}
+            theme={endDateTheme}
           />
         </div>
       </div>
@@ -83,4 +97,3 @@ export default function BranchProfitFilters({
     </section>
   );
 }
-

@@ -1,6 +1,6 @@
-import ResponsiveSortableTable from "@/components/ResponsiveTable";
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { BranchProfitBatchDetailDTO } from "../types";
+import BranchProfitDataTable from "./BranchProfitDataTable";
 
 interface Props {
   batches: BranchProfitBatchDetailDTO[];
@@ -85,9 +85,8 @@ export default function BranchProfitBatchTable({ batches }: Props) {
       </div>
 
       <div className="overflow-x-auto">
-        <ResponsiveSortableTable columns={columns} data={rows} />
+        <BranchProfitDataTable columns={columns} data={rows} />
       </div>
     </section>
   );
 }
-

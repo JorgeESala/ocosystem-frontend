@@ -16,6 +16,9 @@ export interface ProfitSummaryItem {
 
 export interface CashSummaryItem {
   label: string;
+  branchId: number;
+  branchName: string;
+  businessUnitName: string;
   totalSales: number;
   totalExpenses: number;
   expectedCash: number;
@@ -40,6 +43,10 @@ export interface BranchProfitSummary {
 
 const sumNumber = (value: number | string | null | undefined) =>
   Number(value ?? 0);
+
+const excludedBusinessUnitNames = new Set(["merma", "matados"]);
+
+const normalizeText = (value: string) => value.trim().toLowerCase();
 
 const formatBranchItems = (
   report: BranchProfitReportDTO,
@@ -92,14 +99,22 @@ const formatBranchItems = (
 const formatCashItems = (
   cashDetails: BranchProfitCashDetailDTO[] = [],
 ): CashSummaryItem[] => {
-  const totalExpectedCash = cashDetails.reduce(
+  const visibleCashDetails = cashDetails.filter(
+    (item) =>
+      !excludedBusinessUnitNames.has(normalizeText(item.businessUnitName)),
+  );
+
+  const totalExpectedCash = visibleCashDetails.reduce(
     (sum, item) => sum + sumNumber(item.expectedCash),
     0,
   );
 
-  return cashDetails
+  return visibleCashDetails
     .map((item) => ({
-      label: item.businessUnitName || "Sin unidad",
+      label: `${item.branchName || "Sin sucursal"} - ${item.businessUnitName || "Sin unidad"}`,
+      branchId: sumNumber(item.branchId),
+      branchName: item.branchName || "Sin sucursal",
+      businessUnitName: item.businessUnitName || "Sin unidad",
       totalSales: sumNumber(item.totalSales),
       totalExpenses: sumNumber(item.totalExpenses),
       expectedCash: sumNumber(item.expectedCash),
@@ -160,4 +175,3 @@ export const buildBranchProfitSummary = (
     topBusinessUnit: byBusinessUnit[0],
   };
 };
-

@@ -13,6 +13,8 @@ export interface BranchProfitBatchDetailDTO {
 }
 
 export interface BranchProfitCashDetailDTO {
+  branchId: number;
+  branchName: string;
   businessUnitName: string;
   totalSales: number;
   totalExpenses: number;
@@ -35,4 +37,3 @@ export interface BranchProfitFilters {
   startDate: Date;
   endDate: Date;
 }
-
