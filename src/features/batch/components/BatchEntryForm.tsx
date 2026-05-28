@@ -16,6 +16,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toLocalDateString } from "@/utils/date.utils";
 import { useCedis } from "@/core/cedis/api/cedis.queries";
 import { UNIT_CONFIG } from "../config/unitConfig";
+import { calculateEggUnits } from "@/utils/egg.utils";
 
 export const BatchEntryForm: React.FC<{
   open: boolean;
@@ -39,8 +40,8 @@ export const BatchEntryForm: React.FC<{
 
   const getInitialValues = () => {
     const initialPieces = Number(initialData?.initialQuantity || 0);
-    const boxesFromQuantity = Math.floor(initialPieces / 360);
-    const cartonsFromQuantity = Math.floor((initialPieces % 360) / 30);
+    const { boxes: boxesFromQuantity, cartons: cartonsFromQuantity, pieces } =
+      calculateEggUnits(initialPieces);
     const cedisId =
       initialData?.debtorEntityId ??
       allCedis.find((cedis) => cedis.name === initialData?.cedisName)?.id ??
@@ -50,7 +51,7 @@ export const BatchEntryForm: React.FC<{
       entryDate: initialData?.entryDate ?? toLocalDateString(new Date()),
       supplierId: initialData?.supplierId ? String(initialData.supplierId) : "",
       cedisId: String(cedisId),
-      quantity: initialData?.initialQuantity ?? "",
+      quantity: unitType === "EGG" ? pieces : initialData?.initialQuantity ?? "",
       weight: getMetadataNumber("declared_weight", "weight"),
       realWeight: initialData?.weightReal ?? getMetadataNumber("realWeight"),
       pricePerKg: getMetadataNumber("pricePerKg", "price_per_kg"),
@@ -69,22 +70,26 @@ export const BatchEntryForm: React.FC<{
 
   useEffect(() => {
     reset(getInitialValues());
-  }, [allCedis, initialData, reset]);
+  }, [allCedis, initialData, reset, unitType]);
 
   const onSubmit = (data: any) => {
-    // Payload genérico: enviamos todo, el backend filtrará por Strategy
+    const isEggUnit = unitType === "EGG";
+
     const payload = {
       ...data,
       supplierId: Number(data.supplierId),
       debtorEntityId: Number(data.cedisId),
       type: unitType,
-      // Normalizamos campos numéricos
       weight: Number(data.weight || 0),
       realWeight: Number(data.realWeight || 0),
       quantity: Number(data.quantity || 0),
-      boxQuantity: Number(data.boxes || 0),
-      cartonQuantity: Number(data.cartons || 0),
       pricePerKg: Number(data.pricePerKg || 0),
+      ...(isEggUnit
+        ? {
+            boxQuantity: Number(data.boxes || 0),
+            cartonQuantity: Number(data.cartons || 0),
+          }
+        : {}),
     };
 
     const mutationOptions = {
@@ -110,7 +115,6 @@ export const BatchEntryForm: React.FC<{
       <ModalBody className="bg-gray-800">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* 1. SECTOR COMÚN */}
             <div className="col-span-2">
               <Label>Proveedor</Label>
               <Select {...register("supplierId", { required: true })}>
@@ -156,7 +160,6 @@ export const BatchEntryForm: React.FC<{
 
             <hr className="col-span-2 border-gray-700" />
 
-            {/* 2. SECTOR DINÁMICO */}
             <EntryFields register={register} watch={watch} control={control} />
           </div>
 

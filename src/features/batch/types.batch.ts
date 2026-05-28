@@ -122,6 +122,7 @@ export interface BatchRequest {
   pricePerKg?: number;
   boxQuantity?: number;
   cartonQuantity?: number;
+  // En EGG, quantity representa piezas sueltas; en otras unidades es la cantidad base.
   quantity?: number;
   realWeight?: number;
   totalAmount?: number;
