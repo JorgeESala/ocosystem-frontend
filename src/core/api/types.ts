@@ -7,6 +7,7 @@ export enum ExpenseCategoryCode {
   ELECTRICITY = "ELECTRICITY",
   INTERNET = "INTERNET",
   RENT = "RENT",
+  PAYROLL = "PAYROLL",
   OTHER = "OTHER",
 }
 export type FuelType = "GASOLINE" | "DIESEL";
@@ -24,6 +25,7 @@ export const ExpenseCategoryLabels: Record<ExpenseCategoryCode, string> = {
   ELECTRICITY: "Luz",
   INTERNET: "Internet",
   RENT: "Renta",
+  PAYROLL: "Nómina",
   OTHER: "Otro",
 };
 

@@ -5,7 +5,6 @@ import { useEffect } from "react";
 export default function FoodFields({ form, setForm }: any) {
   const { data: cedis, isLoading } = useCedis();
   useEffect(() => {
-    // Si aún no hay valor y existe el cedis con id = 1
     if (!form.food.cedisId && cedis?.length) {
       const defaultCedis = cedis.find((c) => c.id === 1);
 

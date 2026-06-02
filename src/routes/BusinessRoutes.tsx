@@ -4,12 +4,12 @@ import SalesAndBatches from "@/components/SalesAndBatches";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
-import ExpensesPage from "@/features/live-chicken/pages/ExpensesPage";
 import ReportPage from "@/features/live-chicken/Reports/ReportPage";
 import { Routes, Route, useParams } from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
+import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
@@ -27,7 +27,7 @@ export default function BusinessRoutes() {
           path="salesAndBatches"
           element={<BatchPage unitType={"LIVE_CHICKEN"} />}
         />
-        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses" element={<ExpensesPage unitType="LIVE_CHICKEN" />} />
         <Route path="reports" element={<ReportPage />} />
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
@@ -64,7 +64,7 @@ export default function BusinessRoutes() {
           path="salesAndBatches"
           element={<BatchPage unitType={"EGG"} />}
         />
-        <Route path="expenses" element={<BranchExpensesPage />} />
+        <Route path="expenses" element={<ExpensesPage unitType="EGG" />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

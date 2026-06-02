@@ -3,6 +3,6 @@ export function formatMXN(amount: number): string {
     style: "currency",
     currency: "MXN",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 4,
   }).format(amount);
 }

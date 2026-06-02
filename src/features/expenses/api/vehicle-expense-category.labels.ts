@@ -4,7 +4,7 @@ export const VehicleExpenseCategoryLabel: Record<
   VehicleExpenseCategory,
   string
 > = {
-  [VehicleExpenseCategory.MAINTENANCE]: "Mantenimiento",
-  [VehicleExpenseCategory.REPAIRMENT]: "Reparación",
-  [VehicleExpenseCategory.OTHER]: "Otro",
+  MAINTENANCE: "Mantenimiento",
+  REPAIRMENT: "Reparacion",
+  OTHER: "Otro",
 };

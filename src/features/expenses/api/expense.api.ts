@@ -1,12 +1,11 @@
-// expense.api.ts
-import { http } from "@/shared/api/http"; // tu instancia de axios
-import {
+import { http } from "@/shared/api/http";
+import type {
   ExpenseCreateRequestDTO,
+  ExpenseDetailResponseDTO,
   ExpenseResponseDTO,
-  type ExpenseDetailResponseDTO,
 } from "../types/expense.types";
 
-const BASE_URL = "/api/live-chicken/expenses";
+const BASE_URL = "/api/v1/expenses";
 
 export const expenseApi = {
   create: async (
@@ -30,6 +29,7 @@ export const expenseApi = {
     });
     return data;
   },
+
   getById: async (id: number): Promise<ExpenseDetailResponseDTO> => {
     const { data } = await http.get(`${BASE_URL}/${id}`);
     return data;

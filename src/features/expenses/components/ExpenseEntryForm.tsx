@@ -10,22 +10,20 @@ import {
   type ExpenseDetailResponseDTO,
 } from "../types/expense.types";
 import { stringToDate } from "@/utils/date.utils";
+
 type ExpenseFormState = {
   date: Date;
   amount: string;
   reason: string;
-
   food: {
     cedisId: string;
     weight: string;
   };
-
   fuel: {
     vehicleId: string;
     employeeId: string;
     routeId: string;
   };
-
   vehicle: {
     vehicleId: string;
     employeeId: string;
@@ -33,18 +31,21 @@ type ExpenseFormState = {
   };
 };
 
+interface ExpenseEntryFormProps {
+  unitType: "LIVE_CHICKEN" | "EGG";
+  mode: "create" | "edit";
+  initialData?: ExpenseDetailResponseDTO;
+  onSubmit: (payload: { categoryCode: ExpenseCategoryCode; form: any }) => void;
+  onCancel: () => void;
+}
+
 export default function ExpenseEntryForm({
-  onSubmit,
-  onCancel,
+  unitType,
   mode,
   initialData,
-}: {
-  onSubmit: (payload: { categoryCode: ExpenseCategoryCode; form: any }) => void;
-
-  onCancel: () => void;
-  mode: string;
-  initialData: ExpenseDetailResponseDTO | undefined;
-}) {
+  onSubmit,
+  onCancel,
+}: ExpenseEntryFormProps) {
   const [categoryCode, setCategoryCode] = useState<ExpenseCategoryCode>(
     ExpenseCategoryCode.FUEL,
   );
@@ -52,18 +53,15 @@ export default function ExpenseEntryForm({
     date: new Date(),
     amount: "",
     reason: "",
-
     food: {
       cedisId: "",
       weight: "",
     },
-
     fuel: {
       vehicleId: "",
       employeeId: "",
       routeId: "",
     },
-
     vehicle: {
       vehicleId: "",
       employeeId: "",
@@ -80,18 +78,15 @@ export default function ExpenseEntryForm({
       date: stringToDate(initialData.date),
       amount: initialData.amount.toString(),
       reason: initialData.reason ?? "",
-
       food: {
         cedisId: initialData.food?.cedisId.toString() ?? "",
         weight: initialData.food?.weight?.toString() ?? "",
       },
-
       fuel: {
         vehicleId: initialData.fuel?.vehicleId?.toString() ?? "",
         employeeId: initialData.fuel?.employeeId?.toString() ?? "",
         routeId: initialData.fuel?.routeId?.toString() ?? "",
       },
-
       vehicle: {
         vehicleId: initialData.vehicle?.vehicleId?.toString() ?? "",
         employeeId: initialData.vehicle?.employeeId?.toString() ?? "",
@@ -103,9 +98,8 @@ export default function ExpenseEntryForm({
 
   return (
     <div className="space-y-4">
-      {/* Categoría */}
       <div>
-        <Label>Categoría</Label>
+        <Label>Categoria</Label>
         <Select
           value={categoryCode}
           onChange={(e) =>
@@ -113,8 +107,9 @@ export default function ExpenseEntryForm({
           }
         >
           <option value="FUEL">Combustible</option>
+          <option value="PAYROLL">Nómina</option>
           <option value="FOOD">Alimento</option>
-          <option value="VEHICLE">Vehículo</option>
+          <option value="VEHICLE">Vehiculo</option>
           <option value="WATER">Agua</option>
           <option value="ELECTRICITY">Luz</option>
           <option value="INTERNET">Internet</option>
@@ -126,9 +121,7 @@ export default function ExpenseEntryForm({
       <BaseExpenseFields form={form} setForm={setForm} />
 
       {categoryCode === "FOOD" && <FoodFields form={form} setForm={setForm} />}
-
       {categoryCode === "FUEL" && <FuelFields form={form} setForm={setForm} />}
-
       {categoryCode === "VEHICLE" && (
         <VehicleFields form={form} setForm={setForm} />
       )}

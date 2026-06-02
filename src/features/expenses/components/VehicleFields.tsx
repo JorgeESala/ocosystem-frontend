@@ -19,7 +19,7 @@ export default function VehicleFields({ form, setForm }: any) {
 
   return (
     <div className="space-y-3 border-t pt-3">
-      <Label>Vehículo</Label>
+      <Label>Vehiculo</Label>
       <Select
         value={form.vehicle.vehicleId}
         onChange={(e) =>
@@ -29,7 +29,7 @@ export default function VehicleFields({ form, setForm }: any) {
           }))
         }
       >
-        <option value="">Seleccione un vehículo</option>
+        <option value="">Seleccione un vehiculo</option>
         {vehicles?.map((v) => (
           <option key={v.id} value={v.id}>
             {v.name}
@@ -56,8 +56,6 @@ export default function VehicleFields({ form, setForm }: any) {
           </option>
         ))}
       </Select>
-
-      {/* Chofer */}
 
       <Label>Chofer</Label>
       <Select

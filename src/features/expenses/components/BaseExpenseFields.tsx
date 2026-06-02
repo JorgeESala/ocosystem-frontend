@@ -31,7 +31,7 @@ export default function BaseExpenseFields({
       </div>
 
       <div>
-        <Label>Descripción</Label>
+        <Label>Descripcion</Label>
         <Textarea
           rows={2}
           value={form.reason}
