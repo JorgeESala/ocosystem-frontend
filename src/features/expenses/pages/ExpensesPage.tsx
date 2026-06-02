@@ -5,10 +5,7 @@ import ExpenseModal from "../components/ExpenseModal";
 import ExpenseSummary from "../components/ExpenseSummary";
 import ExpenseBreakdowns from "../components/ExpenseBreakdowns";
 import ExpensesTable from "../components/ExpensesTable";
-import {
-  useLatestExpenses,
-  useFilterExpenses,
-} from "../api/expense.queries";
+import { useLatestExpenses, useFilterExpenses } from "../api/expense.queries";
 import { buildExpenseSummary } from "../utils/expense-summary";
 import { EXPENSE_UNIT_CONFIG } from "../config/unitConfig";
 import type {
@@ -47,14 +44,12 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
 
   const usingDateFilters = Boolean(activeDateFilters);
   const rawExpenses = usingDateFilters
-    ? filterQuery.data ?? []
-    : latestQuery.data ?? [];
+    ? (filterQuery.data ?? [])
+    : (latestQuery.data ?? []);
   const isLoading = usingDateFilters
     ? filterQuery.isLoading
     : latestQuery.isLoading;
-  const isError = usingDateFilters
-    ? filterQuery.isError
-    : latestQuery.isError;
+  const isError = usingDateFilters ? filterQuery.isError : latestQuery.isError;
 
   const hasCategoryFilter = selectedCategoryCodes.length > 0;
   const hasTypeFilter = selectedExpenseTypes.length > 0;
@@ -70,7 +65,6 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
     return matchesCategory || matchesType;
   });
 
-  const hasExpenses = displayedExpenses.length > 0;
   const showSpinner = isLoading && !rawExpenses.length;
   const showFullError = isError && !rawExpenses.length;
 
@@ -78,7 +72,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
 
   const scopeLabel = (() => {
     const parts: string[] = [];
-    if (usingDateFilters) {
+    if (activeDateFilters) {
       parts.push(
         `Rango ${formatHumanDate(activeDateFilters.start, "short")} - ${formatHumanDate(activeDateFilters.end, "short")}`,
       );
