@@ -32,7 +32,6 @@ type ExpenseFormState = {
 };
 
 interface ExpenseEntryFormProps {
-  unitType: "LIVE_CHICKEN" | "EGG";
   mode: "create" | "edit";
   initialData?: ExpenseDetailResponseDTO;
   onSubmit: (payload: { categoryCode: ExpenseCategoryCode; form: any }) => void;
@@ -40,7 +39,6 @@ interface ExpenseEntryFormProps {
 }
 
 export default function ExpenseEntryForm({
-  unitType,
   mode,
   initialData,
   onSubmit,
