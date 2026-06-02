@@ -22,8 +22,10 @@ export default function ExpenseModal({
   expenseIdToEdit,
 }: ExpenseModalProps) {
   const isEditing = Boolean(expenseIdToEdit);
-  const { data: expenseToEdit, isLoading: loadingExpense } =
-    useExpenseById(unitType, expenseIdToEdit ?? null);
+  const { data: expenseToEdit, isLoading: loadingExpense } = useExpenseById(
+    unitType,
+    expenseIdToEdit ?? null,
+  );
   const createExpense = useCreateExpense(unitType);
   const updateExpense = useUpdateExpense(unitType);
 
@@ -48,9 +50,7 @@ export default function ExpenseModal({
 
   return (
     <Modal show={open} onClose={onClose} size="md" popup>
-      <ModalHeader>
-        {isEditing ? "Editar gasto" : "Nuevo gasto"}
-      </ModalHeader>
+      <ModalHeader>{isEditing ? "Editar gasto" : "Nuevo gasto"}</ModalHeader>
 
       <ModalBody>
         {loadingExpense ? (
@@ -59,7 +59,6 @@ export default function ExpenseModal({
           </div>
         ) : (
           <ExpenseEntryForm
-            unitType={unitType}
             mode={expenseToEdit ? "edit" : "create"}
             initialData={expenseToEdit}
             onSubmit={handleSubmit}
