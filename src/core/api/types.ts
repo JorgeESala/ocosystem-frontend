@@ -1,4 +1,12 @@
-export type ExpenseType = "FUEL" | "FOOD" | "VEHICLE" | "GENERIC";
+export type ExpenseType =
+  | "SERVICIOS"
+  | "INSUMOS"
+  | "COMBUSTIBLE"
+  | "OTROS"
+  | "NOMINA"
+  | "RENTA"
+  | "MANTENIMIENTO";
+
 export enum ExpenseCategoryCode {
   FUEL = "FUEL",
   FOOD = "FOOD",
@@ -14,19 +22,29 @@ export type FuelType = "GASOLINE" | "DIESEL";
 
 export const FuelTypeLabels: Record<FuelType, string> = {
   GASOLINE: "Gasolina",
-  DIESEL: "Diésel",
+  DIESEL: "Diesel",
 };
 
 export const ExpenseCategoryLabels: Record<ExpenseCategoryCode, string> = {
   FUEL: "Combustible",
   FOOD: "Alimento",
-  VEHICLE: "Vehículo",
+  VEHICLE: "Vehiculo",
   WATER: "Agua",
   ELECTRICITY: "Luz",
   INTERNET: "Internet",
   RENT: "Renta",
-  PAYROLL: "Nómina",
+  PAYROLL: "Nomina",
   OTHER: "Otro",
+};
+
+export const ExpenseTypeLabels: Record<ExpenseType, string> = {
+  SERVICIOS: "Servicios",
+  INSUMOS: "Insumos",
+  COMBUSTIBLE: "Combustible",
+  OTROS: "Otros",
+  NOMINA: "Nomina",
+  RENTA: "Renta",
+  MANTENIMIENTO: "Mantenimiento",
 };
 
 export interface ExpenseDTO {

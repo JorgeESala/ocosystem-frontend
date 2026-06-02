@@ -3,7 +3,6 @@ import { expenseApi } from "./expense.api";
 import { expenseKeys } from "./expense.keys";
 import type {
   ExpenseCreateRequestDTO,
-  ExpenseFilters,
   ExpenseUpdateRequestDTO,
   ExpensesUnitType,
 } from "../types/expense.types";
@@ -14,32 +13,21 @@ export const useLatestExpenses = (unitType: ExpensesUnitType) =>
     queryFn: expenseApi.getLatest,
   });
 
-export const useExpensesBetween = (
+export const useFilterExpenses = (
   unitType: ExpensesUnitType,
-  start: string,
-  end: string,
-) =>
-  useQuery({
-    queryKey: expenseKeys(unitType).between(start, end),
-    queryFn: () => expenseApi.getBetween(start, end),
-    enabled: Boolean(start && end),
-  });
-
-export const useSearchExpenses = (
-  unitType: ExpensesUnitType,
-  filters: ExpenseFilters | null,
+  filters: { start: Date; end: Date } | null,
 ) =>
   useQuery({
     queryKey: filters
       ? expenseKeys(unitType).between(
-          filters.startDate.toISOString(),
-          filters.endDate.toISOString(),
+          filters.start.toISOString(),
+          filters.end.toISOString(),
         )
-      : [...expenseKeys(unitType).all, "search", "disabled"],
+      : [...expenseKeys(unitType).all, "filter", "disabled"],
     queryFn: () =>
-      expenseApi.getBetween(
-        filters!.startDate.toISOString(),
-        filters!.endDate.toISOString(),
+      expenseApi.filter(
+        filters!.start.toISOString().split("T")[0],
+        filters!.end.toISOString().split("T")[0],
       ),
     enabled: Boolean(filters),
   });

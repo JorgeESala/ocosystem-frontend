@@ -1,19 +1,9 @@
 import { Badge, Tooltip } from "flowbite-react";
 import { HiPencil } from "react-icons/hi";
 import { formatHumanDate } from "@/utils/date.utils";
+import { ExpenseTypeLabels } from "@/core/api/types";
+import { CATEGORY_BADGE_COLORS } from "../config/filterConfig";
 import type { ExpenseResponseDTO } from "../types/expense.types";
-
-const categoryColor: Record<string, string> = {
-  FOOD: "success",
-  VEHICLE: "warning",
-  FUEL: "info",
-  WATER: "blue",
-  ELECTRICITY: "yellow",
-  INTERNET: "purple",
-  RENT: "indigo",
-  GENERIC: "gray",
-  OTHER: "gray",
-};
 
 const vehicleCategoryLabel: Record<string, string> = {
   MAINTENANCE: "Mantenimiento",
@@ -65,6 +55,7 @@ export default function ExpensesTable({
           <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-400">
             <tr>
               <th className="px-5 py-3 font-semibold">Fecha</th>
+              <th className="px-5 py-3 font-semibold">Gasto</th>
               <th className="px-5 py-3 font-semibold">Categoria</th>
               <th className="px-5 py-3 font-semibold">Detalles</th>
               <th className="px-5 py-3 font-semibold">Motivo</th>
@@ -85,11 +76,17 @@ export default function ExpensesTable({
                 <td className="px-5 py-4">
                   <Badge
                     color={
-                      (categoryColor[expense.categoryCode] as any) ?? "gray"
+                      (CATEGORY_BADGE_COLORS[expense.categoryCode] as any) ??
+                      "gray"
                     }
                     className="inline-flex"
                   >
                     {expense.categoryName}
+                  </Badge>
+                </td>
+                <td className="px-5 py-4">
+                  <Badge color="gray" className="inline-flex text-xs">
+                    {ExpenseTypeLabels[expense.expenseType] ?? expense.expenseType}
                   </Badge>
                 </td>
                 <td className="px-5 py-4">

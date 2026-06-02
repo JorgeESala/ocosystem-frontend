@@ -83,7 +83,7 @@ export default function ExpenseSummary({
           value={formatMXN(averageAmount)}
           hint={
             topCategory
-              ? `Mayor categoria: ${topCategory}`
+              ? `Mayor gasto: ${topCategory}`
               : "Monto promedio por gasto"
           }
         />

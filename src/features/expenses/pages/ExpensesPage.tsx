@@ -7,15 +7,15 @@ import ExpenseBreakdowns from "../components/ExpenseBreakdowns";
 import ExpensesTable from "../components/ExpensesTable";
 import {
   useLatestExpenses,
-  useSearchExpenses,
+  useFilterExpenses,
 } from "../api/expense.queries";
 import { buildExpenseSummary } from "../utils/expense-summary";
 import { EXPENSE_UNIT_CONFIG } from "../config/unitConfig";
 import type {
-  ExpenseFilters as ExpenseFilterState,
   ExpenseResponseDTO,
   ExpensesUnitType,
 } from "../types/expense.types";
+import type { ExpenseCategoryCode, ExpenseType } from "@/core/api/types";
 import { formatHumanDate } from "@/utils/date.utils";
 
 interface ExpensesPageProps {
@@ -27,43 +27,85 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
 
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [activeFilters, setActiveFilters] =
-    useState<ExpenseFilterState | null>(null);
+  const [selectedCategoryCodes, setSelectedCategoryCodes] = useState<
+    ExpenseCategoryCode[]
+  >([]);
+  const [selectedExpenseTypes, setSelectedExpenseTypes] = useState<
+    ExpenseType[]
+  >([]);
+  const [activeDateFilters, setActiveDateFilters] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
     null,
   );
   const [showModal, setShowModal] = useState(false);
 
   const latestQuery = useLatestExpenses(unitType);
-  const searchQuery = useSearchExpenses(unitType, activeFilters);
+  const filterQuery = useFilterExpenses(unitType, activeDateFilters);
 
-  const usingFilters = Boolean(activeFilters);
-  const expenses = usingFilters
-    ? searchQuery.data ?? []
+  const usingDateFilters = Boolean(activeDateFilters);
+  const rawExpenses = usingDateFilters
+    ? filterQuery.data ?? []
     : latestQuery.data ?? [];
-  const isLoading = usingFilters
-    ? searchQuery.isLoading
+  const isLoading = usingDateFilters
+    ? filterQuery.isLoading
     : latestQuery.isLoading;
-  const isError = usingFilters ? searchQuery.isError : latestQuery.isError;
-  const hasExpenses = expenses.length > 0;
-  const showSpinner = isLoading && !hasExpenses;
-  const showFullError = isError && !hasExpenses;
+  const isError = usingDateFilters
+    ? filterQuery.isError
+    : latestQuery.isError;
 
-  const summary = buildExpenseSummary(expenses);
+  const hasCategoryFilter = selectedCategoryCodes.length > 0;
+  const hasTypeFilter = selectedExpenseTypes.length > 0;
 
-  const scopeLabel = usingFilters
-    ? `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")}`
-    : "Ultimos gastos cargados";
+  const displayedExpenses = rawExpenses.filter((e) => {
+    if (!hasCategoryFilter && !hasTypeFilter) return true;
+    const matchesCategory = hasCategoryFilter
+      ? selectedCategoryCodes.includes(e.categoryCode)
+      : false;
+    const matchesType = hasTypeFilter
+      ? selectedExpenseTypes.includes(e.expenseType)
+      : false;
+    return matchesCategory || matchesType;
+  });
+
+  const hasExpenses = displayedExpenses.length > 0;
+  const showSpinner = isLoading && !rawExpenses.length;
+  const showFullError = isError && !rawExpenses.length;
+
+  const summary = buildExpenseSummary(displayedExpenses);
+
+  const scopeLabel = (() => {
+    const parts: string[] = [];
+    if (usingDateFilters) {
+      parts.push(
+        `Rango ${formatHumanDate(activeDateFilters.start, "short")} - ${formatHumanDate(activeDateFilters.end, "short")}`,
+      );
+    } else {
+      parts.push("Ultimos gastos cargados");
+    }
+    const filterCount =
+      selectedCategoryCodes.length + selectedExpenseTypes.length;
+    if (filterCount > 0) {
+      parts.push(
+        `${filterCount} filtro${filterCount > 1 ? "s" : ""} activo${filterCount > 1 ? "s" : ""}`,
+      );
+    }
+    return parts.join(" | ");
+  })();
 
   const handleSearch = () => {
     if (!startDate || !endDate) return;
-    setActiveFilters({ startDate, endDate });
+    setActiveDateFilters({ start: startDate, end: endDate });
   };
 
   const handleClearFilters = () => {
     setStartDate(new Date());
     setEndDate(new Date());
-    setActiveFilters(null);
+    setSelectedCategoryCodes([]);
+    setSelectedExpenseTypes([]);
+    setActiveDateFilters(null);
   };
 
   const handleCreateClick = () => {
@@ -93,6 +135,10 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
         endDate={endDate}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
+        selectedCategoryCodes={selectedCategoryCodes}
+        onCategoryCodesChange={setSelectedCategoryCodes}
+        selectedExpenseTypes={selectedExpenseTypes}
+        onExpenseTypesChange={setSelectedExpenseTypes}
         onSearch={handleSearch}
         onClear={handleClearFilters}
       />
@@ -110,7 +156,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
         byExpenseType={summary.byExpenseType}
       />
 
-      {isError && hasExpenses && (
+      {isError && rawExpenses.length > 0 && (
         <Alert
           color="warning"
           className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
@@ -131,7 +177,10 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
           No se pudieron cargar los gastos.
         </Alert>
       ) : (
-        <ExpensesTable expenses={expenses} onSelect={handleEditClick} />
+        <ExpensesTable
+          expenses={displayedExpenses}
+          onSelect={handleEditClick}
+        />
       )}
 
       <ExpenseModal

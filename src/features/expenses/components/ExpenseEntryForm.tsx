@@ -97,7 +97,7 @@ export default function ExpenseEntryForm({
   return (
     <div className="space-y-4">
       <div>
-        <Label>Categoria</Label>
+        <Label>Gasto</Label>
         <Select
           value={categoryCode}
           onChange={(e) =>
@@ -105,13 +105,13 @@ export default function ExpenseEntryForm({
           }
         >
           <option value="FUEL">Combustible</option>
-          <option value="PAYROLL">Nómina</option>
           <option value="FOOD">Alimento</option>
           <option value="VEHICLE">Vehiculo</option>
           <option value="WATER">Agua</option>
           <option value="ELECTRICITY">Luz</option>
           <option value="INTERNET">Internet</option>
           <option value="RENT">Renta</option>
+          <option value="PAYROLL">Nomina</option>
           <option value="OTHER">Otro</option>
         </Select>
       </div>

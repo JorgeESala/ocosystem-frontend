@@ -20,13 +20,14 @@ export const expenseApi = {
     return data;
   },
 
-  getBetween: async (
-    start: string,
-    end: string,
+  filter: async (
+    start?: string,
+    end?: string,
   ): Promise<ExpenseResponseDTO[]> => {
-    const { data } = await http.get(BASE_URL, {
-      params: { start, end },
-    });
+    const params: Record<string, string> = {};
+    if (start) params.start = start;
+    if (end) params.end = end;
+    const { data } = await http.get(`${BASE_URL}/filter`, { params });
     return data;
   },
 

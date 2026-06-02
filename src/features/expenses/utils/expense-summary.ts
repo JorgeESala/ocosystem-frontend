@@ -1,4 +1,5 @@
 import type { ExpenseResponseDTO } from "../types/expense.types";
+import { ExpenseTypeLabels } from "@/core/api/types";
 
 export interface ExpenseSummaryItem {
   label: string;
@@ -70,7 +71,10 @@ export const buildExpenseSummary = (
     totalAmount,
   );
   const byExpenseType = addPercentages(
-    sumBy(expenses, (e) => e.expenseType || "Sin tipo"),
+    sumBy(
+      expenses,
+      (e) => ExpenseTypeLabels[e.expenseType] ?? e.expenseType ?? "Sin tipo",
+    ),
     totalAmount,
   );
 

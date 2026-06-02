@@ -74,9 +74,9 @@ export default function ExpenseBreakdowns({
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       <BreakdownTable
-        title="Desglose por tipo de gasto"
+        title="Desglose por gasto"
         items={byCategory}
-        emptyLabel="No hay datos por tipo de gasto para el filtro actual."
+        emptyLabel="No hay datos por gasto para el filtro actual."
       />
       <BreakdownTable
         title="Desglose por categoria"
