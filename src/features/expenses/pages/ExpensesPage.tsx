@@ -22,7 +22,9 @@ interface ExpensesPageProps {
 export default function ExpensesPage({ unitType }: ExpensesPageProps) {
   const config = EXPENSE_UNIT_CONFIG[unitType];
 
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [startDate, setStartDate] = useState<Date | null>(
+    new Date(new Date().setDate(new Date().getDate() - 30)),
+  );
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [selectedCategoryCodes, setSelectedCategoryCodes] = useState<
     ExpenseCategoryCode[]
