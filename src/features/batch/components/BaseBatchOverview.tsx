@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useBatchFullDetail } from "../api/batch.queries";
 import type { BatchResponseDTO } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
@@ -11,13 +11,24 @@ export const BaseBatchOverview: React.FC<{
   batch: BatchResponseDTO;
   statsComponent: React.ReactNode;
   footerComponent: React.ReactNode;
-}> = ({ batch, statsComponent, footerComponent }) => {
+  autoExpandId?: number | null;
+}> = ({ batch, statsComponent, footerComponent, autoExpandId }) => {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [isEditBatchOpen, setIsEditBatchOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useBatchFullDetail(batch.id, { enabled: isOpen });
+
+  useEffect(() => {
+    if (autoExpandId !== null && autoExpandId !== undefined && autoExpandId === batch.id) {
+      if (!isOpen) setIsOpen(true);
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    }
+  }, [autoExpandId, batch.id]);
 
   const onEditMovement = (movement: any) => {
     setSelectedMovement(movement);
@@ -26,7 +37,11 @@ export const BaseBatchOverview: React.FC<{
   const config = UNIT_CONFIG[batch.type];
   const MovementsTable = config.MovementsTable;
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-md">
+    <div
+      ref={cardRef}
+      id={`batch-${batch.id}`}
+      className="overflow-hidden rounded-xl border border-gray-700 bg-gray-800 shadow-md transition-all duration-300"
+    >
       <div
         className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-gray-700"
         onClick={() => setIsOpen(!isOpen)}

@@ -20,7 +20,7 @@ import { EggMovementsTable } from "../components/egg/EggMovementsTable";
 interface UnitConfigValue {
   label: string;
   description: string;
-  overviewComponent: React.FC<{ batch: any }>;
+  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null }>;
   renderMovementQuantity: (movement: any) => React.ReactNode;
   // 🔥 Agregamos setValue aquí:
   movementFormFields: React.FC<{

@@ -1,18 +1,60 @@
-import React, { useState } from "react";
-import { Spinner, Alert } from "flowbite-react";
+import React, { useState, useCallback, useEffect } from "react";
+import { Spinner, Alert, Button, Datepicker } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import type { Batch, BatchPageProps } from "../types.batch";
 
 import { UNIT_CONFIG } from "../config/unitConfig";
 import { BatchEntryForm } from "../components/BatchEntryForm";
+import { GlobalAvailabilitySummary } from "../components/GlobalAvailabilitySummary";
+import { WeeklySalesChart } from "../components/WeeklySalesChart";
+
+type TabKey = "availability" | "weekly";
+
+const THIRTY_DAYS_AGO = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d;
+})();
 
 export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(THIRTY_DAYS_AGO);
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [activeTab, setActiveTab] = useState<TabKey>("availability");
+  const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (expandedBatchId === null) return;
+    const timeout = setTimeout(() => setExpandedBatchId(null), 300);
+    return () => clearTimeout(timeout);
+  }, [expandedBatchId]);
+
   const { data: batches = [], isLoading, isError } = useBatches(unitType);
 
-  // Obtenemos la configuración según el unitType
   const config = UNIT_CONFIG[unitType];
   const BatchOverview = config.overviewComponent;
+
+  const filteredBatches = batches.filter((batch: Batch) => {
+    if (!startDate || !endDate) return true;
+    const entryDate = new Date(`${batch.entryDate}T00:00:00`);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return entryDate >= start && entryDate <= end;
+  });
+
+  const handleBatchClick = useCallback((batchId: number) => {
+    setExpandedBatchId(batchId);
+    setTimeout(() => {
+      document.getElementById(`batch-${batchId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }, []);
+
+  const handleClearFilter = useCallback(() => {
+    setStartDate(THIRTY_DAYS_AGO);
+    setEndDate(new Date());
+  }, []);
 
   if (isLoading)
     return (
@@ -46,14 +88,75 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
         </button>
       </header>
 
-      <div className="grid grid-cols-1 gap-4">
-        {batches.length === 0 ? (
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="mb-1 block text-xs text-gray-400">Inicio</label>
+          <Datepicker
+            language="es-MX"
+            value={startDate}
+            onChange={(d) => d && setStartDate(d)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-gray-400">Fin</label>
+          <Datepicker
+            language="es-MX"
+            value={endDate}
+            onChange={(d) => d && setEndDate(d)}
+          />
+        </div>
+        <Button size="xs" color="gray" onClick={handleClearFilter}>
+          Limpiar
+        </Button>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab("availability")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "availability"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+          }`}
+        >
+          Disponibilidad
+        </button>
+        <button
+          onClick={() => setActiveTab("weekly")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "weekly"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+          }`}
+        >
+          Ventas Semanales
+        </button>
+      </div>
+
+      {activeTab === "availability" && (
+        <GlobalAvailabilitySummary
+          batches={filteredBatches}
+          unitType={unitType}
+          onBatchClick={handleBatchClick}
+        />
+      )}
+
+      {activeTab === "weekly" && (
+        <WeeklySalesChart batches={filteredBatches} unitType={unitType} />
+      )}
+
+      <div className="space-y-4">
+        {filteredBatches.length === 0 ? (
           <div className="py-10 text-center text-gray-500">
-            No hay remesas registradas para esta unidad.
+            No hay remesas registradas en este periodo.
           </div>
         ) : (
-          batches.map((batch: Batch) => (
-            <BatchOverview key={batch.id} batch={batch} />
+          filteredBatches.map((batch: Batch) => (
+            <BatchOverview
+              key={batch.id}
+              batch={batch}
+              autoExpandId={expandedBatchId}
+            />
           ))
         )}
       </div>
