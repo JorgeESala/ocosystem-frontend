@@ -40,9 +40,7 @@ export const ChickenMovementsTable: React.FC<{
               <td
                 className={`px-4 py-3.5 font-medium ${isAdjustment ? "text-red-400" : "text-white"}`}
               >
-                {isAdjustment
-                  ? `⚠️ Baja: ${mov.reason}`
-                  : `Venta: ${mov.concept}`}
+                {isAdjustment ? `⚠️ Baja: ${mov.reason}` : `${mov.concept}`}
               </td>
               <td className="px-4 py-3.5 text-right font-medium text-white">
                 {mov.quantity} aves
