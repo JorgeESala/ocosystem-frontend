@@ -134,3 +134,17 @@ export const useWeeklySalesReport = (
     enabled: !!startDate && !!endDate,
   });
 };
+
+export const useSalesByClient = (
+  startDate: string | null,
+  endDate: string | null,
+) => {
+  return useQuery({
+    queryKey: batchKeys.salesByClient(
+      startDate ?? undefined,
+      endDate ?? undefined,
+    ),
+    queryFn: () => api.getSalesByClient(startDate!, endDate!),
+    enabled: !!startDate && !!endDate,
+  });
+};

@@ -160,3 +160,11 @@ export interface WeeklySalesData {
   totalQuantity: number;
   totalSales: number;
 }
+
+export interface SalesByClientData {
+  clientId: number;
+  clientName: string;
+  isInternalBranch: boolean;
+  totalQuantity: number;
+  totalSales: number;
+}

@@ -7,8 +7,9 @@ import { UNIT_CONFIG } from "../config/unitConfig";
 import { BatchEntryForm } from "../components/BatchEntryForm";
 import { GlobalAvailabilitySummary } from "../components/GlobalAvailabilitySummary";
 import { WeeklySalesChart } from "../components/WeeklySalesChart";
+import { SalesByClientChart } from "../components/SalesByClientChart";
 
-type TabKey = "availability" | "weekly";
+type TabKey = "availability" | "weekly" | "clients";
 
 const THIRTY_DAYS_AGO = (() => {
   const d = new Date();
@@ -131,6 +132,16 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
         >
           Ventas Semanales
         </button>
+        <button
+          onClick={() => setActiveTab("clients")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "clients"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+          }`}
+        >
+          Ventas por Cliente
+        </button>
       </div>
 
       {activeTab === "availability" && (
@@ -143,6 +154,14 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
 
       {activeTab === "weekly" && (
         <WeeklySalesChart
+          unitType={unitType}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      )}
+
+      {activeTab === "clients" && (
+        <SalesByClientChart
           unitType={unitType}
           startDate={startDate}
           endDate={endDate}

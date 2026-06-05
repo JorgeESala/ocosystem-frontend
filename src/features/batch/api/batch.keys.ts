@@ -16,4 +16,6 @@ export const batchKeys = {
     [...batchKeys.details(batchId), "adjustments"] as const,
   weeklySales: (startDate?: string, endDate?: string) =>
     [...batchKeys.all, "weekly", startDate, endDate] as const,
+  salesByClient: (startDate?: string, endDate?: string) =>
+    [...batchKeys.all, "salesByClient", startDate, endDate] as const,
 };
