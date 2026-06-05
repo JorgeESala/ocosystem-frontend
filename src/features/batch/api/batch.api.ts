@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import type { BatchDetailView } from "../types.batch";
+import type { BatchDetailView, WeeklySalesData } from "../types.batch";
 
 const API_BASE = "/api/v1";
 
@@ -43,6 +43,17 @@ export const getBatchFullDetail = async (
 ): Promise<BatchDetailView> => {
   const { data } = await http.get<BatchDetailView>(
     `${API_BASE}/batches/${id}/detail`,
+  );
+  return data;
+};
+
+export const getWeeklySalesReport = async (
+  startDate: string,
+  endDate: string,
+): Promise<WeeklySalesData[]> => {
+  const params = new URLSearchParams({ startDate, endDate });
+  const { data } = await http.get<WeeklySalesData[]>(
+    `${API_BASE}/batches/weekly-sales?${params}`,
   );
   return data;
 };

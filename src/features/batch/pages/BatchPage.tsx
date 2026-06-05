@@ -142,7 +142,11 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
       )}
 
       {activeTab === "weekly" && (
-        <WeeklySalesChart batches={filteredBatches} unitType={unitType} />
+        <WeeklySalesChart
+          unitType={unitType}
+          startDate={startDate}
+          endDate={endDate}
+        />
       )}
 
       <div className="space-y-4">

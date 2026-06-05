@@ -154,3 +154,9 @@ export interface BatchAdjustmentRequest {
   reason: string;
   adjustmentDate: string;
 }
+
+export interface WeeklySalesData {
+  weekStart: string;
+  totalQuantity: number;
+  totalSales: number;
+}

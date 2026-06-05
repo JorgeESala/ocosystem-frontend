@@ -118,8 +118,19 @@ export const useUpdateBatchSale = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: batchKeys.lists(), // Más específico que .all
+        queryKey: batchKeys.lists(),
       });
     },
+  });
+};
+
+export const useWeeklySalesReport = (
+  startDate: string | null,
+  endDate: string | null,
+) => {
+  return useQuery({
+    queryKey: batchKeys.weeklySales(startDate ?? undefined, endDate ?? undefined),
+    queryFn: () => api.getWeeklySalesReport(startDate!, endDate!),
+    enabled: !!startDate && !!endDate,
   });
 };

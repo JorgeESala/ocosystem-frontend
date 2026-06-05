@@ -10,16 +10,15 @@ import {
   Cell,
 } from "recharts";
 import { Spinner } from "flowbite-react";
-import { useQueries } from "@tanstack/react-query";
-import type { BatchResponseDTO, BusinessUnitType } from "../types.batch";
-import { batchKeys } from "../api/batch.keys";
-import { getBatchFullDetail } from "../api/batch.api";
+import type { BusinessUnitType } from "../types.batch";
+import { useWeeklySalesReport } from "../api/batch.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
 
 interface WeeklySalesChartProps {
-  batches: BatchResponseDTO[];
   unitType: BusinessUnitType;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 interface TooltipPayloadItem {
@@ -71,46 +70,37 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   );
 };
 
-interface WeeklyData {
-  weekStart: string;
-  label: string;
-  totalQuantity: number;
-  totalSales: number;
-}
-
-const getWeekStart = (date: Date): Date => {
-  const d = new Date(date);
-  const day = d.getDay();
-  d.setDate(d.getDate() - day);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
-const formatWeekLabel = (weekStart: Date): string => {
-  const end = new Date(weekStart);
+const formatWeekLabel = (weekStart: string): string => {
+  const start = new Date(`${weekStart}T00:00:00`);
+  const end = new Date(start);
   end.setDate(end.getDate() + 6);
-  const startDay = weekStart.getDate();
+  const startDay = start.getDate();
   const endDay = end.getDate();
   const month = new Intl.DateTimeFormat("es-MX", { month: "short" }).format(
-    weekStart,
+    start,
   );
   return `${startDay}-${endDay} ${month}`;
 };
 
 export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
-  batches,
   unitType,
+  startDate,
+  endDate,
 }) => {
-  const batchIds = batches.map((b) => b.id);
+  const startDateStr = startDate
+    ? startDate.toISOString().split("T")[0]
+    : null;
+  const endDateStr = endDate ? endDate.toISOString().split("T")[0] : null;
 
-  const detailQueries = useQueries({
-    queries: batchIds.map((id) => ({
-      queryKey: batchKeys.fullDetail(id),
-      queryFn: () => getBatchFullDetail(id),
-    })),
-  });
+  const { data: rawData = [], isLoading } = useWeeklySalesReport(
+    startDateStr,
+    endDateStr,
+  );
 
-  const isLoading = detailQueries.some((q) => q.isLoading);
+  const weeklyData = rawData.map((w) => ({
+    ...w,
+    label: formatWeekLabel(w.weekStart),
+  }));
 
   if (isLoading) {
     return (
@@ -120,15 +110,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
     );
   }
 
-  const allMovements = detailQueries
-    .filter((q) => q.data)
-    .flatMap((q) => q.data?.movements || []);
-
-  const salesMovements = allMovements.filter(
-    (m: any) => m.type === "SALE" && m.date,
-  );
-
-  if (salesMovements.length === 0) {
+  if (weeklyData.length === 0) {
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
         <p className="text-center text-sm text-gray-400">
@@ -137,31 +119,6 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
       </div>
     );
   }
-
-  const weekMap = new Map<string, WeeklyData>();
-
-  salesMovements.forEach((mov: any) => {
-    const movDate = new Date(`${mov.date}T12:00:00`);
-    const weekStart = getWeekStart(movDate);
-    const key = weekStart.toISOString().split("T")[0];
-
-    if (!weekMap.has(key)) {
-      weekMap.set(key, {
-        weekStart: key,
-        label: formatWeekLabel(weekStart),
-        totalQuantity: 0,
-        totalSales: 0,
-      });
-    }
-
-    const week = weekMap.get(key)!;
-    week.totalQuantity += Number(mov.quantity || 0);
-    week.totalSales += Number(mov.saleTotal || 0);
-  });
-
-  const weeklyData = Array.from(weekMap.values()).sort(
-    (a, b) => a.weekStart.localeCompare(b.weekStart),
-  );
 
   const totalQuantity = weeklyData.reduce(
     (sum, w) => sum + w.totalQuantity,
