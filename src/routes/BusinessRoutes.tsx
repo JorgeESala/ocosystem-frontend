@@ -13,6 +13,7 @@ import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
+import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -32,7 +33,7 @@ export default function BusinessRoutes() {
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<BranchProfitReportPage />} />
+        <Route path="profit" element={<ProfitReportPage unitType="LIVE_CHICKEN" />} />
       </Routes>
     );
   }
@@ -68,7 +69,7 @@ export default function BusinessRoutes() {
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<BranchProfitReportPage />} />
+        <Route path="profit" element={<ProfitReportPage unitType="EGG" />} />
       </Routes>
     );
   }

@@ -102,6 +102,13 @@ inlined. Stay consistent with existing labels.
 
 - **No comments.** Project preference (see commit `526b3ac "removed
   comments"`). Don't add code comments, JSDoc, or file headers.
+- For the EGG unit, always display piece quantities using
+  `EggQuantityDisplay`
+  (`src/features/batch/components/egg/EggQuantityDisplay.tsx`), which renders
+  icons for 📦 cajas / 📊 casilleros / 🥚 piezas. Never use plain numbers in
+  tables, charts, summary cards, or tooltips when displaying EGG unit piece
+  counts. This applies to every batch, sales, expense, profit, and report
+  feature that shows EGG quantities.
 - Use the `flowbite-react` component library for buttons, modals, badges,
   tooltips, alerts, labels, inputs. Don't reinvent these with raw HTML unless
   you need a feature the library lacks.
