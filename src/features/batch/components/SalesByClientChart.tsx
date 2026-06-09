@@ -92,9 +92,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
   const [showBranches, setShowBranches] = useState(true);
   const [showRegular, setShowRegular] = useState(true);
 
-  const startDateStr = startDate
-    ? startDate.toISOString().split("T")[0]
-    : null;
+  const startDateStr = startDate ? startDate.toISOString().split("T")[0] : null;
   const endDateStr = endDate ? endDate.toISOString().split("T")[0] : null;
 
   const { data: rawData = [], isLoading } = useSalesByClient(
@@ -137,18 +135,12 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
     (sum, c) => sum + c.totalQuantity,
     0,
   );
-  const branchSales = branchClients.reduce(
-    (sum, c) => sum + c.totalSales,
-    0,
-  );
+  const branchSales = branchClients.reduce((sum, c) => sum + c.totalSales, 0);
   const regularQuantity = regularClients.reduce(
     (sum, c) => sum + c.totalQuantity,
     0,
   );
-  const regularSales = regularClients.reduce(
-    (sum, c) => sum + c.totalSales,
-    0,
-  );
+  const regularSales = regularClients.reduce((sum, c) => sum + c.totalSales, 0);
 
   const isEgg = unitType === "EGG";
   const unitLabel = unitType === "LIVE_CHICKEN" ? "aves" : "unidades";
@@ -175,7 +167,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg border border-blue-800 bg-blue-900/50 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-blue-400">
+          <p className="text-[10px] tracking-wider text-blue-400 uppercase">
             Unidades a Sucursales
           </p>
           <div className="mt-1 flex items-center justify-center">
@@ -195,7 +187,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
           </div>
         </div>
         <div className="rounded-lg border border-blue-800 bg-blue-900/50 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-blue-400">
+          <p className="text-[10px] tracking-wider text-blue-400 uppercase">
             Ventas a Sucursales
           </p>
           <p className="mt-1 text-lg font-bold text-blue-300">
@@ -203,7 +195,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
           </p>
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Unidades a Clientes
           </p>
           <div className="mt-1 flex items-center justify-center">
@@ -223,7 +215,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
           </div>
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Ventas a Clientes
           </p>
           <p className="mt-1 text-lg font-bold text-green-400">
@@ -255,7 +247,9 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
                   style={{ borderColor: BRANCH_COLOR }}
                 />
               )}
-              <span className="text-[10px] text-gray-400">Sucursales</span>
+              <span className="text-[10px] text-gray-400">
+                Clientes internos
+              </span>
             </button>
             <button
               onClick={() => setShowRegular((v) => !v)}
@@ -274,7 +268,9 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
                   style={{ borderColor: REGULAR_COLOR }}
                 />
               )}
-              <span className="text-[10px] text-gray-400">Clientes</span>
+              <span className="text-[10px] text-gray-400">
+                Clientes Externos
+              </span>
             </button>
           </div>
         </div>
@@ -325,9 +321,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
                 {visibleData.map((entry) => (
                   <Cell
                     key={entry.clientId}
-                    fill={
-                      entry.isInternalBranch ? BRANCH_COLOR : REGULAR_COLOR
-                    }
+                    fill={entry.isInternalBranch ? BRANCH_COLOR : REGULAR_COLOR}
                   />
                 ))}
               </Bar>
