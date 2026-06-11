@@ -13,6 +13,7 @@ import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
+import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
@@ -47,6 +48,7 @@ export default function BusinessRoutes() {
         <Route path="accounting" element={<BranchAccountsPage />} />
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
+        <Route path="checklist" element={<ChecklistPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

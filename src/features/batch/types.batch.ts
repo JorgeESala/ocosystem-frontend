@@ -155,10 +155,18 @@ export interface BatchAdjustmentRequest {
   adjustmentDate: string;
 }
 
+export interface SupplierBreakdownItem {
+  supplierId: number;
+  supplierName: string;
+  totalQuantity: number;
+  totalSales: number;
+}
+
 export interface WeeklySalesData {
   weekStart: string;
   totalQuantity: number;
   totalSales: number;
+  supplierBreakdown: SupplierBreakdownItem[];
 }
 
 export interface SalesByClientData {

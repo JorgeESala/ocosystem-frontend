@@ -79,4 +79,8 @@ export interface Route {
 export interface Client {
   id: number;
   name: string;
+  accountingEntityId?: number;
+  localityId?: number;
+  localityName?: string;
+  isInternalBranch: boolean;
 }

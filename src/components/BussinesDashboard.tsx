@@ -1,5 +1,6 @@
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
+import ChecklistDashboardWidget from "@/features/branches/checklist/components/ChecklistDashboardWidget";
 
 export default function BusinessDashboard() {
   const { slug } = useParams();
@@ -31,18 +32,22 @@ export default function BusinessDashboard() {
         {slug ? slug.toUpperCase() : ""}
       </h1>
 
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {menu.map((m) => (
-          <Link
-            key={m.to}
-            to={m.to}
-            className="flex flex-col items-center justify-center rounded-xl bg-gray-800 p-6 shadow-lg transition hover:bg-gray-700"
-          >
-            {m.icon}
-            <h2 className="text-lg font-semibold">{m.title}</h2>
-            <p className="mt-1 text-center text-sm text-gray-400">{m.desc}</p>
-          </Link>
-        ))}
+      <div className="mx-auto max-w-5xl space-y-6">
+        {slug === "sucursales" && <ChecklistDashboardWidget />}
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {menu.map((m) => (
+            <Link
+              key={m.to}
+              to={m.to}
+              className="flex flex-col items-center justify-center rounded-xl bg-gray-800 p-6 shadow-lg transition hover:bg-gray-700"
+            >
+              {m.icon}
+              <h2 className="text-lg font-semibold">{m.title}</h2>
+              <p className="mt-1 text-center text-sm text-gray-400">{m.desc}</p>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
