@@ -51,6 +51,7 @@ export const BatchMovementModal: React.FC<{
   const [isLocalityDropdownOpen, setIsLocalityDropdownOpen] = useState(false);
   const [isAddingLocality, setIsAddingLocality] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { mutate: createClient, isPending: isCreatingClient } =
     useCreateClient();
   const { data: localities = [] } = useLocalities();
@@ -141,7 +142,8 @@ export const BatchMovementModal: React.FC<{
       reset(getInitialValues());
     }
   }, [employees, isLoadingEmployees, isEditing, reset]);
-  const onSubmit = (data: any) => {
+  const onValid = (data: any) => {
+    setSubmitError(null);
     const payload = {
       ...data,
       batchId: batch.id,
@@ -156,7 +158,15 @@ export const BatchMovementModal: React.FC<{
         // Mandamos el ID y el payload al PUT
         updateSale(
           { id: initialData.id, data: payload },
-          { onSuccess: onClose },
+          {
+            onSuccess: onClose,
+            onError: (error: unknown) =>
+              setSubmitError(
+                error instanceof Error
+                  ? error.message
+                  : "No se pudo guardar la venta",
+              ),
+          },
         );
       } else {
         recordSale(payload, { onSuccess: onClose });
@@ -173,6 +183,12 @@ export const BatchMovementModal: React.FC<{
           },
           {
             onSuccess: onClose,
+            onError: (error: unknown) =>
+              setSubmitError(
+                error instanceof Error
+                  ? error.message
+                  : "No se pudo guardar la baja",
+              ),
           },
         );
       } else {
@@ -180,6 +196,34 @@ export const BatchMovementModal: React.FC<{
       }
     }
   };
+
+  const onInvalid = (errors: any) => {
+    const firstKey = Object.keys(errors)[0];
+    const firstError = firstKey ? errors[firstKey] : null;
+    const label =
+      firstKey === "employeeId"
+        ? "Vendedor / Empleado"
+        : firstKey === "saleTotal"
+          ? "Total a Cobrar"
+          : firstKey === "weight"
+            ? "Peso Kg"
+            : firstKey === "quantity"
+              ? "Cantidad"
+              : firstKey === "kgSent"
+                ? "KG Enviados"
+                : firstKey === "routeId"
+                  ? "Ruta"
+                  : firstKey === "reason"
+                    ? "Motivo"
+                    : firstKey;
+    setSubmitError(
+      firstError?.message
+        ? `${label}: ${firstError.message}`
+        : `Revisa el campo "${label}" antes de guardar`,
+    );
+  };
+
+  const onSubmit = handleSubmit(onValid, onInvalid);
   const handleQuickClientSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientName.trim()) return;
@@ -219,7 +263,7 @@ export const BatchMovementModal: React.FC<{
       </ModalHeader>
       <ModalBody className="bg-gray-800">
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={onSubmit}
           className="grid grid-cols-2 gap-4"
         >
           {/* 1. Tipo de Movimiento (Radios con estilo) */}
@@ -678,6 +722,12 @@ export const BatchMovementModal: React.FC<{
                 icon={HiCurrencyDollar}
                 className="text-lg font-bold"
               />
+            </div>
+          )}
+
+          {submitError && (
+            <div className="col-span-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-2 text-sm text-red-200">
+              {submitError}
             </div>
           )}
 

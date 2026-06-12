@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "./batch.adjustments.api";
 import { batchKeys } from "./batch.keys";
@@ -51,6 +52,18 @@ export const useUpdateBatchAdjustment = () => {
       queryClient.invalidateQueries({
         queryKey: batchKeys.lists(),
       });
+    },
+
+    onError: (error: unknown) => {
+      const message =
+        axios.isAxiosError(error)
+          ? (error.response?.data as any)?.message ??
+            error.response?.statusText ??
+            error.message
+          : error instanceof Error
+            ? error.message
+            : "No se pudo guardar la baja";
+      throw new Error(message);
     },
   });
 };

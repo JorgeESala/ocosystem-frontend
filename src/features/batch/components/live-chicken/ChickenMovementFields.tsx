@@ -218,7 +218,7 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
         )}
 
         {/* Input oculto controlado para vincular el ID al React Hook Form */}
-        <input type="hidden" {...register("routeId", { required: true })} />
+        <input type="hidden" {...register("routeId")} />
       </div>
     </>
   );
