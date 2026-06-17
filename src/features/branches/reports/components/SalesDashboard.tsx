@@ -27,9 +27,11 @@ import DateRangePicker from "@/components/DateRangePicker";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { TopProductsCard } from "./TopProductsCard";
 import { StrategyInsights } from "./StrategyInsights";
+import { TicketsByWeekdayCard } from "./TicketsByWeekdayCard";
 import { BranchSelect } from "@/components/BranchSelect";
 import { KPICard } from "./KPICard";
 import { formatFullDate } from "@/utils/date.utils";
+import { ticketsByWeekday, peakWeekday } from "../utils/ticketsByWeekday";
 
 // Colores para el tema oscuro de la empresa
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"];
@@ -59,7 +61,7 @@ export const SalesDashboard = () => {
   const processedData = useMemo(() => {
     if (!data) return null;
 
-    const { products, categories, summary } = data;
+    const { products, categories, summary, dailySales: dailySeries } = data;
 
     const attachRate =
       summary.ticketsWithComplements > 0
@@ -126,6 +128,9 @@ export const SalesDashboard = () => {
       (c) => c.categoryName !== "Matados" && c.categoryName !== "Merma",
     );
 
+    const weekdayRows = ticketsByWeekday(dailySeries);
+    const peak = peakWeekday(weekdayRows);
+
     return {
       ventasReales,
       totalVentaReal,
@@ -138,6 +143,8 @@ export const SalesDashboard = () => {
       attachRate,
       topAffinity: topAffinityProduct?.productName || "No data",
       crossSellGap: crossSellGap > 0 ? crossSellGap : 0,
+      weekdayRows,
+      peak,
     };
   }, [data]);
 
@@ -325,6 +332,10 @@ export const SalesDashboard = () => {
                   attachRate={processedData.attachRate}
                   topAffinity={processedData.topAffinity}
                   crossSellGap={processedData.crossSellGap}
+                />
+                <TicketsByWeekdayCard
+                  rows={processedData.weekdayRows}
+                  peak={processedData.peak}
                 />
               </div>
             </div>
