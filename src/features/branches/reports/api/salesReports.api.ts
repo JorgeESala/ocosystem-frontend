@@ -13,6 +13,7 @@ export interface DailySalesDTO {
   day: string; // LocalDate llega como string ISO
   totalSales: number;
   totalTickets: number;
+  realTickets: number;
 }
 
 export interface ProductSalesDTO {
@@ -30,6 +31,7 @@ export interface SalesSummaryDTO {
   totalUnits: number;
   totalSlaughtered: number;
   totalTickets: number;
+  realTickets: number;
   totalChickenTickets: number;
   ticketsWithComplements: number;
   avgChickenOnlyTicketValue: number;

@@ -114,7 +114,7 @@ export const SalesDashboard = () => {
       }));
 
     const ticketPromedioReal =
-      summary.totalTickets > 0 ? totalVentaReal / summary.totalTickets : 0;
+      summary.realTickets > 0 ? totalVentaReal / summary.realTickets : 0;
 
     const totalPerdidaNeta = products
       .filter(
@@ -128,7 +128,10 @@ export const SalesDashboard = () => {
       (c) => c.categoryName !== "Matados" && c.categoryName !== "Merma",
     );
 
-    const weekdayRows = ticketsByWeekday(dailySeries);
+    const weekdayRows = ticketsByWeekday(
+      dailySeries,
+      (entry) => entry.realTickets,
+    );
     const peak = peakWeekday(weekdayRows);
 
     return {

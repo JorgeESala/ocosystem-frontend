@@ -168,7 +168,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg border border-blue-800 bg-blue-900/50 p-3 text-center">
           <p className="text-[10px] tracking-wider text-blue-400 uppercase">
-            Unidades a Sucursales
+            Unidades a Clientes internos
           </p>
           <div className="mt-1 flex items-center justify-center">
             {isEgg ? (
@@ -188,7 +188,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
         </div>
         <div className="rounded-lg border border-blue-800 bg-blue-900/50 p-3 text-center">
           <p className="text-[10px] tracking-wider text-blue-400 uppercase">
-            Ventas a Sucursales
+            Ventas a Clientes internos
           </p>
           <p className="mt-1 text-lg font-bold text-blue-300">
             {formatMXN(branchSales)}

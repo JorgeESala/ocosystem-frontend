@@ -41,6 +41,8 @@ const toWeekdayKey = (date: Date): WeekdayKey => {
 
 export const ticketsByWeekday = (
   dailySales: DailySalesDTO[],
+  ticketSource: (entry: DailySalesDTO) => number = (entry) =>
+    entry.totalTickets ?? 0,
 ): WeekdayTicketsRow[] => {
   const acc: Record<
     WeekdayKey,
@@ -60,7 +62,7 @@ export const ticketsByWeekday = (
     const date = new Date(`${entry.day}T00:00:00`);
     if (Number.isNaN(date.getTime())) continue;
     const key = toWeekdayKey(date);
-    acc[key].tickets += entry.totalTickets ?? 0;
+    acc[key].tickets += ticketSource(entry);
     acc[key].days += 1;
   }
 
