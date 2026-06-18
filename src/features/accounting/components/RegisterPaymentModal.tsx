@@ -29,6 +29,7 @@ interface Props {
   account?: AccountsPayableResponse;
   cedisList?: number[] | undefined;
   creditorEntity?: string | undefined;
+  allowCompensation?: boolean;
 }
 
 export const RegisterPaymentModal = ({
@@ -37,6 +38,7 @@ export const RegisterPaymentModal = ({
   account,
   cedisList,
   creditorEntity,
+  allowCompensation = true,
 }: Props) => {
   type PaymentKind = "NORMAL" | "COMPENSATION";
 
@@ -127,32 +129,34 @@ export const RegisterPaymentModal = ({
 
       <ModalBody>
         <div className="space-y-4">
-          <div>
-            <Label>Tipo de pago</Label>
-            <div className="mt-2 flex gap-4 text-white">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="paymentKind"
-                  value="NORMAL"
-                  checked={paymentKind === "NORMAL"}
-                  onChange={() => setPaymentKind("NORMAL")}
-                />
-                Pago al CEDIS
-              </label>
+          {allowCompensation && (
+            <div>
+              <Label>Tipo de pago</Label>
+              <div className="mt-2 flex gap-4 text-white">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="paymentKind"
+                    value="NORMAL"
+                    checked={paymentKind === "NORMAL"}
+                    onChange={() => setPaymentKind("NORMAL")}
+                  />
+                  Pago al CEDIS
+                </label>
 
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="paymentKind"
-                  value="COMPENSATION"
-                  checked={paymentKind === "COMPENSATION"}
-                  onChange={() => setPaymentKind("COMPENSATION")}
-                />
-                Depósito al proveedor
-              </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="paymentKind"
+                    value="COMPENSATION"
+                    checked={paymentKind === "COMPENSATION"}
+                    onChange={() => setPaymentKind("COMPENSATION")}
+                  />
+                  Depósito al proveedor
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Context */}
           <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
@@ -257,10 +261,10 @@ export const RegisterPaymentModal = ({
             </>
           )}
 
-          {paymentKind === "COMPENSATION" && (
+          {paymentKind === "COMPENSATION" && allowCompensation && (
             <>
               <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-                Este pago afecta 2 cuentas, la cuenta de la sucursal con el
+                Este pago afecta 2 cuentas, la cuenta del cliente interno con el
                 CEDIS y del CEDIS con el proveedor.
               </div>
 

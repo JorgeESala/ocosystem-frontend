@@ -102,6 +102,7 @@ export const AccountsPage = () => {
         open={!!selectedAccountForPay}
         account={selectedAccountForPay ?? undefined}
         onClose={() => setSelectedAccountForPay(null)}
+        allowCompensation={receivable}
       />
     </div>
   );

@@ -119,6 +119,7 @@ export const EggAccountsPage = () => {
           EGG_CEDIS_MORELOS_ID,
         ]}
         creditorEntity="EGGCEDIS"
+        allowCompensation={receivable}
       />
     </div>
   );
