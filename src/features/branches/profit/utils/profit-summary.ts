@@ -2,6 +2,7 @@ import type {
   BranchProfitCashDetailDTO,
   BranchProfitReportDTO,
 } from "../types";
+import type { ImportedByBranch } from "../api/useImportedSalesByBranches";
 
 export interface ProfitSummaryItem {
   label: string;
@@ -47,6 +48,29 @@ const sumNumber = (value: number | string | null | undefined) =>
 const excludedBusinessUnitNames = new Set(["merma", "matados"]);
 
 const normalizeText = (value: string) => value.trim().toLowerCase();
+
+const buildImportedIndex = (
+  importedByBranch: ImportedByBranch[] | undefined,
+) => {
+  const map = new Map<number, Record<string, number>>();
+  if (!importedByBranch) return map;
+  for (const entry of importedByBranch) {
+    map.set(entry.branchId, entry.byCategory);
+  }
+  return map;
+};
+
+const lookupImportedSales = (
+  index: Map<number, Record<string, number>>,
+  branchId: number,
+  businessUnitName: string,
+): number | undefined => {
+  const branchBucket = index.get(branchId);
+  if (!branchBucket) return undefined;
+  const key = normalizeText(businessUnitName);
+  const value = branchBucket[key];
+  return value === undefined ? undefined : value;
+};
 
 const formatBranchItems = (
   report: BranchProfitReportDTO,
@@ -98,29 +122,51 @@ const formatBranchItems = (
 
 const formatCashItems = (
   cashDetails: BranchProfitCashDetailDTO[] = [],
+  importedIndex: Map<number, Record<string, number>>,
 ): CashSummaryItem[] => {
   const visibleCashDetails = cashDetails.filter(
     (item) =>
       !excludedBusinessUnitNames.has(normalizeText(item.businessUnitName)),
   );
 
-  const totalExpectedCash = visibleCashDetails.reduce(
-    (sum, item) => sum + sumNumber(item.expectedCash),
+  const enriched = visibleCashDetails.map((item) => {
+    const branchId = sumNumber(item.branchId);
+    const originalTotalSales = sumNumber(item.totalSales);
+    const totalExpenses = sumNumber(item.totalExpenses);
+    const importedSales = lookupImportedSales(
+      importedIndex,
+      branchId,
+      item.businessUnitName,
+    );
+    const totalSales =
+      importedSales !== undefined ? importedSales : originalTotalSales;
+    const originalExpectedCash = sumNumber(item.expectedCash);
+    const expectedCash =
+      importedSales !== undefined
+        ? totalSales - totalExpenses
+        : originalExpectedCash;
+    return {
+      label: `${item.branchName || "Sin sucursal"} - ${item.businessUnitName || "Sin unidad"}`,
+      branchId,
+      branchName: item.branchName || "Sin sucursal",
+      businessUnitName: item.businessUnitName || "Sin unidad",
+      totalSales,
+      totalExpenses,
+      expectedCash,
+    };
+  });
+
+  const totalExpectedCash = enriched.reduce(
+    (sum, item) => sum + item.expectedCash,
     0,
   );
 
-  return visibleCashDetails
+  return enriched
     .map((item) => ({
-      label: `${item.branchName || "Sin sucursal"} - ${item.businessUnitName || "Sin unidad"}`,
-      branchId: sumNumber(item.branchId),
-      branchName: item.branchName || "Sin sucursal",
-      businessUnitName: item.businessUnitName || "Sin unidad",
-      totalSales: sumNumber(item.totalSales),
-      totalExpenses: sumNumber(item.totalExpenses),
-      expectedCash: sumNumber(item.expectedCash),
+      ...item,
       percentage:
         totalExpectedCash > 0
-          ? (sumNumber(item.expectedCash) / totalExpectedCash) * 100
+          ? (item.expectedCash / totalExpectedCash) * 100
           : 0,
     }))
     .sort((a, b) => b.expectedCash - a.expectedCash);
@@ -128,6 +174,7 @@ const formatCashItems = (
 
 export const buildBranchProfitSummary = (
   report: BranchProfitReportDTO | null,
+  importedByBranch?: ImportedByBranch[],
 ): BranchProfitSummary => {
   if (!report) {
     return {
@@ -149,7 +196,15 @@ export const buildBranchProfitSummary = (
   const totalExpenses = sumNumber(report.totalExpenses);
   const totalChickenCosts = sumNumber(report.totalChickenCostsProRated);
   const profit = sumNumber(report.profit);
-  const expectedCash = totalSales - totalExpenses;
+
+  const importedIndex = buildImportedIndex(importedByBranch);
+  const hasImportedData = importedByBranch && importedByBranch.length > 0;
+  const totalImported =
+    importedByBranch?.reduce((sum, entry) => sum + entry.total, 0) ?? 0;
+  const expectedCash = hasImportedData
+    ? totalImported - totalExpenses
+    : totalSales - totalExpenses;
+
   const batchCount = report.batchDetails?.length ?? 0;
   const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
   const expenseRatio = totalSales > 0 ? (totalExpenses / totalSales) * 100 : 0;
@@ -157,7 +212,7 @@ export const buildBranchProfitSummary = (
     totalSales > 0 ? (totalChickenCosts / totalSales) * 100 : 0;
 
   const byBranch = formatBranchItems(report);
-  const byBusinessUnit = formatCashItems(report.cashDetails);
+  const byBusinessUnit = formatCashItems(report.cashDetails, importedIndex);
 
   return {
     totalSales,

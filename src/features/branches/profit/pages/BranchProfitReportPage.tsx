@@ -9,8 +9,10 @@ import BranchProfitBranchBreakdown from "../components/BranchProfitBranchBreakdo
 import BranchProfitCashBreakdown from "../components/BranchProfitCashBreakdown";
 import BranchProfitEmptyState from "../components/BranchProfitEmptyState";
 import BranchProfitFilters from "../components/BranchProfitFilters";
+import BranchProfitSalesSourceBanner from "../components/BranchProfitSalesSourceBanner";
 import BranchProfitSummary from "../components/BranchProfitSummary";
 import { useBranchProfitReport } from "../api/branch-profit.queries";
+import { useImportedSalesByBranches } from "../api/useImportedSalesByBranches";
 import type { BranchProfitFilters as BranchProfitFiltersDTO } from "../types";
 import { buildBranchProfitSummary } from "../utils/profit-summary";
 
@@ -28,7 +30,78 @@ export default function BranchProfitReportPage() {
   const report = reportQuery.data ?? null;
   const expensesQuery = useBranchExpensesSearch(activeFilters);
   const expenses = expensesQuery.data ?? [];
-  const summary = useMemo(() => buildBranchProfitSummary(report), [report]);
+
+  const importedSales = useImportedSalesByBranches({
+    branchIds: activeFilters?.branchIds ?? [],
+    startDate: activeFilters?.startDate ?? null,
+    endDate: activeFilters?.endDate ?? null,
+    branches,
+  });
+
+  const summary = useMemo(
+    () =>
+      buildBranchProfitSummary(
+        report,
+        importedSales.isError ? undefined : importedSales.byBranch,
+      ),
+    [report, importedSales.byBranch, importedSales.isError],
+  );
+
+  const manualChickenByBranch = useMemo(() => {
+    const map = new Map<
+      number,
+      { branchId: number; branchName: string; manualChicken: number }
+    >();
+    const batchDetails = report?.batchDetails ?? [];
+    const selectedIds = activeFilters?.branchIds ?? [];
+    for (const branchId of selectedIds) {
+      const branch = branches.find((b) => b.id === branchId);
+      if (!branch) continue;
+      const manualChicken = batchDetails
+        .filter((b) => b.branchName === branch.name)
+        .reduce(
+          (sum, b) => sum + (Number(b.totalSalesInRange) || 0),
+          0,
+        );
+      map.set(branchId, {
+        branchId,
+        branchName: branch.name,
+        manualChicken,
+      });
+    }
+    return map;
+  }, [report?.batchDetails, branches, activeFilters?.branchIds]);
+
+  const chickenComparison = useMemo(() => {
+    const branchNameById = new Map<number, string>();
+    for (const branch of branches) {
+      branchNameById.set(branch.id, branch.name);
+    }
+    const ids = new Set<number>([
+      ...importedSales.byBranch.map((b) => b.branchId),
+      ...manualChickenByBranch.keys(),
+    ]);
+    return Array.from(ids).map((branchId) => {
+      const imported = importedSales.byBranch.find(
+        (b) => b.branchId === branchId,
+      );
+      const manual = manualChickenByBranch.get(branchId);
+      return {
+        branchId,
+        branchName:
+          imported?.branchName ??
+          manual?.branchName ??
+          branchNameById.get(branchId) ??
+          `Sucursal ${branchId}`,
+        importedChicken: imported?.byCategory["pollo"] ?? 0,
+        manualChicken: manual?.manualChicken ?? 0,
+      };
+    });
+  }, [
+    importedSales.byBranch,
+    manualChickenByBranch,
+    branches,
+  ]);
 
   const showSpinner = (loadingBranches || reportQuery.isLoading) && !report;
   const showFullError = reportQuery.isError && !report;
@@ -119,6 +192,12 @@ export default function BranchProfitReportPage() {
         </Alert>
       ) : report ? (
         <>
+          <BranchProfitSalesSourceBanner
+            byBranch={chickenComparison}
+            isLoading={importedSales.isLoading}
+            isError={importedSales.isError}
+          />
+
           <BranchProfitSummary
             summary={summary}
             scopeLabel={scopeLabel}
