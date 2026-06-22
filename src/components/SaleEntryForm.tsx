@@ -118,27 +118,28 @@ export default function SaleEntryForm({
       return;
     }
 
+    const saleDate = formData.date.toISOString().split("T")[0];
+
     try {
       if (formData.id) {
         await updateDailyBatchSale({
           id: formData.id,
           batchId: formData.batchId,
-          quantitySold: Number(formData.quantitySold),
-          kgTotal: Number(formData.kgTotal),
-          saleTotal: Number(formData.saleTotal),
-          kgGut: Number(formData.kgGut),
-          date: formData.date,
+          saleDate,
+          saleTotal: String(formData.saleTotal),
+          kgTotal: String(formData.kgTotal),
+          kgGut: String(formData.kgGut),
           employeeId: formData.employeeId || undefined,
           clientId: formData.clientId || undefined,
         });
       } else {
         await createDailyBatchSale({
           batchId: formData.batchId,
-          quantitySold: Number(formData.quantitySold),
-          kgTotal: Number(formData.kgTotal),
-          saleTotal: Number(formData.saleTotal),
-          kgGut: Number(formData.kgGut),
-          date: formData.date,
+          saleDate,
+          saleTotal: String(formData.saleTotal),
+          quantity: String(formData.quantitySold),
+          kgTotal: String(formData.kgTotal),
+          kgGut: String(formData.kgGut),
           employeeId: formData.employeeId || undefined,
           clientId: formData.clientId || undefined,
         });
@@ -162,15 +163,15 @@ export default function SaleEntryForm({
       formData.append("file", file);
       formData.append("batchId", String(batch.id));
 
-      const { data } = await http.post<ExtractExcelResponse>(
-        "/api/batchSales/extract-from-excel",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
+        const { data } = await http.post<ExtractExcelResponse>(
+          "/api/v1/batch-sales/extract-from-excel",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           },
-        },
-      );
+        );
 
       const { batches } = data;
 

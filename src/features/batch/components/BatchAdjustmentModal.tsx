@@ -26,8 +26,8 @@ export const BatchAdjustmentModal: React.FC<{
     recordAdjustment(
       {
         batchId: batch.id,
-        weight: Number(data.weight || 0),
-        quantity: Number(data.quantity || 0),
+        weight: String(data.weight || 0),
+        quantity: String(data.quantity || 0),
         reason: data.reason,
         adjustmentDate: toLocalDateString(new Date()),
       },

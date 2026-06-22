@@ -1,13 +1,67 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { salesApi } from "./sales.api";
-import { salesKeys } from "./sales.keys";
 import type { BranchesBatchSale } from "@/services/api";
 
-export const useSalesByBatch = (batchId: number) => {
+export const useSalesByBatch = (batchId: number, enabled = true) => {
   return useQuery({
-    queryKey: salesKeys.list({ batchId }),
+    queryKey: ["batchSales", batchId],
     queryFn: () => salesApi.getByBatchId(batchId),
-    enabled: !!batchId,
+    enabled: !!batchId && enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useSalesByBatches = (batchIds: number[]) => {
+  const queryClient = useQueryClient();
+  const sortedIds = useMemo(
+    () => [...new Set(batchIds)].sort((a, b) => a - b),
+    [batchIds],
+  );
+
+  return useQuery({
+    queryKey: ["batchSales", "by-batches", sortedIds],
+    queryFn: async () => {
+      const sales = await salesApi.searchByBatchIds(batchIds);
+      const byBatch = new Map<number, BranchesBatchSale[]>();
+      for (const sale of sales) {
+        if (sale.batchId == null) continue;
+        const list = byBatch.get(sale.batchId) ?? [];
+        list.push(sale);
+        byBatch.set(sale.batchId, list);
+      }
+      for (const [id, list] of byBatch) {
+        queryClient.setQueryData(["batchSales", id], list);
+      }
+      return sales;
+    },
+    enabled: sortedIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useMarkCuentasReceived = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (entries: Array<{ saleId: number; batchId: number }>) => {
+      await Promise.all(
+        entries.map(({ saleId }) =>
+          salesApi.updateOfficeStatus(saleId, true),
+        ),
+      );
+    },
+    onSuccess: (_, entries) => {
+      const batchIds = new Set(entries.map((e) => e.batchId));
+      for (const batchId of batchIds) {
+        queryClient.invalidateQueries({ queryKey: ["batchSales", batchId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["batchSales", "by-batches"] });
+    },
+    onError: (error) => {
+      console.error("Error al marcar la cuenta como recibida:", error);
+      alert("No se pudieron marcar todas las ventas como recibidas.");
+    },
   });
 };
 
@@ -24,10 +78,8 @@ export const useUpdateSaleOfficeStatus = (batchId: number) => {
     }) => salesApi.updateOfficeStatus(saleId, officeReceived),
 
     onSuccess: (updatedSale) => {
-      // 1. Apuntamos EXACTAMENTE a la misma queryKey que usa tu componente padre
       const targetQueryKey = ["batchSales", Number(batchId)];
 
-      // 2. Aplicamos la actualización optimista/local para que pinte verde al instante
       queryClient.setQueryData<BranchesBatchSale[]>(
         targetQueryKey,
         (oldSales) => {
@@ -40,8 +92,8 @@ export const useUpdateSaleOfficeStatus = (batchId: number) => {
         },
       );
 
-      // 3. Invalidamos para asegurar consistencia con el servidor
       queryClient.invalidateQueries({ queryKey: targetQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["batchSales", "by-batches"] });
     },
     onError: (error) => {
       console.error("Error al actualizar el estado financiero:", error);

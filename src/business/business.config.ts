@@ -20,7 +20,7 @@ export interface BusinessConfig {
 
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { HiClipboardList } from "react-icons/hi";
+// import { HiClipboardList } from "react-icons/hi";
 
 export const BASE_MENU = [
   { to: "reports", label: "Reportes", icon: FaFileAlt },
@@ -30,7 +30,7 @@ export const BASE_MENU = [
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
 const BRANCHES_MENU = [
-  { to: "checklist", label: "Checklist diario", icon: HiClipboardList },
+  // { to: "checklist", label: "Checklist diario", icon: HiClipboardList },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
