@@ -58,38 +58,73 @@ export interface Branch {
   id: number;
   name: string;
 }
+
+const toNumber = (v: string | number | null | undefined): number => {
+  if (v === null || v === undefined || v === "") return 0;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+interface BatchItemApi {
+  id: number;
+  branchId: number | null;
+  cedisId: number | null;
+  cedisName: string | null;
+  kgTotal: string | null;
+  pricePerKg: string | null;
+  priceTotal: string | null;
+  avgChickenWeight: string | null;
+  date: string;
+  provider: string | null;
+  chickenQuantity: number | null;
+}
+
 export interface Batch {
   id: number;
-  branchId: number;
-  branchName: string;
+  branchId: number | null;
   kgTotal: number;
   pricePerKg: number;
-  date: Date;
+  priceTotal: number;
+  avgChickenWeight: number;
+  date: string;
+  provider: string | null;
+  chickenQuantity: number;
+}
+
+export const mapBatchItem = (raw: BatchItemApi): Batch => {
+  const kgTotal = toNumber(raw.kgTotal);
+  const chickenQuantity = toNumber(raw.chickenQuantity);
+  const explicitAvg = toNumber(raw.avgChickenWeight);
+  const avgChickenWeight =
+    explicitAvg > 0
+      ? explicitAvg
+      : chickenQuantity > 0
+        ? kgTotal / chickenQuantity
+        : 0;
+  return {
+    id: raw.id,
+    branchId: raw.branchId,
+    kgTotal,
+    pricePerKg: toNumber(raw.pricePerKg),
+    priceTotal: toNumber(raw.priceTotal),
+    avgChickenWeight,
+    date: raw.date,
+    provider: raw.provider,
+    chickenQuantity,
+  };
+};
+
+export interface BatchUpdateRequest {
+  type: "BRANCHES";
+  branchId: number;
   supplierId: number;
   provider: string;
   chickenQuantity: number;
-  priceTotal?: number;
-  avgChickenWeight: number;
+  kgTotal: string;
+  pricePerKg?: string;
+  entryDate: string;
 }
-export interface BatchUpdateRequest {
-  branchId: number;
-  kgTotal: number;
-  pricePerKg: number;
-  date: Date | null;
-  provider: string;
-  chickenQuantity: number;
-}
-export interface DailyBatchSaleRequest {
-  id?: number;
-  batchId: string | number;
-  quantitySold: string | number;
-  kgTotal: string | number;
-  saleTotal: number;
-  kgGut: string | number;
-  date: Date | null;
-  employeeId?: number;
-  clientId?: number;
-}
+
 export interface Employee {
   id: number;
   name: string;
@@ -106,42 +141,97 @@ export interface DailyBatchSale {
   kgTotal: number;
   saleTotal: number;
   kgGut: number;
-  date: string;
+  saleDate: string;
 }
+
+interface BatchSaleItemApi {
+  id: number;
+  batchId: number;
+  branchId: number | null;
+  employeeId: number;
+  employeeName: string;
+  clientId: number | null;
+  clientName: string;
+  quantitySold: string;
+  kgTotal: string;
+  kgGut: string;
+  saleTotal: string;
+  date: string;
+  officeReceived: boolean;
+}
+
 export interface BranchesBatchSale {
   id: number;
-  batch: Batch;
-  employeeId?: number;
+  batchId: number | null;
+  branchId: number | null;
+  employeeId: number;
   employeeName: string;
-  clientId?: number;
+  clientId: number | null;
   clientName: string;
   quantitySold: number;
   kgTotal: number;
-  officeReceived?: boolean;
-  saleTotal: number;
   kgGut: number;
+  saleTotal: number;
   date: string;
+  officeReceived: boolean;
 }
+
+export const mapBranchSale = (raw: BatchSaleItemApi): BranchesBatchSale => ({
+  id: raw.id,
+  batchId: raw.batchId,
+  branchId: raw.branchId,
+  employeeId: raw.employeeId,
+  employeeName: raw.employeeName,
+  clientId: raw.clientId,
+  clientName: raw.clientName,
+  quantitySold: toNumber(raw.quantitySold),
+  kgTotal: toNumber(raw.kgTotal),
+  kgGut: toNumber(raw.kgGut),
+  saleTotal: toNumber(raw.saleTotal),
+  date: raw.date,
+  officeReceived: Boolean(raw.officeReceived),
+});
+
+export interface BatchSaleCreateRequest {
+  batchId: number;
+  saleDate: string;
+  saleTotal: string;
+  employeeId?: number;
+  clientId?: number;
+  clientName?: string;
+  quantity?: string;
+  boxes?: string;
+  cartons?: string;
+  weight?: string;
+  pricePerKg?: string;
+  kgSent?: string;
+  kgTotal?: string;
+  kgGut?: string;
+  officeReceived?: boolean;
+  notes?: string;
+}
+
 export interface BatchSaleUpdateRequest {
   id: number;
   batchId: number;
   employeeId?: number;
   clientId?: number;
-  quantitySold: number;
-  kgTotal: number;
-  saleTotal: number;
-  kgGut: number;
-  date: Date;
+  saleDate: string;
+  saleTotal: string;
+  kgTotal?: string;
+  kgGut?: string;
+  officeReceived?: boolean;
 }
 
 export interface BatchRequest {
-  branchId: number | string;
-  chickenQuantity: number | string;
-  kgTotal: number | string;
-  pricePerKg: number | string;
+  type: "BRANCHES";
+  branchId: number;
+  supplierId: number;
   provider: string;
-  date: Date | null;
-  supplierId: number | string;
+  chickenQuantity: number;
+  kgTotal: string;
+  pricePerKg?: string;
+  entryDate: string;
 }
 export interface BatchSearchRequest {
   branchIds: number[];
@@ -425,8 +515,8 @@ export const fetchBatchesByBranchesAndDateRange = async (
     endDate: toISODate(endDate),
   };
 
-  const res = await http.post("/api/batches/search", payload);
-  return res.data;
+  const res = await http.post("/api/v1/batches/search", payload);
+  return (res.data as BatchItemApi[]).map(mapBatchItem);
 };
 
 export const fetchEmployees = async (): Promise<Employee[]> => {
@@ -442,8 +532,8 @@ export const fetchLatestExpenses = async (): Promise<BranchesExpense[]> => {
   return res.data;
 };
 export const fetchLatestBatches = async (): Promise<Batch[]> => {
-  const res = await http.get(`/api/batches/latest`);
-  return res.data;
+  const res = await http.get(`/api/v1/batches/latest?limit=15`);
+  return (res.data as BatchItemApi[]).map(mapBatchItem);
 };
 // Sucursales
 
@@ -486,7 +576,7 @@ export const updateExpense = async function (
 };
 export const createBatch = async function (batch: BatchRequest) {
   try {
-    const response = await http.post(`/api/batches`, batch);
+    const response = await http.post(`/api/v1/batches`, batch);
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -496,10 +586,10 @@ export const createBatch = async function (batch: BatchRequest) {
   }
 };
 export const createDailyBatchSale = async function (
-  batchSale: DailyBatchSaleRequest,
+  batchSale: BatchSaleCreateRequest,
 ) {
   try {
-    const response = await http.post(`/api/batchSales`, batchSale);
+    const response = await http.post(`/api/v1/batch-sales`, batchSale);
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -512,19 +602,11 @@ export const createDailyBatchSale = async function (
 export const updateDailyBatchSale = async function (
   batchSale: BatchSaleUpdateRequest,
 ) {
-  const payload = {
-    id: batchSale.id,
-    batchId: batchSale.batchId,
-    employeeId: batchSale.employeeId,
-    clientId: batchSale.clientId,
-    quantitySold: Number(batchSale.quantitySold),
-    kgTotal: Number(batchSale.kgTotal),
-    saleTotal: Number(batchSale.saleTotal),
-    kgGut: Number(batchSale.kgGut),
-    date: batchSale.date,
-  };
   try {
-    const response = await http.put(`/api/batchSales/${batchSale.id}`, payload);
+    const response = await http.put(
+      `/api/v1/batch-sales/${batchSale.id}`,
+      batchSale,
+    );
     return response.data;
   } catch (err: unknown) {
     const error = err as AxiosError<{ message?: string }>;
@@ -534,21 +616,21 @@ export const updateDailyBatchSale = async function (
   }
 };
 export async function updateBatch(id: number, data: BatchUpdateRequest) {
-  const res = await http.put(`/api/batches/${id}`, data);
+  const res = await http.put(`/api/v1/batches/${id}`, data);
   return res.data;
 }
 export const fetchBatches = async (): Promise<Batch[]> => {
-  const res = await http.get(`/api/batches`);
-  return res.data;
+  const res = await http.get(`/api/v1/batches`);
+  return (res.data as BatchItemApi[]).map(mapBatchItem);
 };
 export const fetchBatchSales = async (): Promise<DailyBatchSale[]> => {
-  const res = await http.get(`/api/batchSales`);
+  const res = await http.get(`/api/v1/batch-sales`);
   return res.data;
 };
 export async function fetchBatchSalesById(
   id: number,
 ): Promise<DailyBatchSale[]> {
-  const res = await http.get(`/api/batchSales/${id}`);
+  const res = await http.get(`/api/v1/batch-sales/${id}`);
   return res.data;
 }
 
@@ -671,6 +753,6 @@ export async function fetchGraphData(
 export const fetchBatchSalesByBatch = async (
   batchId: number | string,
 ): Promise<BranchesBatchSale[]> => {
-  const res = await http.get(`/api/batchSales/${batchId}`);
-  return res.data;
+  const res = await http.get(`/api/v1/batch-sales/batch/${batchId}`);
+  return (res.data as BatchSaleItemApi[]).map(mapBranchSale);
 };

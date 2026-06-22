@@ -11,10 +11,12 @@ import {
 import { type Batch, type BranchesBatchSale } from "../../../services/api";
 import { BatchSummary } from "./BatchSummary";
 import SaleEntryForm from "../../../components/SaleEntryForm";
+import { getCuentaKey } from "./utils/cuenta";
 
 interface Props {
   sales: BranchesBatchSale[];
   batch: Batch;
+  cuentaCounts: Map<string, number>;
   onToggleOfficeStatus: (
     saleId: number,
     currentStatus: boolean,
@@ -38,6 +40,7 @@ function getMermaColor(value: number, target = 0.25) {
 export const BatchSalesTable: React.FC<Props> = ({
   sales,
   batch,
+  cuentaCounts,
   onToggleOfficeStatus,
 }) => {
   const [selectedSale, setSelectedSale] = useState<BranchesBatchSale | null>(
@@ -180,14 +183,29 @@ export const BatchSalesTable: React.FC<Props> = ({
 
                   {/* -> MODIFICADO: Deshabilitar botón si ya fue recibido */}
                   <TableCell>
-                    <Button
-                      size="xs"
-                      onClick={() => handleEditSale(s)}
-                      disabled={isReceived} // -> NUEVO: Bloqueo de seguridad preventivo
-                      color={isReceived ? "gray" : "info"}
-                    >
-                      {isReceived ? "Bloqueado" : "Editar"}
-                    </Button>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button
+                        size="xs"
+                        onClick={() => handleEditSale(s)}
+                        disabled={isReceived}
+                        color={isReceived ? "gray" : "info"}
+                      >
+                        {isReceived ? "Bloqueado" : "Editar"}
+                      </Button>
+                      {(() => {
+                        if (isReceived) return null;
+                        const count = cuentaCounts.get(getCuentaKey(s, batch)) ?? 0;
+                        if (count <= 1) return null;
+                        return (
+                          <span
+                            className="rounded-full bg-red-900/40 px-2 py-0.5 text-[10px] font-medium text-red-200"
+                            title={`Parte de una cuenta con ${count} ventas. Márcala como recibida en la sección Cuentas pendientes.`}
+                          >
+                            Parte de cuenta ({count})
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

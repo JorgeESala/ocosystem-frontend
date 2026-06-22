@@ -11,16 +11,31 @@ import {
   ModalHeader,
   ModalBody,
 } from "flowbite-react";
-import {
-  Branch,
-  createBatch,
-  updateBatch,
-  fetchBranches,
-  type Batch,
-  type BatchRequest,
-} from "../../../services/api";
+import { createBatch, updateBatch, type Batch } from "../../../services/api";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useBranchSuppliers } from "@/features/branches/branchsupplier/branch.supplier.queries";
+import { useBranches } from "@/features/branches/branch/branch.queries";
+import { stringToDate } from "@/utils/date.utils";
+
+interface FormState {
+  branchId: number | "";
+  supplierId: number | "";
+  entryDate: Date;
+  provider: string;
+  chickenQuantity: number | "";
+  kgTotal: string;
+  pricePerKg: string;
+}
+
+const EMPTY_FORM: FormState = {
+  branchId: "",
+  supplierId: "",
+  entryDate: new Date(),
+  provider: "",
+  chickenQuantity: "",
+  kgTotal: "",
+  pricePerKg: "",
+};
 
 export default function BatchEntryForm({
   open,
@@ -35,16 +50,8 @@ export default function BatchEntryForm({
   batch?: Batch;
   mode?: "create" | "edit";
 }) {
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [formData, setFormData] = useState<BatchRequest>({
-    branchId: "",
-    supplierId: "",
-    date: new Date(),
-    provider: "",
-    chickenQuantity: "",
-    kgTotal: "",
-    pricePerKg: "",
-  });
+  const { data: branches = [] } = useBranches();
+  const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "failure">("success");
@@ -56,29 +63,21 @@ export default function BatchEntryForm({
       branchSuppliers.length > 0 &&
       !formData.supplierId
     ) {
-      setFormData((prev) => ({ ...prev, supplierId: "1" }));
+      setFormData((prev) => ({ ...prev, supplierId: 1 }));
     }
   }, [branchSuppliers, loadingSuppliers]);
-
-  // Cargar sucursales
-  useEffect(() => {
-    if (!open) return;
-    fetchBranches().then((data) =>
-      setBranches(Array.isArray(data) ? data : []),
-    );
-  }, [open]);
 
   // Cargar datos si estoy editando
   useEffect(() => {
     if (mode === "edit" && batch) {
       setFormData({
-        branchId: batch.branchId,
-        supplierId: batch.supplierId,
-        provider: batch.provider,
-        chickenQuantity: String(batch.chickenQuantity),
-        kgTotal: String(batch.kgTotal),
-        pricePerKg: String(batch.pricePerKg),
-        date: new Date(`${batch.date}T00:00:00`),
+        branchId: batch.branchId ?? "",
+        supplierId: "",
+        provider: batch.provider ?? "",
+        chickenQuantity: batch.chickenQuantity ?? "",
+        kgTotal: String(batch.kgTotal ?? ""),
+        pricePerKg: String(batch.pricePerKg ?? ""),
+        entryDate: stringToDate(batch.date),
       });
     }
   }, [batch, mode]);
@@ -87,16 +86,18 @@ export default function BatchEntryForm({
   const handleChange = (e: any) => {
     const { name, value } = e.target;
 
-    const numericFields = [
-      "branchId",
-      "chickenQuantity",
-      "kgTotal",
-      "pricePerKg",
-    ];
+    const integerFields = ["branchId", "chickenQuantity"];
+    const stringFields = ["kgTotal", "pricePerKg"];
 
     setFormData((prev) => ({
       ...prev,
-      [name]: numericFields.includes(name) ? Number(value) : value,
+      [name]: integerFields.includes(name)
+        ? value === ""
+          ? ""
+          : Number(value)
+        : stringFields.includes(name)
+          ? value
+          : value,
     }));
   };
 
@@ -104,27 +105,32 @@ export default function BatchEntryForm({
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
+    const entryDate = formData.entryDate.toISOString().split("T")[0];
+
     try {
       if (mode === "edit" && batch) {
         await updateBatch(batch.id, {
+          type: "BRANCHES",
           branchId: Number(formData.branchId),
+          supplierId: Number(formData.supplierId) || 1,
           provider: formData.provider.trim(),
-          date: formData.date,
           chickenQuantity: Number(formData.chickenQuantity),
-          kgTotal: Number(formData.kgTotal),
-          pricePerKg: Number(formData.pricePerKg),
+          kgTotal: formData.kgTotal,
+          pricePerKg: formData.pricePerKg || undefined,
+          entryDate,
         });
 
         setToastMessage("Remesa actualizada.");
       } else {
         await createBatch({
-          branchId: formData.branchId,
+          type: "BRANCHES",
+          branchId: Number(formData.branchId),
           supplierId: Number(formData.supplierId),
           provider: formData.provider.trim(),
-          date: formData.date,
-          chickenQuantity: formData.chickenQuantity,
+          chickenQuantity: Number(formData.chickenQuantity),
           kgTotal: formData.kgTotal,
-          pricePerKg: formData.pricePerKg,
+          pricePerKg: formData.pricePerKg || undefined,
+          entryDate,
         });
         setToastMessage("Remesa creada.");
       }
@@ -200,9 +206,9 @@ export default function BatchEntryForm({
               <Label>Fecha</Label>
               <Datepicker
                 language="es-MX"
-                value={formData.date}
+                value={formData.entryDate}
                 onChange={(date: Date | null) =>
-                  setFormData({ ...formData, date })
+                  setFormData({ ...formData, entryDate: date ?? new Date() })
                 }
               />
             </div>

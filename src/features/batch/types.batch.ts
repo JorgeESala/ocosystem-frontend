@@ -6,14 +6,15 @@ export interface Batch {
   supplierId: number;
   supplierName: string;
   debtorEntityId?: number;
+  cedisId?: number;
   cedisName?: string;
   entryDate: string;
-  totalAmount: number;
+  totalAmount: string;
   metadata: Record<string, any>;
 
-  initialQuantity: number;
-  soldQuantity: number;
-  remainingQuantity: number;
+  initialQuantity: string;
+  soldQuantity: string;
+  remainingQuantity: string;
   remainingBoxes: number;
   remainingCartons: number;
   remainingPieces: number;
@@ -23,48 +24,58 @@ export interface BatchResponseDTO {
   supplierId: number;
   supplierName: string;
   debtorEntityId?: number;
-  cedisName?: string;
+  cedisId: number;
+  cedisName: string;
   entryDate: string;
-  totalAmount: number;
+  totalAmount: string;
   type: BusinessUnitType;
   metadata: Record<string, any>;
 
   // --- Inventario y Cantidades ---
-  initialQuantity: number;
-  soldQuantity: number;
-  adjustedQuantity: number; // Bajas totales
-  remainingQuantity: number;
+  initialQuantity: string;
+  soldQuantity: string;
+  adjustedQuantity: string; // Bajas totales
+  remainingQuantity: string;
 
   // --- Rendimiento Físico
-  weightReal: number;
-  weightSold: number;
-  weightAdjusted: number;
-  weightDiff: number;
+  weightReal?: string;
+  weightSold?: string;
+  weightAdjusted?: string;
+  weightDiff?: string;
 
   // --- KPIs Financieros (BI) ---
-  amountDiff: number;
-  totalSalesAmount: number;
-  averagePricePerKg: number;
-  estimatedProfit: number;
-  realPricePerKg: number;
+  amountDiff?: string;
+  totalSalesAmount?: string;
+  averagePricePerKg?: string;
+  estimatedProfit?: string;
+  realPricePerKg?: string;
 
   // --- Huevo ---
   remainingBoxes: number;
   remainingCartons: number;
   remainingPieces: number;
+
+  // --- Sucursales (type === "BRANCHES") ---
+  branchId?: number;
+  provider?: string;
+  chickenQuantity?: number;
+  kgTotal?: string;
 }
 
 export interface BatchSale {
   id: number;
   batchId: number;
   saleDate: string;
-  saleTotal: number;
+  saleTotal: string;
   employeeId: number;
   employeeName: string;
   routeId?: number;
   routeName?: string;
-  // Aquí vendrá el desglose de aves/peso o cajas/cartones
   metadata: Record<string, any>;
+  clientId?: number;
+  kgTotal?: string;
+  kgGut?: string;
+  officeReceived?: boolean;
 }
 
 export interface Movement {
@@ -104,8 +115,8 @@ export interface BatchPageProps {
 export interface BatchAdjustment {
   id?: number;
   batchId: number;
-  weight: number;
-  quantity: number;
+  weight: string;
+  quantity: string;
   reason: string;
   adjustmentDate: string;
 }
@@ -115,35 +126,44 @@ export interface BatchRequest {
   entryDate: string;
   type: BusinessUnitType;
   supplierId: number;
-  debtorEntityId: number; // El CEDIS que recibe
+  debtorEntityId?: number; // El CEDIS que recibe
 
   // Datos físicos dinámicos
-  weight?: number;
-  pricePerKg?: number;
-  boxQuantity?: number;
-  cartonQuantity?: number;
+  weight?: string;
+  pricePerKg?: string;
+  boxQuantity?: string;
+  cartonQuantity?: string;
   // En EGG, quantity representa piezas sueltas; en otras unidades es la cantidad base.
-  quantity?: number;
-  realWeight?: number;
-  totalAmount?: number;
+  quantity?: string;
+  realWeight?: string;
+  totalAmount?: string;
   notes?: string;
+
+  // --- Sucursales (type === "BRANCHES") ---
+  branchId?: number;
+  provider?: string;
+  chickenQuantity?: number;
+  kgTotal?: string;
 }
 
 // Coincide con BatchSaleRequestDTO
 export interface BatchSaleRequest {
   batchId: number;
   saleDate: string;
-  saleTotal: number;
+  saleTotal: string;
   employeeId?: number;
   clientId?: number;
   routeId?: number;
-
-  // Datos específicos del negocio
-  boxes?: number;
-  cartons?: number;
-  quantity?: number;
-  weight?: number;
-  pricePerKg?: number;
+  clientName?: string;
+  boxes?: string;
+  cartons?: string;
+  quantity?: string;
+  weight?: string;
+  pricePerKg?: string;
+  kgSent?: string;
+  kgTotal?: string;
+  kgGut?: string;
+  officeReceived?: boolean;
   notes?: string;
 }
 
