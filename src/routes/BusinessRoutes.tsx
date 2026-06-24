@@ -14,6 +14,8 @@ import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
+import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
+import MetricWeightsPage from "@/features/branches/checklist/pages/MetricWeightsPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
@@ -49,6 +51,8 @@ export default function BusinessRoutes() {
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
         <Route path="checklist" element={<ChecklistPage />} />
+        <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
+        <Route path="checklist/weights" element={<MetricWeightsPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

@@ -7,4 +7,18 @@ export const checklistKeys = {
       date,
       [...branchIds].sort((a, b) => a - b).join(","),
     ] as const,
+  performance: (from: string, to: string, branchIds: number[]) =>
+    [
+      ...checklistKeys.all,
+      "performance",
+      from,
+      to,
+      [...branchIds].sort((a, b) => a - b).join(","),
+    ] as const,
+  currentWeek: (branchIds: number[]) =>
+    [
+      ...checklistKeys.all,
+      "currentWeek",
+      [...branchIds].sort((a, b) => a - b).join(","),
+    ] as const,
 };

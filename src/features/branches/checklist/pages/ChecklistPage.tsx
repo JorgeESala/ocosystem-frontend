@@ -1,34 +1,64 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
-import { useDailyChecklist } from "../api/checklist.queries";
+import { useBranchPerformance } from "../api/checklist.queries";
 import ChecklistGrid from "../components/ChecklistGrid";
-import ChecklistHeader from "../components/ChecklistHeader";
-import { toLocalDateString } from "@/utils/date.utils";
+import ChecklistHeader, { type DateRangePreset } from "../components/ChecklistHeader";
+import PerformanceSummaryCard from "../components/PerformanceSummaryCard";
+import { toIsoDateString } from "../utils/week";
+import {
+  getCurrentMonth,
+  getCurrentWeek,
+  getLast30Days,
+  getLast7Days,
+  getLastWeek,
+} from "../utils/week";
+
+const RANGE_PRESETS: Record<Exclude<DateRangePreset, "custom">, () => { from: Date; to: Date }> = {
+  "current-week": getCurrentWeek,
+  "last-week": getLastWeek,
+  "last-7": getLast7Days,
+  "last-30": getLast30Days,
+  "current-month": getCurrentMonth,
+};
 
 export default function ChecklistPage() {
-  const today = useMemo(() => new Date(), []);
-  const maxDate = useMemo(() => new Date(), []);
-
-  const [date, setDate] = useState<Date>(today);
+  const initial = useMemo(() => getCurrentWeek(), []);
+  const [from, setFrom] = useState<Date>(initial.from);
+  const [to, setTo] = useState<Date>(initial.to);
+  const [preset, setPreset] = useState<DateRangePreset>("current-week");
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
 
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
 
-  const apiDate = toLocalDateString(date);
   const branchIds = useMemo(
-    () =>
-      selectedBranchIds.length > 0 ? [...selectedBranchIds].sort((a, b) => a - b) : [],
+    () => [...selectedBranchIds].sort((a, b) => a - b),
     [selectedBranchIds],
   );
 
-  const query = useDailyChecklist({
-    date: apiDate,
+  const query = useBranchPerformance({
+    from: toIsoDateString(from),
+    to: toIsoDateString(to),
     branchIds: branchIds.length > 0 ? branchIds : undefined,
   });
 
-  const isLoadingBranches = loadingBranches;
-  const isLoading = query.isLoading || isLoadingBranches;
+  useEffect(() => {
+    if (preset === "custom") {
+      return;
+    }
+    const fn = RANGE_PRESETS[preset];
+    const next = fn();
+    setFrom(next.from);
+    setTo(next.to);
+  }, [preset]);
+
+  const handleRangeChange = (nextFrom: Date, nextTo: Date) => {
+    setPreset("custom");
+    setFrom(nextFrom);
+    setTo(nextTo);
+  };
+
+  const isLoading = query.isLoading || loadingBranches;
   const isError = query.isError;
   const hasData = Boolean(query.data);
 
@@ -38,8 +68,7 @@ export default function ChecklistPage() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Checklist diario</h1>
           <p className="text-sm text-slate-400">
-            Tareas clave del dia para cada sucursal. Todo se calcula a partir
-            de los datos ya cargados en el sistema.
+            Resultado por sucursal y por todas las sucursales a partir de las tareas y ventas registradas.
           </p>
         </div>
       </header>
@@ -48,12 +77,19 @@ export default function ChecklistPage() {
         branches={branches}
         selectedBranchIds={selectedBranchIds}
         onSelectedBranchIdsChange={setSelectedBranchIds}
-        date={date}
-        onDateChange={setDate}
-        maxDate={maxDate}
+        from={from}
+        to={to}
+        onRangeChange={handleRangeChange}
+        preset={preset}
+        onPresetChange={setPreset}
         onRefresh={() => query.refetch()}
         isRefreshing={query.isFetching}
         summary={query.data?.summary ?? null}
+      />
+
+      <PerformanceSummaryCard
+        summary={query.data?.summary ?? null}
+        loading={isLoading}
       />
 
       {isError && hasData && (
@@ -61,8 +97,7 @@ export default function ChecklistPage() {
           color="warning"
           className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
         >
-          No se pudo refrescar el checklist. Se muestra la ultima respuesta
-          disponible.
+          No se pudo refrescar el resultado. Se muestra la última respuesta disponible.
         </Alert>
       )}
 
@@ -75,17 +110,24 @@ export default function ChecklistPage() {
           color="failure"
           className="border border-red-900/40 bg-red-950/40"
         >
-          No se pudo cargar el checklist. Intenta actualizar.
+          No se pudo cargar el resultado. Intenta actualizar.
         </Alert>
       ) : query.data && query.data.branches.length === 0 ? (
         <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-10 text-center text-sm text-slate-400">
           No hay sucursales registradas.
         </div>
+      ) : query.data &&
+        (query.data.branches.every((b) => (b.metricResults ?? []).every((m) => !m.evaluable)) &&
+          query.data.summary.evaluableBranches === 0) ? (
+        <Alert
+          color="info"
+          className="border border-blue-900/40 bg-blue-950/40 text-blue-100"
+        >
+          Ningún indicador tiene datos en el periodo. Configura el calendario de
+          fechas esperadas para empezar a medir el resultado.
+        </Alert>
       ) : (
-        <ChecklistGrid
-          branches={query.data?.branches ?? []}
-          now={new Date()}
-        />
+        <ChecklistGrid branches={query.data?.branches ?? []} />
       )}
     </div>
   );
