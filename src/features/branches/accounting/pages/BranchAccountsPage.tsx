@@ -215,6 +215,7 @@ export const BranchAccountsPage = () => {
         open={isPaymentFirstOpen}
         onClose={() => setIsPaymentFirstOpen(false)}
         onSuccessToast={setToastMessage}
+        side="PAYABLE"
         allowCompensation={false}
         primaryAccounts={paymentFirstPrimary}
         secondaryAccounts={[]}

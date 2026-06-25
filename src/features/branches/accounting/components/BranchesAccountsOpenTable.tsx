@@ -10,8 +10,10 @@ import {
 } from "flowbite-react";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
+import { useMemo, useState } from "react";
 import { FaMoneyBillWave } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
+import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 
 interface Props {
@@ -25,6 +27,17 @@ export const BranchesAccountsOpenTable = ({
   onPay,
   onViewHistory,
 }: Props) => {
+  const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
+
+  const sortedData = useMemo(() => {
+    const copy = [...data];
+    copy.sort((a, b) => {
+      const cmp = a.date.localeCompare(b.date);
+      return dateSort === "desc" ? -cmp : cmp;
+    });
+    return copy;
+  }, [data, dateSort]);
+
   if (!data.length) {
     return <div className="text-sm text-gray-500">No hay cuentas abiertas</div>;
   }
@@ -35,12 +48,27 @@ export const BranchesAccountsOpenTable = ({
         <TableHeadCell>Relación</TableHeadCell>
         <TableHeadCell>Total</TableHeadCell>
         <TableHeadCell>Saldo</TableHeadCell>
-        <TableHeadCell>Creada</TableHeadCell>
+        <TableHeadCell>
+          <button
+            type="button"
+            onClick={() =>
+              setDateSort((prev) => (prev === "desc" ? "asc" : "desc"))
+            }
+            className="inline-flex items-center gap-1 text-xs font-medium uppercase text-gray-700 hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400"
+          >
+            Creada
+            {dateSort === "desc" ? (
+              <HiSortDescending className="h-3.5 w-3.5" />
+            ) : (
+              <HiSortAscending className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </TableHeadCell>
         <TableHeadCell> Acciones</TableHeadCell>
       </TableHead>
 
       <TableBody>
-        {data.map((row) => (
+        {sortedData.map((row) => (
           <TableRow key={row.id}>
             <TableCell>
               {row.debtorName} → {row.creditorName}

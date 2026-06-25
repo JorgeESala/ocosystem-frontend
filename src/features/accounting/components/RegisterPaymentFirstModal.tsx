@@ -22,13 +22,15 @@ import {
   useCreatePayment,
 } from "@/features/accounting/api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
-import { SearchableSelect } from "@/components/SearchableSelect";
+import { AccountPicker } from "@/components/AccountPicker";
+import { PartyChecklist } from "@/components/PartyChecklist";
 
 const CONFIRMATION_THRESHOLD = 10_000;
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  side: "RECEIVABLE" | "PAYABLE";
   allowCompensation?: boolean;
   onSuccessToast?: (message: string) => void;
   primaryAccounts: AccountsPayableResponse[];
@@ -68,6 +70,7 @@ type PendingConfirmation = {
 export const RegisterPaymentFirstModal = ({
   open,
   onClose,
+  side,
   allowCompensation = true,
   onSuccessToast,
   primaryAccounts,
@@ -99,6 +102,17 @@ export const RegisterPaymentFirstModal = ({
   );
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
+  const [selectedPrimaryParties, setSelectedPrimaryParties] = useState<
+    string[]
+  >([]);
+  const [selectedSecondaryParties, setSelectedSecondaryParties] = useState<
+    string[]
+  >([]);
+
+  const getPrimaryPartyName = (ap: AccountsPayableResponse) =>
+    side === "RECEIVABLE" ? ap.debtorName : ap.creditorName;
+  const getSecondaryPartyName = (ap: AccountsPayableResponse) =>
+    side === "RECEIVABLE" ? ap.creditorName : ap.debtorName;
 
   const validPayables = useMemo(
     () => primaryAccounts.filter((ap) => ap.balance > 0),
@@ -112,6 +126,39 @@ export const RegisterPaymentFirstModal = ({
       ),
     [secondaryAccounts],
   );
+
+  const filteredPrimaryPayables = useMemo(
+    () =>
+      selectedPrimaryParties.length === 0
+        ? validPayables
+        : validPayables.filter((ap) =>
+            selectedPrimaryParties.includes(getPrimaryPartyName(ap)),
+          ),
+    [validPayables, selectedPrimaryParties, getPrimaryPartyName],
+  );
+
+  const filteredSecondarySuppliers = useMemo(
+    () =>
+      selectedSecondaryParties.length === 0
+        ? validSuppliers
+        : validSuppliers.filter((ap) =>
+            selectedSecondaryParties.includes(getSecondaryPartyName(ap)),
+          ),
+    [validSuppliers, selectedSecondaryParties, getSecondaryPartyName],
+  );
+
+  const handlePrimaryPartiesChange = (parties: string[]) => {
+    setSelectedPrimaryParties(parties);
+    setSelectedAp(null);
+    setSelectedSupplierAp(null);
+    setCompensationError(null);
+  };
+
+  const handleSecondaryPartiesChange = (parties: string[]) => {
+    setSelectedSecondaryParties(parties);
+    setSelectedSupplierAp(null);
+    setCompensationError(null);
+  };
 
   const maxCompensationAmount = Math.min(
     selectedAp?.balance ?? Infinity,
@@ -132,6 +179,8 @@ export const RegisterPaymentFirstModal = ({
       setRouteId("");
       setCompensationError(null);
       setPendingConfirmation(null);
+      setSelectedPrimaryParties([]);
+      setSelectedSecondaryParties([]);
     }
   }, [open]);
 
@@ -374,10 +423,21 @@ export const RegisterPaymentFirstModal = ({
               </div>
 
               {paymentKind === "NORMAL" ? (
-                <div>
+                <div className="space-y-2">
                   <Label>Cuenta</Label>
-                  <SearchableSelect<AccountsPayableResponse>
+                  <PartyChecklist<AccountsPayableResponse>
                     items={validPayables}
+                    getPartyName={getPrimaryPartyName}
+                    selectedParties={selectedPrimaryParties}
+                    onChange={handlePrimaryPartiesChange}
+                    label={
+                      side === "RECEIVABLE"
+                        ? "Filtrar por cliente interno"
+                        : "Filtrar por proveedor"
+                    }
+                  />
+                  <AccountPicker<AccountsPayableResponse>
+                    items={filteredPrimaryPayables}
                     selected={selectedAp}
                     onChange={(item) => setSelectedAp(item)}
                     getValue={(ap) => ap.id}
@@ -385,20 +445,35 @@ export const RegisterPaymentFirstModal = ({
                     getSubtitle={(ap) =>
                       `${formatHumanDate(ap.date)} · ${formatMXN(ap.balance)}`
                     }
-                    placeholder="Buscar cuenta por pagar..."
+                    getSearchText={(ap) =>
+                      `${ap.debtorName} ${ap.creditorName}`
+                    }
+                    searchPlaceholder="Buscar por sucursal o acreedor..."
                     emptyMessage={
-                      primaryLoading
-                        ? "Cargando..."
+                      selectedPrimaryParties.length > 0
+                        ? "Sin cuentas para el filtro seleccionado"
                         : "No hay cuentas pendientes"
                     }
+                    loading={primaryLoading}
                   />
                 </div>
               ) : (
                 <>
-                  <div>
+                  <div className="space-y-2">
                     <Label>Cuenta sucursal → CEDIS</Label>
-                    <SearchableSelect<AccountsPayableResponse>
+                    <PartyChecklist<AccountsPayableResponse>
                       items={validPayables}
+                      getPartyName={getPrimaryPartyName}
+                      selectedParties={selectedPrimaryParties}
+                      onChange={handlePrimaryPartiesChange}
+                      label={
+                        side === "RECEIVABLE"
+                          ? "Filtrar por cliente interno"
+                          : "Filtrar por proveedor"
+                      }
+                    />
+                    <AccountPicker<AccountsPayableResponse>
+                      items={filteredPrimaryPayables}
                       selected={selectedAp}
                       onChange={(item) => {
                         setSelectedAp(item);
@@ -412,18 +487,33 @@ export const RegisterPaymentFirstModal = ({
                       getSubtitle={(ap) =>
                         `${formatHumanDate(ap.date)} · ${formatMXN(ap.balance)}`
                       }
-                      placeholder="Buscar cuenta sucursal..."
+                      getSearchText={(ap) =>
+                        `${ap.debtorName} ${ap.creditorName}`
+                      }
+                      searchPlaceholder="Buscar por sucursal..."
                       emptyMessage={
-                        primaryLoading
-                          ? "Cargando..."
+                        selectedPrimaryParties.length > 0
+                          ? "Sin cuentas para el filtro seleccionado"
                           : "No hay cuentas pendientes"
                       }
+                      loading={primaryLoading}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label>Cuenta CEDIS → proveedor</Label>
-                    <SearchableSelect<AccountsPayableResponse>
+                    <PartyChecklist<AccountsPayableResponse>
                       items={validSuppliers}
+                      getPartyName={getSecondaryPartyName}
+                      selectedParties={selectedSecondaryParties}
+                      onChange={handleSecondaryPartiesChange}
+                      label={
+                        side === "RECEIVABLE"
+                          ? "Filtrar por proveedor"
+                          : "Filtrar por cliente interno"
+                      }
+                    />
+                    <AccountPicker<AccountsPayableResponse>
+                      items={filteredSecondarySuppliers}
                       selected={selectedSupplierAp}
                       onChange={(item) => {
                         setSelectedSupplierAp(item);
@@ -436,16 +526,16 @@ export const RegisterPaymentFirstModal = ({
                       getSubtitle={(ap) =>
                         `${formatHumanDate(ap.date)} · ${formatMXN(ap.balance)}`
                       }
-                      placeholder={
-                        selectedAp
-                          ? "Buscar cuenta a compensar..."
-                          : "Selecciona primero la cuenta sucursal"
+                      getSearchText={(ap) =>
+                        `${ap.debtorName} ${ap.creditorName}`
                       }
+                      searchPlaceholder="Buscar por proveedor..."
                       emptyMessage={
-                        secondaryLoading
-                          ? "Cargando..."
+                        selectedSecondaryParties.length > 0
+                          ? "Sin cuentas para el filtro seleccionado"
                           : "No hay cuentas a compensar"
                       }
+                      loading={secondaryLoading}
                       disabled={!selectedAp}
                     />
                     {selectedAp && selectedSupplierAp && (

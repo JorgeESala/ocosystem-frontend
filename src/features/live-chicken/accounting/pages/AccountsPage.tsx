@@ -280,6 +280,7 @@ export const AccountsPage = () => {
         open={isPaymentFirstOpen}
         onClose={() => setIsPaymentFirstOpen(false)}
         onSuccessToast={setToastMessage}
+        side={receivable ? "RECEIVABLE" : "PAYABLE"}
         allowCompensation={receivable}
         primaryAccounts={paymentFirstPrimary}
         secondaryAccounts={paymentFirstSecondary}
