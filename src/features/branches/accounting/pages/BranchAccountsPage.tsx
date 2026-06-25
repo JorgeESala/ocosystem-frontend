@@ -1,40 +1,68 @@
 import { useMemo, useState } from "react";
 import { Button } from "flowbite-react";
+import { HiClock, HiPlus } from "react-icons/hi";
 
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { useOpenAccounts } from "@/features/accounting/api/accounts-payable.queries";
 import { AccountsPayableHistoryDrawer } from "@/features/accounting/components/AccountsPayableHistoryDrawer";
+import { AccountingSummaryCards } from "@/features/accounting/components/AccountingSummaryCards";
+import { AccountingErrorAlert } from "@/features/accounting/components/AccountingErrorAlert";
+import { AccountingToast } from "@/features/accounting/components/AccountingToast";
+import { RegisterPaymentFirstModal } from "@/features/accounting/components/RegisterPaymentFirstModal";
+import { RecentPaymentsDrawer } from "@/features/accounting/components/RecentPaymentsDrawer";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
+import DateRangeFilter, {
+  type DateRange,
+} from "@/components/DateRangeFilter";
+import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import { RegisterBranchPaymentModal } from "../components/RegisterBranchPaymentModal";
 import { CreateBranchAccountsPayableModal } from "../components/CreateBranchAccountsPayableModal";
 import { BranchesAccountsOpenTable } from "../components/BranchesAccountsOpenTable";
 import { useBranches } from "../../branch/branch.queries";
 
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
 export const BranchAccountsPage = () => {
-  // --- Estado de Selección ---
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const { data: branches, isLoading: loadingBranches } = useBranches();
 
-  // --- UI State (Modales) ---
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [selectedAccountForPay, setSelectedAccountForPay] =
     useState<AccountsPayableResponse | null>(null);
   const [selectedAccountForHistory, setSelectedAccountForHistory] =
     useState<AccountsPayableResponse | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isPaymentFirstOpen, setIsPaymentFirstOpen] = useState(false);
+  const [isRecentOpen, setIsRecentOpen] = useState(false);
 
-  // --- Data Fetching ---
+  const defaultRange = useMemo(() => getLastDays(30), []);
+  const [dateRange, setDateRange] = useState<DateRange>(defaultRange);
 
-  const { data = [], isLoading: loadingAccounts } = useOpenAccounts({
+  const {
+    data = [],
+    isLoading: loadingAccounts,
+    isError: accountsError,
+    error: accountsErrorDetail,
+    refetch: refetchAccounts,
+  } = useOpenAccounts({
     debtorOriginalIds:
       selectedBranches.length > 0 ? selectedBranches : undefined,
     debtorEntityType: "BRANCH",
+    from: formatDateToISO(dateRange.start),
+    to: formatDateToISO(dateRange.end),
   });
-  const totalDebt = useMemo(() => {
-    return data.reduce((acc, curr) => acc + (curr.balance || 0), 0);
-  }, [data]);
 
-  // Handlers para la tabla
+  const {
+    data: paymentFirstPrimary = [],
+    isLoading: paymentFirstPrimaryLoading,
+  } = useOpenAccounts({
+    debtorEntityType: "BRANCH",
+  });
+
   const handlePay = (account: AccountsPayableResponse) =>
     setSelectedAccountForPay(account);
   const handleViewHistory = (account: AccountsPayableResponse) => {
@@ -42,49 +70,18 @@ export const BranchAccountsPage = () => {
     setHistoryOpen(true);
   };
 
-  const getAntiquityColor = (
-    days: number,
-  ): { text: string; bg: string; border: string } => {
-    if (days <= 3) {
-      return {
-        text: "text-green-400",
-        bg: "bg-green-500/5",
-        border: "border-green-800/50",
-      };
-    }
-    if (days <= 7) {
-      return {
-        text: "text-yellow-400",
-        bg: "bg-yellow-500/5",
-        border: "border-yellow-800/50",
-      };
-    }
-    if (days <= 14) {
-      return {
-        text: "text-orange-400",
-        bg: "bg-orange-500/5",
-        border: "border-gray-800",
-      };
-    }
-    return {
-      text: "text-red-400",
-      bg: "bg-red-500/10",
-      border: "border-red-800",
-    };
-  };
-  const oldestDays = useMemo(() => {
-    if (data.length === 0) return 0;
-    const dates = data.map((d) => new Date(d.date).getTime());
-    const oldest = Math.min(...dates);
-    const diffTime = Math.abs(Date.now() - oldest);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, [data]);
-  const antiquityStyle = useMemo(
-    () => getAntiquityColor(oldestDays),
-    [oldestDays],
+  const dateRangeModified = !(
+    isSameDay(dateRange.start, defaultRange.start) &&
+    isSameDay(dateRange.end, defaultRange.end)
   );
+  const hasFilter = selectedBranches.length > 0 || dateRangeModified;
   return (
     <div className="space-y-6 p-6">
+      <AccountingToast
+        message={toastMessage}
+        onDismiss={() => setToastMessage(null)}
+      />
+
       {/* Header con Título y Botón de Acción Principal */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -96,65 +93,38 @@ export const BranchAccountsPage = () => {
           </p>
         </div>
 
-        <Button
-          onClick={() => setOpenCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Crear Nueva Cuenta
-        </Button>
-      </div>
-
-      {/* --- NUEVA SECCIÓN: RESUMEN DE DEUDA --- */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
-          <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
-            Total Pendiente{" "}
-            {selectedBranches.length > 0 ? "(Filtrado)" : "(Consolidado)"}
-          </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
-              {new Intl.NumberFormat("es-MX", {
-                style: "currency",
-                currency: "MXN",
-              }).format(totalDebt)}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
-          <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
-            Documentos Abiertos
-          </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-blue-400">
-              {data.length}
-            </span>
-            <span className="text-sm text-nowrap text-gray-400">
-              cuentas/remesas
-            </span>
-          </div>
-        </div>
-
-        <div
-          className={`rounded-lg border p-5 shadow-sm transition-colors duration-300 ${antiquityStyle.border} ${antiquityStyle.bg}`}
-        >
-          <p
-            className={`text-xs font-medium tracking-wider uppercase ${antiquityStyle.text}`}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            color="gray"
+            onClick={() => setIsRecentOpen(true)}
+            data-testid="open-recent-payments"
           >
-            Alerta de Antigüedad
-          </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">{oldestDays}</span>
-            <span className="text-sm text-gray-400">días activo</span>
-          </div>
-          <p className="mt-1 text-[10px] text-gray-500 italic">
-            Basado en la cuenta más antigua.
-          </p>
+            <HiClock className="mr-2 h-4 w-4" />
+            Pagos recientes
+          </Button>
+          <Button
+            onClick={() => setIsPaymentFirstOpen(true)}
+            data-testid="open-payment-first"
+          >
+            <HiPlus className="mr-2 h-4 w-4" />
+            Registrar pago
+          </Button>
+          <Button
+            color="gray"
+            onClick={() => setOpenCreateModal(true)}
+          >
+            Crear Nueva Cuenta
+          </Button>
         </div>
       </div>
+
+      <AccountingSummaryCards
+        data={data}
+        filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
+      />
 
       {/* Barra de Filtros */}
-      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+      <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-300">Sucursales:</span>
           <div className="w-80">
@@ -166,9 +136,18 @@ export const BranchAccountsPage = () => {
           </div>
         </div>
 
-        {selectedBranches.length > 0 && (
+        <DateRangeFilter
+          value={dateRange}
+          defaultRange={defaultRange}
+          onChange={setDateRange}
+        />
+
+        {hasFilter && (
           <button
-            onClick={() => setSelectedBranches([])}
+            onClick={() => {
+              setSelectedBranches([]);
+              setDateRange(defaultRange);
+            }}
             className="text-xs text-blue-400 hover:underline"
           >
             Limpiar filtros
@@ -184,10 +163,19 @@ export const BranchAccountsPage = () => {
               Cargando información consolidada...
             </p>
           </div>
+        ) : accountsError ? (
+          <div className="p-6">
+            <AccountingErrorAlert
+              error={accountsErrorDetail}
+              onRetry={() => refetchAccounts()}
+            />
+          </div>
         ) : data.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-gray-400">
-              No se encontraron cuentas pendientes para la selección actual.
+              {hasFilter
+                ? "No hay cuentas para los filtros seleccionados."
+                : "No hay cuentas abiertas."}
             </p>
           </div>
         ) : (
@@ -219,6 +207,26 @@ export const BranchAccountsPage = () => {
         open={!!selectedAccountForPay}
         account={selectedAccountForPay ?? undefined}
         onClose={() => setSelectedAccountForPay(null)}
+        onSuccessToast={setToastMessage}
+      />
+
+      {/* Modal: Registrar pago (flujo payment-first) */}
+      <RegisterPaymentFirstModal
+        open={isPaymentFirstOpen}
+        onClose={() => setIsPaymentFirstOpen(false)}
+        onSuccessToast={setToastMessage}
+        allowCompensation={false}
+        primaryAccounts={paymentFirstPrimary}
+        secondaryAccounts={[]}
+        primaryLoading={paymentFirstPrimaryLoading}
+        secondaryLoading={false}
+      />
+
+      {/* Drawer: Pagos recientes */}
+      <RecentPaymentsDrawer
+        open={isRecentOpen}
+        onClose={() => setIsRecentOpen(false)}
+        onSuccessToast={setToastMessage}
       />
     </div>
   );

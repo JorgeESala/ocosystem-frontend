@@ -5,6 +5,8 @@ export type PaymentMethod =
   | "CHECK"
   | "OTHER";
 
+export type PaymentStatus = "ACTIVE" | "CANCELLED";
+
 // ---------- Requests ----------
 
 export interface CreatePaymentRequest {
@@ -31,4 +33,8 @@ export interface PaymentResponse {
   paymentMethod: PaymentMethod;
   folio?: string;
   note?: string;
+  status: PaymentStatus;
+  createdAt: string; // ISO
+  payerName?: string;
+  receiverName?: string;
 }
