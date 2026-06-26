@@ -10,14 +10,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type {
-  WeekdayKey,
-  WeekdayTicketsRow,
-} from "../utils/ticketsByWeekday";
+import type { WeekdayKey, WeekdayTicketsRow } from "../utils/ticketsByWeekday";
 
 interface Props {
   rows: WeekdayTicketsRow[];
   peak: WeekdayTicketsRow | null;
+  tickets: number;
 }
 
 const BASE_COLOR = "#3B82F6";
@@ -27,15 +25,23 @@ const PEAK_KEYS: WeekdayKey[] = ["L", "M", "X", "J", "V", "S", "D"];
 const formatTickets = (value: number) =>
   `${Math.round(value).toLocaleString("es-MX")} tickets`;
 
-export const TicketsByWeekdayCard = ({ rows, peak }: Props) => {
+export const TicketsByWeekdayCard = ({ rows, peak, tickets }: Props) => {
   const totalSamples = rows.reduce((acc, row) => acc + row.days, 0);
 
   return (
     <Card className="border-none bg-gray-800 shadow-xl">
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-200">
+      <h3 className="flex items-center gap-2 text-lg font-bold text-gray-200">
         <HiCalendar className="text-blue-400" />
         Tickets por día de la semana
       </h3>
+      <div className="rounded-lg border-l-4 border-blue-500 bg-gray-900/40 p-3">
+        <div className="flex items-baseline gap-2">
+          <h4 className="text-xl font-black text-blue-400">Total</h4>
+          <span className="text-sm font-semibold text-white">
+            · {formatTickets(tickets)}
+          </span>
+        </div>
+      </div>
 
       {peak ? (
         <div className="mb-4 rounded-lg border-l-4 border-blue-500 bg-gray-900/40 p-3">
@@ -101,19 +107,22 @@ export const TicketsByWeekdayCard = ({ rows, peak }: Props) => {
                 fontWeight: 500,
               }}
               labelFormatter={(_label, payload) => {
-                const row = payload?.[0]?.payload as WeekdayTicketsRow | undefined;
+                const row = payload?.[0]?.payload as
+                  | WeekdayTicketsRow
+                  | undefined;
                 return row?.labelLong ?? "";
               }}
-              formatter={(value: number) => [
-                formatTickets(value),
-                "Promedio",
-              ]}
+              formatter={(value: number) => [formatTickets(value), "Promedio"]}
             />
             <Bar dataKey="avg" radius={[6, 6, 0, 0]}>
               {rows.map((row, index) => (
                 <Cell
                   key={`${row.key}-${index}`}
-                  fill={peak && PEAK_KEYS[index] === peak.key ? PEAK_COLOR : BASE_COLOR}
+                  fill={
+                    peak && PEAK_KEYS[index] === peak.key
+                      ? PEAK_COLOR
+                      : BASE_COLOR
+                  }
                 />
               ))}
             </Bar>
