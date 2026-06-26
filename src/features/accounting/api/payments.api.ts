@@ -1,5 +1,8 @@
 import { http } from "@/shared/api/http";
-import type { CreatePaymentRequest } from "../types/payment.types";
+import type {
+  CreatePaymentRequest,
+  PaymentResponse,
+} from "../types/payment.types";
 import type {
   CompensationPaymentAPRequest,
   CompensationPaymentResponse,
@@ -15,3 +18,16 @@ export const createCompensationPaymentFromAP = (
     "/api/compensation-payments/from-ap",
     data,
   );
+
+export const cancelPayment = (id: number) => {
+  return http.post<void>(`/api/accounting/payments/${id}/cancel`);
+};
+
+export const fetchRecentPayments = async (
+  limit = 20,
+): Promise<PaymentResponse[]> => {
+  const { data } = await http.get<PaymentResponse[]>(
+    `/api/accounting/payments/recent?limit=${limit}`,
+  );
+  return data;
+};

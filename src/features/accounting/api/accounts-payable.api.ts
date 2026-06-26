@@ -22,6 +22,8 @@ export const fetchOpenAccounts = (params: {
   // --- Nuevos filtros ---
   entityId?: number;
   entityType?: string;
+  from?: string;
+  to?: string;
 }) => {
   return http.get<AccountsPayableResponse[]>(
     "/api/read/accounts-payable/open",

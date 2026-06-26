@@ -29,6 +29,8 @@ export const useOpenAccounts = (params: {
   debtorEntityType?: string;
   creditorOriginalIds?: number[];
   creditorEntityType?: string;
+  from?: string;
+  to?: string;
 }) => {
   const { slug } = useParams<{ slug: string }>();
 
