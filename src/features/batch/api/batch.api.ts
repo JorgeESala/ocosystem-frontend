@@ -31,6 +31,17 @@ export const updateBatchSale = async (id: number, data: any) => {
   return response.data;
 };
 
+export const bulkUpdateBatchSaleRoute = async (
+  saleIds: number[],
+  routeId: number,
+) => {
+  const response = await http.put(`${API_BASE}/batch-sales/bulk-update-route`, {
+    saleIds,
+    routeId,
+  });
+  return response.data as { updated: number };
+};
+
 export const getBatchSales = async (batchId: number) => {
   const { data } = await http.get(`${API_BASE}/batch-sales/batch/${batchId}`);
   return data;

@@ -16,7 +16,7 @@ import type { PaymentMethod } from "../types/payment.types";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { useDrivers } from "@/features/employee/api/employees.queries";
-import { useRoutes } from "../../live-chicken/api/routes.queries";
+import { useRoutes } from "@/core/api/route/routes.queries";
 import {
   useCreateCompensationPaymentFromAP,
   useCreatePayment,

@@ -112,6 +112,8 @@ export const BaseBatchOverview: React.FC<{
               <MovementsTable
                 movements={data?.movements || []}
                 onEdit={onEditMovement}
+                unitType={batch.type}
+                batchId={batch.id}
               />
 
               {/* FOOTER DE TOTALES (Inyectado - Imagen 144043.png) */}

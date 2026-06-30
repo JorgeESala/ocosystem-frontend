@@ -49,19 +49,18 @@ export const useCreateBatchSale = () => {
   return useMutation({
     mutationFn: api.createBatchSale,
     onSuccess: (_, variables) => {
-      // Forzamos que sea número para que coincida con la key
       const bId = Number(variables.batchId);
 
-      // Invalidamos el "fullDetail" de forma exacta
       queryClient.invalidateQueries({
         queryKey: batchKeys.fullDetail(bId),
         exact: true,
       });
 
-      // Invalidamos TODA la rama de batches para asegurar que la lista principal se refresque
       queryClient.invalidateQueries({
         queryKey: batchKeys.all,
       });
+
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
   });
 };
@@ -121,6 +120,8 @@ export const useUpdateBatchSale = () => {
       queryClient.invalidateQueries({
         queryKey: batchKeys.lists(),
       });
+
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
 
     onError: (error: unknown) => {
@@ -133,6 +134,19 @@ export const useUpdateBatchSale = () => {
             ? error.message
             : "No se pudo guardar la venta";
       throw new Error(message);
+    },
+  });
+};
+
+export const useBulkUpdateBatchSaleRoute = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ saleIds, routeId }: { saleIds: number[]; routeId: number }) =>
+      api.bulkUpdateBatchSaleRoute(saleIds, routeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: batchKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
     },
   });
 };

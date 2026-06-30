@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Label, Spinner, TextInput } from "flowbite-react";
-import { useCreateRoute } from "../api/routes.queries";
+import { useCreateRoute } from "@/core/api/route/routes.queries";
 import type { Route } from "../types";
 
 interface Props {
