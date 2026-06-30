@@ -125,42 +125,57 @@ export const EggMovementsTable: React.FC<{
     </>
   );
 
+  const singleSaleSales: { mov: any; key: string }[] = [];
+  const tripGroups = groups.filter((g) => !g.isSingleSale);
+  for (const group of groups) {
+    if (group.isSingleSale) {
+      for (const mov of group.movements) {
+        singleSaleSales.push({
+          mov,
+          key: `${group.key}-${mov.type}-${mov.id}`,
+        });
+      }
+    }
+  }
+
   return (
     <div className="space-y-3">
-      {groups.map((group) => {
-        if (group.isSingleSale) {
-          return (
+      {tripGroups.map((group) => (
+        <TripInlineRow
+          key={group.key}
+          unitType={tripsUnitType}
+          currentBatchId={batchId}
+          group={group}
+          onEditMovement={onEdit}
+          renderSaleColumns={renderSaleColumns}
+          renderHeaderColumns={renderHeaderColumns}
+          renderOtherBatchHeader={renderOtherBatchHeader}
+        />
+      ))}
+
+      {singleSaleSales.length > 0 && (
+        <div className="rounded-xl border border-slate-700/70 bg-slate-900/40">
+          <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 px-3 py-1.5">
+            <span className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Ventas sin agrupar ({singleSaleSales.length})
+            </span>
+            <span className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Click en <span className="font-semibold text-blue-400">Editar</span> para asignar chofer + ruta + fecha
+            </span>
+          </div>
+          <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800/40 bg-slate-950/20 px-3 py-1.5">
+            {renderHeaderColumns()}
+          </div>
+          {singleSaleSales.map(({ mov, key }) => (
             <div
-              key={group.key}
-              className="rounded-xl border border-slate-700/70 bg-slate-900/40"
+              key={key}
+              className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
             >
-              <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800/60 bg-slate-950/40 px-3 py-1.5">
-                {renderHeaderColumns()}
-              </div>
-              {group.movements.map((mov) => (
-                <div
-                  key={`${mov.type}-${mov.id}`}
-                  className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
-                >
-                  {renderSaleColumns(mov, false)}
-                </div>
-              ))}
+              {renderSaleColumns(mov, false)}
             </div>
-          );
-        }
-        return (
-          <TripInlineRow
-            key={group.key}
-            unitType={tripsUnitType}
-            currentBatchId={batchId}
-            group={group}
-            onEditMovement={onEdit}
-            renderSaleColumns={renderSaleColumns}
-            renderHeaderColumns={renderHeaderColumns}
-            renderOtherBatchHeader={renderOtherBatchHeader}
-          />
-        );
-      })}
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -218,6 +218,7 @@ export interface BatchSaleUpdateRequest {
   clientId?: number;
   saleDate: string;
   saleTotal: string;
+  quantity?: string;
   kgTotal?: string;
   kgGut?: string;
   officeReceived?: boolean;
