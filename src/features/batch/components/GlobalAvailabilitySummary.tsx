@@ -4,6 +4,8 @@ import { GiFeather } from "react-icons/gi";
 import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
 import type { BatchResponseDTO, BusinessUnitType } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { ValorEnInventarioHelp } from "./common/ValorEnInventarioHelp";
 
 interface GlobalAvailabilitySummaryProps {
   batches: BatchResponseDTO[];
@@ -42,9 +44,27 @@ export const GlobalAvailabilitySummary: React.FC<
     0,
   );
 
+  const totalValorEnInventario = visibleBatches.reduce<number | null>(
+    (acc, b) => {
+      const raw = b.availableCost;
+      if (raw === null || raw === undefined) return acc;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) return acc;
+      if (acc === null) return n;
+      return acc + n;
+    },
+    null,
+  );
+
+  const helpUnit: "aves" | "piezas" = unitType === "EGG" ? "piezas" : "aves";
+  const valorEnInventarioHelp = React.useMemo(
+    () => <ValorEnInventarioHelp unit={helpUnit} />,
+    [helpUnit],
+  );
+
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-white">
             Disponibilidad Global
@@ -58,6 +78,22 @@ export const GlobalAvailabilitySummary: React.FC<
             en {visibleBatches.length} remesa
             {visibleBatches.length > 1 ? "s" : ""}
           </span>
+        </div>
+        <div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-medium tracking-wider text-emerald-300 uppercase">
+              Valor en inventario
+            </span>
+            {valorEnInventarioHelp}
+          </div>
+          <p className="text-xl font-bold text-white">
+            {totalValorEnInventario !== null
+              ? formatMXN(totalValorEnInventario)
+              : "—"}
+          </p>
+          <p className="text-[10px] text-gray-400">
+            MXN restantes en remesas
+          </p>
         </div>
       </div>
 

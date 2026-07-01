@@ -49,6 +49,7 @@ export interface BatchResponseDTO {
   averagePricePerKg?: string;
   estimatedProfit?: string;
   realPricePerKg?: string;
+  availableCost?: string | null;
 
   // --- Huevo ---
   remainingBoxes: number;

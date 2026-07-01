@@ -77,6 +77,7 @@ interface BatchItemApi {
   date: string;
   provider: string | null;
   chickenQuantity: number | null;
+  availableCost?: number | string | null;
 }
 
 export interface Batch {
@@ -89,6 +90,7 @@ export interface Batch {
   date: string;
   provider: string | null;
   chickenQuantity: number;
+  availableCost: number | null;
 }
 
 export const mapBatchItem = (raw: BatchItemApi): Batch => {
@@ -101,6 +103,15 @@ export const mapBatchItem = (raw: BatchItemApi): Batch => {
       : chickenQuantity > 0
         ? kgTotal / chickenQuantity
         : 0;
+  const rawCost = raw.availableCost;
+  const parsedCost =
+    rawCost === null || rawCost === undefined
+      ? null
+      : typeof rawCost === "number"
+        ? rawCost
+        : toNumber(rawCost);
+  const availableCost =
+    parsedCost === null ? null : Number.isFinite(parsedCost) && parsedCost > 0 ? parsedCost : null;
   return {
     id: raw.id,
     branchId: raw.branchId,
@@ -111,6 +122,7 @@ export const mapBatchItem = (raw: BatchItemApi): Batch => {
     date: raw.date,
     provider: raw.provider,
     chickenQuantity,
+    availableCost,
   };
 };
 

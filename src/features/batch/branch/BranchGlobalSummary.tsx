@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Spinner, Alert } from "flowbite-react";
-import { HiArrowUp, HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { Spinner, Alert, Tooltip } from "flowbite-react";
+import {
+  HiArrowUp,
+  HiChevronDown,
+  HiChevronUp,
+  HiInformationCircle,
+} from "react-icons/hi";
 import { GiFeather } from "react-icons/gi";
 import type { Batch, Branch, BranchesBatchSale } from "@/services/api";
 import { useMarkCuentasReceived } from "./api/sales.queries";
@@ -23,6 +28,91 @@ interface BranchGlobalSummaryProps {
 const resolveBranchName = (branches: Branch[], branchId: number | null) =>
   branches.find((b) => b.id === branchId)?.name ??
   (branchId != null ? `Sucursal #${branchId}` : "Sin sucursal");
+
+const sumCost = (a: number | null, b: number | null): number | null => {
+  if (a === null && b === null) return null;
+  if (a === null) return b;
+  if (b === null) return a;
+  return a + b;
+};
+
+const computeAvailableCost = (
+  batch: Batch,
+  remaining: number,
+): number | null => {
+  if (batch.availableCost !== null && batch.availableCost !== undefined) {
+    return batch.availableCost;
+  }
+  if (
+    !batch.priceTotal ||
+    !batch.chickenQuantity ||
+    batch.chickenQuantity <= 0 ||
+    batch.priceTotal <= 0 ||
+    remaining <= 0
+  ) {
+    return null;
+  }
+  return (remaining / batch.chickenQuantity) * batch.priceTotal;
+};
+
+const VALOR_EN_INVENTARIO_EXPLANATION = (
+  <div className="max-w-xs space-y-2 text-left text-gray-100">
+    <p className="font-semibold text-white">¿Qué es el valor en inventario?</p>
+    <p className="text-xs leading-snug">
+      Es el valor en dinero de las aves que aún tienes disponibles en la remesa
+      (sin vender y sin dar de baja).
+    </p>
+    <div className="border-t border-gray-600 pt-1.5">
+      <p className="text-[10px] font-medium tracking-wider text-gray-300 uppercase">
+        Fórmula
+      </p>
+      <p className="text-xs leading-snug text-emerald-200">
+        (pollos restantes ÷ pollos iniciales) × costo total de la remesa
+      </p>
+    </div>
+    <div className="border-t border-gray-600 pt-1.5">
+      <p className="text-[10px] font-medium tracking-wider text-gray-300 uppercase">
+        ¿De dónde sale cada dato?
+      </p>
+      <ul className="mt-0.5 space-y-0.5 text-xs leading-snug">
+        <li>
+          <strong className="text-white">Costo total</strong>: lo que pagaste
+          por la remesa completa.
+        </li>
+        <li>
+          <strong className="text-white">Pollos restantes</strong>: aves que aún
+          no has vendido ni dado de baja.
+        </li>
+        <li>
+          <strong className="text-white">Pollos iniciales</strong>: total de
+          aves que llegaron en la remesa.
+        </li>
+      </ul>
+    </div>
+    <p className="text-[11px] leading-snug text-gray-400">
+      Si el costo total es 0 o no hay aves iniciales, se muestra{" "}
+      <strong className="text-white">—</strong>.
+    </p>
+  </div>
+);
+
+const ValorEnInventarioHelpIcon: React.FC<{ className?: string }> = ({
+  className,
+}) => (
+  <Tooltip
+    content={VALOR_EN_INVENTARIO_EXPLANATION}
+    placement="right"
+    style="dark"
+    arrow
+  >
+    <HiInformationCircle
+      className={`cursor-help text-gray-400 hover:text-gray-200 ${className ?? ""}`}
+      size={13}
+      aria-label="¿Qué es el valor en inventario?"
+      role="img"
+    />
+  </Tooltip>
+);
 
 export const BranchGlobalSummary: React.FC<BranchGlobalSummaryProps> = ({
   batches,
@@ -64,8 +154,7 @@ export const BranchGlobalSummary: React.FC<BranchGlobalSummaryProps> = ({
         groups.set(key, {
           key,
           clientId: sale.clientId,
-          clientName:
-            sale.clientName || sale.employeeName || "Sin responsable",
+          clientName: sale.clientName || sale.employeeName || "Sin responsable",
           branchId,
           date: sale.date,
           sales: [{ sale, batchId: batch.id }],
@@ -98,7 +187,11 @@ export const BranchGlobalSummary: React.FC<BranchGlobalSummaryProps> = ({
       .map(({ batch, sales }) => {
         const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
         const remaining = batch.chickenQuantity - chickensSold;
-        return { batch, remaining };
+        return {
+          batch,
+          remaining,
+          cost: computeAvailableCost(batch, remaining),
+        };
       })
       .filter((row) => row.remaining > 0)
       .sort(
@@ -110,6 +203,15 @@ export const BranchGlobalSummary: React.FC<BranchGlobalSummaryProps> = ({
 
   const totalAvailableChickens = useMemo(
     () => availableRows.reduce((sum, r) => sum + r.remaining, 0),
+    [availableRows],
+  );
+
+  const totalAvailableCost = useMemo(
+    () =>
+      availableRows.reduce<number | null>(
+        (acc, r) => sumCost(acc, r.cost),
+        null,
+      ),
     [availableRows],
   );
 
@@ -170,6 +272,7 @@ export const BranchGlobalSummary: React.FC<BranchGlobalSummaryProps> = ({
           rows={availableRows}
           branches={branches}
           totalChickens={totalAvailableChickens}
+          totalCost={totalAvailableCost}
           onBatchClick={onBatchClick}
         />
       )}
@@ -307,9 +410,7 @@ const PendingCuentaRow: React.FC<PendingCuentaRowProps> = ({
   const isMerged = cuenta.sales.length > 1;
   const firstBatchId = cuenta.sales[0].batchId;
   const branchName = resolveBranchName(branches, cuenta.branchId);
-  const uniqueBranchCount = new Set(
-    cuenta.sales.map((s) => s.batchId),
-  ).size;
+  const uniqueBranchCount = new Set(cuenta.sales.map((s) => s.batchId)).size;
 
   const handleMarkReceived = async () => {
     await markReceived(
@@ -330,7 +431,11 @@ const PendingCuentaRow: React.FC<PendingCuentaRowProps> = ({
               className="flex items-center gap-1 rounded-md p-0.5 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
               title={expanded ? "Ocultar ventas" : "Ver ventas"}
             >
-              {expanded ? <HiChevronUp size={14} /> : <HiChevronDown size={14} />}
+              {expanded ? (
+                <HiChevronUp size={14} />
+              ) : (
+                <HiChevronDown size={14} />
+              )}
             </button>
           ) : (
             <span className="inline-block w-[18px]" />
@@ -398,6 +503,7 @@ const PendingCuentaRow: React.FC<PendingCuentaRowProps> = ({
 interface AvailableRow {
   batch: Batch;
   remaining: number;
+  cost: number | null;
 }
 
 interface AvailableBranchSummary {
@@ -405,12 +511,14 @@ interface AvailableBranchSummary {
   branchName: string;
   remaining: number;
   batchCount: number;
+  cost: number | null;
 }
 
 interface AvailableTabProps {
   rows: AvailableRow[];
   branches: Branch[];
   totalChickens: number;
+  totalCost: number | null;
   onBatchClick?: (batchId: number) => void;
 }
 
@@ -418,20 +526,23 @@ const AvailableTab: React.FC<AvailableTabProps> = ({
   rows,
   branches,
   totalChickens,
+  totalCost,
   onBatchClick,
 }) => {
   const branchSummaries = useMemo<AvailableBranchSummary[]>(() => {
     const map = new Map<number, AvailableBranchSummary>();
-    for (const { batch, remaining } of rows) {
+    for (const { batch, remaining, cost } of rows) {
       const branchId = batch.branchId ?? -1;
       const entry = map.get(branchId) ?? {
         branchId,
         branchName: resolveBranchName(branches, branchId),
         remaining: 0,
         batchCount: 0,
+        cost: null,
       };
       entry.remaining += remaining;
       entry.batchCount += 1;
+      entry.cost = sumCost(entry.cost, cost);
       map.set(branchId, entry);
     }
     return Array.from(map.values()).sort((a, b) => b.remaining - a.remaining);
@@ -458,6 +569,20 @@ const AvailableTab: React.FC<AvailableTabProps> = ({
             </p>
             <p className="text-[11px] text-gray-400">
               en {rows.length} remesa{rows.length > 1 ? "s" : ""}
+            </p>
+          </div>
+          <div>
+            <div className="flex items-center gap-1">
+              <p className="text-[10px] font-medium tracking-wider text-emerald-300 uppercase">
+                Valor en inventario
+              </p>
+              <ValorEnInventarioHelpIcon />
+            </div>
+            <p className="text-2xl font-bold text-white">
+              {totalCost !== null ? formatMXN(totalCost) : "—"}
+            </p>
+            <p className="text-[11px] text-gray-400">
+              MXN restantes en remesas
             </p>
           </div>
         </div>
