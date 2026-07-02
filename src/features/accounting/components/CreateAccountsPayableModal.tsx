@@ -131,7 +131,7 @@ export const CreateAccountsPayableModal = ({ open, onClose }: Props) => {
               required
               value={debtDate ?? undefined}
               onChange={(date) => setDate(date)}
-              language="es"
+              language="es-MX"
             />
           </div>
           {/* Amount */}

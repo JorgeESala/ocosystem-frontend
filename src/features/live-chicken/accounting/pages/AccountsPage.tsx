@@ -17,9 +17,7 @@ import { useClients } from "@/core/client/api/client.queries";
 import { useSuppliers } from "@/core/supplier/supplier.queries";
 import SupplierMultiSelect from "@/components/SupplierMultiSelect";
 import InternalClientMultiSelect from "@/components/InternalClientMultiSelect";
-import DateRangeFilter, {
-  type DateRange,
-} from "@/components/DateRangeFilter";
+import DateRangeFilter, { type DateRange } from "@/components/DateRangeFilter";
 import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import { WeeklyWeightDiffTable } from "../weight-diff/WeeklyWeightDiffTable";
 import { WeightDiffSummaryCards } from "../weight-diff/WeightDiffSummaryCards";
@@ -68,8 +66,9 @@ export const AccountsPage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("RECEIVABLE");
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<number[]>([]);
-  const [selectedWeightDiffSupplier, setSelectedWeightDiffSupplier] =
-    useState<number | null>(null);
+  const [selectedWeightDiffSupplier, setSelectedWeightDiffSupplier] = useState<
+    number | null
+  >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPaymentFirstOpen, setIsPaymentFirstOpen] = useState(false);
   const [isRecentOpen, setIsRecentOpen] = useState(false);
@@ -165,9 +164,12 @@ export const AccountsPage = () => {
     refetch: refetchWeightDiff,
   } = useWeeklyWeightDiff(weightDiffStartIso, weightDiffEndIso);
 
-  const filteredWeightDiffRows = selectedWeightDiffSupplier == null
-    ? weightDiffRows
-    : weightDiffRows.filter((r) => r.supplierId === selectedWeightDiffSupplier);
+  const filteredWeightDiffRows =
+    selectedWeightDiffSupplier == null
+      ? weightDiffRows
+      : weightDiffRows.filter(
+          (r) => r.supplierId === selectedWeightDiffSupplier,
+        );
 
   const dateRangeModified = !(
     isSameDay(dateRange.start, defaultRange.start) &&
@@ -200,17 +202,11 @@ export const AccountsPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            color="gray"
-            onClick={() => setIsRecentOpen(true)}
-          >
+          <Button color="gray" onClick={() => setIsRecentOpen(true)}>
             <HiClock className="mr-2 h-4 w-4" />
             Pagos recientes
           </Button>
-          <Button
-            color="gray"
-            onClick={() => setIsPaymentFirstOpen(true)}
-          >
+          <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
             <HiPlus className="mr-2 h-4 w-4" />
             Registrar pago
           </Button>
@@ -237,7 +233,7 @@ export const AccountsPage = () => {
           color={viewMode === "WEIGHT_DIFF" ? "blue" : "gray"}
           onClick={() => handleSetViewMode("WEIGHT_DIFF")}
         >
-          Diferencia de peso
+          N-C
         </Button>
       </div>
 
@@ -372,9 +368,9 @@ export const AccountsPage = () => {
               <WeightDiffSummaryCards rows={filteredWeightDiffRows} />
               <div className="rounded-lg bg-gray-800 p-4 shadow">
                 <p className="mb-3 text-xs text-gray-500 italic">
-                  Diferencia = peso declarado − peso real. El rango se ajusta
-                  a semanas completas (lunes a domingo). Haz clic en una
-                  fila para ver las remesas que la componen.
+                  Diferencia = peso declarado − peso real. El rango se ajusta a
+                  semanas completas (lunes a domingo). Haz clic en una fila para
+                  ver las remesas que la componen.
                 </p>
                 <WeeklyWeightDiffTable
                   rows={filteredWeightDiffRows}

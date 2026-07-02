@@ -11,6 +11,7 @@ interface BatchTableProps {
   error: unknown;
   expandedBatchId?: number | null;
   cuentaCounts: Map<string, number>;
+  chickensRemainingByBatchId?: Map<number, number>;
 }
 
 export const BatchTable: React.FC<BatchTableProps> = ({
@@ -20,6 +21,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
   error,
   expandedBatchId,
   cuentaCounts,
+  chickensRemainingByBatchId,
 }) => {
   if (isLoading)
     return (
@@ -44,6 +46,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
           branches={branches}
           autoExpandId={expandedBatchId}
           cuentaCounts={cuentaCounts}
+          chickensRemaining={chickensRemainingByBatchId?.get(batch.id)}
         />
       ))}
     </div>

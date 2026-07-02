@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Spinner, Alert } from "flowbite-react";
+import { Badge, Button, Spinner, Alert } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -18,6 +18,7 @@ interface BatchRowProps {
   branches: Branch[];
   autoExpandId?: number | null;
   cuentaCounts: Map<string, number>;
+  chickensRemaining?: number;
 }
 
 export const BatchRow: React.FC<BatchRowProps> = ({
@@ -25,6 +26,7 @@ export const BatchRow: React.FC<BatchRowProps> = ({
   branches,
   autoExpandId,
   cuentaCounts,
+  chickensRemaining: chickensRemainingProp,
 }) => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -96,9 +98,17 @@ export const BatchRow: React.FC<BatchRowProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <div className="mx-auto flex flex-col items-center">
-          <h3 className="text-center text-lg font-semibold text-white">
-            Remesa #{batch.id} — {branchName}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-center text-lg font-semibold text-white">
+              Remesa #{batch.id} — {branchName}
+            </h3>
+            {typeof chickensRemainingProp === "number" &&
+              chickensRemainingProp < 0 && (
+                <Badge color="failure" size="sm">
+                  Disponibilidad negativa
+                </Badge>
+              )}
+          </div>
 
           <p className="text-center text-sm text-gray-400">
             {batch.provider} •{" "}
