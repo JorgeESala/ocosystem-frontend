@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Spinner, Alert, Button, Datepicker } from "flowbite-react";
+import { Spinner, Alert, Button, Datepicker, ToggleSwitch } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import type { Batch, BatchPageProps } from "../types.batch";
 
@@ -23,6 +23,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [activeTab, setActiveTab] = useState<TabKey>("availability");
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
+  const [showOnlyWithAvailability, setShowOnlyWithAvailability] = useState(true);
 
   useEffect(() => {
     if (expandedBatchId === null) return;
@@ -36,6 +37,9 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const BatchOverview = config.overviewComponent;
 
   const filteredBatches = batches.filter((batch: Batch) => {
+    if (showOnlyWithAvailability && Number(batch.remainingQuantity) === 0) {
+      return false;
+    }
     if (!startDate || !endDate) return true;
     const entryDate = new Date(`${batch.entryDate}T00:00:00`);
     const start = new Date(startDate);
@@ -55,6 +59,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const handleClearFilter = useCallback(() => {
     setStartDate(THIRTY_DAYS_AGO);
     setEndDate(new Date());
+    setShowOnlyWithAvailability(true);
   }, []);
 
   if (isLoading)
@@ -109,6 +114,13 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
         <Button size="xs" color="gray" onClick={handleClearFilter}>
           Limpiar
         </Button>
+        <div className="ml-auto flex items-center gap-2 pb-1">
+          <ToggleSwitch
+            checked={showOnlyWithAvailability}
+            label="Solo con disponibilidad"
+            onChange={setShowOnlyWithAvailability}
+          />
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -171,7 +183,9 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
       <div className="space-y-4">
         {filteredBatches.length === 0 ? (
           <div className="py-10 text-center text-gray-500">
-            No hay remesas registradas en este periodo.
+            {showOnlyWithAvailability
+              ? "No hay remesas con disponibilidad en este periodo."
+              : "No hay remesas registradas en este periodo."}
           </div>
         ) : (
           filteredBatches.map((batch: Batch) => (

@@ -3,7 +3,7 @@ import { useBatchFullDetail } from "../api/batch.queries";
 import type { BatchResponseDTO } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
 import { HiChevronDown, HiChevronUp } from "react-icons/hi";
-import { Spinner } from "flowbite-react";
+import { Spinner, Badge } from "flowbite-react";
 import { BatchMovementModal } from "./BatchMovementModal";
 import { UNIT_CONFIG } from "../config/unitConfig";
 import { BatchEntryForm } from "./BatchEntryForm";
@@ -54,6 +54,11 @@ export const BaseBatchOverview: React.FC<{
             <span className="rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
               {batch.supplierName}
             </span>
+            {Number(batch.remainingQuantity) < 0 && (
+              <Badge color="failure" size="sm">
+                Disponibilidad negativa
+              </Badge>
+            )}
             {batch.cedisName && (
               <span className="rounded bg-emerald-900/40 px-2 py-0.5 text-xs text-emerald-300">
                 CEDIS: {batch.cedisName}
