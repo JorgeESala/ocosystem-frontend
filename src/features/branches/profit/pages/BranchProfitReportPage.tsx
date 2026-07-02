@@ -39,12 +39,8 @@ export default function BranchProfitReportPage() {
   });
 
   const summary = useMemo(
-    () =>
-      buildBranchProfitSummary(
-        report,
-        importedSales.isError ? undefined : importedSales.byBranch,
-      ),
-    [report, importedSales.byBranch, importedSales.isError],
+    () => buildBranchProfitSummary(report),
+    [report],
   );
 
   const manualChickenByBranch = useMemo(() => {

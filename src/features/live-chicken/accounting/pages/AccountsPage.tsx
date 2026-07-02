@@ -21,13 +21,39 @@ import DateRangeFilter, {
   type DateRange,
 } from "@/components/DateRangeFilter";
 import { formatDateToISO, getLastDays } from "@/utils/date.utils";
+import { WeeklyWeightDiffTable } from "../weight-diff/WeeklyWeightDiffTable";
+import { WeightDiffSummaryCards } from "../weight-diff/WeightDiffSummaryCards";
+import { WeightDiffToolbar } from "../weight-diff/WeightDiffToolbar";
+import { useWeeklyWeightDiff } from "../weight-diff/weight-diff.queries";
 
 const CEDIS_ID = 2;
+
+type ViewMode = "RECEIVABLE" | "PAYABLE" | "WEIGHT_DIFF";
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
+
+const startOfIsoWeek = (d: Date): Date => {
+  const day = d.getDay();
+  const diff = (day + 6) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - diff);
+};
+
+const endOfIsoWeek = (d: Date): Date => {
+  const day = d.getDay();
+  const diff = (day + 6) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + (6 - diff));
+};
+
+const snapToFullWeeks = (): DateRange => {
+  const end = endOfIsoWeek(new Date());
+  const rawStart = new Date();
+  rawStart.setDate(end.getDate() - 30);
+  const start = startOfIsoWeek(rawStart);
+  return { start, end };
+};
 
 export const AccountsPage = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -39,9 +65,11 @@ export const AccountsPage = () => {
 
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const [receivable, setReceivable] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("RECEIVABLE");
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<number[]>([]);
+  const [selectedWeightDiffSupplier, setSelectedWeightDiffSupplier] =
+    useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPaymentFirstOpen, setIsPaymentFirstOpen] = useState(false);
   const [isRecentOpen, setIsRecentOpen] = useState(false);
@@ -49,17 +77,25 @@ export const AccountsPage = () => {
   const defaultRange = useMemo(() => getLastDays(30), []);
   const [dateRange, setDateRange] = useState<DateRange>(defaultRange);
 
+  const defaultWeightDiffRange = useMemo(() => snapToFullWeeks(), []);
+  const [weightDiffDateRange, setWeightDiffDateRange] = useState<DateRange>(
+    defaultWeightDiffRange,
+  );
+
   const { data: clients = [] } = useClients();
   const { data: suppliers = [] } = useSuppliers();
 
   const internalClients = clients.filter((c) => c.isInternalBranch);
 
-  const handleToggleReceivable = (next: boolean) => {
-    if (next === receivable) return;
-    setReceivable(next);
-    if (next) {
+  const receivable = viewMode === "RECEIVABLE";
+  const isWeightDiff = viewMode === "WEIGHT_DIFF";
+
+  const handleSetViewMode = (next: ViewMode) => {
+    if (next === viewMode) return;
+    setViewMode(next);
+    if (next === "RECEIVABLE") {
       setSelectedSuppliers([]);
-    } else {
+    } else if (next === "PAYABLE") {
       setSelectedClients([]);
     }
   };
@@ -73,21 +109,27 @@ export const AccountsPage = () => {
     setHistoryOpen(true);
   };
 
+  const startIso = formatDateToISO(dateRange.start);
+  const endIso = formatDateToISO(dateRange.end);
+
+  const weightDiffStartIso = formatDateToISO(weightDiffDateRange.start);
+  const weightDiffEndIso = formatDateToISO(weightDiffDateRange.end);
+
   const queryParams = receivable
     ? {
         creditorId: CEDIS_ID,
         debtorIds: selectedClients.length > 0 ? selectedClients : undefined,
         debtorEntityType: "BRANCH" as const,
-        from: formatDateToISO(dateRange.start),
-        to: formatDateToISO(dateRange.end),
+        from: startIso,
+        to: endIso,
       }
     : {
         debtorId: CEDIS_ID,
         creditorOriginalIds:
           selectedSuppliers.length > 0 ? selectedSuppliers : undefined,
         creditorEntityType: "SUPPLIER" as const,
-        from: formatDateToISO(dateRange.start),
-        to: formatDateToISO(dateRange.end),
+        from: startIso,
+        to: endIso,
       };
 
   const {
@@ -115,9 +157,25 @@ export const AccountsPage = () => {
     isLoading: paymentFirstSecondaryLoading,
   } = useOpenAccounts(paymentFirstSecondaryParams);
 
+  const {
+    data: weightDiffRows = [],
+    isLoading: weightDiffLoading,
+    isError: weightDiffError,
+    error: weightDiffErrorDetail,
+    refetch: refetchWeightDiff,
+  } = useWeeklyWeightDiff(weightDiffStartIso, weightDiffEndIso);
+
+  const filteredWeightDiffRows = selectedWeightDiffSupplier == null
+    ? weightDiffRows
+    : weightDiffRows.filter((r) => r.supplierId === selectedWeightDiffSupplier);
+
   const dateRangeModified = !(
     isSameDay(dateRange.start, defaultRange.start) &&
     isSameDay(dateRange.end, defaultRange.end)
+  );
+  const weightDiffDateRangeModified = !(
+    isSameDay(weightDiffDateRange.start, defaultWeightDiffRange.start) &&
+    isSameDay(weightDiffDateRange.end, defaultWeightDiffRange.end)
   );
   const roleFilterActive = receivable
     ? selectedClients.length > 0
@@ -160,108 +218,174 @@ export const AccountsPage = () => {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
-          color={receivable ? "blue" : "gray"}
-          onClick={() => handleToggleReceivable(true)}
+          color={viewMode === "RECEIVABLE" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("RECEIVABLE")}
         >
           Por cobrar
         </Button>
 
         <Button
-          color={!receivable ? "blue" : "gray"}
-          onClick={() => handleToggleReceivable(false)}
+          color={viewMode === "PAYABLE" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("PAYABLE")}
         >
           Por pagar
         </Button>
+
+        <Button
+          color={viewMode === "WEIGHT_DIFF" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("WEIGHT_DIFF")}
+        >
+          Diferencia de peso
+        </Button>
       </div>
 
-      <AccountingSummaryCards
-        data={data}
-        filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
-      />
+      {!isWeightDiff && (
+        <>
+          <AccountingSummaryCards
+            data={data}
+            filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
+          />
 
-      <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
-        {receivable ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">
-              Clientes internos:
-            </span>
-            <div className="w-80">
-              <InternalClientMultiSelect
-                clients={internalClients}
-                selected={selectedClients}
-                onChange={setSelectedClients}
-              />
-            </div>
+          <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
+            {receivable ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-300">
+                  Clientes internos:
+                </span>
+                <div className="w-80">
+                  <InternalClientMultiSelect
+                    clients={internalClients}
+                    selected={selectedClients}
+                    onChange={setSelectedClients}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-300">
+                  Proveedores:
+                </span>
+                <div className="w-80">
+                  <SupplierMultiSelect
+                    suppliers={suppliers}
+                    selected={selectedSuppliers}
+                    onChange={setSelectedSuppliers}
+                  />
+                </div>
+              </div>
+            )}
+
+            <DateRangeFilter
+              value={dateRange}
+              defaultRange={defaultRange}
+              onChange={setDateRange}
+            />
+
+            {hasFilter && (
+              <button
+                onClick={() => {
+                  if (receivable) {
+                    setSelectedClients([]);
+                  } else {
+                    setSelectedSuppliers([]);
+                  }
+                  setDateRange(defaultRange);
+                }}
+                className="text-xs text-blue-400 hover:underline"
+              >
+                Limpiar filtros
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">
-              Proveedores:
-            </span>
-            <div className="w-80">
-              <SupplierMultiSelect
-                suppliers={suppliers}
-                selected={selectedSuppliers}
-                onChange={setSelectedSuppliers}
+
+          <div className="rounded-lg bg-gray-800 shadow">
+            {isLoading ? (
+              <p className="p-6 text-sm text-gray-500">Cargando...</p>
+            ) : accountsError ? (
+              <div className="p-6">
+                <AccountingErrorAlert
+                  error={accountsErrorDetail}
+                  onRetry={() => refetchAccounts()}
+                />
+              </div>
+            ) : data.length === 0 ? (
+              <p className="p-6 text-center text-sm text-gray-400">
+                {hasFilter
+                  ? "No hay cuentas para los filtros seleccionados."
+                  : "No hay cuentas abiertas."}
+              </p>
+            ) : (
+              <AccountsOpenTable
+                data={data}
+                onPay={handlePay}
+                onViewHistory={handleViewHistory}
               />
-            </div>
-          </div>
-        )}
-
-        <DateRangeFilter
-          value={dateRange}
-          defaultRange={defaultRange}
-          onChange={setDateRange}
-        />
-
-        {hasFilter && (
-          <button
-            onClick={() => {
-              if (receivable) {
-                setSelectedClients([]);
-              } else {
-                setSelectedSuppliers([]);
-              }
-              setDateRange(defaultRange);
-            }}
-            className="text-xs text-blue-400 hover:underline"
-          >
-            Limpiar filtros
-          </button>
-        )}
-      </div>
-
-      <div className="rounded-lg bg-gray-800 shadow">
-        {isLoading ? (
-          <p className="p-6 text-sm text-gray-500">Cargando...</p>
-        ) : accountsError ? (
-          <div className="p-6">
-            <AccountingErrorAlert
-              error={accountsErrorDetail}
-              onRetry={() => refetchAccounts()}
+            )}
+            <AccountsPayableHistoryDrawer
+              open={historyOpen}
+              onClose={() => setHistoryOpen(false)}
+              account={selectedAccountForHistory}
             />
           </div>
-        ) : data.length === 0 ? (
-          <p className="p-6 text-center text-sm text-gray-400">
-            {hasFilter
-              ? "No hay cuentas para los filtros seleccionados."
-              : "No hay cuentas abiertas."}
-          </p>
-        ) : (
-          <AccountsOpenTable
-            data={data}
-            onPay={handlePay}
-            onViewHistory={handleViewHistory}
-          />
-        )}
-        <AccountsPayableHistoryDrawer
-          open={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-          account={selectedAccountForHistory}
-        />
-      </div>
+        </>
+      )}
+
+      {isWeightDiff && (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-end">
+            <DateRangeFilter
+              value={weightDiffDateRange}
+              defaultRange={defaultWeightDiffRange}
+              onChange={setWeightDiffDateRange}
+            />
+            <WeightDiffToolbar
+              rows={weightDiffRows}
+              startDate={weightDiffStartIso}
+              endDate={weightDiffEndIso}
+              onSupplierChange={setSelectedWeightDiffSupplier}
+            />
+            {weightDiffDateRangeModified && (
+              <button
+                onClick={() => setWeightDiffDateRange(snapToFullWeeks())}
+                className="text-xs text-blue-400 hover:underline"
+              >
+                Restablecer (ultimas 5 semanas)
+              </button>
+            )}
+          </div>
+
+          {weightDiffLoading ? (
+            <p className="p-6 text-sm text-gray-500">Cargando...</p>
+          ) : weightDiffError ? (
+            <div className="rounded-lg bg-gray-800 p-4 shadow">
+              <div className="p-6">
+                <AccountingErrorAlert
+                  error={weightDiffErrorDetail}
+                  onRetry={() => refetchWeightDiff()}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <WeightDiffSummaryCards rows={filteredWeightDiffRows} />
+              <div className="rounded-lg bg-gray-800 p-4 shadow">
+                <p className="mb-3 text-xs text-gray-500 italic">
+                  Diferencia = peso declarado − peso real. El rango se ajusta
+                  a semanas completas (lunes a domingo). Haz clic en una
+                  fila para ver las remesas que la componen.
+                </p>
+                <WeeklyWeightDiffTable
+                  rows={filteredWeightDiffRows}
+                  selectedStart={weightDiffStartIso}
+                  selectedEnd={weightDiffEndIso}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <CreateAccountsPayableModal
         open={openCreateModal}
