@@ -75,6 +75,7 @@ export interface Route {
   id: number;
   name: string;
   description?: string;
+  active?: boolean;
 }
 export interface Client {
   id: number;
@@ -83,4 +84,6 @@ export interface Client {
   localityId?: number;
   localityName?: string;
   isInternalBranch: boolean;
+  businessName?: string;
+  active?: boolean;
 }

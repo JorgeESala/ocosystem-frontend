@@ -122,9 +122,11 @@ export const BatchMovementModal: React.FC<{
 
   // Filtrar clientes en tiempo real según lo que escriba el usuario
   const term = searchTerm.toLowerCase();
-  const matchingClients = clients.filter((c: any) =>
-    c.name.toLowerCase().includes(term),
-  );
+  const matchingClients = clients.filter((c: any) => {
+    const name = (c.name ?? "").toLowerCase();
+    const business = (c.businessName ?? "").toLowerCase();
+    return name.includes(term) || business.includes(term);
+  });
   const branchClients = matchingClients.filter((c: any) => c.isInternalBranch);
   const regularClients = matchingClients.filter(
     (c: any) => !c.isInternalBranch,
@@ -462,8 +464,10 @@ export const BatchMovementModal: React.FC<{
                                           {c.name}
                                         </div>
                                       </div>
-                                      {c.localityName && (
+                                      {(c.businessName || c.localityName) && (
                                         <div className="ml-[42px] text-[10px] text-gray-500">
+                                          {c.businessName}
+                                          {c.businessName && c.localityName && " · "}
                                           {c.localityName}
                                         </div>
                                       )}
@@ -488,8 +492,10 @@ export const BatchMovementModal: React.FC<{
                                       <div className="leading-tight">
                                         {c.name}
                                       </div>
-                                      {c.localityName && (
+                                      {(c.businessName || c.localityName) && (
                                         <div className="text-[10px] text-gray-500">
+                                          {c.businessName}
+                                          {c.businessName && c.localityName && " · "}
                                           {c.localityName}
                                         </div>
                                       )}
