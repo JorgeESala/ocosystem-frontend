@@ -483,7 +483,7 @@ export default function TripInlineRow({
                   <div className="mt-2 space-y-1">
                     {otherBatchSales.map((s) => {
                       const isEgg = unitType === "EGG";
-                      const totalPieces = Number(s.quantity ?? 0) * 30;
+                      const totalPieces = Number(s.quantity ?? 0);
                       const canNavigate =
                         s.batchId != null && slug != null && slug !== "";
                       return (
