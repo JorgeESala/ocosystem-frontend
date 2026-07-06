@@ -108,12 +108,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
   const handleSubmit = async () => {
     setError(null);
-    if (!form.name.trim()) {
-      setError("El nombre es obligatorio.");
+    if (!form.name.trim() && !form.businessName.trim()) {
+      setError(
+        "Ingresa al menos el nombre del cliente o el nombre del negocio.",
+      );
       return;
     }
     const payload = {
-      name: form.name.trim(),
+      name: form.name.trim() || null,
       localityId: form.localityId,
       isInternalBranch: false,
       businessName: form.businessName.trim() || null,
@@ -147,6 +149,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                 {error}
               </Alert>
             )}
+            <p className="text-xs text-gray-400">
+              Ingresa al menos uno: el nombre del cliente o el nombre del
+              negocio.
+            </p>
             <div>
               <Label htmlFor="client-name">Nombre del cliente</Label>
               <TextInput
@@ -156,7 +162,6 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   setForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="Ej. Juan Pérez"
-                required
                 disabled={isSaving}
               />
             </div>

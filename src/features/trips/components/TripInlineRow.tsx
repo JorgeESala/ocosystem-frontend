@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Spinner, TextInput, Tooltip } from "flowbite-react";
 import {
+  HiArrowRight,
   HiCheck,
   HiChevronDown,
   HiChevronUp,
@@ -17,6 +19,7 @@ import type { TripSaleDTO, TripsUnitType } from "../types/trip.types";
 import {
   useCreateTrip,
   useTripSales,
+  useTripSalesByDriverAndDate,
   useUpdateTrip,
 } from "../api/trips.queries";
 import { useBulkUpdateBatchSaleRoute } from "@/features/batch/api/batch.queries";
@@ -31,6 +34,8 @@ interface TripInlineRowProps {
   renderSaleColumns: (sale: any, isOtherBatch: boolean) => React.ReactNode;
   renderHeaderColumns: () => React.ReactNode;
   renderOtherBatchHeader?: () => React.ReactNode;
+  slug?: string;
+  tripId?: number | null;
 }
 
 const formatKg = (kg: number | null | undefined) =>
@@ -50,6 +55,8 @@ export default function TripInlineRow({
   renderSaleColumns,
   renderHeaderColumns,
   renderOtherBatchHeader,
+  slug,
+  tripId: externalTripId,
 }: TripInlineRowProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [kgDraft, setKgDraft] = useState<string>("");
@@ -57,12 +64,25 @@ export default function TripInlineRow({
   const [editError, setEditError] = useState<string | null>(null);
   const lastSavedValueRef = useRef<string>("");
 
+  useEffect(() => {
+    if (externalTripId != null && group.trip?.id === externalTripId && !expanded) {
+      setExpanded(true);
+    }
+  }, [externalTripId, group.trip?.id, expanded]);
+
   const tripId = group.trip?.id ?? null;
   const fetchSales = !isAdjustmentsGroup(group);
-  const { data: tripSales = [], isLoading: salesLoading } = useTripSales(
+  const { isLoading: salesLoading } = useTripSales(
     unitType,
     fetchSales ? tripId : null,
     { enabled: expanded && fetchSales && tripId != null },
+  );
+
+  const { data: allTripSales = [] } = useTripSalesByDriverAndDate(
+    unitType,
+    group.driverId,
+    group.date,
+    { enabled: expanded && fetchSales && group.driverId != null && group.date != null },
   );
 
   const updateMutation = useUpdateTrip(unitType);
@@ -128,15 +148,15 @@ export default function TripInlineRow({
 
   const otherBatchSales = useMemo<TripSaleDTO[]>(
     () =>
-      (tripSales as TripSaleDTO[]).filter((s) =>
+      (allTripSales as TripSaleDTO[]).filter((s) =>
         saleIsFromOtherBatch(s, currentBatchId),
       ),
-    [tripSales, currentBatchId],
+    [allTripSales, currentBatchId],
   );
 
   const handleSaveKg = () => {
-    if (group.driverId == null || group.routeId == null || !group.date) {
-      setEditError("No se puede crear un despacho sin chofer, ruta o fecha.");
+    if (group.driverId == null || !group.date) {
+      setEditError("No se puede crear un despacho sin chofer o fecha.");
       setSaveState("error");
       return;
     }
@@ -186,7 +206,7 @@ export default function TripInlineRow({
       createMutation.mutate(
         {
           driverId: group.driverId,
-          routeId: group.routeId,
+          routeId: group.routeId ?? null,
           departureDate: group.date,
           totalKgLoaded: value,
           batchSources: [{ batchId: currentBatchId, kgLoaded: kgForSource }],
@@ -461,30 +481,66 @@ export default function TripInlineRow({
                     </div>
                   )}
                   <div className="mt-2 space-y-1">
-                    {otherBatchSales.map((s) => (
-                      <div
-                        key={s.id}
-                        className="grid grid-cols-12 items-center gap-2 rounded border border-slate-800/70 bg-slate-900/30 px-2 py-1.5 text-xs text-slate-400"
-                      >
-                        <div className="col-span-3 truncate">
-                          {s.batchLabel ?? "Remesa"}
+                    {otherBatchSales.map((s) => {
+                      const isEgg = unitType === "EGG";
+                      const totalPieces = Number(s.quantity ?? 0) * 30;
+                      const canNavigate =
+                        s.batchId != null && slug != null && slug !== "";
+                      return (
+                        <div
+                          key={s.id}
+                          className="grid grid-cols-12 items-center gap-2 rounded border border-slate-800/70 bg-slate-900/30 px-2 py-1.5 text-xs text-slate-400"
+                        >
+                          <div className="col-span-3 truncate">
+                            {canNavigate ? (
+                              <Link
+                                to={`/business/${slug}/salesAndBatches?batch=${s.batchId}${s.tripId != null ? `&tripId=${s.tripId}` : ""}`}
+                                className="inline-flex max-w-full items-center gap-1 text-blue-400 hover:text-blue-300 hover:underline"
+                                title="Ir a la remesa"
+                              >
+                                <span className="truncate">
+                                  {s.batchLabel ??
+                                    `Remesa #${s.batchId}`}
+                                </span>
+                                <HiArrowRight className="h-3 w-3 flex-shrink-0" />
+                              </Link>
+                            ) : (
+                              <span className="truncate">
+                                {s.batchLabel ?? "Remesa"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="col-span-3 truncate">
+                            {s.clientName ?? "Venta directa"}
+                          </div>
+                          {isEgg ? (
+                            <>
+                              <div className="col-span-2 flex justify-center">
+                                <EggQuantityDisplay totalPieces={totalPieces} />
+                              </div>
+                              <div className="col-span-2" />
+                              <div className="col-span-2 text-right font-mono text-slate-300">
+                                {formatMXN(Number(s.saleTotal))}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="col-span-2 text-right font-mono">
+                                {formatKg(s.weight)}
+                              </div>
+                              <div className="col-span-2 text-right font-mono text-slate-500">
+                                {s.kgSent != null
+                                  ? `Env ${s.kgSent.toFixed(2)}`
+                                  : "-"}
+                              </div>
+                              <div className="col-span-2 text-right font-mono text-slate-300">
+                                {formatMXN(Number(s.saleTotal))}
+                              </div>
+                            </>
+                          )}
                         </div>
-                        <div className="col-span-3 truncate">
-                          {s.clientName ?? "Venta directa"}
-                        </div>
-                        <div className="col-span-2 text-right font-mono">
-                          {formatKg(s.weight)}
-                        </div>
-                        <div className="col-span-2 text-right font-mono text-slate-500">
-                          {s.kgSent != null
-                            ? `Env ${s.kgSent.toFixed(2)}`
-                            : "-"}
-                        </div>
-                        <div className="col-span-2 text-right font-mono text-slate-300">
-                          {formatMXN(Number(s.saleTotal))}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

@@ -6,17 +6,20 @@ import TripInlineRow from "@/features/trips/components/TripInlineRow";
 import { useTripsForBatch } from "@/features/trips/api/trips.queries";
 import { buildTripGroups } from "@/features/trips/utils/tripGrouping";
 import type { TripsUnitType } from "@/features/trips/types/trip.types";
+import { useParams } from "react-router-dom";
 
 export const EggMovementsTable: React.FC<{
   movements: any[];
   onEdit: (mov: any) => void;
   unitType: BusinessUnitType;
   batchId: number;
-}> = ({ movements, onEdit, unitType, batchId }) => {
+  tripId?: number | null;
+}> = ({ movements, onEdit, unitType, batchId, tripId }) => {
   const tripsUnitType: TripsUnitType =
     unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
   const { data: trips = [] } = useTripsForBatch(tripsUnitType, batchId);
   const groups = buildTripGroups(movements, trips);
+  const { slug } = useParams();
 
   if (movements.length === 0) {
     return (
@@ -113,13 +116,10 @@ export const EggMovementsTable: React.FC<{
       <div className="col-span-3 text-[10px] tracking-wider text-slate-500 uppercase">
         Cliente
       </div>
-      <div className="col-span-2 text-center text-[10px] tracking-wider text-slate-500 uppercase">
+      <div className="col-span-3 text-center text-[10px] tracking-wider text-slate-500 uppercase">
         Cantidad
       </div>
-      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
-        KG vend.
-      </div>
-      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+      <div className="col-span-3 text-right text-[10px] tracking-wider text-slate-500 uppercase">
         $ Total
       </div>
     </>
@@ -150,6 +150,8 @@ export const EggMovementsTable: React.FC<{
           renderSaleColumns={renderSaleColumns}
           renderHeaderColumns={renderHeaderColumns}
           renderOtherBatchHeader={renderOtherBatchHeader}
+          slug={slug}
+          tripId={tripId}
         />
       ))}
 

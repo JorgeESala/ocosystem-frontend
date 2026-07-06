@@ -16,7 +16,7 @@ export interface BatchSourceDTO {
 export interface TripCreateRequestDTO {
   driverId: number;
   vehicleId?: number | null;
-  routeId: number;
+  routeId?: number | null;
   departureDate: string;
   totalKgLoaded?: number | null;
   notes?: string | null;
@@ -67,6 +67,7 @@ export interface TripSummaryDTO {
 
 export interface TripSaleDTO {
   id: number;
+  tripId: number | null;
   batchId: number | null;
   batchLabel: string | null;
   clientId?: number | null;
@@ -76,6 +77,7 @@ export interface TripSaleDTO {
   saleDate: string;
   weight?: number | null;
   kgSent?: number | null;
+  quantity?: number | null;
   saleTotal: number;
   officeReceived?: boolean | null;
 }

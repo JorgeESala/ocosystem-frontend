@@ -2,7 +2,7 @@ import type { Client } from "@/core/api/types";
 import { http } from "@/shared/api/http";
 
 export interface ClientCreateRequestDTO {
-  name: string;
+  name?: string | null;
   accountingEntityId?: number | null;
   localityId?: number | null;
   isInternalBranch?: boolean;

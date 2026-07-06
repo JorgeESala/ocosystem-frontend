@@ -12,7 +12,8 @@ export const BaseBatchOverview: React.FC<{
   statsComponent: React.ReactNode;
   footerComponent: React.ReactNode;
   autoExpandId?: number | null;
-}> = ({ batch, statsComponent, footerComponent, autoExpandId }) => {
+  tripId?: number | null;
+}> = ({ batch, statsComponent, footerComponent, autoExpandId, tripId }) => {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [isEditBatchOpen, setIsEditBatchOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -119,6 +120,7 @@ export const BaseBatchOverview: React.FC<{
                 onEdit={onEditMovement}
                 unitType={batch.type}
                 batchId={batch.id}
+                tripId={tripId}
               />
 
               {/* FOOTER DE TOTALES (Inyectado - Imagen 144043.png) */}

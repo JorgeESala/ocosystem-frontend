@@ -70,7 +70,7 @@ export const useCreateBatch = () => {
   return useMutation({
     mutationFn: api.createBatch, // Asegúrate de que api.createBatch esté definido en batch.api.ts
     onSuccess: () => {
-      // Refrescamos la lista de lotes de todas las unidades de negocio
+      // Refrescamos la lista de las remesas de todas las unidades de negocio
       queryClient.invalidateQueries({ queryKey: batchKeys.lists() });
       // Opcional: podrías invalidar solo la unidad actual si la tienes a mano
     },
@@ -125,14 +125,13 @@ export const useUpdateBatchSale = () => {
     },
 
     onError: (error: unknown) => {
-      const message =
-        axios.isAxiosError(error)
-          ? (error.response?.data as any)?.message ??
-            error.response?.statusText ??
-            error.message
-          : error instanceof Error
-            ? error.message
-            : "No se pudo guardar la venta";
+      const message = axios.isAxiosError(error)
+        ? ((error.response?.data as any)?.message ??
+          error.response?.statusText ??
+          error.message)
+        : error instanceof Error
+          ? error.message
+          : "No se pudo guardar la venta";
       throw new Error(message);
     },
   });
@@ -142,8 +141,13 @@ export const useBulkUpdateBatchSaleRoute = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ saleIds, routeId }: { saleIds: number[]; routeId: number }) =>
-      api.bulkUpdateBatchSaleRoute(saleIds, routeId),
+    mutationFn: ({
+      saleIds,
+      routeId,
+    }: {
+      saleIds: number[];
+      routeId: number;
+    }) => api.bulkUpdateBatchSaleRoute(saleIds, routeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: batchKeys.all });
       queryClient.invalidateQueries({ queryKey: ["trips"] });
@@ -156,7 +160,10 @@ export const useWeeklySalesReport = (
   endDate: string | null,
 ) => {
   return useQuery({
-    queryKey: batchKeys.weeklySales(startDate ?? undefined, endDate ?? undefined),
+    queryKey: batchKeys.weeklySales(
+      startDate ?? undefined,
+      endDate ?? undefined,
+    ),
     queryFn: () => api.getWeeklySalesReport(startDate!, endDate!),
     enabled: !!startDate && !!endDate,
   });

@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Spinner, Alert, Button, Datepicker, ToggleSwitch } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import type { Batch, BatchPageProps } from "../types.batch";
@@ -24,6 +25,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("availability");
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
   const [showOnlyWithAvailability, setShowOnlyWithAvailability] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (expandedBatchId === null) return;
@@ -55,6 +57,24 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
       document.getElementById(`batch-${batchId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
   }, []);
+
+  useEffect(() => {
+    const raw = searchParams.get("batch");
+    const targetId = raw != null ? Number(raw) : NaN;
+    if (!Number.isFinite(targetId) || targetId <= 0) return;
+    if (isLoading) return;
+    const exists = batches.some((b: Batch) => b.id === targetId);
+    if (!exists) return;
+    handleBatchClick(targetId);
+    const next = new URLSearchParams(searchParams);
+    next.delete("batch");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, batches, isLoading, handleBatchClick, setSearchParams]);
+
+  const tripIdFromUrl = useMemo(() => {
+    const raw = searchParams.get("tripId");
+    return raw != null ? Number(raw) : null;
+  }, [searchParams]);
 
   const handleClearFilter = useCallback(() => {
     setStartDate(THIRTY_DAYS_AGO);
@@ -193,6 +213,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
               key={batch.id}
               batch={batch}
               autoExpandId={expandedBatchId}
+              tripId={tripIdFromUrl}
             />
           ))
         )}

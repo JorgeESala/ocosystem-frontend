@@ -29,6 +29,17 @@ export const tripApi = {
     return data;
   },
 
+  getSalesByDriverAndDate: async (
+    driverId: number,
+    date: string,
+  ): Promise<TripSaleDTO[]> => {
+    const { data } = await http.get<TripSaleDTO[]>(
+      `${BASE_URL}/sales-by-driver-date`,
+      { params: { driverId, date } },
+    );
+    return data;
+  },
+
   update: async (
     id: number,
     payload: TripUpdateRequestDTO,

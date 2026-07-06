@@ -179,7 +179,7 @@ export const BatchMovementModal: React.FC<{
       if (isEditing) {
         updateAdjustment(
           {
-            batchId: batch.id, // ID del lote (padre)
+            batchId: batch.id, // ID de la remesa (padre)
             id: initialData.id, // ID del ajuste (hijo)
             data: adjustmentPayload,
           },
@@ -264,10 +264,7 @@ export const BatchMovementModal: React.FC<{
         </span>
       </ModalHeader>
       <ModalBody className="bg-gray-800">
-        <form
-          onSubmit={onSubmit}
-          className="grid grid-cols-2 gap-4"
-        >
+        <form onSubmit={onSubmit} className="grid grid-cols-2 gap-4">
           {/* 1. Tipo de Movimiento (Radios con estilo) */}
           <div className="col-span-2 flex justify-center gap-6 rounded-lg bg-gray-700/30 p-4">
             <div className="flex items-center gap-2">
@@ -467,7 +464,9 @@ export const BatchMovementModal: React.FC<{
                                       {(c.businessName || c.localityName) && (
                                         <div className="ml-[42px] text-[10px] text-gray-500">
                                           {c.businessName}
-                                          {c.businessName && c.localityName && " · "}
+                                          {c.businessName &&
+                                            c.localityName &&
+                                            " · "}
                                           {c.localityName}
                                         </div>
                                       )}
@@ -495,7 +494,9 @@ export const BatchMovementModal: React.FC<{
                                       {(c.businessName || c.localityName) && (
                                         <div className="text-[10px] text-gray-500">
                                           {c.businessName}
-                                          {c.businessName && c.localityName && " · "}
+                                          {c.businessName &&
+                                            c.localityName &&
+                                            " · "}
                                           {c.localityName}
                                         </div>
                                       )}

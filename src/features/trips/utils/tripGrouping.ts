@@ -41,11 +41,8 @@ const safeNumber = (v: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const groupKey = (
-  driverId: number | null,
-  routeId: number | null,
-  date: string,
-) => `${driverId ?? "_"}|${routeId ?? "_"}|${date}`;
+const groupKey = (driverId: number | null, date: string) =>
+  `${driverId ?? "_"}|${date}`;
 
 const dateOnly = (input: string) => {
   if (!input) return "";
@@ -63,7 +60,7 @@ export function buildTripGroups(
   const tripIndexByKey = new Map<string, TripSummaryDTO>();
   for (const t of trips) {
     tripIndexByKey.set(
-      groupKey(t.driverId, t.routeId, dateOnly(t.departureDate)),
+      groupKey(t.driverId, dateOnly(t.departureDate)),
       t,
     );
   }
@@ -71,7 +68,7 @@ export function buildTripGroups(
   const groupMap = new Map<string, TripGroup>();
   for (const m of sales) {
     const d = dateOnly(m.date);
-    const key = groupKey(m.employeeId ?? null, m.routeId ?? null, d);
+    const key = groupKey(m.employeeId ?? null, d);
     let group = groupMap.get(key);
     if (!group) {
       const trip = tripIndexByKey.get(key) ?? null;
@@ -105,14 +102,14 @@ export function buildTripGroups(
   const orphanSales: InlineMovement[] = [];
   for (const m of sales) {
     const d = dateOnly(m.date);
-    const key = groupKey(m.employeeId ?? null, m.routeId ?? null, d);
+    const key = groupKey(m.employeeId ?? null, d);
     if (!groupMap.has(key)) {
       orphanSales.push(m);
     }
   }
 
   for (const t of trips) {
-    const key = groupKey(t.driverId, t.routeId, dateOnly(t.departureDate));
+    const key = groupKey(t.driverId, dateOnly(t.departureDate));
     if (!groupMap.has(key)) {
       groupMap.set(key, {
         key,

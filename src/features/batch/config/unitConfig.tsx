@@ -21,7 +21,7 @@ import { EggMovementsTable } from "../components/egg/EggMovementsTable";
 interface UnitConfigValue {
   label: string;
   description: string;
-  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null }>;
+  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null; tripId?: number | null }>;
   renderMovementQuantity: (movement: any) => React.ReactNode;
   // 🔥 Agregamos setValue aquí:
   movementFormFields: React.FC<{
@@ -38,6 +38,7 @@ interface UnitConfigValue {
     onEdit: (mov: any) => void;
     unitType: BusinessUnitType;
     batchId: number;
+    tripId?: number | null;
   }>;
 }
 export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {

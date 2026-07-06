@@ -5,17 +5,20 @@ import TripInlineRow from "@/features/trips/components/TripInlineRow";
 import { useTripsForBatch } from "@/features/trips/api/trips.queries";
 import { buildTripGroups } from "@/features/trips/utils/tripGrouping";
 import type { TripsUnitType } from "@/features/trips/types/trip.types";
+import { useParams } from "react-router-dom";
 
 export const ChickenMovementsTable: React.FC<{
   movements: any[];
   onEdit: (mov: any) => void;
   unitType: BusinessUnitType;
   batchId: number;
-}> = ({ movements, onEdit, unitType, batchId }) => {
+  tripId?: number | null;
+}> = ({ movements, onEdit, unitType, batchId, tripId }) => {
   const tripsUnitType: TripsUnitType =
     unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
   const { data: trips = [] } = useTripsForBatch(tripsUnitType, batchId);
   const groups = buildTripGroups(movements, trips);
+  const { slug } = useParams();
 
   if (movements.length === 0) {
     return (
@@ -139,6 +142,26 @@ export const ChickenMovementsTable: React.FC<{
     </>
   );
 
+  const renderOtherBatchHeader = () => (
+    <>
+      <div className="col-span-3 px-2 text-[10px] tracking-wider text-slate-500 uppercase">
+        Remesa
+      </div>
+      <div className="col-span-3 text-[10px] tracking-wider text-slate-500 uppercase">
+        Cliente
+      </div>
+      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        KG vend.
+      </div>
+      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        Env
+      </div>
+      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        $ Total
+      </div>
+    </>
+  );
+
   const singleSaleSales: { mov: any; key: string }[] = [];
   const tripGroups = groups.filter((g) => !g.isSingleSale);
   for (const group of groups) {
@@ -163,6 +186,9 @@ export const ChickenMovementsTable: React.FC<{
           onEditMovement={onEdit}
           renderSaleColumns={renderSaleColumns}
           renderHeaderColumns={renderHeaderColumns}
+          renderOtherBatchHeader={renderOtherBatchHeader}
+          slug={slug}
+          tripId={tripId}
         />
       ))}
 

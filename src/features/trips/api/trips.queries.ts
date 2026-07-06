@@ -30,6 +30,21 @@ export const useTripSales = (
     enabled: (options?.enabled ?? true) && Boolean(tripId),
   });
 
+export const useTripSalesByDriverAndDate = (
+  unitType: TripsUnitType,
+  driverId: number | null,
+  date: string | null,
+  options?: { enabled?: boolean },
+) =>
+  useQuery<TripSaleDTO[]>({
+    queryKey:
+      driverId != null && date
+        ? tripKeys(unitType).salesByDriverDate(driverId, date)
+        : [],
+    queryFn: () => tripApi.getSalesByDriverAndDate(driverId!, date!),
+    enabled: (options?.enabled ?? true) && driverId != null && date != null,
+  });
+
 export const useCreateTrip = (unitType: TripsUnitType) => {
   const queryClient = useQueryClient();
   const keys = tripKeys(unitType);
