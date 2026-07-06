@@ -168,7 +168,7 @@ export function buildTripGroups(
     if (
       !group.key.startsWith("__") &&
       group.movements.length === 1 &&
-      group.trip == null
+      (group.trip == null || group.trip.salesCount === 1)
     ) {
       group.isSingleSale = true;
     }
