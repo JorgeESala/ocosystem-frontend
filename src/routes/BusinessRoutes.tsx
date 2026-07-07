@@ -20,6 +20,7 @@ import HelpPage from "@/features/branches/checklist/pages/HelpPage";
 import FormulaConfigPage from "@/features/branches/checklist/pages/FormulaConfigPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
+import RouteGuard from "./RouteGuard";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -56,9 +57,9 @@ export default function BusinessRoutes() {
         <Route path="expenses" element={<BranchExpensesPage />} />
         <Route path="checklist" element={<ChecklistPage />} />
         <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
-        <Route path="checklist/weights" element={<MetricWeightsPage />} />
         <Route path="checklist/help" element={<HelpPage />} />
-        <Route path="checklist/formulas" element={<FormulaConfigPage />} />
+        <Route path="checklist/weights" element={<RouteGuard><MetricWeightsPage /></RouteGuard>} />
+        <Route path="checklist/formulas" element={<RouteGuard><FormulaConfigPage /></RouteGuard>} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

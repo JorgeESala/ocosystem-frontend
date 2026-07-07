@@ -8,7 +8,13 @@ import type { ChecklistSummary } from "../types/checklist.types";
 import { formatFullDate } from "@/utils/date.utils";
 import { toIsoDateString } from "../utils/week";
 
-export type DateRangePreset = "current-week" | "last-week" | "last-7" | "last-30" | "current-month" | "custom";
+export type DateRangePreset =
+  | "current-week"
+  | "last-week"
+  | "last-7"
+  | "last-30"
+  | "current-month"
+  | "custom";
 
 interface ChecklistHeaderProps {
   branches: Branch[];
@@ -59,7 +65,8 @@ export default function ChecklistHeader({
             Periodo
           </p>
           <h2 className="mt-1 text-lg font-semibold text-white">
-            {formatFullDate(toIsoDateString(pendingFrom))} – {formatFullDate(toIsoDateString(pendingTo))}
+            {formatFullDate(toIsoDateString(pendingFrom))} –{" "}
+            {formatFullDate(toIsoDateString(pendingTo))}
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +98,9 @@ export default function ChecklistHeader({
           <Datepicker
             language="es-MX"
             value={pendingFrom}
-            onChange={(d) => d && onPendingChange(d, pendingTo < d ? d : pendingTo)}
+            onChange={(d) =>
+              d && onPendingChange(d, pendingTo < d ? d : pendingTo)
+            }
             maxDate={pendingTo > maxDate ? pendingTo : maxDate}
           />
         </div>
@@ -100,7 +109,9 @@ export default function ChecklistHeader({
           <Datepicker
             language="es-MX"
             value={pendingTo}
-            onChange={(d) => d && onPendingChange(pendingFrom > d ? d : pendingFrom, d)}
+            onChange={(d) =>
+              d && onPendingChange(pendingFrom > d ? d : pendingFrom, d)
+            }
             maxDate={maxDate}
           />
         </div>
@@ -109,7 +120,7 @@ export default function ChecklistHeader({
             color="blue"
             onClick={onApply}
             disabled={isApplying || !unsavedChanges}
-            className="w-full lg:w-auto relative"
+            className="relative w-full lg:w-auto"
           >
             <HiOutlineRefresh
               className={`mr-2 h-4 w-4 ${isApplying ? "animate-spin" : ""}`}
@@ -117,7 +128,7 @@ export default function ChecklistHeader({
             />
             Actualizar
             {unsavedChanges && (
-              <Badge color="warning" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-[10px]">
+              <Badge color="warning" className="absolute -top-2 -right-2">
                 !
               </Badge>
             )}
@@ -133,7 +144,10 @@ export default function ChecklistHeader({
 
       {summary && (
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-800 pt-4 text-xs text-slate-400">
-          <span>{summary.evaluableBranches ?? 0} de {summary.totalBranches} sucursales con datos</span>
+          <span>
+            {summary.evaluableBranches ?? 0} de {summary.totalBranches}{" "}
+            sucursales con datos
+          </span>
           {summary.combinedScore != null && (
             <span className="rounded-full bg-slate-800/80 px-2 py-0.5 text-slate-300 ring-1 ring-slate-700/50">
               Puntaje general: {summary.combinedScore.toFixed(1)}%

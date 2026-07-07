@@ -4,4 +4,5 @@ export interface AuthUser {
   id: number;
   name: string;
   allowedBusinesses: BusinessType[];
+  role: string;
 }

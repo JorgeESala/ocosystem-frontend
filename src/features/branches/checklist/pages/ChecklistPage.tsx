@@ -15,6 +15,7 @@ import {
   getLast7Days,
   getLastWeek,
 } from "../utils/week";
+import { useAuthRole } from "@/hooks/useAuthRole";
 
 const RANGE_PRESETS: Record<Exclude<DateRangePreset, "custom">, () => { from: Date; to: Date }> = {
   "current-week": getCurrentWeek,
@@ -26,6 +27,7 @@ const RANGE_PRESETS: Record<Exclude<DateRangePreset, "custom">, () => { from: Da
 
 export default function ChecklistPage() {
   const { slug } = useParams();
+  const { isAdmin } = useAuthRole();
   const initial = useMemo(() => getCurrentWeek(), []);
   
   // Applied state - what the query uses
@@ -111,12 +113,22 @@ export default function ChecklistPage() {
               Ayuda
             </Button>
           </Link>
-          <Link to={`/business/${slug}/checklist/formulas`}>
-            <Button color="light" size="sm">
-              <HiCog aria-hidden className="mr-2 h-4 w-4" />
-              Configurar fórmulas
-            </Button>
-          </Link>
+          {isAdmin && (
+            <>
+              <Link to={`/business/${slug}/checklist/weights`}>
+                <Button color="light" size="sm">
+                  <HiCog aria-hidden className="mr-2 h-4 w-4" />
+                  Importancias
+                </Button>
+              </Link>
+              <Link to={`/business/${slug}/checklist/formulas`}>
+                <Button color="light" size="sm">
+                  <HiCog aria-hidden className="mr-2 h-4 w-4" />
+                  Configurar fórmulas
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
