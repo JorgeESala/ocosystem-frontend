@@ -25,6 +25,7 @@ interface UseBranchPerformanceParams {
   from: string;
   to: string;
   branchIds?: number[];
+  includeDays?: boolean;
   enabled?: boolean;
 }
 
@@ -32,12 +33,13 @@ export const useBranchPerformance = ({
   from,
   to,
   branchIds,
+  includeDays = false,
   enabled = true,
 }: UseBranchPerformanceParams) =>
   useQuery({
-    queryKey: checklistKeys.performance(from, to, branchIds ?? []),
+    queryKey: checklistKeys.performance(from, to, branchIds ?? [], includeDays),
     queryFn: () => {
-      const params: PerformanceQueryParams = { from, to, branchIds };
+      const params: PerformanceQueryParams = { from, to, branchIds, includeDays };
       return checklistApi.getPerformance(params);
     },
     enabled,

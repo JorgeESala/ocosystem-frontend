@@ -1,5 +1,9 @@
 import { HiQuestionMarkCircle } from "react-icons/hi";
-import { HiClipboardList, HiTrendingUp, HiExclamationCircle } from "react-icons/hi";
+import {
+  HiClipboardList,
+  HiTrendingUp,
+  HiExclamationCircle,
+} from "react-icons/hi";
 import type { IconType } from "react-icons";
 import type { MetricAccent } from "../types/checklist.types";
 
@@ -38,11 +42,12 @@ export const metricRegistry: Record<string, RegistryEntry> = {
   },
 };
 
-export const getMetricMeta = (id: string): RegistryEntry => metricRegistry[id] ?? fallback;
+export const getMetricMeta = (id: string): RegistryEntry =>
+  metricRegistry[id] ?? fallback;
 
 export const TASK_LABELS: Record<string, string> = {
   UPLOAD_SALES_REPORT: "Subir reporte de ventas",
   REGISTER_EXPENSES: "Registrar gastos",
-  REGISTER_SALES_AND_ENTRIES: "Registrar ventas y entradas",
+  REGISTER_SALES_AND_ENTRIES: "Registrar entradas y ventas",
   REVIEW_ACCOUNTS_PAYABLE: "Revisar cuentas por pagar",
 };

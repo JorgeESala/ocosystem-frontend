@@ -16,6 +16,8 @@ import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfi
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
 import MetricWeightsPage from "@/features/branches/checklist/pages/MetricWeightsPage";
+import HelpPage from "@/features/branches/checklist/pages/HelpPage";
+import FormulaConfigPage from "@/features/branches/checklist/pages/FormulaConfigPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
 export default function BusinessRoutes() {
@@ -55,6 +57,8 @@ export default function BusinessRoutes() {
         <Route path="checklist" element={<ChecklistPage />} />
         <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
         <Route path="checklist/weights" element={<MetricWeightsPage />} />
+        <Route path="checklist/help" element={<HelpPage />} />
+        <Route path="checklist/formulas" element={<FormulaConfigPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

@@ -1,4 +1,4 @@
-import { Button, Label } from "flowbite-react";
+import { Button, Label, Badge } from "flowbite-react";
 import { Datepicker } from "flowbite-react";
 import { HiOutlineRefresh, HiCalendar } from "react-icons/hi";
 import { Link, useParams } from "react-router-dom";
@@ -14,13 +14,14 @@ interface ChecklistHeaderProps {
   branches: Branch[];
   selectedBranchIds: number[];
   onSelectedBranchIdsChange: (ids: number[]) => void;
-  from: Date;
-  to: Date;
-  onRangeChange: (from: Date, to: Date) => void;
+  pendingFrom: Date;
+  pendingTo: Date;
+  onPendingChange: (from: Date, to: Date) => void;
   preset: DateRangePreset;
   onPresetChange: (preset: DateRangePreset) => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
+  onApply: () => void;
+  isApplying: boolean;
+  unsavedChanges: boolean;
   summary: ChecklistSummary | null;
 }
 
@@ -28,13 +29,14 @@ export default function ChecklistHeader({
   branches,
   selectedBranchIds,
   onSelectedBranchIdsChange,
-  from,
-  to,
-  onRangeChange,
+  pendingFrom,
+  pendingTo,
+  onPendingChange,
   preset,
   onPresetChange,
-  onRefresh,
-  isRefreshing,
+  onApply,
+  isApplying,
+  unsavedChanges,
   summary,
 }: ChecklistHeaderProps) {
   const { slug } = useParams();
@@ -57,7 +59,7 @@ export default function ChecklistHeader({
             Periodo
           </p>
           <h2 className="mt-1 text-lg font-semibold text-white">
-            {formatFullDate(toIsoDateString(from))} – {formatFullDate(toIsoDateString(to))}
+            {formatFullDate(toIsoDateString(pendingFrom))} – {formatFullDate(toIsoDateString(pendingTo))}
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -88,32 +90,37 @@ export default function ChecklistHeader({
           <Label>Desde</Label>
           <Datepicker
             language="es-MX"
-            value={from}
-            onChange={(d) => d && onRangeChange(d, to < d ? d : to)}
-            maxDate={to > maxDate ? to : maxDate}
+            value={pendingFrom}
+            onChange={(d) => d && onPendingChange(d, pendingTo < d ? d : pendingTo)}
+            maxDate={pendingTo > maxDate ? pendingTo : maxDate}
           />
         </div>
         <div>
           <Label>Hasta</Label>
           <Datepicker
             language="es-MX"
-            value={to}
-            onChange={(d) => d && onRangeChange(from > d ? d : from, d)}
+            value={pendingTo}
+            onChange={(d) => d && onPendingChange(pendingFrom > d ? d : pendingFrom, d)}
             maxDate={maxDate}
           />
         </div>
         <div className="flex items-end gap-2">
           <Button
-            color="gray"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="w-full lg:w-auto"
+            color="blue"
+            onClick={onApply}
+            disabled={isApplying || !unsavedChanges}
+            className="w-full lg:w-auto relative"
           >
             <HiOutlineRefresh
-              className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              className={`mr-2 h-4 w-4 ${isApplying ? "animate-spin" : ""}`}
               aria-hidden
             />
             Actualizar
+            {unsavedChanges && (
+              <Badge color="warning" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-[10px]">
+                !
+              </Badge>
+            )}
           </Button>
           <Link to={`/business/${slug}/checklist/calendar`}>
             <Button color="light" className="w-full lg:w-auto">

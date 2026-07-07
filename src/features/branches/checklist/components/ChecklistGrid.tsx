@@ -3,9 +3,11 @@ import BranchPerformanceRow from "./BranchPerformanceRow";
 
 interface ChecklistGridProps {
   branches: BranchChecklist[];
+  expandedBranchId: number | null;
+  onToggleRow: (branchId: number) => void;
 }
 
-export default function ChecklistGrid({ branches }: ChecklistGridProps) {
+export default function ChecklistGrid({ branches, expandedBranchId, onToggleRow }: ChecklistGridProps) {
   if (branches.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-10 text-center text-sm text-slate-400">
@@ -33,7 +35,12 @@ export default function ChecklistGrid({ branches }: ChecklistGridProps) {
           </thead>
           <tbody>
             {branches.map((branch) => (
-              <BranchPerformanceRow key={branch.branchId} branch={branch} />
+              <BranchPerformanceRow 
+                key={branch.branchId} 
+                branch={branch} 
+                expanded={expandedBranchId === branch.branchId}
+                onToggle={() => onToggleRow(branch.branchId)}
+              />
             ))}
           </tbody>
         </table>
@@ -45,7 +52,11 @@ export default function ChecklistGrid({ branches }: ChecklistGridProps) {
             key={branch.branchId}
             className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4"
           >
-            <BranchPerformanceRow branch={branch} />
+            <BranchPerformanceRow 
+              branch={branch} 
+              expanded={expandedBranchId === branch.branchId}
+              onToggle={() => onToggleRow(branch.branchId)}
+            />
           </div>
         ))}
       </div>

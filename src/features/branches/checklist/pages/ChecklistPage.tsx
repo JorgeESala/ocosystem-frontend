@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Spinner } from "flowbite-react";
+import { Alert, Spinner, Button } from "flowbite-react";
+import { Link, useParams } from "react-router-dom";
+import { HiQuestionMarkCircle, HiCog } from "react-icons/hi";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import { useBranchPerformance } from "../api/checklist.queries";
 import ChecklistGrid from "../components/ChecklistGrid";
@@ -23,11 +25,21 @@ const RANGE_PRESETS: Record<Exclude<DateRangePreset, "custom">, () => { from: Da
 };
 
 export default function ChecklistPage() {
+  const { slug } = useParams();
   const initial = useMemo(() => getCurrentWeek(), []);
-  const [from, setFrom] = useState<Date>(initial.from);
-  const [to, setTo] = useState<Date>(initial.to);
+  
+  // Applied state - what the query uses
+  const [appliedFrom, setAppliedFrom] = useState<Date>(initial.from);
+  const [appliedTo, setAppliedTo] = useState<Date>(initial.to);
+  
+  // Pending state - what the user is editing
+  const [pendingFrom, setPendingFrom] = useState<Date>(initial.from);
+  const [pendingTo, setPendingTo] = useState<Date>(initial.to);
+  
   const [preset, setPreset] = useState<DateRangePreset>("current-week");
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+  const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
+  const [daysIncluded, setDaysIncluded] = useState(false);
 
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
 
@@ -36,10 +48,18 @@ export default function ChecklistPage() {
     [selectedBranchIds],
   );
 
+  // Compute unsaved days for the badge
+  const unsavedDays = useMemo(() => {
+    const appliedDays = Math.floor((appliedTo.getTime() - appliedFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const pendingDays = Math.floor((pendingTo.getTime() - pendingFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return appliedDays !== pendingDays || appliedFrom.getTime() !== pendingFrom.getTime() || appliedTo.getTime() !== pendingTo.getTime();
+  }, [appliedFrom, appliedTo, pendingFrom, pendingTo]);
+
   const query = useBranchPerformance({
-    from: toIsoDateString(from),
-    to: toIsoDateString(to),
+    from: toIsoDateString(appliedFrom),
+    to: toIsoDateString(appliedTo),
     branchIds: branchIds.length > 0 ? branchIds : undefined,
+    includeDays: daysIncluded,
   });
 
   useEffect(() => {
@@ -48,14 +68,27 @@ export default function ChecklistPage() {
     }
     const fn = RANGE_PRESETS[preset];
     const next = fn();
-    setFrom(next.from);
-    setTo(next.to);
+    setPendingFrom(next.from);
+    setPendingTo(next.to);
   }, [preset]);
 
-  const handleRangeChange = (nextFrom: Date, nextTo: Date) => {
+  const handlePendingChange = (nextFrom: Date, nextTo: Date) => {
     setPreset("custom");
-    setFrom(nextFrom);
-    setTo(nextTo);
+    setPendingFrom(nextFrom);
+    setPendingTo(nextTo);
+  };
+
+  const handleApply = () => {
+    setAppliedFrom(pendingFrom);
+    setAppliedTo(pendingTo);
+  };
+
+  const handleToggleRow = (branchId: number) => {
+    const next = expandedBranchId === branchId ? null : branchId;
+    setExpandedBranchId(next);
+    if (next != null && !daysIncluded) {
+      setDaysIncluded(true);
+    }
   };
 
   const isLoading = query.isLoading || loadingBranches;
@@ -71,19 +104,34 @@ export default function ChecklistPage() {
             Resultado por sucursal y por todas las sucursales a partir de las tareas y ventas registradas.
           </p>
         </div>
+        <div className="flex gap-2">
+          <Link to={`/business/${slug}/checklist/help`}>
+            <Button color="light" size="sm">
+              <HiQuestionMarkCircle aria-hidden className="mr-2 h-4 w-4" />
+              Ayuda
+            </Button>
+          </Link>
+          <Link to={`/business/${slug}/checklist/formulas`}>
+            <Button color="light" size="sm">
+              <HiCog aria-hidden className="mr-2 h-4 w-4" />
+              Configurar fórmulas
+            </Button>
+          </Link>
+        </div>
       </header>
 
       <ChecklistHeader
         branches={branches}
         selectedBranchIds={selectedBranchIds}
         onSelectedBranchIdsChange={setSelectedBranchIds}
-        from={from}
-        to={to}
-        onRangeChange={handleRangeChange}
+        pendingFrom={pendingFrom}
+        pendingTo={pendingTo}
+        onPendingChange={handlePendingChange}
         preset={preset}
         onPresetChange={setPreset}
-        onRefresh={() => query.refetch()}
-        isRefreshing={query.isFetching}
+        onApply={handleApply}
+        isApplying={query.isFetching}
+        unsavedChanges={unsavedDays}
         summary={query.data?.summary ?? null}
       />
 
@@ -127,7 +175,11 @@ export default function ChecklistPage() {
           fechas esperadas para empezar a medir el resultado.
         </Alert>
       ) : (
-        <ChecklistGrid branches={query.data?.branches ?? []} />
+        <ChecklistGrid 
+          branches={query.data?.branches ?? []} 
+          expandedBranchId={expandedBranchId}
+          onToggleRow={handleToggleRow}
+        />
       )}
     </div>
   );

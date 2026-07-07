@@ -55,6 +55,12 @@ export interface MetricSummary {
   missingTaskLabels?: string[];
 }
 
+export interface DailyChecklist {
+  date: string;
+  personInCharge?: PersonInCharge | null;
+  tasks: ChecklistTaskEntry[];
+}
+
 export interface BranchChecklist {
   branchId: number;
   branchName: string;
@@ -62,6 +68,7 @@ export interface BranchChecklist {
   metricResults?: MetricResult[];
   combinedScore?: number | null;
   personInCharge?: PersonInCharge | null;
+  dailyBreakdown?: DailyChecklist[];
 }
 
 export interface ChecklistSummary {
@@ -95,4 +102,5 @@ export interface PerformanceQueryParams {
   from: string;
   to: string;
   branchIds?: number[];
+  includeDays?: boolean;
 }

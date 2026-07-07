@@ -1,32 +1,46 @@
 import Tooltip from "@/components/Tooltip";
+import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { getMetricMeta } from "../config/metricRegistry";
 import { scoreToTone } from "../utils/performance-color";
 import { describeMetric } from "../utils/indicator-sentences";
 import { formatPercent } from "../utils/format-score";
 import PerformanceBar from "./PerformanceBar";
+import BranchDayRow from "./BranchDayRow";
 import type { BranchChecklist } from "../types/checklist.types";
 
 interface BranchPerformanceRowProps {
   branch: BranchChecklist;
+  expanded: boolean;
+  onToggle: () => void;
 }
 
-export default function BranchPerformanceRow({ branch }: BranchPerformanceRowProps) {
+export default function BranchPerformanceRow({ branch, expanded, onToggle }: BranchPerformanceRowProps) {
   const combined = branch.combinedScore ?? null;
   const tone = scoreToTone(combined);
   const metricResults = branch.metricResults ?? [];
+  const dailyBreakdown = branch.dailyBreakdown ?? [];
 
   return (
-    <tr className="border-b border-slate-800/60 transition hover:bg-slate-900/40">
-      <td className="px-4 py-3 align-top">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-white">{branch.branchName}</span>
-          {branch.personInCharge && (
-            <span className="text-[11px] text-slate-400">
-              {branch.personInCharge.name ?? "Sin encargado"}
+    <>
+      <tr 
+        className="border-b border-slate-800/60 transition hover:bg-slate-900/40 cursor-pointer"
+        onClick={onToggle}
+      >
+        <td className="px-4 py-3 align-top">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500">
+              {expanded ? <HiChevronUp className="h-4 w-4" /> : <HiChevronDown className="h-4 w-4" />}
             </span>
-          )}
-        </div>
-      </td>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-white">{branch.branchName}</span>
+              {branch.personInCharge && (
+                <span className="text-[11px] text-slate-400">
+                  {branch.personInCharge.name ?? "Sin encargado"}
+                </span>
+              )}
+            </div>
+          </div>
+        </td>
       <td className="px-4 py-3 align-top">
         <div className="flex flex-col gap-3 min-w-[280px]">
           {metricResults.length === 0 ? (
@@ -78,5 +92,22 @@ export default function BranchPerformanceRow({ branch }: BranchPerformanceRowPro
         </div>
       </td>
     </tr>
+    {expanded && dailyBreakdown.length > 0 && (
+      <tr className="bg-slate-900/40">
+        <td colSpan={3} className="px-4 py-3">
+          <div className="border-l-4 border-blue-500/40 pl-4">
+            <div className="mb-2 text-xs font-semibold text-slate-300">
+              Desglose diario
+            </div>
+            <div className="space-y-2">
+              {dailyBreakdown.map((day) => (
+                <BranchDayRow key={day.date} day={day} />
+              ))}
+            </div>
+          </div>
+        </td>
+      </tr>
+    )}
+    </>
   );
 }

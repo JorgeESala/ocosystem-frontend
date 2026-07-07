@@ -36,6 +36,7 @@ export const checklistApi = {
       from: params.from,
       to: params.to,
       branchIds: params.branchIds,
+      include: params.includeDays ? "days" : undefined,
     });
     const { data } = await http.get<ChecklistResponse>(`${API_BASE}/performance?${qs}`);
     return data;
