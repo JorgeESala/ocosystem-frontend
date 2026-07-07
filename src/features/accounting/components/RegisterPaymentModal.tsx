@@ -16,7 +16,7 @@ import type { AccountsPayableResponse } from "../../live-chicken/accounting/acco
 import type { PaymentMethod } from "../types/payment.types";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import { useDrivers } from "@/features/employee/api/employees.queries";
-import { useRoutes } from "../../live-chicken/api/routes.queries";
+import { useRoutes } from "@/core/api/route/routes.queries";
 import { useOpenAccounts } from "../api/accounts-payable.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {

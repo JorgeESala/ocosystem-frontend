@@ -1,20 +1,215 @@
-import { Label, TextInput } from "flowbite-react";
+import {
+  useCreateRoute,
+  useRoutes,
+} from "@/core/api/route/routes.queries";
+import { Button, Label } from "flowbite-react";
+import React, { useState } from "react";
+import { HiPlus, HiX, HiMap } from "react-icons/hi";
+import type { Batch } from "../../types.batch";
 
-export const EggMovementFields: React.FC<{ register: any }> = ({
+interface EggFieldsProps {
+  register: any;
+  watch: any;
+  setValue: any;
+  batch: Batch;
+}
+
+export const EggMovementFields: React.FC<EggFieldsProps> = ({
   register,
-}) => (
-  <>
-    <div>
-      <Label>Cajas</Label>
-      <TextInput type="number" {...register("boxes")} />
-    </div>
-    <div>
-      <Label>Casilleros</Label>
-      <TextInput type="number" {...register("cartons")} />
-    </div>
-    <div>
-      <Label>Piezas Sueltas</Label>
-      <TextInput type="number" {...register("quantity")} />
-    </div>
-  </>
-);
+  watch,
+  setValue,
+}) => {
+  const [isAddingRoute, setIsAddingRoute] = useState(false);
+  const [newRouteName, setNewRouteName] = useState("");
+  const [routeSearchTerm, setRouteSearchTerm] = useState("");
+  const [isRouteDropdownOpen, setIsRouteDropdownOpen] = useState(false);
+
+  const { data: routes = [], isLoading: isLoadingRoutes } = useRoutes();
+  const { mutate: createRoute, isPending: isCreatingRoute } = useCreateRoute();
+
+  const selectedRouteId = watch("routeId");
+
+  const filteredRoutes = routes.filter((r: any) =>
+    r.name.toLowerCase().includes(routeSearchTerm.toLowerCase()),
+  );
+
+  const selectedRoute = routes.find(
+    (r: any) => r.id === Number(selectedRouteId),
+  );
+
+  const handleQuickRouteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRouteName.trim()) return;
+
+    createRoute(
+      { name: newRouteName.trim() },
+      {
+        onSuccess: (savedRoute: any) => {
+          setIsAddingRoute(false);
+          setNewRouteName("");
+          setValue("routeId", savedRoute.id);
+        },
+      },
+    );
+  };
+
+  return (
+    <>
+      <div>
+        <Label>Cajas</Label>
+        <input
+          type="number"
+          className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-blue-500"
+          {...register("boxes")}
+        />
+      </div>
+      <div>
+        <Label>Casilleros</Label>
+        <input
+          type="number"
+          className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-blue-500"
+          {...register("cartons")}
+        />
+      </div>
+      <div>
+        <Label>Piezas Sueltas</Label>
+        <input
+          type="number"
+          className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:border-blue-500 focus:ring-blue-500"
+          {...register("quantity")}
+        />
+      </div>
+
+      {/* 4. Selector de Ruta Buscable / Creador Inline */}
+      <div className="relative col-span-2">
+        <div className="mb-2 flex items-center justify-between">
+          <Label>Ruta</Label>
+          {!isAddingRoute && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingRoute(true);
+                setIsRouteDropdownOpen(false);
+              }}
+              className="flex items-center gap-1 text-xs font-medium text-blue-400 transition-colors hover:text-blue-300"
+            >
+              <HiPlus className="h-3 w-3" /> Nueva Ruta
+            </button>
+          )}
+        </div>
+
+        {!isAddingRoute ? (
+          <div className="relative">
+            <div className="relative flex items-center">
+              <HiMap className="absolute left-3 z-10 h-5 w-5 text-gray-500" />
+              <input
+                type="text"
+                className="w-full rounded-lg border border-gray-600 bg-gray-700 py-2 pr-10 pl-10 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                placeholder={
+                  isLoadingRoutes
+                    ? "Cargando rutas..."
+                    : "Buscar o seleccionar ruta..."
+                }
+                value={
+                  isRouteDropdownOpen
+                    ? routeSearchTerm
+                    : selectedRoute?.name || ""
+                }
+                onFocus={() => {
+                  setIsRouteDropdownOpen(true);
+                  setRouteSearchTerm("");
+                }}
+                onChange={(e) => {
+                  setRouteSearchTerm(e.target.value);
+                  setIsRouteDropdownOpen(true);
+                }}
+                disabled={isLoadingRoutes}
+              />
+              <div
+                className="absolute right-3 flex cursor-pointer items-center text-gray-400"
+                onClick={() => setIsRouteDropdownOpen(!isRouteDropdownOpen)}
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {isRouteDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setIsRouteDropdownOpen(false)}
+                />
+                <ul className="absolute top-full left-0 z-30 mt-1 max-h-48 w-full divide-y divide-gray-800 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-1 shadow-xl">
+                  {filteredRoutes.length > 0 ? (
+                    filteredRoutes.map((r: any) => (
+                      <li
+                        key={r.id}
+                        className={`cursor-pointer rounded px-3 py-2 text-xs text-gray-300 hover:bg-blue-600 hover:text-white ${Number(selectedRouteId) === r.id ? "bg-blue-600/20 font-semibold text-blue-400" : ""}`}
+                        onClick={() => {
+                          setValue("routeId", r.id);
+                          setIsRouteDropdownOpen(false);
+                        }}
+                      >
+                        {r.name}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-3 py-2 text-center text-xs text-gray-500 italic">
+                      No se encontraron rutas
+                    </li>
+                  )}
+                </ul>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/30 p-1.5">
+            <input
+              type="text"
+              className="flex-1 rounded-lg border border-gray-600 bg-gray-700 px-3 py-1.5 text-xs text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Nombre de la ruta (Ej. Vía Corta)..."
+              value={newRouteName}
+              onChange={(e) => setNewRouteName(e.target.value)}
+              disabled={isCreatingRoute}
+              required
+              autoFocus
+            />
+            <Button
+              size="xs"
+              color="blue"
+              type="button"
+              onClick={handleQuickRouteSubmit}
+              disabled={isCreatingRoute || !newRouteName.trim()}
+            >
+              {isCreatingRoute ? "..." : "Guardar"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingRoute(false);
+                setNewRouteName("");
+              }}
+              className="p-1 text-gray-500 hover:text-gray-400"
+            >
+              <HiX className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        <input type="hidden" {...register("routeId")} />
+      </div>
+    </>
+  );
+};

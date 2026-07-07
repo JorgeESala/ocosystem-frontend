@@ -17,6 +17,7 @@ import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
 import MetricWeightsPage from "@/features/branches/checklist/pages/MetricWeightsPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
+import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -33,6 +34,7 @@ export default function BusinessRoutes() {
         />
         <Route path="expenses" element={<ExpensesPage unitType="LIVE_CHICKEN" />} />
         <Route path="reports" element={<ReportPage />} />
+        <Route path="clients-routes" element={<ClientsRoutesPage unitType="LIVE_CHICKEN" />} />
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
@@ -72,6 +74,7 @@ export default function BusinessRoutes() {
           element={<BatchPage unitType={"EGG"} />}
         />
         <Route path="expenses" element={<ExpensesPage unitType="EGG" />} />
+        <Route path="clients-routes" element={<ClientsRoutesPage unitType="EGG" />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

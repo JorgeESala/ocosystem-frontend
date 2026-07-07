@@ -10,6 +10,7 @@ import { ChickenEntryFields } from "../components/live-chicken/ChickenEntryField
 import {
   GenericPlaceholderOverview,
   EmptyFields,
+  EmptyMovementsTable,
 } from "../components/common/UnitPlaceholders";
 import { ChickenHeaderStats } from "../components/live-chicken/ChickentHeaderStats";
 import { ChickenFooterStats } from "../components/live-chicken/ChickenFooterStats";
@@ -20,7 +21,7 @@ import { EggMovementsTable } from "../components/egg/EggMovementsTable";
 interface UnitConfigValue {
   label: string;
   description: string;
-  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null }>;
+  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null; tripId?: number | null }>;
   renderMovementQuantity: (movement: any) => React.ReactNode;
   // 🔥 Agregamos setValue aquí:
   movementFormFields: React.FC<{
@@ -32,7 +33,13 @@ interface UnitConfigValue {
   entryFormFields: React.FC<{ register: any; watch: any; control: any }>;
   HeaderStats: React.FC<{ batch: BatchResponseDTO }>;
   FooterStats: React.FC<{ batch: BatchResponseDTO }>;
-  MovementsTable: React.FC<{ movements: any[]; onEdit: (mov: any) => void }>;
+  MovementsTable: React.FC<{
+    movements: any[];
+    onEdit: (mov: any) => void;
+    unitType: BusinessUnitType;
+    batchId: number;
+    tripId?: number | null;
+  }>;
 }
 export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {
   EGG: {
@@ -73,7 +80,7 @@ export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {
     renderMovementQuantity: (mov) => <span>{mov.quantity} kg</span>,
     HeaderStats: EmptyFields,
     FooterStats: EmptyFields,
-    MovementsTable: EmptyFields,
+    MovementsTable: EmptyMovementsTable,
   },
   BRANCHES: {
     label: "Sucursales",
@@ -84,6 +91,6 @@ export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {
     renderMovementQuantity: (mov) => <span>{mov.quantity} uds</span>,
     HeaderStats: EmptyFields,
     FooterStats: EmptyFields,
-    MovementsTable: EmptyFields,
+    MovementsTable: EmptyMovementsTable,
   },
 };

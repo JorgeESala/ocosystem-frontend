@@ -26,3 +26,13 @@ export const GenericPlaceholderForm: React.FC<any> = () => (
 
 // Un campo vacío para los formularios dinámicos
 export const EmptyFields: React.FC<any> = () => null;
+
+// Tabla de movimientos vacía para unidades que aún no soportan la vista
+// detallada (PORK, BRANCHES). Cumple con la firma MovementsTable que ahora
+// recibe unitType y batchId.
+export const EmptyMovementsTable: React.FC<{
+  movements: any[];
+  onEdit: (mov: any) => void;
+  unitType: string;
+  batchId: number;
+}> = () => null;

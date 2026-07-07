@@ -127,6 +127,7 @@ export default function SaleEntryForm({
           batchId: formData.batchId,
           saleDate,
           saleTotal: String(formData.saleTotal),
+          quantity: String(formData.quantitySold),
           kgTotal: String(formData.kgTotal),
           kgGut: String(formData.kgGut),
           employeeId: formData.employeeId || undefined,

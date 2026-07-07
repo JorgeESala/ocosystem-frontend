@@ -11,6 +11,7 @@ import {
   Modal,
   ModalBody,
   ModalHeader,
+  ToggleSwitch,
 } from "flowbite-react";
 import BranchMultiSelect from "./BranchMultiSelect";
 import { useBranches } from "@/features/branches/branch/branch.queries";
@@ -30,6 +31,8 @@ export default function SalesAndBatches() {
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [hasSearched, setHasSearched] = useState(false);
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
+  const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
+    useState(true);
 
   useEffect(() => {
     if (expandedBatchId === null) return;
@@ -94,6 +97,36 @@ export default function SalesAndBatches() {
     return counts;
   }, [bulkSales, batches]);
 
+  const chickensRemainingByBatchId = useMemo(() => {
+    const map = new Map<number, number>();
+    if (isBulkSalesLoading) return map;
+    const soldByBatchId = new Map<number, number>();
+    for (const sale of bulkSales) {
+      if (sale.batchId == null) continue;
+      soldByBatchId.set(
+        sale.batchId,
+        (soldByBatchId.get(sale.batchId) ?? 0) + sale.quantitySold,
+      );
+    }
+    for (const batch of batches) {
+      const sold = soldByBatchId.get(batch.id) ?? 0;
+      map.set(batch.id, (batch.chickenQuantity ?? 0) - sold);
+    }
+    return map;
+  }, [bulkSales, batches, isBulkSalesLoading]);
+
+  const displayedBatches = useMemo(() => {
+    if (isBulkSalesLoading || isBulkSalesError) return batches;
+    if (!showOnlyWithAvailability) return batches;
+    return batches.filter((b) => chickensRemainingByBatchId.get(b.id) !== 0);
+  }, [
+    batches,
+    chickensRemainingByBatchId,
+    isBulkSalesLoading,
+    isBulkSalesError,
+    showOnlyWithAvailability,
+  ]);
+
   const handleBatchCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["batches"] });
     setOpenModal(false);
@@ -134,17 +167,29 @@ export default function SalesAndBatches() {
 
         <div>
           <label>Inicio</label>
-          <Datepicker value={startDate} onChange={(d) => setStartDate(d)} />
+          <Datepicker
+            language="es-MX"
+            value={startDate}
+            onChange={(d) => setStartDate(d)}
+          />
         </div>
 
         <div>
           <label>Fin</label>
-          <Datepicker onChange={(d) => setEndDate(d)} />
+          <Datepicker language="es-MX" onChange={(d) => setEndDate(d)} />
         </div>
         <div className="mt-2">
           <Button fullSized onClick={handleSearch}>
             Buscar
           </Button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-center">
+          <ToggleSwitch
+            checked={showOnlyWithAvailability}
+            label="Solo con disponibilidad"
+            onChange={setShowOnlyWithAvailability}
+          />
         </div>
       </div>
 
@@ -162,14 +207,26 @@ export default function SalesAndBatches() {
 
       <div className="mt-4">
         <BatchTable
-          batches={batches}
+          batches={displayedBatches}
           branches={branches ?? []}
           isLoading={isBatchesLoading}
           error={batchesError}
           expandedBatchId={expandedBatchId}
           cuentaCounts={cuentaCounts}
+          chickensRemainingByBatchId={chickensRemainingByBatchId}
         />
       </div>
+
+      {!isBatchesLoading &&
+        !batchesError &&
+        displayedBatches.length === 0 &&
+        batches.length > 0 && (
+          <div className="mt-4 px-4 text-center text-sm text-gray-500">
+            {showOnlyWithAvailability
+              ? "No hay remesas con disponibilidad en este periodo."
+              : "No hay remesas para mostrar."}
+          </div>
+        )}
 
       <Modal
         show={openModal}

@@ -155,23 +155,7 @@ export const SalesDashboard = () => {
   const products = data?.products || [];
   const categories = data?.categories || [];
   const dailySales = data?.dailySales || [];
-  // const diffDays = useMemo(() => {
-  //   if (!dates.start || !dates.end) return 1;
 
-  //   // Limpiamos horas para comparar solo días naturales
-  //   const startDate = new Date(dates.start).setHours(0, 0, 0, 0);
-  //   const endDate = new Date(dates.end).setHours(0, 0, 0, 0);
-
-  //   const diffInMs = Math.abs(endDate - startDate);
-  //   const days = Math.ceil(diffInMs / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir el día final
-
-  //   return days > 0 ? days : 1;
-  // }, [dates]);
-
-  // const dailySlaughteredAvg = useMemo(() => {
-  //   const total = summary?.totalSlaughtered || 0;
-  //   return total / diffDays;
-  // }, [summary, diffDays]);
   const dailySlaughteredAvg = useMemo(() => {
     const total = summary?.totalSlaughtered || 0;
 
@@ -339,6 +323,7 @@ export const SalesDashboard = () => {
                 <TicketsByWeekdayCard
                   rows={processedData.weekdayRows}
                   peak={processedData.peak}
+                  tickets={summary?.realTickets || 0}
                 />
               </div>
             </div>

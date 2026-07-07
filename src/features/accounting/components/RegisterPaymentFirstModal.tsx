@@ -16,7 +16,7 @@ import type { PaymentMethod } from "../types/payment.types";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { useDrivers } from "@/features/employee/api/employees.queries";
-import { useRoutes } from "../../live-chicken/api/routes.queries";
+import { useRoutes } from "@/core/api/route/routes.queries";
 import {
   useCreateCompensationPaymentFromAP,
   useCreatePayment,
@@ -91,8 +91,7 @@ export const RegisterPaymentFirstModal = ({
     useState<AccountsPayableResponse | null>(null);
   const [amount, setAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState<Date | null>(new Date());
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("DEPOSIT");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("DEPOSIT");
   const [folio, setFolio] = useState("");
   const [note, setnote] = useState("");
   const [driverId, setDriverId] = useState("");
@@ -236,9 +235,7 @@ export const RegisterPaymentFirstModal = ({
       },
       {
         onSuccess: () => {
-          onSuccessToast?.(
-            `Compensación registrada · ${formatMXN(p.amount)}`,
-          );
+          onSuccessToast?.(`Compensación registrada · ${formatMXN(p.amount)}`);
           resetForm();
         },
       },
@@ -320,7 +317,11 @@ export const RegisterPaymentFirstModal = ({
     Number.isFinite(value) && value > CONFIRMATION_THRESHOLD;
 
   return (
-    <Modal show={open} onClose={onClose} size={pendingConfirmation ? "md" : "xl"}>
+    <Modal
+      show={open}
+      onClose={onClose}
+      size={pendingConfirmation ? "md" : "xl"}
+    >
       <ModalHeader>Registrar pago</ModalHeader>
 
       <ModalBody>
@@ -390,8 +391,7 @@ export const RegisterPaymentFirstModal = ({
                 {exceedsThreshold && (
                   <p className="mt-1 text-xs text-amber-400">
                     Por seguridad, montos mayores a{" "}
-                    {formatMXN(CONFIRMATION_THRESHOLD)} requieren
-                    confirmación.
+                    {formatMXN(CONFIRMATION_THRESHOLD)} requieren confirmación.
                   </p>
                 )}
               </div>
@@ -402,7 +402,7 @@ export const RegisterPaymentFirstModal = ({
                   required
                   value={paymentDate ?? undefined}
                   onChange={(date) => setPaymentDate(date)}
-                  language="es"
+                  language="es-MX"
                 />
               </div>
 
@@ -481,9 +481,7 @@ export const RegisterPaymentFirstModal = ({
                         setCompensationError(null);
                       }}
                       getValue={(ap) => ap.id}
-                      getLabel={(ap) =>
-                        `${ap.debtorName} → ${ap.creditorName}`
-                      }
+                      getLabel={(ap) => `${ap.debtorName} → ${ap.creditorName}`}
                       getSubtitle={(ap) =>
                         `${formatHumanDate(ap.date)} · ${formatMXN(ap.balance)}`
                       }
@@ -520,9 +518,7 @@ export const RegisterPaymentFirstModal = ({
                         setCompensationError(null);
                       }}
                       getValue={(ap) => ap.id}
-                      getLabel={(ap) =>
-                        `${ap.debtorName} → ${ap.creditorName}`
-                      }
+                      getLabel={(ap) => `${ap.debtorName} → ${ap.creditorName}`}
                       getSubtitle={(ap) =>
                         `${formatHumanDate(ap.date)} · ${formatMXN(ap.balance)}`
                       }

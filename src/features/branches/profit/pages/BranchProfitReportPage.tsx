@@ -39,12 +39,8 @@ export default function BranchProfitReportPage() {
   });
 
   const summary = useMemo(
-    () =>
-      buildBranchProfitSummary(
-        report,
-        importedSales.isError ? undefined : importedSales.byBranch,
-      ),
-    [report, importedSales.byBranch, importedSales.isError],
+    () => buildBranchProfitSummary(report),
+    [report],
   );
 
   const manualChickenByBranch = useMemo(() => {
@@ -129,7 +125,12 @@ export default function BranchProfitReportPage() {
       return;
     }
 
-    if (endDate < startDate) {
+    const startOfDay = (d: Date) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      return x;
+    };
+    if (startOfDay(endDate) < startOfDay(startDate)) {
       setValidationError("La fecha final no puede ser menor a la inicial.");
       return;
     }

@@ -1,57 +1,185 @@
-import React from "react";
-import { EggQuantityDisplay } from "./EggQuantityDisplay"; // Tu componente de iconos
+import { EggQuantityDisplay } from "./EggQuantityDisplay";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
+import type { BusinessUnitType } from "../../types.batch";
+import TripInlineRow from "@/features/trips/components/TripInlineRow";
+import { useTripsForBatch } from "@/features/trips/api/trips.queries";
+import { buildTripGroups } from "@/features/trips/utils/tripGrouping";
+import type { TripsUnitType } from "@/features/trips/types/trip.types";
+import { useParams } from "react-router-dom";
 
 export const EggMovementsTable: React.FC<{
   movements: any[];
   onEdit: (mov: any) => void;
-}> = ({ movements, onEdit }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-left text-sm text-gray-400">
-      <thead className="border-b border-gray-700/50 bg-gray-800/40 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">
-        <tr>
-          <th className="px-4 py-3">Fecha</th>
-          <th className="px-4 py-3">Concepto</th>
-          <th className="px-4 py-3 text-center">Cantidad desglosada</th>
-          <th className="px-4 py-3 text-right">$ Total</th>
-          <th className="px-4 py-3 text-right">Acciones</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-800/60">
-        {movements.map((mov) => {
-          const isAdjustment = mov.type === "ADJUSTMENT";
-          return (
-            <tr
-              key={`${mov.type}-${mov.id}`}
-              className={isAdjustment ? "bg-red-950/10" : ""}
+  unitType: BusinessUnitType;
+  batchId: number;
+  tripId?: number | null;
+}> = ({ movements, onEdit, unitType, batchId, tripId }) => {
+  const tripsUnitType: TripsUnitType =
+    unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
+  const { data: trips = [] } = useTripsForBatch(tripsUnitType, batchId);
+  const groups = buildTripGroups(movements, trips);
+  const { slug } = useParams();
+
+  if (movements.length === 0) {
+    return (
+      <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/60 py-10 text-center text-sm text-slate-400">
+        Aún no hay ventas ni bajas registradas.
+      </div>
+    );
+  }
+
+  const renderSaleColumns = (mov: any, isOtherBatch: boolean) => {
+    if (isOtherBatch) return null;
+    const isAdjustment = mov.type === "ADJUSTMENT";
+    const qty = Number(mov.quantity || 0);
+
+    if (isAdjustment) {
+      return (
+        <>
+          <div className="col-span-3 truncate text-xs text-slate-400">
+            {formatHumanDate(mov.date, "short")}
+          </div>
+          <div className="col-span-5 truncate text-xs text-red-300">
+            ⚠️ {mov.reason ?? "Baja"}
+          </div>
+          <div className="col-span-2 text-right">
+            <EggQuantityDisplay totalPieces={qty} />
+          </div>
+          <div className="col-span-2 text-right">
+            <button
+              type="button"
+              onClick={() => onEdit(mov)}
+              className="rounded bg-red-500/10 px-2 py-0.5 text-[11px] font-semibold text-red-400"
             >
-              <td className="px-4 py-3.5 text-gray-300">
-                {formatHumanDate(mov.date)}
-              </td>
-              <td
-                className={`px-4 py-3.5 font-medium ${isAdjustment ? "text-red-400" : "text-white"}`}
-              >
-                {isAdjustment ? `⚠️ Baja: ${mov.reason}` : `${mov.concept}`}
-              </td>
-              <td className="flex justify-center px-4 py-3.5">
-                <EggQuantityDisplay totalPieces={mov.quantity} />
-              </td>
-              <td className="px-4 py-3.5 text-right font-semibold text-white">
-                {mov.saleTotal > 0 ? formatMXN(mov.saleTotal) : "-"}
-              </td>
-              <td className="px-4 py-3.5 text-right">
-                <button
-                  onClick={() => onEdit(mov)}
-                  className={`rounded px-2.5 py-1 text-xs font-semibold ${isAdjustment ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"}`}
-                >
-                  Editar
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-);
+              Editar
+            </button>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="col-span-2 truncate text-xs text-slate-400">
+          {formatHumanDate(mov.date, "short")}
+        </div>
+        <div className="col-span-4 truncate text-xs text-white">
+          {mov.concept ?? mov.clientName ?? "Venta directa"}
+        </div>
+        <div className="col-span-2 text-right">
+          <EggQuantityDisplay totalPieces={qty} />
+        </div>
+        <div className="col-span-1 text-right font-mono text-xs text-white">
+          {Number(mov.saleTotal ?? 0) > 0
+            ? formatMXN(Number(mov.saleTotal))
+            : "-"}
+        </div>
+        <div className="col-span-3 text-right">
+          <button
+            type="button"
+            onClick={() => onEdit(mov)}
+            className="rounded bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-400"
+          >
+            Editar
+          </button>
+        </div>
+      </>
+    );
+  };
+
+  const renderHeaderColumns = () => (
+    <>
+      <div className="col-span-2 px-3 text-[10px] tracking-wider text-slate-500 uppercase">
+        Fecha
+      </div>
+      <div className="col-span-4 text-[10px] tracking-wider text-slate-500 uppercase">
+        Cliente
+      </div>
+      <div className="col-span-2 text-center text-[10px] tracking-wider text-slate-500 uppercase">
+        Cantidad
+      </div>
+      <div className="col-span-1 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        $ Total
+      </div>
+      <div className="col-span-3 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        Acción
+      </div>
+    </>
+  );
+
+  const renderOtherBatchHeader = () => (
+    <>
+      <div className="col-span-3 px-2 text-[10px] tracking-wider text-slate-500 uppercase">
+        Remesa
+      </div>
+      <div className="col-span-3 text-[10px] tracking-wider text-slate-500 uppercase">
+        Cliente
+      </div>
+      <div className="col-span-3 text-center text-[10px] tracking-wider text-slate-500 uppercase">
+        Cantidad
+      </div>
+      <div className="col-span-3 text-right text-[10px] tracking-wider text-slate-500 uppercase">
+        $ Total
+      </div>
+    </>
+  );
+
+  const singleSaleSales: { mov: any; key: string }[] = [];
+  const tripGroups = groups.filter((g) => !g.isSingleSale);
+  for (const group of groups) {
+    if (group.isSingleSale) {
+      for (const mov of group.movements) {
+        singleSaleSales.push({
+          mov,
+          key: `${group.key}-${mov.type}-${mov.id}`,
+        });
+      }
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {tripGroups.map((group) => (
+        <TripInlineRow
+          key={group.key}
+          unitType={tripsUnitType}
+          currentBatchId={batchId}
+          group={group}
+          onEditMovement={onEdit}
+          renderSaleColumns={renderSaleColumns}
+          renderHeaderColumns={renderHeaderColumns}
+          renderOtherBatchHeader={renderOtherBatchHeader}
+          slug={slug}
+          tripId={tripId}
+        />
+      ))}
+
+      {singleSaleSales.length > 0 && (
+        <div className="rounded-xl border border-slate-700/70 bg-slate-900/40">
+          <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 px-3 py-1.5">
+            <span className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Ventas sin agrupar ({singleSaleSales.length})
+            </span>
+            <span className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Click en{" "}
+              <span className="font-semibold text-blue-400">Editar</span> para
+              asignar chofer + ruta + fecha
+            </span>
+          </div>
+          <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800/40 bg-slate-950/20 px-3 py-1.5">
+            {renderHeaderColumns()}
+          </div>
+          {singleSaleSales.map(({ mov, key }) => (
+            <div
+              key={key}
+              className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+            >
+              {renderSaleColumns(mov, false)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -6,29 +6,21 @@ import { formatMXN } from "@/utils/moneyNumbers";
 export const ChickenHeaderStats: React.FC<{ batch: BatchResponseDTO }> = ({
   batch,
 }) => {
-  // 1. Extracción de valores del DTO y metadata (en snake_case de la BD)
   const initialAves = Number(batch.initialQuantity || 0);
   const remainingAves = Number(batch.remainingQuantity || 0);
 
   const weightDeclared = Number(batch.metadata?.declared_weight || 0);
   const weightReal = Number(batch.weightReal || 0);
-  const weightDiffArrival = weightReal - weightDeclared; // Merma del viaje del proveedor
+  const weightDiffArrival = weightReal - weightDeclared;
 
   const totalCost = Number(batch.totalAmount || 0);
   const priceProvider = weightDeclared > 0 ? totalCost / weightDeclared : 0;
 
-  // Costo Real por Kg (Inversión / Lo que llegó de verdad en báscula)
   const priceReal = weightReal > 0 ? totalCost / weightReal : 0;
-
-  // Dinero "evaporado" en el trayecto (Pérdida por deshidratación en ruta)
   const moneyDiffArrival = weightDiffArrival * priceProvider;
-
-  // Peso promedio por pollo al recibir
-  // const avgWeightArrival = initialAves > 0 ? weightReal / initialAves : 0;
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      {/* FILA 1: Rendimiento Físico e Inventario */}
       <div className="grid grid-cols-2 gap-4 border-b border-gray-700/30 pb-3 sm:grid-cols-3 md:grid-cols-5">
         <StatItem label="Aves Iniciales" value={`${initialAves} und.`} />
         <StatItem
@@ -52,7 +44,6 @@ export const ChickenHeaderStats: React.FC<{ batch: BatchResponseDTO }> = ({
         />
       </div>
 
-      {/* FILA 2: KPIs Financieros y de Compra (Business Intelligence) */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatItem
           label="Costo Remesa"

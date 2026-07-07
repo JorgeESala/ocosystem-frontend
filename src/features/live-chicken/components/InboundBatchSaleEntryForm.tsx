@@ -16,6 +16,7 @@ import type {
   CreateInboundBatchSalePayload,
   UpdateInboundBatchSalePayload,
 } from "../types";
+import type { Route } from "@/core/api/types";
 
 import {
   useCreateInboundBatchSale,
@@ -25,7 +26,7 @@ import {
 import { useEmployees } from "@/features/employee/api/employees.queries";
 import { JobPosition } from "@/features/employee/types";
 import CreateRouteInlineForm from "./CreateRouteInlineForm";
-import { useRoutes } from "../api/routes.queries";
+import { useRoutes } from "@/core/api/route/routes.queries";
 
 interface SaleEntryFormProps {
   batch: InboundBatch;
@@ -191,7 +192,7 @@ export default function InboundBatchSaleEntryForm({
                 ? "Error al cargar rutas"
                 : "Selecciona una ruta"}
           </option>
-          {routes.map((route) => (
+          {routes.map((route: Route) => (
             <option key={route.id} value={route.id}>
               {route.name}
             </option>

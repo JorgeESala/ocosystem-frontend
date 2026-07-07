@@ -4,7 +4,7 @@ import { HiPlus, HiX } from "react-icons/hi";
 import {
   useCreateRoute,
   useRoutes,
-} from "@/features/live-chicken/api/routes.queries";
+} from "@/core/api/route/routes.queries";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useVehicles } from "@/core/vehicle/api/vehicle.queries";
 

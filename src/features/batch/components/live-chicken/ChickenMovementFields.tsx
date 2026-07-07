@@ -1,15 +1,17 @@
 import {
   useCreateRoute,
   useRoutes,
-} from "@/features/live-chicken/api/routes.queries";
+} from "@/core/api/route/routes.queries";
 import { Button, Label, TextInput } from "flowbite-react";
 import React, { useState } from "react";
 import { HiPlus, HiX, HiMap } from "react-icons/hi";
+import type { Batch } from "../../types.batch";
 
 interface ChickenFieldsProps {
   register: any;
   watch: any;
   setValue: any;
+  batch: Batch;
 }
 
 export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
@@ -27,13 +29,14 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
   const { data: routes = [], isLoading: isLoadingRoutes } = useRoutes();
   const { mutate: createRoute, isPending: isCreatingRoute } = useCreateRoute();
 
+  const selectedRouteId = watch("routeId");
+
   // Filtrado de rutas en tiempo real
   const filteredRoutes = routes.filter((r: any) =>
     r.name.toLowerCase().includes(routeSearchTerm.toLowerCase()),
   );
 
   // Obtener la ruta seleccionada actual para pintar en el buscador
-  const selectedRouteId = watch("routeId");
   const selectedRoute = routes.find(
     (r: any) => r.id === Number(selectedRouteId),
   );
@@ -44,12 +47,11 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
     if (!newRouteName.trim()) return;
 
     createRoute(
-      { name: newRouteName.trim() }, // Ajusta el payload según pida tu backend
+      { name: newRouteName.trim() },
       {
         onSuccess: (savedRoute: any) => {
           setIsAddingRoute(false);
           setNewRouteName("");
-          // Auto-seleccionamos la ruta creada en el formulario global
           setValue("routeId", savedRoute.id);
         },
       },
@@ -183,7 +185,6 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
             )}
           </div>
         ) : (
-          /* Mini-formulario inline para agregar ruta al vuelo */
           <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/30 p-1.5">
             <input
               type="text"
@@ -217,7 +218,6 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
           </div>
         )}
 
-        {/* Input oculto controlado para vincular el ID al React Hook Form */}
         <input type="hidden" {...register("routeId")} />
       </div>
     </>

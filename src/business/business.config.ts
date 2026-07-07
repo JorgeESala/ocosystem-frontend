@@ -20,7 +20,7 @@ export interface BusinessConfig {
 
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { HiClipboardList } from "react-icons/hi";
+import { HiClipboardList, HiUserGroup } from "react-icons/hi";
 
 export const BASE_MENU = [
   { to: "reports", label: "Reportes", icon: FaFileAlt },
@@ -45,6 +45,7 @@ const LIVE_CHICKEN_MENU = [
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
   { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
+  { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
@@ -53,6 +54,7 @@ const EGG_MENU = [
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
   { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
+  { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
