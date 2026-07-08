@@ -18,7 +18,10 @@ import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import { RegisterBranchPaymentModal } from "../components/RegisterBranchPaymentModal";
 import { CreateBranchAccountsPayableModal } from "../components/CreateBranchAccountsPayableModal";
 import { BranchesAccountsOpenTable } from "../components/BranchesAccountsOpenTable";
+import { BranchesAccountingSummary } from "../components/BranchesAccountingSummary";
 import { useBranches } from "../../branch/branch.queries";
+
+type ViewMode = "PAYABLE" | "FINANCIAL";
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
@@ -26,6 +29,7 @@ const isSameDay = (a: Date, b: Date) =>
   a.getDate() === b.getDate();
 
 export const BranchAccountsPage = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>("PAYABLE");
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
   const { data: branches, isLoading: loadingBranches } = useBranches();
 
@@ -118,15 +122,27 @@ export const BranchAccountsPage = () => {
         </div>
       </div>
 
-      <AccountingSummaryCards
-        data={data}
-        filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
-      />
+      <div className="flex flex-wrap gap-2">
+        <Button
+          color={viewMode === "PAYABLE" ? "blue" : "gray"}
+          onClick={() => setViewMode("PAYABLE")}
+        >
+          Por pagar
+        </Button>
+        <Button
+          color={viewMode === "FINANCIAL" ? "blue" : "gray"}
+          onClick={() => setViewMode("FINANCIAL")}
+        >
+          Resumen financiero
+        </Button>
+      </div>
 
-      {/* Barra de Filtros */}
+      {/* Barra de Filtros (compartida entre ambas vistas) */}
       <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-300">Sucursales:</span>
+          <span className="text-sm font-medium text-gray-300">
+            Sucursales:
+          </span>
           <div className="w-80">
             <BranchMultiSelect
               branches={branches ?? []}
@@ -136,11 +152,13 @@ export const BranchAccountsPage = () => {
           </div>
         </div>
 
-        <DateRangeFilter
-          value={dateRange}
-          defaultRange={defaultRange}
-          onChange={setDateRange}
-        />
+        {viewMode === "PAYABLE" && (
+          <DateRangeFilter
+            value={dateRange}
+            defaultRange={defaultRange}
+            onChange={setDateRange}
+          />
+        )}
 
         {hasFilter && (
           <button
@@ -155,37 +173,51 @@ export const BranchAccountsPage = () => {
         )}
       </div>
 
-      {/* Tabla de Resultados */}
-      <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800 shadow-xl">
-        {loadingAccounts || loadingBranches ? (
-          <div className="p-12 text-center">
-            <p className="animate-pulse text-gray-400">
-              Cargando información consolidada...
-            </p>
-          </div>
-        ) : accountsError ? (
-          <div className="p-6">
-            <AccountingErrorAlert
-              error={accountsErrorDetail}
-              onRetry={() => refetchAccounts()}
-            />
-          </div>
-        ) : data.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-gray-400">
-              {hasFilter
-                ? "No hay cuentas para los filtros seleccionados."
-                : "No hay cuentas abiertas."}
-            </p>
-          </div>
-        ) : (
-          <BranchesAccountsOpenTable
+      {viewMode === "PAYABLE" && (
+        <>
+          <AccountingSummaryCards
             data={data}
-            onPay={handlePay}
-            onViewHistory={handleViewHistory}
+            filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
           />
-        )}
-      </div>
+
+          <div className="overflow-hidden rounded-lg border border-gray-700 bg-gray-800 shadow-xl">
+            {loadingAccounts || loadingBranches ? (
+              <div className="p-12 text-center">
+                <p className="animate-pulse text-gray-400">
+                  Cargando información consolidada...
+                </p>
+              </div>
+            ) : accountsError ? (
+              <div className="p-6">
+                <AccountingErrorAlert
+                  error={accountsErrorDetail}
+                  onRetry={() => refetchAccounts()}
+                />
+              </div>
+            ) : data.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-gray-400">
+                  {hasFilter
+                    ? "No hay cuentas para los filtros seleccionados."
+                    : "No hay cuentas abiertas."}
+                </p>
+              </div>
+            ) : (
+              <BranchesAccountsOpenTable
+                data={data}
+                onPay={handlePay}
+                onViewHistory={handleViewHistory}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {viewMode === "FINANCIAL" && (
+        <BranchesAccountingSummary
+          selectedBranchIds={selectedBranches}
+        />
+      )}
 
       {/* Modal: Ver Historial (Drawer o Modal) */}
       <AccountsPayableHistoryDrawer
