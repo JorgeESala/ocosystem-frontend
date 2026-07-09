@@ -67,9 +67,11 @@ export default function SaleEntryForm({
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [detectedBatches, setDetectedBatches] = useState<ReportBatchSale[]>([]);
   const [showBatchSelector, setShowBatchSelector] = useState(false);
-  const [movementType, setMovementType] = useState<"SALE" | "ADJUSTMENT">("SALE");
+  const [movementType, setMovementType] = useState<"SALE" | "ADJUSTMENT">(
+    "SALE",
+  );
   const [adjustmentWeight, setAdjustmentWeight] = useState("");
-  const [adjustmentReason, setAdjustmentReason] = useState("MERMA");
+  const [adjustmentReason, setAdjustmentReason] = useState("MUERTE");
   const { mutateAsync: createAdjustment, isPending } = useCreateAdjustment();
   const {
     data: clients = [],
@@ -196,15 +198,15 @@ export default function SaleEntryForm({
       formData.append("file", file);
       formData.append("batchId", String(batch.id));
 
-        const { data } = await http.post<ExtractExcelResponse>(
-          "/api/v1/batch-sales/extract-from-excel",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
+      const { data } = await http.post<ExtractExcelResponse>(
+        "/api/v1/batch-sales/extract-from-excel",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
           },
-        );
+        },
+      );
 
       const { batches } = data;
 
@@ -470,9 +472,9 @@ export default function SaleEntryForm({
                   value={adjustmentReason}
                   onChange={(e) => setAdjustmentReason(e.target.value)}
                 >
-                  <option value="MERMA">Merma natural</option>
                   <option value="MUERTE">Muerte</option>
-                  <option value="ROTURA">Rotura / Daño</option>
+                  <option value="MERMA">Merma natural</option>
+                  <option value="ROTURA">Daño</option>
                   <option value="CONSUMO">Consumo interno</option>
                   <option value="OTRO">Otro</option>
                 </Select>
