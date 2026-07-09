@@ -99,7 +99,7 @@ export const BranchesAccountingSummary = ({
             <span
               key={m.branchId}
               className="inline-flex items-center gap-1 rounded-full bg-gray-800 px-2.5 py-1 text-[11px] text-gray-300"
-              title={`Deuda: ${formatMXN(m.debt)} · Por cobrar: ${formatMXN(m.pendingAmount)} · Inventario: ${formatMXN(m.inventoryValue)}`}
+              title={`Deuda: ${formatMXN(m.debt)} · Por recibir: ${formatMXN(m.pendingAmount)} · Inventario: ${formatMXN(m.inventoryValue)}`}
             >
               <span className="font-medium text-white">{m.branchName}</span>
               <span
@@ -131,18 +131,18 @@ export const BranchesAccountingSummary = ({
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalDebt)}
           </p>
-          <p className="text-[11px] text-gray-400">cuentas por pagar</p>
+          <p className="text-[11px] text-gray-400">Cuentas por pagar</p>
         </div>
 
         <div className="rounded-lg border border-yellow-900/40 bg-yellow-950/20 p-5">
           <p className="text-[10px] font-medium tracking-wider text-yellow-300 uppercase">
-            Por cobrar
+            Por recibir
           </p>
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalPending)}
           </p>
           <p className="text-[11px] text-gray-400">
-            ventas sin recibir en oficina
+            Ventas sin recibir en oficina
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export const BranchesAccountingSummary = ({
             {formatMXN(totalInventory)}
           </p>
           <p className="text-[11px] text-gray-400">
-            pollos disponibles en remesas
+            Pollos disponibles en remesas
           </p>
         </div>
 
@@ -175,9 +175,7 @@ export const BranchesAccountingSummary = ({
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalNet)}
           </p>
-          <p className="text-[11px] text-gray-400">
-            deuda + por cobrar + inventario
-          </p>
+          <p className="text-[11px] text-gray-400">Activos - Deuda</p>
         </div>
       </div>
 
@@ -186,7 +184,7 @@ export const BranchesAccountingSummary = ({
           <TableHead>
             <TableHeadCell>Sucursal</TableHeadCell>
             <TableHeadCell>Deuda</TableHeadCell>
-            <TableHeadCell>Por cobrar</TableHeadCell>
+            <TableHeadCell>Por recibir</TableHeadCell>
             <TableHeadCell>Inventario</TableHeadCell>
             <TableHeadCell>Balance neto</TableHeadCell>
           </TableHead>

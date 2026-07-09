@@ -33,8 +33,13 @@ import {
   fetchGraphData,
 } from "../services/api";
 import BranchMultiSelect from "./BranchMultiSelect";
+import MermaComparison from "@/features/batch/components/live-chicken/MermaComparison";
+import { useParams } from "react-router-dom";
 
 export default function ComparisonsGraphs() {
+  const { slug } = useParams();
+  const isBranches = slug === "sucursales";
+  const [activeTab, setActiveTab] = useState<"ventas" | "merma">("ventas");
   const [metric, setMetric] = useState<"sales" | "quantity">("sales");
   const [frequency, setFrequency] = useState<Frequency>("daily");
   const [isContinuous, setIsContinuous] = useState(true);
@@ -255,6 +260,33 @@ export default function ComparisonsGraphs() {
     <div className="p-6">
       <h1 className="mb-4 text-center text-xl font-semibold">Comparaciones</h1>
 
+      {isBranches && (
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => setActiveTab("ventas")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === "ventas"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Ventas
+          </button>
+          <button
+            onClick={() => setActiveTab("merma")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === "merma"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Merma
+          </button>
+        </div>
+      )}
+
+      {(!isBranches || activeTab === "ventas") && (
+        <>
       <div className="mb-6 flex flex-wrap items-end gap-2">
         <Select
           id="periods"
@@ -492,6 +524,12 @@ export default function ComparisonsGraphs() {
             })}
         </BarChart>
       </ResponsiveContainer>
+        </>
+      )}
+
+      {isBranches && activeTab === "merma" && (
+        <MermaComparison />
+      )}
     </div>
   );
 }

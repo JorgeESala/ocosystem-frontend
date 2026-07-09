@@ -1,6 +1,7 @@
 import { http } from "@/shared/api/http";
 import type {
   BatchDetailView,
+  MermaReport,
   SalesByClientData,
   WeeklySalesData,
 } from "../types.batch";
@@ -80,6 +81,23 @@ export const getSalesByClient = async (
   const params = new URLSearchParams({ startDate, endDate });
   const { data } = await http.get<SalesByClientData[]>(
     `${API_BASE}/batches/sales-by-client?${params}`,
+  );
+  return data;
+};
+
+export const getMermaReport = async (
+  start: string,
+  end: string,
+  trainingDate?: string,
+  branchIds?: number[],
+): Promise<MermaReport> => {
+  const params = new URLSearchParams({ start, end });
+  if (trainingDate) params.set("trainingDate", trainingDate);
+  if (branchIds && branchIds.length > 0) {
+    branchIds.forEach((id) => params.append("branchIds", String(id)));
+  }
+  const { data } = await http.get<MermaReport>(
+    `${API_BASE}/batches/merma?${params}`,
   );
   return data;
 };

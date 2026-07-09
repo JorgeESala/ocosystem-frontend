@@ -197,3 +197,39 @@ export interface SalesByClientData {
   totalQuantity: number;
   totalSales: number;
 }
+
+export interface MermaPeriodStats {
+  totalBatches: number;
+  totalChickensReceived: number;
+  totalChickensSold: number;
+  totalWeightReceived: number;
+  totalWeightSold: number;
+  totalWeightAdjusted: number;
+  totalMermaKg: number;
+  avgMermaGramsPerChicken: number;
+  mermaPct: number;
+  avgMermaConTripa: number;
+  avgMermaSinTripa: number;
+}
+
+export interface MermaBatchDetail {
+  batchId: number;
+  supplierName: string;
+  entryDate: string;
+  chickensReceived: number;
+  chickensSold: number;
+  weightReceived: number;
+  weightSold: number;
+  weightAdjusted: number;
+  totalKgGut: number;
+  mermaKg: number;
+  mermaGramsPerChicken: number;
+  mermaConTripa: number;
+  mermaSinTripa: number;
+}
+
+export interface MermaReport {
+  before: MermaPeriodStats;
+  after: MermaPeriodStats;
+  batches: MermaBatchDetail[];
+}
