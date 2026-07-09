@@ -49,7 +49,7 @@ export const getBatchSales = async (batchId: number) => {
 
 export const getBatchAdjustments = async (batchId: number) => {
   const { data } = await http.get(
-    `${API_BASE}/batch-adjustments/batch/${batchId}`,
+    `${API_BASE}/batches/${batchId}/adjustments`,
   );
   return data;
 };

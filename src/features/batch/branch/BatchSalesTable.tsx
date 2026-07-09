@@ -15,6 +15,7 @@ import { getCuentaKey } from "./utils/cuenta";
 
 interface Props {
   sales: BranchesBatchSale[];
+  adjustments: any[];
   batch: Batch;
   cuentaCounts: Map<string, number>;
   onToggleOfficeStatus: (
@@ -39,6 +40,7 @@ function getMermaColor(value: number, target = 0.25) {
 
 export const BatchSalesTable: React.FC<Props> = ({
   sales,
+  adjustments,
   batch,
   cuentaCounts,
   onToggleOfficeStatus,
@@ -78,13 +80,10 @@ export const BatchSalesTable: React.FC<Props> = ({
     }
   };
 
-  if (sales.length === 0) {
-    return <div className="py-2 text-center text-gray-400">Sin ventas</div>;
-  }
-
   return (
     <div className="mt-2">
       {/* Desktop: tabla */}
+      {sales.length > 0 && (
       <div className="hidden overflow-x-auto md:block">
         <Table striped>
           <TableHead>
@@ -213,10 +212,15 @@ export const BatchSalesTable: React.FC<Props> = ({
           </TableBody>
         </Table>
       </div>
+      )}
+
+      {sales.length === 0 && adjustments.length === 0 && (
+        <div className="py-2 text-center text-gray-400">Sin ventas</div>
+      )}
 
       {/* Mobile */}
       <div className="space-y-2 md:hidden">
-        {sales.map((s) => {
+        {sales.length > 0 && sales.map((s) => {
           const isReceived = s.officeReceived ?? false;
           return (
             <div
@@ -249,6 +253,25 @@ export const BatchSalesTable: React.FC<Props> = ({
             </div>
           );
         })}
+
+        {adjustments.length > 0 && (
+          <div className="mt-2 space-y-2">
+            <h4 className="text-sm font-semibold text-red-400">
+              Bajas / Ajustes ({adjustments.length})
+            </h4>
+            {adjustments.map((adj: any) => (
+              <div
+                key={adj.id}
+                className="rounded-md bg-red-900/30 p-2 text-red-200 shadow"
+              >
+                <div>Fecha: {adj.adjustmentDate ? new Date(`${adj.adjustmentDate}T00:00:00`).toLocaleDateString("es-MX") : "-"}</div>
+                <div>Motivo: {adj.reason || "Sin motivo"}</div>
+                <div>Cantidad: {adj.quantity} aves</div>
+                <div>Peso: {adj.weight ? `${adj.weight} kg` : "-"}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {isFormOpen && selectedSale && (
@@ -258,6 +281,40 @@ export const BatchSalesTable: React.FC<Props> = ({
           onClose={handleCloseForm}
           onSuccess={() => {}}
         />
+      )}
+
+      {adjustments.length > 0 && (
+        <div className="mt-4">
+          <h4 className="mb-2 text-sm font-semibold text-red-400">
+            Bajas / Ajustes ({adjustments.length})
+          </h4>
+          <div className="overflow-x-auto">
+            <Table striped>
+              <TableHead>
+                <TableRow className="text-center">
+                  <TableHeadCell>Fecha</TableHeadCell>
+                  <TableHeadCell>Motivo</TableHeadCell>
+                  <TableHeadCell>Cantidad (aves)</TableHeadCell>
+                  <TableHeadCell>Peso (kg)</TableHeadCell>
+                </TableRow>
+              </TableHead>
+              <TableBody className="divide-y text-center">
+                {adjustments.map((adj: any) => (
+                  <TableRow key={adj.id} className="bg-red-900/20">
+                    <TableCell className="text-red-200">
+                      {adj.adjustmentDate
+                        ? new Date(`${adj.adjustmentDate}T00:00:00`).toLocaleDateString("es-MX")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="text-red-200">{adj.reason || "Sin motivo"}</TableCell>
+                    <TableCell className="font-semibold text-red-200">{adj.quantity} aves</TableCell>
+                    <TableCell className="text-red-200">{adj.weight ? `${adj.weight} kg` : "-"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
 
       <BatchSummary batch={batch} sales={sales} />

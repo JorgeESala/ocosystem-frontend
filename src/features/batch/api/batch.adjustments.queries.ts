@@ -10,17 +10,9 @@ export const useCreateAdjustment = () => {
     onSuccess: (_, variables) => {
       const batchId = variables.batchId;
 
-      // 1. Invalidar el detalle unificado (Para que la tabla y badges se actualicen)
       queryClient.invalidateQueries({
         queryKey: batchKeys.fullDetail(batchId),
       });
-
-      // 2. Invalidar la lista general (Para que el stock en la lista principal cambie)
-      queryClient.invalidateQueries({
-        queryKey: batchKeys.all,
-      });
-
-      // 3. Opcional: Si aún usas los endpoints viejos en algún lado
       queryClient.invalidateQueries({ queryKey: batchKeys.sales(batchId) });
       queryClient.invalidateQueries({
         queryKey: batchKeys.adjustments(batchId),

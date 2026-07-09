@@ -5,10 +5,14 @@ import {
   triggerDownload,
 } from "./financial-summary.api";
 
-export const useFinancialSummary = (branchIds?: number[]) => {
+export const useFinancialSummary = (
+  branchIds?: number[],
+  from?: string,
+  to?: string,
+) => {
   return useQuery({
-    queryKey: ["financialSummary", branchIds],
-    queryFn: () => getFinancialSummary(branchIds),
+    queryKey: ["financialSummary", branchIds, from, to],
+    queryFn: () => getFinancialSummary(branchIds, from, to),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -32,7 +36,7 @@ const buildFilename = (
         .map((r) => r.branchName)
         .filter(Boolean)
         .join("_y_")
-        .replaceAll(/\s+/g, "_")
+        .replace(/\s+/g, "_")
         .toLowerCase();
 
   return `reporte_financiero_${namePart}_${datePart}.pdf`;
@@ -40,10 +44,12 @@ const buildFilename = (
 
 export const useDownloadFinancialSummaryPdf = () => {
   return {
-    download: async (branchIds?: number[]) => {
-      const blob = await downloadFinancialSummaryPdf(branchIds);
+    download: async (branchIds?: number[], from?: string, to?: string) => {
+      const blob = await downloadFinancialSummaryPdf(branchIds, from, to);
       const rows = await getFinancialSummary(
         branchIds && branchIds.length > 0 ? branchIds : undefined,
+        from,
+        to,
       );
       const filename = buildFilename(branchIds, rows);
       triggerDownload(blob, filename);

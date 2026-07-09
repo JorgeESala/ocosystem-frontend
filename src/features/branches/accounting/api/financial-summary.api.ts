@@ -13,6 +13,8 @@ export interface FinancialSummaryDTO {
 
 export const getFinancialSummary = async (
   branchIds?: number[],
+  from?: string,
+  to?: string,
 ): Promise<FinancialSummaryDTO[]> => {
   const params = new URLSearchParams();
   if (branchIds && branchIds.length > 0) {
@@ -20,6 +22,8 @@ export const getFinancialSummary = async (
       params.append("branchIds", String(id));
     }
   }
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
   const query = params.toString();
   const { data } = await http.get<FinancialSummaryDTO[]>(
     `${API_BASE}/financial-summary${query ? `?${query}` : ""}`,
@@ -29,6 +33,8 @@ export const getFinancialSummary = async (
 
 export const downloadFinancialSummaryPdf = async (
   branchIds?: number[],
+  from?: string,
+  to?: string,
 ): Promise<Blob> => {
   const params = new URLSearchParams();
   if (branchIds && branchIds.length > 0) {
@@ -36,6 +42,8 @@ export const downloadFinancialSummaryPdf = async (
       params.append("branchIds", String(id));
     }
   }
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
   const query = params.toString();
   const response = await http.get<Blob>(
     `${API_BASE}/financial-summary/pdf${query ? `?${query}` : ""}`,

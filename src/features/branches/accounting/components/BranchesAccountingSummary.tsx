@@ -18,15 +18,23 @@ import {
 
 interface Props {
   selectedBranchIds: number[];
+  from?: string;
+  to?: string;
 }
 
-export const BranchesAccountingSummary = ({ selectedBranchIds }: Props) => {
+export const BranchesAccountingSummary = ({
+  selectedBranchIds,
+  from,
+  to,
+}: Props) => {
   const {
     data: rows = [],
     isLoading,
     isError,
   } = useFinancialSummary(
     selectedBranchIds.length > 0 ? selectedBranchIds : undefined,
+    from,
+    to,
   );
 
   const { download: downloadPdf } = useDownloadFinancialSummaryPdf();
@@ -48,6 +56,8 @@ export const BranchesAccountingSummary = ({ selectedBranchIds }: Props) => {
     try {
       await downloadPdf(
         selectedBranchIds.length > 0 ? selectedBranchIds : undefined,
+        from,
+        to,
       );
     } finally {
       setIsDownloading(false);

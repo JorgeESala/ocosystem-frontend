@@ -12,6 +12,7 @@ import {
   useSalesByBatch,
   useUpdateSaleOfficeStatus,
 } from "./api/sales.queries";
+import { useBatchAdjustments } from "../api/batch.queries";
 
 interface BatchRowProps {
   batch: Batch;
@@ -46,12 +47,20 @@ export const BatchRow: React.FC<BatchRowProps> = ({
     isError,
   } = useSalesByBatch(batch.id, isOpen);
 
+  const { data: adjustments = [] } = useBatchAdjustments(batch.id, {
+    enabled: isOpen,
+  });
+
   const branchName =
     branches.find((b) => b.id === batch.branchId)?.name ??
     (batch.branchId != null ? `Sucursal #${batch.branchId}` : "Sin sucursal");
 
   const chickensSold = sales.reduce((sum, s) => sum + s.quantitySold, 0);
-  const chickensRemaining = batch.chickenQuantity - chickensSold;
+  const chickensAdjusted = adjustments.reduce(
+    (sum: number, a: { quantity?: number }) => sum + (Number(a.quantity) || 0),
+    0,
+  );
+  const chickensRemaining = batch.chickenQuantity - chickensSold - chickensAdjusted;
 
   function getRemainingStyle(remaining: number, total: number) {
     if (total <= 0) return { color: "hsl(0, 80%, 50%)" };
@@ -79,6 +88,12 @@ export const BatchRow: React.FC<BatchRowProps> = ({
   const handleSaleCreated = async () => {
     await queryClient.invalidateQueries({
       queryKey: ["batchSales", batch.id],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["batches", "detail", batch.id],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["batches", "detail", batch.id, "adjustments"],
     });
   };
 
@@ -147,7 +162,7 @@ export const BatchRow: React.FC<BatchRowProps> = ({
               setSelectedBatch(batch);
             }}
           >
-            Agregar venta
+            Agregar salida
           </Button>
 
           {/* Botón Editar */}
@@ -168,7 +183,7 @@ export const BatchRow: React.FC<BatchRowProps> = ({
         </div>
       </div>
 
-      {/* Modal agregar venta */}
+      {/* Modal agregar salida (venta o baja) */}
       {selectedBatch && (
         <SaleEntryForm
           batch={selectedBatch}
@@ -207,6 +222,7 @@ export const BatchRow: React.FC<BatchRowProps> = ({
             <BatchSalesTable
               batch={batch}
               sales={sales}
+              adjustments={adjustments}
               cuentaCounts={cuentaCounts}
               onToggleOfficeStatus={handleToggleOfficeStatus}
             />

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button } from "flowbite-react";
+import { Button, ToggleSwitch } from "flowbite-react";
 import { HiClock, HiPlus } from "react-icons/hi";
 
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
@@ -45,6 +45,7 @@ export const BranchAccountsPage = () => {
 
   const defaultRange = useMemo(() => getLastDays(30), []);
   const [dateRange, setDateRange] = useState<DateRange>(defaultRange);
+  const [showFinancialDates, setShowFinancialDates] = useState(false);
 
   const {
     data = [],
@@ -152,7 +153,15 @@ export const BranchAccountsPage = () => {
           </div>
         </div>
 
-        {viewMode === "PAYABLE" && (
+        {viewMode === "FINANCIAL" && (
+          <ToggleSwitch
+            checked={showFinancialDates}
+            label="Filtrar por fechas"
+            onChange={setShowFinancialDates}
+          />
+        )}
+
+        {(viewMode === "PAYABLE" || showFinancialDates) && (
           <DateRangeFilter
             value={dateRange}
             defaultRange={defaultRange}
@@ -165,6 +174,7 @@ export const BranchAccountsPage = () => {
             onClick={() => {
               setSelectedBranches([]);
               setDateRange(defaultRange);
+              setShowFinancialDates(false);
             }}
             className="text-xs text-blue-400 hover:underline"
           >
@@ -216,6 +226,8 @@ export const BranchAccountsPage = () => {
       {viewMode === "FINANCIAL" && (
         <BranchesAccountingSummary
           selectedBranchIds={selectedBranches}
+          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
         />
       )}
 

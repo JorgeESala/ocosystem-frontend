@@ -84,13 +84,18 @@ export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {
   },
   BRANCHES: {
     label: "Sucursales",
-    description: "Traslados entre puntos de venta.",
-    overviewComponent: GenericPlaceholderOverview,
-    movementFormFields: EmptyFields,
-    entryFormFields: EmptyFields,
-    renderMovementQuantity: (mov) => <span>{mov.quantity} uds</span>,
-    HeaderStats: EmptyFields,
-    FooterStats: EmptyFields,
-    MovementsTable: EmptyMovementsTable,
+    description: "Control de aves, peso real y mermas por remesa.",
+    overviewComponent: ChickenBatchOverview,
+    renderMovementQuantity: (mov) => (
+      <div className="flex flex-col">
+        <span className="text-white">{mov.quantity} aves</span>
+        <span className="text-xs text-gray-500">{mov.weight} kg</span>
+      </div>
+    ),
+    movementFormFields: ChickenMovementFields,
+    entryFormFields: ChickenEntryFields,
+    HeaderStats: ChickenHeaderStats,
+    FooterStats: ChickenFooterStats,
+    MovementsTable: ChickenMovementsTable,
   },
 };

@@ -12,6 +12,7 @@ import {
   TextInput,
   Toast,
   ToastToggle,
+  Radio,
 } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import {
@@ -22,6 +23,7 @@ import {
 } from "../services/api";
 import { fetchEmployees } from "../services/api";
 import { useClients } from "@/features/processed/client/api/client.queries";
+import { useCreateAdjustment } from "@/features/batch/api/batch.adjustments.queries";
 import CreateClientInlineForm from "./CreateClientInlineForm";
 import { ExcelDropzone } from "@/features/branches/report-reader/components/ExcelDropzone";
 import { http } from "@/shared/api/http";
@@ -65,6 +67,10 @@ export default function SaleEntryForm({
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [detectedBatches, setDetectedBatches] = useState<ReportBatchSale[]>([]);
   const [showBatchSelector, setShowBatchSelector] = useState(false);
+  const [movementType, setMovementType] = useState<"SALE" | "ADJUSTMENT">("SALE");
+  const [adjustmentWeight, setAdjustmentWeight] = useState("");
+  const [adjustmentReason, setAdjustmentReason] = useState("MERMA");
+  const { mutateAsync: createAdjustment, isPending } = useCreateAdjustment();
   const {
     data: clients = [],
     isLoading: isLoadingClients,
@@ -106,6 +112,34 @@ export default function SaleEntryForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const saleDate = formData.date.toISOString().split("T")[0];
+
+    if (movementType === "ADJUSTMENT") {
+      const qty = parseFloat(formData.quantitySold);
+      if (!qty || qty <= 0) {
+        setToastType("error");
+        setToastMessage("La cantidad debe ser mayor a 0");
+        return;
+      }
+
+      try {
+        await createAdjustment({
+          batchId: batch.id,
+          quantity: String(qty),
+          weight: String(parseFloat(adjustmentWeight) || 0),
+          reason: adjustmentReason,
+          adjustmentDate: saleDate,
+        });
+        onSuccess?.();
+        onClose();
+      } catch {
+        setToastType("error");
+        setToastMessage("Error al registrar la baja");
+      }
+      return;
+    }
+
     if (
       !formData.quantitySold ||
       !formData.kgTotal ||
@@ -117,8 +151,6 @@ export default function SaleEntryForm({
       setToastMessage("Completa todos los campos");
       return;
     }
-
-    const saleDate = formData.date.toISOString().split("T")[0];
 
     try {
       if (formData.id) {
@@ -227,22 +259,52 @@ export default function SaleEntryForm({
   };
   return (
     <Modal show={true} onClose={onClose} size="md" popup>
-      <ModalHeader>Nueva venta - Remesa #{batch.id}</ModalHeader>
+      <ModalHeader>
+        {existingSale
+          ? `Editar venta - Remesa #${batch.id}`
+          : `Nueva salida - Remesa #${batch.id}`}
+      </ModalHeader>
 
       <ModalBody>
         <div className="space-y-3">
-          {/* Excel uploader */}
-          <ExcelDropzone
-            multiple={false}
-            onFilesSelect={(files) => handleExcelUpload(files[0])}
-            className="p-3 text-sm"
-            text={
-              isProcessingExcel
-                ? "Procesando archivo..."
-                : "Arrastra un archivo excel aquí"
-            }
-          />
-          {showBatchSelector && (
+          {/* Radio selector for sale vs adjustment */}
+          {!existingSale && (
+            <div className="flex gap-4 rounded-lg border border-gray-600 bg-gray-700 p-3">
+              <div className="flex items-center gap-2">
+                <Radio
+                  id="sale"
+                  name="movementType"
+                  checked={movementType === "SALE"}
+                  onChange={() => setMovementType("SALE")}
+                />
+                <Label htmlFor="sale">Venta / Salida</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Radio
+                  id="adjustment"
+                  name="movementType"
+                  checked={movementType === "ADJUSTMENT"}
+                  onChange={() => setMovementType("ADJUSTMENT")}
+                />
+                <Label htmlFor="adjustment">Baja / Ajuste</Label>
+              </div>
+            </div>
+          )}
+
+          {/* Excel uploader - only for sales */}
+          {movementType === "SALE" && (
+            <ExcelDropzone
+              multiple={false}
+              onFilesSelect={(files) => handleExcelUpload(files[0])}
+              className="p-3 text-sm"
+              text={
+                isProcessingExcel
+                  ? "Procesando archivo..."
+                  : "Arrastra un archivo excel aquí"
+              }
+            />
+          )}
+          {showBatchSelector && movementType === "SALE" && (
             <div className="rounded-lg border border-yellow-500 bg-yellow-900/20 p-3">
               <p className="mb-2 text-sm font-semibold text-white">
                 Se detectaron múltiples remesas en el archivo
@@ -271,114 +333,156 @@ export default function SaleEntryForm({
               onChange={handleDateChange}
             />
 
-            <Label>Encargado</Label>
-            <select
-              required
-              name="employeeId"
-              className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
-              value={formData.employeeId ?? ""}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  employeeId: e.target.value
-                    ? Number(e.target.value)
-                    : undefined,
-                }))
-              }
-            >
-              <option value="">Seleccione un encargado</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name}
-                </option>
-              ))}
-            </select>
+            {movementType === "SALE" ? (
+              <>
+                <Label>Encargado</Label>
+                <select
+                  required
+                  name="employeeId"
+                  className="rounded-lg border border-gray-600 bg-gray-700 p-2 text-white"
+                  value={formData.employeeId ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      employeeId: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    }))
+                  }
+                >
+                  <option value="">Seleccione un encargado</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </option>
+                  ))}
+                </select>
 
-            <Label>Cliente</Label>
+                <Label>Cliente</Label>
 
-            <div className="flex gap-2">
-              <Select
-                name="clientId"
-                value={formData.clientId ?? ""}
-                onChange={handleChange}
-              >
-                <option value="">
-                  {isLoadingClients
-                    ? "Cargando clientes..."
-                    : isErrorClients
-                      ? "Error al cargar clientes"
-                      : "Selecciona un cliente"}
-                </option>
+                <div className="flex gap-2">
+                  <Select
+                    name="clientId"
+                    value={formData.clientId ?? ""}
+                    onChange={handleChange}
+                  >
+                    <option value="">
+                      {isLoadingClients
+                        ? "Cargando clientes..."
+                        : isErrorClients
+                          ? "Error al cargar clientes"
+                          : "Selecciona un cliente"}
+                    </option>
 
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </Select>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name}
+                      </option>
+                    ))}
+                  </Select>
 
-              <Button
-                size="sm"
-                color="light"
-                type="button"
-                onClick={() => setShowCreateClient(true)}
-              >
-                + Nuevo
-              </Button>
-            </div>
+                  <Button
+                    size="sm"
+                    color="light"
+                    type="button"
+                    onClick={() => setShowCreateClient(true)}
+                  >
+                    + Nuevo
+                  </Button>
+                </div>
 
-            {showCreateClient && (
-              <CreateClientInlineForm
-                onCancel={() => setShowCreateClient(false)}
-                onCreated={(client) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    clientId: client.id,
-                  }));
-                  setShowCreateClient(false);
-                }}
-              />
+                {showCreateClient && (
+                  <CreateClientInlineForm
+                    onCancel={() => setShowCreateClient(false)}
+                    onCreated={(client) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        clientId: client.id,
+                      }));
+                      setShowCreateClient(false);
+                    }}
+                  />
+                )}
+
+                <Label>Pollos vendidos</Label>
+                <TextInput
+                  name="quantitySold"
+                  type="number"
+                  value={formData.quantitySold}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Label>Kilos vendidos</Label>
+                <TextInput
+                  required
+                  name="kgTotal"
+                  type="number"
+                  step="any"
+                  value={formData.kgTotal}
+                  onChange={handleChange}
+                />
+
+                <Label>Efectivo recibido</Label>
+                <TextInput
+                  name="saleTotal"
+                  type="number"
+                  step="any"
+                  value={formData.saleTotal}
+                  onChange={handleChange}
+                />
+
+                <Label>Kilos de tripa</Label>
+                <TextInput
+                  name="kgGut"
+                  type="number"
+                  step="any"
+                  value={formData.kgGut}
+                  onChange={handleChange}
+                />
+              </>
+            ) : (
+              <>
+                <Label>Cantidad (aves)</Label>
+                <TextInput
+                  name="quantitySold"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  placeholder="Ej: 5"
+                  value={formData.quantitySold}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Label>Peso (kg)</Label>
+                <TextInput
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  placeholder="Ej: 12.5"
+                  value={adjustmentWeight}
+                  onChange={(e) => setAdjustmentWeight(e.target.value)}
+                />
+
+                <Label>Motivo</Label>
+                <Select
+                  value={adjustmentReason}
+                  onChange={(e) => setAdjustmentReason(e.target.value)}
+                >
+                  <option value="MERMA">Merma natural</option>
+                  <option value="MUERTE">Muerte</option>
+                  <option value="ROTURA">Rotura / Daño</option>
+                  <option value="CONSUMO">Consumo interno</option>
+                  <option value="OTRO">Otro</option>
+                </Select>
+              </>
             )}
 
-            <Label>Pollos vendidos</Label>
-            <TextInput
-              name="quantitySold"
-              type="number"
-              value={formData.quantitySold}
-              onChange={handleChange}
-              required
-            />
-
-            <Label>Kilos vendidos</Label>
-            <TextInput
-              required
-              name="kgTotal"
-              type="number"
-              step="any"
-              value={formData.kgTotal}
-              onChange={handleChange}
-            />
-
-            <Label>Efectivo recibido</Label>
-            <TextInput
-              name="saleTotal"
-              type="number"
-              step="any"
-              value={formData.saleTotal}
-              onChange={handleChange}
-            />
-
-            <Label>Kilos de tripa</Label>
-            <TextInput
-              name="kgGut"
-              type="number"
-              step="any"
-              value={formData.kgGut}
-              onChange={handleChange}
-            />
-
             <div className="mt-2 flex justify-between">
-              <Button type="submit">Guardar</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Guardando..." : "Guardar"}
+              </Button>
               <Button type="button" color="gray" onClick={onClose}>
                 Cancelar
               </Button>
