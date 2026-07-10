@@ -3,6 +3,8 @@ import {
   getFinancialSummary,
   downloadFinancialSummaryPdf,
   triggerDownload,
+  getCedisFinancialSummary,
+  downloadCedisFinancialSummaryPdf,
 } from "./financial-summary.api";
 
 export const useFinancialSummary = (
@@ -17,29 +19,41 @@ export const useFinancialSummary = (
   });
 };
 
+export const useCedisFinancialSummary = (
+  cedisIds?: number[],
+  entityType?: string,
+) => {
+  return useQuery({
+    queryKey: ["cedisFinancialSummary", cedisIds, entityType],
+    queryFn: () => getCedisFinancialSummary(cedisIds, entityType),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
 const MONTHS_ES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
 const buildFilename = (
-  branchIds: number[] | undefined,
-  rows: { branchName: string }[],
+  ids: number[] | undefined,
+  rows: { branchName?: string; cedisName?: string }[],
+  prefix: string,
 ): string => {
   const now = new Date();
   const datePart = `${now.getDate()}_de_${MONTHS_ES[now.getMonth()]}`;
 
-  const allBranches = !branchIds || branchIds.length === 0;
-  const namePart = allBranches
-    ? "todas_sucursales"
+  const allIds = !ids || ids.length === 0;
+  const namePart = allIds
+    ? "todos"
     : rows
-        .map((r) => r.branchName)
+        .map((r) => r.branchName ?? r.cedisName)
         .filter(Boolean)
         .join("_y_")
         .replace(/\s+/g, "_")
         .toLowerCase();
 
-  return `reporte_financiero_${namePart}_${datePart}.pdf`;
+  return `${prefix}_${namePart}_${datePart}.pdf`;
 };
 
 export const useDownloadFinancialSummaryPdf = () => {
@@ -51,7 +65,21 @@ export const useDownloadFinancialSummaryPdf = () => {
         from,
         to,
       );
-      const filename = buildFilename(branchIds, rows);
+      const filename = buildFilename(branchIds, rows, "reporte_financiero");
+      triggerDownload(blob, filename);
+    },
+  };
+};
+
+export const useDownloadCedisFinancialSummaryPdf = () => {
+  return {
+    download: async (cedisIds?: number[], entityType?: string) => {
+      const blob = await downloadCedisFinancialSummaryPdf(cedisIds, entityType);
+      const rows = await getCedisFinancialSummary(
+        cedisIds && cedisIds.length > 0 ? cedisIds : undefined,
+        entityType,
+      );
+      const filename = buildFilename(cedisIds, rows, "reporte_financiero_cedis");
       triggerDownload(blob, filename);
     },
   };

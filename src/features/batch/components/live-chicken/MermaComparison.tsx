@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Datepicker,
   Spinner,
@@ -41,7 +41,10 @@ function getMermaColor(grams: number, target: "conTripa" | "sinTripa"): string {
   return "text-red-400";
 }
 
-function getMermaBgColor(grams: number, target: "conTripa" | "sinTripa"): string {
+function getMermaBgColor(
+  grams: number,
+  target: "conTripa" | "sinTripa",
+): string {
   const t = MERMA_THRESHOLDS[target];
   if (grams <= t.green) return "bg-green-900/30 text-green-400";
   if (grams <= t.yellow) return "bg-yellow-900/30 text-yellow-400";
@@ -81,11 +84,25 @@ function KpiCard({
   );
 }
 
+type SortField =
+  | "batchId"
+  | "supplierName"
+  | "entryDate"
+  | "chickensReceived"
+  | "weightReceived"
+  | "weightSold"
+  | "totalKgGut"
+  | "mermaGramsPerChicken"
+  | "mermaConTripa"
+  | "mermaSinTripa";
+
 export default function MermaComparison() {
   const [report, setReport] = useState<MermaReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
+  const [sortField, setSortField] = useState<SortField>("entryDate");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [startDate, setStartDate] = useState<Date>(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -147,26 +164,56 @@ export default function MermaComparison() {
       ? [
           {
             name: "Antes",
-            "Merma (g/ave)": before.avgMermaGramsPerChicken,
             "Merma con tripa (g/ave)": Math.round(
               before.avgMermaConTripa * 1000,
+            ),
+            "Merma sin tripa (g/ave)": Math.round(
+              before.avgMermaSinTripa * 1000,
             ),
           },
           {
             name: "Despues",
-            "Merma (g/ave)": after.avgMermaGramsPerChicken,
             "Merma con tripa (g/ave)": Math.round(
               after.avgMermaConTripa * 1000,
+            ),
+            "Merma sin tripa (g/ave)": Math.round(
+              after.avgMermaSinTripa * 1000,
             ),
           },
         ]
       : [];
 
-  const sortedBatches = report?.batches
-    ? [...report.batches].sort(
-        (a, b) => b.mermaGramsPerChicken - a.mermaGramsPerChicken,
-      )
-    : [];
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return null;
+    return (
+      <span className="ml-1 text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>
+    );
+  };
+
+  const sortedBatches = useMemo(() => {
+    if (!report?.batches) return [];
+    return [...report.batches].sort((a, b) => {
+      const aVal = a[sortField];
+      const bVal = b[sortField];
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return sortDir === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+      return sortDir === "asc"
+        ? (aVal as number) - (bVal as number)
+        : (bVal as number) - (aVal as number);
+    });
+  }, [report?.batches, sortField, sortDir]);
 
   return (
     <div className="space-y-6">
@@ -227,14 +274,20 @@ export default function MermaComparison() {
               value={`${before?.avgMermaGramsPerChicken ?? 0} g/ave`}
               subtitle={`${before?.totalBatches ?? 0} remesas · ${before?.totalChickensReceived ?? 0} aves`}
               icon={HiScale}
-              colorClass={getMermaBgColor(before?.avgMermaGramsPerChicken ?? 0, "conTripa")}
+              colorClass={getMermaBgColor(
+                before?.avgMermaGramsPerChicken ?? 0,
+                "conTripa",
+              )}
             />
             <KpiCard
               title="Merma despues"
               value={`${after?.avgMermaGramsPerChicken ?? 0} g/ave`}
               subtitle={`${after?.totalBatches ?? 0} remesas · ${after?.totalChickensReceived ?? 0} aves`}
               icon={HiScale}
-              colorClass={getMermaBgColor(after?.avgMermaGramsPerChicken ?? 0, "conTripa")}
+              colorClass={getMermaBgColor(
+                after?.avgMermaGramsPerChicken ?? 0,
+                "conTripa",
+              )}
             />
             <KpiCard
               title="Total merma"
@@ -296,13 +349,13 @@ export default function MermaComparison() {
                   />
                   <Legend />
                   <Bar
-                    dataKey="Merma (g/ave)"
-                    fill="#F59E0B"
+                    dataKey="Merma con tripa (g/ave)"
+                    fill="#EF4444"
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
-                    dataKey="Merma con tripa (g/ave)"
-                    fill="#EF4444"
+                    dataKey="Merma sin tripa (g/ave)"
+                    fill="#F59E0B"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -319,29 +372,69 @@ export default function MermaComparison() {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableHeadCell>Remesa</TableHeadCell>
-                      <TableHeadCell>Proveedor</TableHeadCell>
-                      <TableHeadCell>Fecha</TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort("batchId")}
+                      >
+                        Remesa
+                        <SortIcon field="batchId" />
+                      </TableHeadCell>
+
+                      <TableHeadCell
+                        className="cursor-pointer select-none"
+                        onClick={() => toggleSort("entryDate")}
+                      >
+                        Fecha
+                        <SortIcon field="entryDate" />
+                      </TableHeadCell>
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("chickensReceived")}
+                      >
                         Pollos
+                        <SortIcon field="chickensReceived" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("weightReceived")}
+                      >
                         Recibido (kg)
+                        <SortIcon field="weightReceived" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("weightSold")}
+                      >
                         Vendido (kg)
+                        <SortIcon field="weightSold" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("totalKgGut")}
+                      >
                         Tripa (kg)
+                        <SortIcon field="totalKgGut" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("mermaGramsPerChicken")}
+                      >
                         Merma (g/ave)
+                        <SortIcon field="mermaGramsPerChicken" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("mermaConTripa")}
+                      >
                         Con tripa (g/ave)
+                        <SortIcon field="mermaConTripa" />
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
+                      <TableHeadCell
+                        className="cursor-pointer text-right select-none"
+                        onClick={() => toggleSort("mermaSinTripa")}
+                      >
                         Sin tripa (g/ave)
+                        <SortIcon field="mermaSinTripa" />
                       </TableHeadCell>
                     </TableRow>
                   </TableHead>
@@ -349,7 +442,6 @@ export default function MermaComparison() {
                     {sortedBatches.map((b: MermaBatchDetail) => (
                       <TableRow key={b.batchId} className="text-gray-300">
                         <TableCell>#{b.batchId}</TableCell>
-                        <TableCell>{b.supplierName}</TableCell>
                         <TableCell>
                           {new Date(
                             `${b.entryDate}T00:00:00`,

@@ -21,6 +21,7 @@ import DateRangeFilter, {
 import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { CreateEggAccountsPayableModal } from "../components/CreateEggAccountsPayableModal";
+import { CedisFinancialSummary } from "@/features/branches/accounting/components/CedisFinancialSummary";
 
 const EGG_CEDIS_ORIGINAL_ID = 1;
 const EGG_CEDIS_CHUNHUHUB_ID = 3;
@@ -30,6 +31,8 @@ const EGG_CEDIS_IDS = [
   EGG_CEDIS_CHUNHUHUB_ID,
   EGG_CEDIS_MORELOS_ID,
 ];
+
+type ViewMode = "RECEIVABLE" | "PAYABLE" | "FINANCIAL";
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
@@ -46,7 +49,7 @@ export const EggAccountsPage = () => {
 
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const [receivable, setReceivable] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("RECEIVABLE");
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [selectedSuppliers, setSelectedSuppliers] = useState<number[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -61,12 +64,14 @@ export const EggAccountsPage = () => {
 
   const internalClients = clients.filter((c) => c.isInternalBranch);
 
-  const handleToggleReceivable = (next: boolean) => {
-    if (next === receivable) return;
-    setReceivable(next);
-    if (next) {
+  const receivable = viewMode === "RECEIVABLE";
+
+  const handleSetViewMode = (next: ViewMode) => {
+    if (next === viewMode) return;
+    setViewMode(next);
+    if (next === "RECEIVABLE") {
       setSelectedSuppliers([]);
-    } else {
+    } else if (next === "PAYABLE") {
       setSelectedClients([]);
     }
   };
@@ -183,106 +188,119 @@ export const EggAccountsPage = () => {
 
       <div className="flex gap-2">
         <Button
-          color={receivable ? "blue" : "gray"}
-          onClick={() => handleToggleReceivable(true)}
+          color={viewMode === "RECEIVABLE" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("RECEIVABLE")}
         >
           Por cobrar
         </Button>
 
         <Button
-          color={!receivable ? "blue" : "gray"}
-          onClick={() => handleToggleReceivable(false)}
+          color={viewMode === "PAYABLE" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("PAYABLE")}
         >
           Por pagar
         </Button>
+
+        <Button
+          color={viewMode === "FINANCIAL" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("FINANCIAL")}
+        >
+          Resumen financiero
+        </Button>
       </div>
 
-      <AccountingSummaryCards
-        data={data}
-        filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
-      />
+      {viewMode === "FINANCIAL" ? (
+        <CedisFinancialSummary entityType="EGGCEDIS" />
+      ) : (
+        <>
+          <AccountingSummaryCards
+            data={data}
+            filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
+          />
 
-      <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
-        {receivable ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">
-              Clientes internos:
-            </span>
-            <div className="w-80">
-              <InternalClientMultiSelect
-                clients={internalClients}
-                selected={selectedClients}
-                onChange={setSelectedClients}
-              />
-            </div>
+          <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
+            {receivable ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-300">
+                  Clientes internos:
+                </span>
+                <div className="w-80">
+                  <InternalClientMultiSelect
+                    clients={internalClients}
+                    selected={selectedClients}
+                    onChange={setSelectedClients}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-300">
+                  Proveedores:
+                </span>
+                <div className="w-80">
+                  <SupplierMultiSelect
+                    suppliers={suppliers}
+                    selected={selectedSuppliers}
+                    onChange={setSelectedSuppliers}
+                  />
+                </div>
+              </div>
+            )}
+
+            <DateRangeFilter
+              value={dateRange}
+              defaultRange={defaultRange}
+              onChange={setDateRange}
+            />
+
+            {hasFilter && (
+              <button
+                onClick={() => {
+                  if (receivable) {
+                    setSelectedClients([]);
+                  } else {
+                    setSelectedSuppliers([]);
+                  }
+                  setDateRange(defaultRange);
+                }}
+                className="text-xs text-blue-400 hover:underline"
+              >
+                Limpiar filtros
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">
-              Proveedores:
-            </span>
-            <div className="w-80">
-              <SupplierMultiSelect
-                suppliers={suppliers}
-                selected={selectedSuppliers}
-                onChange={setSelectedSuppliers}
+
+          <div className="rounded-lg bg-gray-800 shadow">
+            {isLoading ? (
+              <p className="p-6 text-sm text-gray-500">Cargando...</p>
+            ) : accountsError ? (
+              <div className="p-6">
+                <AccountingErrorAlert
+                  error={accountsErrorDetail}
+                  onRetry={() => refetchAccounts()}
+                />
+              </div>
+            ) : data.length === 0 ? (
+              <p className="p-6 text-center text-sm text-gray-400">
+                {hasFilter
+                  ? "No hay cuentas para los filtros seleccionados."
+                  : "No hay cuentas abiertas."}
+              </p>
+            ) : (
+              <AccountsOpenTable
+                data={data}
+                onPay={handlePay}
+                onViewHistory={handleViewHistory}
               />
-            </div>
-          </div>
-        )}
-
-        <DateRangeFilter
-          value={dateRange}
-          defaultRange={defaultRange}
-          onChange={setDateRange}
-        />
-
-        {hasFilter && (
-          <button
-            onClick={() => {
-              if (receivable) {
-                setSelectedClients([]);
-              } else {
-                setSelectedSuppliers([]);
-              }
-              setDateRange(defaultRange);
-            }}
-            className="text-xs text-blue-400 hover:underline"
-          >
-            Limpiar filtros
-          </button>
-        )}
-      </div>
-
-      <div className="rounded-lg bg-gray-800 shadow">
-        {isLoading ? (
-          <p className="p-6 text-sm text-gray-500">Cargando...</p>
-        ) : accountsError ? (
-          <div className="p-6">
-            <AccountingErrorAlert
-              error={accountsErrorDetail}
-              onRetry={() => refetchAccounts()}
+            )}
+            <AccountsPayableHistoryDrawer
+              open={historyOpen}
+              onClose={() => setHistoryOpen(false)}
+              account={selectedAccountForHistory}
             />
           </div>
-        ) : data.length === 0 ? (
-          <p className="p-6 text-center text-sm text-gray-400">
-            {hasFilter
-              ? "No hay cuentas para los filtros seleccionados."
-              : "No hay cuentas abiertas."}
-          </p>
-        ) : (
-          <AccountsOpenTable
-            data={data}
-            onPay={handlePay}
-            onViewHistory={handleViewHistory}
-          />
-        )}
-        <AccountsPayableHistoryDrawer
-          open={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-          account={selectedAccountForHistory}
-        />
-      </div>
+        </>
+      )}
 
       <CreateEggAccountsPayableModal
         open={openCreateModal}

@@ -13,6 +13,7 @@ import { RecentPaymentsDrawer } from "../../../accounting/components/RecentPayme
 import { useOpenAccounts } from "../../../accounting/api/accounts-payable.queries";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { AccountsPayableHistoryDrawer } from "../../../accounting/components/AccountsPayableHistoryDrawer";
+import { CedisFinancialSummary } from "@/features/branches/accounting/components/CedisFinancialSummary";
 import { useClients } from "@/core/client/api/client.queries";
 import { useSuppliers } from "@/core/supplier/supplier.queries";
 import SupplierMultiSelect from "@/components/SupplierMultiSelect";
@@ -26,7 +27,7 @@ import { useWeeklyWeightDiff } from "../weight-diff/weight-diff.queries";
 
 const CEDIS_ID = 2;
 
-type ViewMode = "RECEIVABLE" | "PAYABLE" | "WEIGHT_DIFF";
+type ViewMode = "RECEIVABLE" | "PAYABLE" | "WEIGHT_DIFF" | "FINANCIAL";
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
@@ -235,6 +236,13 @@ export const AccountsPage = () => {
         >
           N-C
         </Button>
+
+        <Button
+          color={viewMode === "FINANCIAL" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("FINANCIAL")}
+        >
+          Resumen financiero
+        </Button>
       </div>
 
       {!isWeightDiff && (
@@ -381,6 +389,10 @@ export const AccountsPage = () => {
             </>
           )}
         </div>
+      )}
+
+      {viewMode === "FINANCIAL" && (
+        <CedisFinancialSummary entityType="CEDIS" />
       )}
 
       <CreateAccountsPayableModal
