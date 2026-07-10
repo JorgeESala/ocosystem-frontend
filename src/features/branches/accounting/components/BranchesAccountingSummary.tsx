@@ -9,7 +9,7 @@ import {
   TableRow,
   TableCell,
 } from "flowbite-react";
-import { HiDocumentDownload } from "react-icons/hi";
+import { HiDocumentDownload, HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {
   useFinancialSummary,
@@ -39,6 +39,7 @@ export const BranchesAccountingSummary = ({
 
   const { download: downloadPdf } = useDownloadFinancialSummaryPdf();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [expandedBranch, setExpandedBranch] = useState<number | null>(null);
 
   const totalDebt = rows.reduce((sum, r) => sum + Number(r.debt), 0);
   const totalPending = rows.reduce(
@@ -189,27 +190,99 @@ export const BranchesAccountingSummary = ({
             <TableHeadCell>Balance neto</TableHeadCell>
           </TableHead>
           <TableBody>
-            {rows.map((m) => (
-              <TableRow key={m.branchId}>
-                <TableCell className="font-medium text-white">
-                  {m.branchName}
-                </TableCell>
-                <TableCell className="text-red-300">
-                  {formatMXN(m.debt)}
-                </TableCell>
-                <TableCell className="text-yellow-300">
-                  {formatMXN(m.pendingAmount)}
-                </TableCell>
-                <TableCell className="text-blue-300">
-                  {formatMXN(m.inventoryValue)}
-                </TableCell>
-                <TableCell
-                  className={`font-semibold ${m.netBalance >= 0 ? "text-green-400" : "text-red-400"}`}
-                >
-                  {formatMXN(m.netBalance)}
-                </TableCell>
-              </TableRow>
-            ))}
+            {rows.map((m) => {
+              const hasBreakdown =
+                m.inventoryBreakdown && m.inventoryBreakdown.length > 0;
+              const isExpanded = expandedBranch === m.branchId;
+
+              return (
+                <>
+                  <TableRow
+                    key={m.branchId}
+                    className={hasBreakdown ? "cursor-pointer hover:bg-gray-700/40" : ""}
+                    onClick={() =>
+                      hasBreakdown &&
+                      setExpandedBranch(isExpanded ? null : m.branchId)
+                    }
+                  >
+                    <TableCell className="font-medium text-white">
+                      <span className="flex items-center gap-2">
+                        {hasBreakdown &&
+                          (isExpanded ? (
+                            <HiChevronUp size={14} className="text-gray-400" />
+                          ) : (
+                            <HiChevronDown size={14} className="text-gray-400" />
+                          ))}
+                        {m.branchName}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-red-300">
+                      {formatMXN(m.debt)}
+                    </TableCell>
+                    <TableCell className="text-yellow-300">
+                      {formatMXN(m.pendingAmount)}
+                    </TableCell>
+                    <TableCell className="text-blue-300">
+                      {formatMXN(m.inventoryValue)}
+                    </TableCell>
+                    <TableCell
+                      className={`font-semibold ${m.netBalance >= 0 ? "text-green-400" : "text-red-400"}`}
+                    >
+                      {formatMXN(m.netBalance)}
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && hasBreakdown && (
+                    <TableRow key={`${m.branchId}-breakdown`}>
+                      <TableCell colSpan={5}>
+                        <div className="ml-6 rounded border border-blue-800 bg-blue-950/10 p-3">
+                          <p className="mb-2 text-xs font-semibold text-blue-400">
+                            Desglose de inventario — {m.branchName}
+                          </p>
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHead>
+                                <TableHeadCell>Remesa</TableHeadCell>
+                                <TableHeadCell>Fecha</TableHeadCell>
+                                <TableHeadCell>Iniciales</TableHeadCell>
+                                <TableHeadCell>Restantes</TableHeadCell>
+                                <TableHeadCell>Costo total</TableHeadCell>
+                                <TableHeadCell>Disponible</TableHeadCell>
+                              </TableHead>
+                              <TableBody>
+                                {m.inventoryBreakdown!.map((item) => (
+                                  <TableRow key={item.batchId}>
+                                    <TableCell className="font-medium text-white">
+                                      #{item.batchId}
+                                    </TableCell>
+                                    <TableCell className="text-gray-300">
+                                      {new Date(
+                                        `${item.entryDate}T00:00:00`,
+                                      ).toLocaleDateString("es-MX")}
+                                    </TableCell>
+                                    <TableCell className="text-gray-300">
+                                      {item.initialQuantity}
+                                    </TableCell>
+                                    <TableCell className="text-blue-300 font-medium">
+                                      {item.remainingQuantity}
+                                    </TableCell>
+                                    <TableCell className="text-gray-300">
+                                      {formatMXN(item.totalCost)}
+                                    </TableCell>
+                                    <TableCell className="text-blue-300 font-semibold">
+                                      {formatMXN(item.availableCost)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

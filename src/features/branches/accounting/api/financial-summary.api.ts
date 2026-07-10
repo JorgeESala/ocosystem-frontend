@@ -2,6 +2,17 @@ import { http } from "@/shared/api/http";
 
 const API_BASE = "/api/read/accounts-payable";
 
+export interface InventoryBreakdownDTO {
+  batchId: number;
+  entryDate: string;
+  provider: string;
+  initialQuantity: number;
+  soldQuantity: number;
+  remainingQuantity: number;
+  totalCost: number;
+  availableCost: number;
+}
+
 export interface FinancialSummaryDTO {
   branchId: number;
   branchName: string;
@@ -9,6 +20,7 @@ export interface FinancialSummaryDTO {
   pendingAmount: number;
   inventoryValue: number;
   netBalance: number;
+  inventoryBreakdown: InventoryBreakdownDTO[];
 }
 
 export const getFinancialSummary = async (
