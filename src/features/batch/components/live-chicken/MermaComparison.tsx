@@ -415,13 +415,7 @@ export default function MermaComparison() {
                         Tripa (kg)
                         <SortIcon field="totalKgGut" />
                       </TableHeadCell>
-                      <TableHeadCell
-                        className="cursor-pointer text-right select-none"
-                        onClick={() => toggleSort("mermaGramsPerChicken")}
-                      >
-                        Merma (g/ave)
-                        <SortIcon field="mermaGramsPerChicken" />
-                      </TableHeadCell>
+
                       <TableHeadCell
                         className="cursor-pointer text-right select-none"
                         onClick={() => toggleSort("mermaConTripa")}
@@ -459,11 +453,7 @@ export default function MermaComparison() {
                         <TableCell className="text-right">
                           {b.totalKgGut.toFixed(1)}
                         </TableCell>
-                        <TableCell
-                          className={`text-right font-medium ${getMermaColor(b.mermaGramsPerChicken, "conTripa")}`}
-                        >
-                          {b.mermaGramsPerChicken.toFixed(0)}
-                        </TableCell>
+
                         <TableCell
                           className={`text-right font-medium ${getMermaColor(Math.round(b.mermaConTripa * 1000), "conTripa")}`}
                         >
