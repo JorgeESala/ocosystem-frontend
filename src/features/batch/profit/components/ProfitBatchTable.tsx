@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import type { BusinessUnitType } from "@/features/batch/types.batch";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
+import { BatchPreviewDrawer } from "@/features/batch/components/BatchPreviewDrawer";
 
 interface Props {
   details: BatchProfitDetail[];
@@ -71,6 +72,8 @@ const ColumnHeaderWithTooltip: React.FC<ColumnHeaderWithTooltipProps> = ({
 );
 
 export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
+  const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
+
   if (details.length === 0) {
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
@@ -89,6 +92,7 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
   const firstMargin = first.totalSalesInRange - first.computedCostForRange;
 
   return (
+    <>
     <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-800">
       <Table striped>
         <TableHead>
@@ -244,7 +248,12 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 className="bg-gray-800 text-white hover:bg-gray-700"
               >
                 <TableCell className="font-medium text-white">
-                  #{row.batchId}
+                  <button
+                    onClick={() => setPreviewBatchId(row.batchId)}
+                    className="text-blue-400 hover:text-blue-300 hover:underline"
+                  >
+                    #{row.batchId}
+                  </button>
                 </TableCell>
                 <TableCell className="text-gray-300">
                   {row.entityName}
@@ -287,5 +296,12 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
         </TableBody>
       </Table>
     </div>
+    <BatchPreviewDrawer
+      open={previewBatchId != null}
+      onClose={() => setPreviewBatchId(null)}
+      batchId={previewBatchId}
+      unitType={unitType}
+    />
+    </>
   );
 };

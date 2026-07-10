@@ -13,6 +13,13 @@ export const getBatches = async (unit: string) => {
   return data;
 };
 
+export const getBatchById = async (id: number): Promise<import("../types.batch").BatchResponseDTO> => {
+  const { data } = await http.get<import("../types.batch").BatchResponseDTO>(
+    `${API_BASE}/batches/${id}`,
+  );
+  return data;
+};
+
 export const createBatch = async (payload: any) => {
   const { data } = await http.post(`${API_BASE}/batches`, payload);
   return data;

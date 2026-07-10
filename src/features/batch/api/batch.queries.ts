@@ -8,11 +8,21 @@ import {
 import * as api from "./batch.api";
 import { batchKeys } from "./batch.keys";
 
+import type { BatchResponseDTO } from "../types.batch";
+
 // Hook para obtener remesas
 export const useBatches = (unit: string) => {
   return useQuery({
     queryKey: batchKeys.lists(unit),
     queryFn: () => api.getBatches(unit),
+  });
+};
+
+export const useBatchById = (id: number | null) => {
+  return useQuery({
+    queryKey: batchKeys.details(id ?? 0),
+    queryFn: () => api.getBatchById(id!),
+    enabled: id != null && id > 0,
   });
 };
 

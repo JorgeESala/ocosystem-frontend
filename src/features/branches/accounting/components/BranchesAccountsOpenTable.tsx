@@ -15,6 +15,8 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
+import { SourceBadge } from "@/features/accounting/components/SourceBadge";
+import { BatchPreviewDrawer } from "@/features/batch/components/BatchPreviewDrawer";
 
 interface Props {
   data: AccountsPayableResponse[];
@@ -28,6 +30,7 @@ export const BranchesAccountsOpenTable = ({
   onViewHistory,
 }: Props) => {
   const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
+  const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
 
   const sortedData = useMemo(() => {
     const copy = [...data];
@@ -43,9 +46,11 @@ export const BranchesAccountsOpenTable = ({
   }
 
   return (
+    <>
     <Table>
       <TableHead>
         <TableHeadCell>Relación</TableHeadCell>
+        <TableHeadCell>Origen</TableHeadCell>
         <TableHeadCell>Total</TableHeadCell>
         <TableHeadCell>Saldo</TableHeadCell>
         <TableHeadCell>
@@ -72,6 +77,14 @@ export const BranchesAccountsOpenTable = ({
           <TableRow key={row.id}>
             <TableCell>
               {row.debtorName} → {row.creditorName}
+            </TableCell>
+
+            <TableCell>
+              <SourceBadge
+                sourceType={row.sourceType}
+                sourceBatchId={row.sourceBatchId}
+                onOpenBatch={(id) => setPreviewBatchId(id)}
+              />
             </TableCell>
 
             <TableCell>{formatMXN(row.totalAmount)}</TableCell>
@@ -111,5 +124,11 @@ export const BranchesAccountsOpenTable = ({
         ))}
       </TableBody>
     </Table>
+    <BatchPreviewDrawer
+      open={previewBatchId != null}
+      onClose={() => setPreviewBatchId(null)}
+      batchId={previewBatchId}
+    />
+    </>
   );
 };

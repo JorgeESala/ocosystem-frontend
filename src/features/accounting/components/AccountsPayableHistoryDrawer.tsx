@@ -12,6 +12,9 @@ import {
   type AccountsPayableResponse,
 } from "../../live-chicken/accounting/accounts-payable/types";
 import { useAccountsPayableMovements } from "../api/movements.queries";
+import { SourceBadge } from "./SourceBadge";
+import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
+import { useState } from "react";
 
 interface Props {
   open: boolean;
@@ -25,8 +28,10 @@ export const AccountsPayableHistoryDrawer = ({
   account,
 }: Props) => {
   const { data, isLoading } = useAccountsPayableMovements(account?.id);
+  const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
 
   return (
+    <>
     <Drawer
       open={open}
       onClose={onClose}
@@ -41,9 +46,16 @@ export const AccountsPayableHistoryDrawer = ({
             <p className="text-sm text-gray-500">
               {account.debtorName} → {account.creditorName}
             </p>
-            <p className="text-sm">
-              Total: <strong>{formatMXN(account.totalAmount)}</strong>
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm">
+                Total: <strong>{formatMXN(account.totalAmount)}</strong>
+              </p>
+              <SourceBadge
+                sourceType={account.sourceType}
+                sourceBatchId={account.sourceBatchId}
+                onOpenBatch={(id) => setPreviewBatchId(id)}
+              />
+            </div>
             <p className="text-sm">
               Saldo actual:{" "}
               <strong className="text-blue-600">
@@ -125,5 +137,11 @@ export const AccountsPayableHistoryDrawer = ({
         )}
       </DrawerItems>
     </Drawer>
+    <BatchPreviewDrawer
+      open={previewBatchId != null}
+      onClose={() => setPreviewBatchId(null)}
+      batchId={previewBatchId}
+    />
+    </>
   );
 };

@@ -20,6 +20,8 @@ import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
+import { SourceBadge } from "./SourceBadge";
+import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
 interface Props {
   data: AccountsPayableResponse[];
   onPay: (account: AccountsPayableResponse) => void;
@@ -32,6 +34,7 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
     null,
   );
   const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
+  const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
 
   const { data: solicitors = [] } = useSolicitors();
   const updateSolicitorMutation = useUpdateAccountsPayableSolicitor();
@@ -60,9 +63,11 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
   }
 
   return (
+    <>
     <Table>
       <TableHead>
         <TableHeadCell>Relación</TableHeadCell>
+        <TableHeadCell>Origen</TableHeadCell>
         <TableHeadCell>Solicitante</TableHeadCell>
         <TableHeadCell>Total</TableHeadCell>
         <TableHeadCell>Saldo</TableHeadCell>
@@ -90,6 +95,14 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
           <TableRow key={row.id}>
             <TableCell>
               {row.debtorName} → {row.creditorName}
+            </TableCell>
+
+            <TableCell>
+              <SourceBadge
+                sourceType={row.sourceType}
+                sourceBatchId={row.sourceBatchId}
+                onOpenBatch={(id) => setPreviewBatchId(id)}
+              />
             </TableCell>
 
             <TableCell>
@@ -181,5 +194,11 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
         ))}
       </TableBody>
     </Table>
+    <BatchPreviewDrawer
+      open={previewBatchId != null}
+      onClose={() => setPreviewBatchId(null)}
+      batchId={previewBatchId}
+    />
+    </>
   );
 };

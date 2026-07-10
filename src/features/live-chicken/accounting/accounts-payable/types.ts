@@ -49,6 +49,7 @@ export interface AccountsPayableResponse {
   balance: number;
   sourceType?: AccountsPayableSourceType;
   sourceId?: number;
+  sourceBatchId?: number;
   solicitorName?: string;
   solicitorId?: number;
   date: string;
