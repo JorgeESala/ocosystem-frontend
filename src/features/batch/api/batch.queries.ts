@@ -8,8 +8,6 @@ import {
 import * as api from "./batch.api";
 import { batchKeys } from "./batch.keys";
 
-import type { BatchResponseDTO } from "../types.batch";
-
 // Hook para obtener remesas
 export const useBatches = (unit: string) => {
   return useQuery({

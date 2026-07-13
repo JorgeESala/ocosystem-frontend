@@ -16,13 +16,15 @@ export interface BusinessConfig {
   slug: string;
   icon: IconType;
   menu?: BusinessMenuItem[];
+  hasTasks?: boolean;
 }
 
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { HiClipboardList, HiUserGroup } from "react-icons/hi";
+import { HiClipboardList, HiClipboardCheck, HiUserGroup } from "react-icons/hi";
 
 export const BASE_MENU = [
+  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
@@ -30,6 +32,7 @@ export const BASE_MENU = [
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
 const BRANCHES_MENU = [
+  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "checklist", label: "Checklist diario", icon: HiClipboardList },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
@@ -41,6 +44,7 @@ const BRANCHES_MENU = [
 ];
 
 const LIVE_CHICKEN_MENU = [
+  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
@@ -50,6 +54,7 @@ const LIVE_CHICKEN_MENU = [
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
 const EGG_MENU = [
+  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
@@ -66,6 +71,7 @@ export const BUSINESSES: BusinessConfig[] = [
     slug: "sucursales",
     icon: FaStore,
     menu: BRANCHES_MENU,
+    hasTasks: true,
   },
   {
     key: "LIVE_CHICKEN",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BatchTable } from "../features/batch/branch/BatchTable";
 import BatchEntryForm from "../features/batch/branch/BatchEntryForm";
@@ -24,12 +25,15 @@ import { useSalesByBatches } from "@/features/batch/branch/api/sales.queries";
 import { getCuentaKey } from "@/features/batch/branch/utils/cuenta";
 
 export default function SalesAndBatches() {
+  const [searchParams] = useSearchParams();
   const [openModal, setOpenModal] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(
     new Date(new Date().setDate(new Date().getDate() - 30)),
   );
   const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(
+    !!searchParams.get("branch"),
+  );
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
   const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
     useState(true);
@@ -40,7 +44,9 @@ export default function SalesAndBatches() {
     return () => clearTimeout(timeout);
   }, [expandedBatchId]);
 
-  const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
+  const [selectedBranches, setSelectedBranches] = useState<number[]>(
+    searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
+  );
   const queryClient = useQueryClient();
   const { data: branches } = useBranches();
 

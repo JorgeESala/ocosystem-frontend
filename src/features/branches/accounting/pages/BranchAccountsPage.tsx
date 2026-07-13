@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button, ToggleSwitch } from "flowbite-react";
 import { HiClock, HiPlus } from "react-icons/hi";
 
@@ -29,8 +30,11 @@ const isSameDay = (a: Date, b: Date) =>
   a.getDate() === b.getDate();
 
 export const BranchAccountsPage = () => {
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>("PAYABLE");
-  const [selectedBranches, setSelectedBranches] = useState<number[]>([]);
+  const [selectedBranches, setSelectedBranches] = useState<number[]>(
+    searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
+  );
   const { data: branches, isLoading: loadingBranches } = useBranches();
 
   const [openCreateModal, setOpenCreateModal] = useState(false);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Alert, Button, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchExpenseModal from "../components/BranchExpenseModal";
@@ -15,8 +16,11 @@ import { buildBranchExpenseSummary } from "../utils/expense-summary";
 import { formatHumanDate } from "@/utils/date.utils";
 
 export default function BranchExpensesPage() {
+  const [searchParams] = useSearchParams();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
-  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>(
+    searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
+  );
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [activeFilters, setActiveFilters] =

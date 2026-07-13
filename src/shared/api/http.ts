@@ -22,23 +22,17 @@ http.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   const currentPath = window.location.pathname;
 
-  // 1. Manejo de Autenticación (Lo que ya tenías)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // 2. Lógica de Multi-tenancy: Detectar el área por la URL
-  // Buscamos si la ruta actual empieza con alguno de nuestros prefijos
-  const tenantKey = Object.keys(TENANT_MAP).find((prefix) =>
-    currentPath.startsWith(prefix),
-  );
-
-  if (tenantKey) {
-    config.headers["X-Business-Code"] = TENANT_MAP[tenantKey];
-  } else {
-    // Si no estamos en una ruta específica, podemos enviar "public"
-    // para que el Backend no pierda tiempo adivinando.
-    config.headers["X-Business-Code"] = "public";
+  if (!config.headers["X-Business-Code"]) {
+    const tenantKey = Object.keys(TENANT_MAP).find((prefix) =>
+      currentPath.startsWith(prefix),
+    );
+    config.headers["X-Business-Code"] = tenantKey
+      ? TENANT_MAP[tenantKey]
+      : "public";
   }
 
   return config;

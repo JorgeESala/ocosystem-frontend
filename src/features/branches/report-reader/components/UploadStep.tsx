@@ -1,6 +1,7 @@
 // UploadStep.tsx
 
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, Button, Spinner, Toast, ToastToggle } from "flowbite-react";
 import { useUploadSalesReports } from "../api/report.queries";
 import { BranchSelector } from "./BranchSelector";
@@ -18,7 +19,10 @@ interface Props {
 }
 
 export const UploadStep = ({ onPreviewSuccess }: Props) => {
-  const [branchId, setBranchId] = useState<number | undefined>();
+  const [searchParams] = useSearchParams();
+  const [branchId, setBranchId] = useState<number | undefined>(
+    searchParams.get("branch") ? Number(searchParams.get("branch")) : undefined,
+  );
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [toastState, setToastState] = useState<ToastState>(null);
 

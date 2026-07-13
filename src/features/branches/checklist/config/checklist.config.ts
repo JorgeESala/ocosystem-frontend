@@ -7,6 +7,7 @@ export interface TaskMeta {
   icon: IconType;
   accent: "blue" | "rose" | "amber" | "purple";
   shortLabel: string;
+  actionPath: string;
 }
 
 export const TASK_META: Record<ChecklistTaskId, TaskMeta> = {
@@ -14,21 +15,25 @@ export const TASK_META: Record<ChecklistTaskId, TaskMeta> = {
     icon: FaFileUpload,
     accent: "blue",
     shortLabel: "Reporte",
+    actionPath: "upload-reports",
   },
   REGISTER_EXPENSES: {
     icon: GiPayMoney,
     accent: "rose",
     shortLabel: "Gastos",
+    actionPath: "expenses",
   },
   REGISTER_SALES_AND_ENTRIES: {
     icon: FaBoxes,
     accent: "amber",
     shortLabel: "Ventas",
+    actionPath: "salesAndBatches",
   },
   REVIEW_ACCOUNTS_PAYABLE: {
     icon: GiReceiveMoney,
     accent: "purple",
     shortLabel: "Ctas x p",
+    actionPath: "accounting",
   },
 };
 

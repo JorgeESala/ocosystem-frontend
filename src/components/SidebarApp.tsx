@@ -98,42 +98,72 @@ export default function SidebarApp() {
           >
             <SidebarItems>
               <SidebarItemGroup>
-                {allowedBusinesses.map((b) => {
-                  const menu = b.menu ?? BASE_MENU;
-                  const Icon = b.icon;
+                {allowedBusinesses.length === 1 ? (
+                  (() => {
+                    const b = allowedBusinesses[0];
+                    const menu = b.menu ?? BASE_MENU;
 
-                  // 🔹 Collapsed desktop
-                  if (effectiveCollapsed) {
+                    if (effectiveCollapsed) {
+                      return (
+                        <SidebarItem
+                          key={b.slug}
+                          icon={b.icon}
+                          title={b.name}
+                          onClick={() => navigate(`/business/${b.slug}`)}
+                        />
+                      );
+                    }
+
+                    return menu.map((m) => {
+                      const MIcon = m.icon;
+                      return (
+                        <Link
+                          key={m.to}
+                          to={`/business/${b.slug}/${m.to}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="block"
+                        >
+                          <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
+                        </Link>
+                      );
+                    });
+                  })()
+                ) : (
+                  allowedBusinesses.map((b) => {
+                    const menu = b.menu ?? BASE_MENU;
+                    const Icon = b.icon;
+
+                    if (effectiveCollapsed) {
+                      return (
+                        <SidebarItem
+                          key={b.slug}
+                          icon={Icon}
+                          title={b.name}
+                          onClick={() => navigate(`/business/${b.slug}`)}
+                        />
+                      );
+                    }
+
                     return (
-                      <SidebarItem
-                        key={b.slug}
-                        icon={Icon}
-                        title={b.name}
-                        onClick={() => navigate(`/business/${b.slug}`)}
-                      />
+                      <SidebarCollapse key={b.slug} icon={Icon} label={b.name}>
+                        {menu.map((m) => {
+                          const MIcon = m.icon;
+
+                          return (
+                            <Link
+                              key={m.to}
+                              to={`/business/${b.slug}/${m.to}`}
+                              onClick={() => setMobileOpen(false)}
+                              className="block"
+                            >
+                              <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
+                            </Link>
+                          );
+                        })}
+                      </SidebarCollapse>
                     );
-                  }
-
-                  // 🔹 Expanded accordion
-                  return (
-                    <SidebarCollapse key={b.slug} icon={Icon} label={b.name}>
-                      {menu.map((m) => {
-                        const MIcon = m.icon;
-
-                        return (
-                          <Link
-                            key={m.to}
-                            to={`/business/${b.slug}/${m.to}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="block"
-                          >
-                            <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
-                          </Link>
-                        );
-                      })}
-                    </SidebarCollapse>
-                  );
-                })}
+                  })
+                )}
               </SidebarItemGroup>
             </SidebarItems>
           </Sidebar>

@@ -1,37 +1,60 @@
-import { Link } from "react-router-dom";
-import { FaStore } from "react-icons/fa";
-import { GiBigEgg, GiCarrot, GiFeather, GiPig } from "react-icons/gi";
-import { MdOutlineLocalGroceryStore } from "react-icons/md";
+import { Navigate, Link } from "react-router-dom";
+import { useQueries } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { BUSINESSES } from "@/business/business.config";
+import { http } from "@/shared/api/http";
+import { toIsoDateString } from "@/features/branches/checklist/utils/week";
+
+function getTodayIso(): string {
+  return toIsoDateString(new Date());
+}
 
 export default function Home() {
-  const businesses = [
-    {
-      name: "Sucursales",
-      slug: "sucursales",
-      icon: FaStore,
-      color: "text-blue-400",
-    },
-    {
-      name: "Pollo vivo",
-      slug: "pollo-vivo",
-      icon: GiFeather,
-      color: "text-yellow-300",
-    },
-    { name: "Cerdo", slug: "cerdo", icon: GiPig, color: "text-pink-400" },
-    { name: "Huevo", slug: "huevo", icon: GiBigEgg, color: "text-white-300" },
-    {
-      name: "Verduras",
-      slug: "verduras",
-      icon: GiCarrot,
-      color: "text-orange-400",
-    },
-    {
-      name: "Abarrotes",
-      slug: "abarrotes",
-      icon: MdOutlineLocalGroceryStore,
-      color: "text-blue-300",
-    },
-  ];
+  const { user } = useAuth();
+
+  const allowed = user?.allowedBusinesses ?? [];
+  const allowedConfigs = BUSINESSES.filter((b) => allowed.includes(b.key));
+
+  if (allowed.length === 1) {
+    const slug = allowedConfigs[0]?.slug;
+    if (slug) {
+      return <Navigate to={`/business/${slug}/mis-tareas`} replace />;
+    }
+  }
+
+  return <MultiBuHome allowedConfigs={allowedConfigs} />;
+}
+
+function MultiBuHome({
+  allowedConfigs,
+}: {
+  allowedConfigs: (typeof BUSINESSES)[number][];
+}) {
+  const today = getTodayIso();
+
+  const taskBUs = allowedConfigs.filter((b) => b.hasTasks);
+
+  const taskQueries = useQueries({
+    queries: taskBUs.map((b) => ({
+      queryKey: ["home-tasks", b.slug, today],
+      queryFn: async () => {
+        const { data } = await http.get("/api/v1/branches/checklist", {
+          params: { date: today },
+          headers: { "X-Business-Code": b.key.toLowerCase() },
+        });
+        return data.branches.reduce(
+          (sum: number, br: { tasks: { status: string }[] }) =>
+            sum + br.tasks.filter((t) => t.status === "EMPTY").length,
+          0,
+        );
+      },
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  const taskCountBySlug = new Map(
+    taskBUs.map((b, i) => [b.slug, taskQueries[i]]),
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 p-6 text-gray-100">
@@ -40,16 +63,31 @@ export default function Home() {
       </h1>
 
       <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {businesses.map((b) => {
+        {allowedConfigs.map((b) => {
           const Icon = b.icon;
+          const taskQuery = taskCountBySlug.get(b.slug);
+          const pending = taskQuery?.data;
+          const isLoading = taskQuery?.isLoading;
+
           return (
             <Link
               key={b.slug}
-              to={`/business/${b.slug}`}
+              to={b.hasTasks ? `/business/${b.slug}/mis-tareas` : `/business/${b.slug}`}
               className="flex flex-col items-center justify-center rounded-xl bg-gray-800 p-6 shadow-lg transition hover:bg-gray-700"
             >
-              <Icon className={`mb-3 text-4xl ${b.color}`} />
+              <Icon className="mb-3 text-4xl text-blue-400" />
               <h2 className="text-lg font-semibold">{b.name}</h2>
+              {isLoading ? (
+                <span className="mt-2 text-xs text-gray-500">Cargando...</span>
+              ) : pending != null && pending > 0 ? (
+                <span className="mt-2 rounded-full bg-amber-900/50 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                  {pending} pendiente{pending !== 1 ? "s" : ""}
+                </span>
+              ) : pending === 0 ? (
+                <span className="mt-2 rounded-full bg-emerald-900/50 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                  Completado
+                </span>
+              ) : null}
             </Link>
           );
         })}

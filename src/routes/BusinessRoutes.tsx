@@ -18,6 +18,7 @@ import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/Expec
 import MetricWeightsPage from "@/features/branches/checklist/pages/MetricWeightsPage";
 import HelpPage from "@/features/branches/checklist/pages/HelpPage";
 import FormulaConfigPage from "@/features/branches/checklist/pages/FormulaConfigPage";
+import MyTasksPage from "@/features/branches/checklist/pages/MyTasksPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
 import RouteGuard from "./RouteGuard";
@@ -31,6 +32,7 @@ export default function BusinessRoutes() {
     return (
       <Routes>
         <Route index element={<BusinessDashboard />} />
+        <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route
           path="salesAndBatches"
           element={<BatchPage unitType={"LIVE_CHICKEN"} />}
@@ -50,6 +52,7 @@ export default function BusinessRoutes() {
     return (
       <Routes>
         <Route index element={<BusinessDashboard />} />
+        <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />
         <Route path="accounting" element={<BranchAccountsPage />} />
@@ -71,6 +74,7 @@ export default function BusinessRoutes() {
     return (
       <Routes>
         <Route index element={<BusinessDashboard />} />
+        <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />
         <Route path="accounting" element={<EggAccountsPage />} />
@@ -92,6 +96,7 @@ export default function BusinessRoutes() {
   return (
     <Routes>
       <Route index element={<BusinessDashboard />} />
+      <Route path="mis-tareas" element={<MyTasksPage />} />
       <Route path="salesAndBatches" element={<SalesAndBatches />} />
       <Route path="expenses" element={<BranchExpensesPage />} />
       <Route path="*" element={<ForbiddenPage />} />

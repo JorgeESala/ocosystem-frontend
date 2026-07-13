@@ -1,4 +1,3 @@
-import { Badge } from "flowbite-react";
 import { HiOutlineExternalLink } from "react-icons/hi";
 import type { AccountsPayableSourceType } from "../../live-chicken/accounting/accounts-payable/types";
 
