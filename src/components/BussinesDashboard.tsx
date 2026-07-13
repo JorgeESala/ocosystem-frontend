@@ -1,4 +1,5 @@
-import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
+import { FaBoxes } from "react-icons/fa";
+import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import { Link, useParams } from "react-router-dom";
 import ChecklistDashboardWidget from "@/features/branches/checklist/components/ChecklistDashboardWidget";
 
@@ -7,22 +8,22 @@ export default function BusinessDashboard() {
 
   const menu = [
     {
-      to: `/business/${slug}/reports`,
-      icon: <FaFileAlt className="mb-3 text-4xl text-blue-400" />,
-      title: "Tabla de reportes",
-      desc: "Consulta y descarga reportes.",
-    },
-    {
-      to: `/business/${slug}/graphs`,
-      icon: <FaChartBar className="mb-3 text-4xl text-green-400" />,
-      title: "Gráficas comparativas",
-      desc: "Visualiza comportamiento por fechas.",
-    },
-    {
-      to: `/business/${slug}/sales`,
+      to: `/business/${slug}/salesAndBatches`,
       icon: <FaBoxes className="mb-3 text-4xl text-yellow-400" />,
       title: "Entradas y ventas",
       desc: "Registra remesas y ventas diarias.",
+    },
+    {
+      to: `/business/${slug}/expenses`,
+      icon: <GiPayMoney className="mb-3 text-4xl text-rose-400" />,
+      title: "Gastos",
+      desc: "Registra y consulta gastos.",
+    },
+    {
+      to: `/business/${slug}/accounting`,
+      icon: <GiReceiveMoney className="mb-3 text-4xl text-purple-400" />,
+      title: "Contabilidad",
+      desc: "Revisa cuentas por pagar.",
     },
   ];
 

@@ -17,8 +17,12 @@ export default function Home() {
 
   if (allowed.length === 1) {
     const slug = allowedConfigs[0]?.slug;
+    const hasTasks = allowedConfigs[0]?.hasTasks;
     if (slug) {
-      return <Navigate to={`/business/${slug}/mis-tareas`} replace />;
+      const dest = hasTasks
+        ? `/business/${slug}/mis-tareas`
+        : `/business/${slug}`;
+      return <Navigate to={dest} replace />;
     }
   }
 

@@ -24,7 +24,6 @@ import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import { HiClipboardList, HiClipboardCheck, HiUserGroup } from "react-icons/hi";
 
 export const BASE_MENU = [
-  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
@@ -44,7 +43,6 @@ const BRANCHES_MENU = [
 ];
 
 const LIVE_CHICKEN_MENU = [
-  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
@@ -54,7 +52,6 @@ const LIVE_CHICKEN_MENU = [
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
 ];
 const EGG_MENU = [
-  { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
