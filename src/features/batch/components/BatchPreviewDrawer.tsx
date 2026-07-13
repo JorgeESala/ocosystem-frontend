@@ -192,7 +192,7 @@ const MovementRow = ({
   config,
 }: {
   movement: Movement;
-  config: ReturnType<typeof UNIT_CONFIG>[keyof typeof UNIT_CONFIG] | null;
+  config: { renderMovementQuantity: (movement: any) => React.ReactNode } | null;
 }) => (
   <>
     <div className="flex flex-col">
