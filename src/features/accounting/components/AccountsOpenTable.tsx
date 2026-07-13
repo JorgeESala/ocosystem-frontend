@@ -35,6 +35,7 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
   );
   const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
   const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
+  const [previewSaleId, setPreviewSaleId] = useState<number | null>(null);
 
   const { data: solicitors = [] } = useSolicitors();
   const updateSolicitorMutation = useUpdateAccountsPayableSolicitor();
@@ -101,7 +102,11 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
               <SourceBadge
                 sourceType={row.sourceType}
                 sourceBatchId={row.sourceBatchId}
-                onOpenBatch={(id) => setPreviewBatchId(id)}
+                sourceId={row.sourceId}
+                onOpenSource={(batchId, saleId) => {
+                  setPreviewBatchId(batchId);
+                  setPreviewSaleId(saleId ?? null);
+                }}
               />
             </TableCell>
 
@@ -196,8 +201,12 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
     </Table>
     <BatchPreviewDrawer
       open={previewBatchId != null}
-      onClose={() => setPreviewBatchId(null)}
+      onClose={() => {
+        setPreviewBatchId(null);
+        setPreviewSaleId(null);
+      }}
       batchId={previewBatchId}
+      highlightSaleId={previewSaleId}
     />
     </>
   );

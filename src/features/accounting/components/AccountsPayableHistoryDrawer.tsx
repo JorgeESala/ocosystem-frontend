@@ -29,6 +29,7 @@ export const AccountsPayableHistoryDrawer = ({
 }: Props) => {
   const { data, isLoading } = useAccountsPayableMovements(account?.id);
   const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
+  const [previewSaleId, setPreviewSaleId] = useState<number | null>(null);
 
   return (
     <>
@@ -53,7 +54,11 @@ export const AccountsPayableHistoryDrawer = ({
               <SourceBadge
                 sourceType={account.sourceType}
                 sourceBatchId={account.sourceBatchId}
-                onOpenBatch={(id) => setPreviewBatchId(id)}
+                sourceId={account.sourceId}
+                onOpenSource={(batchId, saleId) => {
+                  setPreviewBatchId(batchId);
+                  setPreviewSaleId(saleId ?? null);
+                }}
               />
             </div>
             <p className="text-sm">
@@ -139,8 +144,12 @@ export const AccountsPayableHistoryDrawer = ({
     </Drawer>
     <BatchPreviewDrawer
       open={previewBatchId != null}
-      onClose={() => setPreviewBatchId(null)}
+      onClose={() => {
+        setPreviewBatchId(null);
+        setPreviewSaleId(null);
+      }}
       batchId={previewBatchId}
+      highlightSaleId={previewSaleId}
     />
     </>
   );

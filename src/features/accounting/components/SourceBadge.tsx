@@ -5,43 +5,36 @@ interface Props {
   sourceType?: AccountsPayableSourceType;
   sourceBatchId?: number;
   sourceId?: number;
-  onOpenBatch: (batchId: number) => void;
+  onOpenSource: (batchId: number, saleId?: number) => void;
 }
 
 const sourceConfig: Record<
   AccountsPayableSourceType,
-  { label: string; color: string; hoverColor: string; icon: boolean }
+  { color: string; hoverColor: string }
 > = {
   BATCH: {
-    label: "Remesa",
     color: "bg-amber-900/50 text-amber-300 border border-amber-700/50",
     hoverColor: "hover:bg-amber-800/50 hover:text-amber-200",
-    icon: true,
   },
   DELIVERY: {
-    label: "Venta",
     color: "bg-blue-900/50 text-blue-300 border border-blue-700/50",
     hoverColor: "hover:bg-blue-800/50 hover:text-blue-200",
-    icon: true,
   },
   ADJUSTMENT: {
-    label: "Ajuste manual",
     color: "bg-gray-700/50 text-gray-400 border border-gray-600/50",
     hoverColor: "",
-    icon: false,
   },
   OTHER: {
-    label: "Otro",
     color: "bg-gray-700/50 text-gray-400 border border-gray-600/50",
     hoverColor: "",
-    icon: false,
   },
 };
 
 export const SourceBadge = ({
   sourceType,
   sourceBatchId,
-  onOpenBatch,
+  sourceId,
+  onOpenSource,
 }: Props) => {
   if (!sourceType) return null;
 
@@ -53,21 +46,26 @@ export const SourceBadge = ({
   if (!isClickable) {
     return (
       <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${config.color}`}>
-        {config.label}
+        {sourceType === "ADJUSTMENT" ? "Ajuste manual" : "Otro"}
       </span>
     );
   }
+
+  const label =
+    sourceType === "DELIVERY"
+      ? `Venta de remesa #${sourceBatchId}`
+      : `Remesa #${sourceBatchId}`;
 
   return (
     <button
       type="button"
       onClick={(e) => {
         e.stopPropagation();
-        onOpenBatch(sourceBatchId!);
+        onOpenSource(sourceBatchId!, sourceType === "DELIVERY" ? sourceId : undefined);
       }}
       className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer ${config.color} ${config.hoverColor}`}
     >
-      {config.label} #{sourceBatchId}
+      {label}
       <HiOutlineExternalLink className="h-3 w-3" />
     </button>
   );

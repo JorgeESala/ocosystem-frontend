@@ -31,6 +31,7 @@ export const BranchesAccountsOpenTable = ({
 }: Props) => {
   const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
   const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
+  const [previewSaleId, setPreviewSaleId] = useState<number | null>(null);
 
   const sortedData = useMemo(() => {
     const copy = [...data];
@@ -83,7 +84,11 @@ export const BranchesAccountsOpenTable = ({
               <SourceBadge
                 sourceType={row.sourceType}
                 sourceBatchId={row.sourceBatchId}
-                onOpenBatch={(id) => setPreviewBatchId(id)}
+                sourceId={row.sourceId}
+                onOpenSource={(batchId, saleId) => {
+                  setPreviewBatchId(batchId);
+                  setPreviewSaleId(saleId ?? null);
+                }}
               />
             </TableCell>
 
@@ -126,8 +131,12 @@ export const BranchesAccountsOpenTable = ({
     </Table>
     <BatchPreviewDrawer
       open={previewBatchId != null}
-      onClose={() => setPreviewBatchId(null)}
+      onClose={() => {
+        setPreviewBatchId(null);
+        setPreviewSaleId(null);
+      }}
       batchId={previewBatchId}
+      highlightSaleId={previewSaleId}
     />
     </>
   );
