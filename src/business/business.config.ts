@@ -32,7 +32,7 @@ export const BASE_MENU = [
 ];
 const BRANCHES_MENU = [
   { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
-  { to: "checklist", label: "Checklist diario", icon: HiClipboardList },
+  { to: "checklist", label: "Desempeño", icon: HiClipboardList },
   { to: "reports", label: "Reportes", icon: FaFileAlt },
   { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },

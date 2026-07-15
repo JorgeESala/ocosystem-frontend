@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Button, Card, Label, TextInput, Alert, Spinner } from 'flowbite-react';
-import { HiArrowLeft, HiSave } from 'react-icons/hi';
-import { useMetricFormulaConfig, useUpdateMetricFormulaConfig } from '../api/metric-formula-config.queries';
-import { METRIC_HELP } from '../help/content';
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Button, Card, Label, TextInput, Alert, Spinner } from "flowbite-react";
+import { HiArrowLeft, HiSave } from "react-icons/hi";
+import {
+  useMetricFormulaConfig,
+  useUpdateMetricFormulaConfig,
+} from "../api/metric-formula-config.queries";
+import { METRIC_HELP } from "../help/content";
 
 interface ParameterField {
   key: string;
@@ -19,7 +22,9 @@ export default function FormulaConfigPage() {
   const { data: configs, isLoading, isError } = useMetricFormulaConfig();
   const updateMutation = useUpdateMetricFormulaConfig();
 
-  const [formData, setFormData] = useState<Record<string, Record<string, number>>>({});
+  const [formData, setFormData] = useState<
+    Record<string, Record<string, number>>
+  >({});
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
@@ -32,7 +37,11 @@ export default function FormulaConfigPage() {
     }
   }, [configs]);
 
-  const handleParameterChange = (metricId: string, key: string, value: string) => {
+  const handleParameterChange = (
+    metricId: string,
+    key: string,
+    value: string,
+  ) => {
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
       setFormData((prev) => ({
@@ -55,7 +64,7 @@ export default function FormulaConfigPage() {
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
           },
-        }
+        },
       );
     }
   };
@@ -81,7 +90,9 @@ export default function FormulaConfigPage() {
 
   if (isError) {
     return (
-      <Alert color="failure">No se pudieron cargar las configuraciones de las fórmulas.</Alert>
+      <Alert color="failure">
+        No se pudieron cargar las configuraciones de las fórmulas.
+      </Alert>
     );
   }
 
@@ -89,9 +100,12 @@ export default function FormulaConfigPage() {
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Configuración de fórmulas</h1>
+          <h1 className="text-2xl font-semibold text-white">
+            Configuración de fórmulas
+          </h1>
           <p className="text-sm text-slate-400">
-            Ajusta los parámetros de las fórmulas de cada indicador. Los cambios afectan el cálculo del puntaje.
+            Ajusta los parámetros de las fórmulas de cada indicador. Los cambios
+            afectan el cálculo del puntaje.
           </p>
         </div>
         <Link to={`/business/${slug}/checklist`}>
@@ -115,17 +129,27 @@ export default function FormulaConfigPage() {
         }
 
         return (
-          <Card key={config.metricId} className="border-slate-700/80 bg-slate-950/70">
+          <Card
+            key={config.metricId}
+            className="border-slate-700/80 bg-slate-950/70"
+          >
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">{help?.title || config.metricId}</h2>
-                <p className="text-sm text-slate-400 mt-1">{help?.description}</p>
+                <h2 className="text-lg font-semibold text-white">
+                  {help?.title || config.metricId}
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  {help?.description}
+                </p>
               </div>
 
               <div className="space-y-3">
                 {schema.map((field) => (
                   <div key={field.key}>
-                    <Label htmlFor={`${config.metricId}-${field.key}`} className="mb-1">
+                    <Label
+                      htmlFor={`${config.metricId}-${field.key}`}
+                      className="mb-1"
+                    >
                       {field.description}
                     </Label>
                     <TextInput
@@ -134,11 +158,21 @@ export default function FormulaConfigPage() {
                       step="0.01"
                       min={field.min}
                       max={field.max}
-                      value={formData[config.metricId]?.[field.key] ?? field.defaultValue}
-                      onChange={(e) => handleParameterChange(config.metricId, field.key, e.target.value)}
+                      value={
+                        formData[config.metricId]?.[field.key] ??
+                        field.defaultValue
+                      }
+                      onChange={(e) =>
+                        handleParameterChange(
+                          config.metricId,
+                          field.key,
+                          e.target.value,
+                        )
+                      }
                     />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Rango: {field.min} - {field.max} (por defecto: {field.defaultValue})
+                    <p className="mt-1 text-xs text-slate-400">
+                      Rango: {field.min} - {field.max} (por defecto:{" "}
+                      {field.defaultValue})
                     </p>
                   </div>
                 ))}
@@ -166,10 +200,12 @@ export default function FormulaConfigPage() {
       })}
 
       <div className="rounded-xl border border-blue-900/40 bg-blue-950/40 p-5">
-        <h2 className="text-lg font-semibold text-blue-200 mb-2">¿Cómo afectan estos cambios?</h2>
+        <h2 className="mb-2 text-lg font-semibold text-blue-200">
+          ¿Cómo afectan estos cambios?
+        </h2>
         <p className="text-sm text-blue-300">
-          Los cambios en los parámetros de las fórmulas afectan inmediatamente el cálculo del puntaje de todas las sucursales.
-          Asegúrate de probar los valores antes de guardarlos.
+          Los cambios en los parámetros de las fórmulas afectan inmediatamente
+          el cálculo del puntaje de todas las sucursales.
         </p>
       </div>
     </div>

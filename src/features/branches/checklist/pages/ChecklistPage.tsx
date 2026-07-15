@@ -29,14 +29,22 @@ export default function ChecklistPage() {
   const { slug } = useParams();
   const { isAdmin } = useAuthRole();
   const initial = useMemo(() => getCurrentWeek(), []);
-  
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, []);
+
+  const clampToToday = (d: Date) => (d > today ? today : d);
+
   // Applied state - what the query uses
   const [appliedFrom, setAppliedFrom] = useState<Date>(initial.from);
-  const [appliedTo, setAppliedTo] = useState<Date>(initial.to);
-  
+  const [appliedTo, setAppliedTo] = useState<Date>(clampToToday(initial.to));
+
   // Pending state - what the user is editing
   const [pendingFrom, setPendingFrom] = useState<Date>(initial.from);
-  const [pendingTo, setPendingTo] = useState<Date>(initial.to);
+  const [pendingTo, setPendingTo] = useState<Date>(clampToToday(initial.to));
   
   const [preset, setPreset] = useState<DateRangePreset>("current-week");
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
@@ -71,7 +79,7 @@ export default function ChecklistPage() {
     const fn = RANGE_PRESETS[preset];
     const next = fn();
     setPendingFrom(next.from);
-    setPendingTo(next.to);
+    setPendingTo(preset === "current-week" ? clampToToday(next.to) : next.to);
   }, [preset]);
 
   const handlePendingChange = (nextFrom: Date, nextTo: Date) => {
@@ -101,7 +109,7 @@ export default function ChecklistPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Checklist diario</h1>
+          <h1 className="text-2xl font-semibold text-white">Desempeño</h1>
           <p className="text-sm text-slate-400">
             Resultado por sucursal y por todas las sucursales a partir de las tareas y ventas registradas.
           </p>
