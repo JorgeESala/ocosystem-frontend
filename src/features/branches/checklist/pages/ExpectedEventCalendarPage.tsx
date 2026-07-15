@@ -3,14 +3,21 @@ import { Alert, Button, Label, Modal, ModalBody, ModalHeader, Select, Spinner, T
 import { HiPlus, HiTrash, HiCalendar } from "react-icons/hi";
 import { Link, useParams } from "react-router-dom";
 import { useBranches } from "@/features/branches/branch/branch.queries";
+import { useAuthRole } from "@/hooks/useAuthRole";
 import {
   useCreateExpectedEvent,
   useCreateExpectedEventsBulk,
   useDeleteExpectedEvent,
   useExpectedEvents,
 } from "../api/expected-events.queries";
+import {
+  useScheduleTemplates,
+  useCreateScheduleTemplate,
+  useDeleteScheduleTemplate,
+} from "../api/schedule-templates.queries";
 import { fromIsoDateString, toIsoDateString } from "../utils/week";
 import { EXPECTED_EVENT_LABELS, type ExpectedEvent, type ExpectedEventType } from "../types/expected-event.types";
+import { DAY_OF_WEEK_LABELS } from "../types/schedule-template.types";
 import { useQueryClient } from "@tanstack/react-query";
 
 const TYPE_OPTIONS: { value: ExpectedEventType; label: string }[] = (
@@ -27,6 +34,7 @@ const TYPE_TONE: Record<ExpectedEventType, string> = {
 export default function ExpectedEventCalendarPage() {
   const { slug } = useParams();
   const qc = useQueryClient();
+  const { isAdmin } = useAuthRole();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
 
   const [singleModal, setSingleModal] = useState<{ open: boolean; branchId?: number; date?: string }>(
@@ -53,6 +61,8 @@ export default function ExpectedEventCalendarPage() {
     to: toIsoDateString(to),
   });
 
+  const { data: allTemplates = [] } = useScheduleTemplates();
+
   const createSingle = useCreateExpectedEvent();
   const createBulk = useCreateExpectedEventsBulk();
   const deleteEvent = useDeleteExpectedEvent();
@@ -64,6 +74,16 @@ export default function ExpectedEventCalendarPage() {
     }
     return map;
   }, [events]);
+
+  const templatesByBranchId = useMemo(() => {
+    const map = new Map<number, typeof allTemplates>();
+    for (const t of allTemplates) {
+      const list = map.get(t.branchId) ?? [];
+      list.push(t);
+      map.set(t.branchId, list);
+    }
+    return map;
+  }, [allTemplates]);
 
   const days = useMemo(() => {
     const arr: Date[] = [];
@@ -122,30 +142,37 @@ export default function ExpectedEventCalendarPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    size="xs"
-                    color="light"
-                    onClick={() => setBulkModal({ open: true, branchId: branch.id })}
-                  >
-                    <HiPlus aria-hidden className="mr-1 h-3 w-3" />
-                    Repetir
-                  </Button>
-                  <Button
-                    size="xs"
-                    color="blue"
-                    onClick={() =>
-                      setSingleModal({
-                        open: true,
-                        branchId: branch.id,
-                        date: toIsoDateString(today),
-                      })
-                    }
-                  >
-                    <HiPlus aria-hidden className="mr-1 h-3 w-3" />
-                    Agregar fecha
-                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        size="xs"
+                        color="light"
+                        onClick={() => setBulkModal({ open: true, branchId: branch.id })}
+                      >
+                        <HiPlus aria-hidden className="mr-1 h-3 w-3" />
+                        Repetir
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="blue"
+                        onClick={() =>
+                          setSingleModal({
+                            open: true,
+                            branchId: branch.id,
+                            date: toIsoDateString(today),
+                          })
+                        }
+                      >
+                        <HiPlus aria-hidden className="mr-1 h-3 w-3" />
+                        Agregar fecha
+                      </Button>
+                    </>
+                  )}
                 </div>
               </header>
+              <div className="border-b border-slate-800/80 p-4">
+                <TemplateSection branchId={branch.id} />
+              </div>
               <div className="overflow-x-auto p-4">
                 {loadingEvents ? (
                   <div className="flex justify-center py-6">
@@ -156,6 +183,11 @@ export default function ExpectedEventCalendarPage() {
                     {days.map((d) => {
                       const key = `${branch.id}|${toIsoDateString(d)}`;
                       const event = eventsByBranchAndDate.get(key);
+                      const dayOfWeek = d.getDay();
+                      const branchTemplates = templatesByBranchId.get(branch.id) ?? [];
+                      const templateEvent = !event
+                        ? branchTemplates.find((t) => t.dayOfWeek === dayOfWeek)
+                        : null;
                       return (
                         <div
                           key={key}
@@ -175,14 +207,20 @@ export default function ExpectedEventCalendarPage() {
                                   {event.cutoffTime}
                                 </div>
                               )}
-                              <button
-                                type="button"
-                                className="ml-1 text-rose-200 hover:text-rose-100"
-                                onClick={() => event.id != null && deleteEvent.mutate(event.id)}
-                                aria-label="Eliminar"
-                              >
-                                <HiTrash aria-hidden className="inline h-3 w-3" />
-                              </button>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  className="ml-1 text-rose-200 hover:text-rose-100"
+                                  onClick={() => event.id != null && deleteEvent.mutate(event.id)}
+                                  aria-label="Eliminar"
+                                >
+                                  <HiTrash aria-hidden className="inline h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ) : templateEvent ? (
+                            <div className={`mt-1 w-full rounded border border-dashed px-1.5 py-0.5 text-[10px] font-semibold opacity-60 ${TYPE_TONE[templateEvent.eventType]}`}>
+                              {EXPECTED_EVENT_LABELS[templateEvent.eventType]}
                             </div>
                           ) : null}
                         </div>
@@ -226,6 +264,130 @@ export default function ExpectedEventCalendarPage() {
         <Alert color="failure">
           No se pudo crear el bloque: {(createBulk.error as Error)?.message ?? "error"}
         </Alert>
+      )}
+    </div>
+  );
+}
+
+function TemplateSection({ branchId }: { branchId: number }) {
+  const { isAdmin } = useAuthRole();
+  const [showForm, setShowForm] = useState(false);
+  const [eventType, setEventType] = useState<ExpectedEventType>("BATCH_RECEPTION");
+  const [dayOfWeek, setDayOfWeek] = useState<number>(1);
+  const [cutoffTime, setCutoffTime] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+
+  const { data: templates = [] } = useScheduleTemplates(branchId);
+  const createTemplate = useCreateScheduleTemplate();
+  const deleteTemplate = useDeleteScheduleTemplate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createTemplate.mutate(
+      { branchId, eventType, dayOfWeek, cutoffTime: cutoffTime || null, note: note || null },
+      {
+        onSuccess: () => {
+          setShowForm(false);
+          setEventType("BATCH_RECEPTION");
+          setDayOfWeek(1);
+          setCutoffTime("");
+          setNote("");
+        },
+      },
+    );
+  };
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          Rutinas
+        </h3>
+        {isAdmin && (
+          <Button size="xs" color="light" onClick={() => setShowForm(!showForm)}>
+            <HiPlus className="mr-1 h-3 w-3" />
+            {showForm ? "Cancelar" : "Agregar rutina"}
+          </Button>
+        )}
+      </div>
+
+      {templates.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {templates.map((t) => (
+            <div
+              key={t.id}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ${TYPE_TONE[t.eventType]}`}
+            >
+              <span>{DAY_OF_WEEK_LABELS[t.dayOfWeek]}</span>
+              <span className="opacity-60">·</span>
+              <span>{EXPECTED_EVENT_LABELS[t.eventType]}</span>
+              {t.cutoffTime && (
+                <span className="opacity-60">· {t.cutoffTime}</span>
+              )}
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="ml-1 text-rose-200 hover:text-rose-100"
+                  onClick={() => t.id != null && deleteTemplate.mutate(t.id)}
+                >
+                  <HiTrash className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {templates.length === 0 && !showForm && (
+        <p className="text-xs text-slate-500">
+          Sin rutinas. Las tareas se evaluarán solo en fechas creadas manualmente.
+        </p>
+      )}
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+          <div>
+            <Label className="text-xs">Tipo</Label>
+            <Select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value as ExpectedEventType)}
+            >
+              {TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Día</Label>
+            <Select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(Number(e.target.value))}
+            >
+              {DAY_OF_WEEK_LABELS.map((label, i) => (
+                <option key={i} value={i}>{label}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Hora límite</Label>
+            <TextInput
+              type="time"
+              value={cutoffTime}
+              onChange={(e) => setCutoffTime(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Nota</Label>
+            <TextInput
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Opcional"
+            />
+          </div>
+          <Button type="submit" size="xs" color="blue" disabled={createTemplate.isPending}>
+            Guardar
+          </Button>
+        </form>
       )}
     </div>
   );

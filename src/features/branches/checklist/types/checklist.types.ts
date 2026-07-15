@@ -1,7 +1,8 @@
 export type ChecklistTaskId =
   | "UPLOAD_SALES_REPORT"
   | "REGISTER_EXPENSES"
-  | "REGISTER_SALES_AND_ENTRIES"
+  | "REGISTER_SALES"
+  | "REGISTER_ENTRIES"
   | "REVIEW_ACCOUNTS_PAYABLE";
 
 export type ChecklistStatus = "DONE" | "EMPTY" | "NOT_APPLICABLE";

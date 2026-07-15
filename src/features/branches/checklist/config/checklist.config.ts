@@ -23,10 +23,16 @@ export const TASK_META: Record<ChecklistTaskId, TaskMeta> = {
     shortLabel: "Gastos",
     actionPath: "expenses",
   },
-  REGISTER_SALES_AND_ENTRIES: {
+  REGISTER_SALES: {
     icon: FaBoxes,
     accent: "amber",
     shortLabel: "Ventas",
+    actionPath: "salesAndBatches",
+  },
+  REGISTER_ENTRIES: {
+    icon: FaBoxes,
+    accent: "amber",
+    shortLabel: "Entradas",
     actionPath: "salesAndBatches",
   },
   REVIEW_ACCOUNTS_PAYABLE: {
@@ -40,6 +46,7 @@ export const TASK_META: Record<ChecklistTaskId, TaskMeta> = {
 export const TASK_ORDER: ChecklistTaskId[] = [
   "UPLOAD_SALES_REPORT",
   "REGISTER_EXPENSES",
-  "REGISTER_SALES_AND_ENTRIES",
+  "REGISTER_SALES",
+  "REGISTER_ENTRIES",
   "REVIEW_ACCOUNTS_PAYABLE",
 ];
