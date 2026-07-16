@@ -15,9 +15,8 @@ import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpense
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
-import MetricWeightsPage from "@/features/branches/checklist/pages/MetricWeightsPage";
+import AdminConfigPage from "@/features/branches/checklist/pages/AdminConfigPage";
 import HelpPage from "@/features/branches/checklist/pages/HelpPage";
-import FormulaConfigPage from "@/features/branches/checklist/pages/FormulaConfigPage";
 import MyTasksPage from "@/features/branches/checklist/pages/MyTasksPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
@@ -59,10 +58,9 @@ export default function BusinessRoutes() {
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
         <Route path="checklist" element={<ChecklistPage />} />
+        <Route path="checklist/admin" element={<RouteGuard><AdminConfigPage /></RouteGuard>} />
         <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
         <Route path="checklist/help" element={<HelpPage />} />
-        <Route path="checklist/weights" element={<RouteGuard><MetricWeightsPage /></RouteGuard>} />
-        <Route path="checklist/formulas" element={<RouteGuard><FormulaConfigPage /></RouteGuard>} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

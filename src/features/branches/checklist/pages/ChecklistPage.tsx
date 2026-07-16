@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { HiQuestionMarkCircle, HiCog } from "react-icons/hi";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import { useBranchPerformance } from "../api/checklist.queries";
+import { useExcludedBranches } from "../api/excluded-branches.queries";
 import ChecklistGrid from "../components/ChecklistGrid";
 import ChecklistHeader, { type DateRangePreset } from "../components/ChecklistHeader";
 import PerformanceSummaryCard from "../components/PerformanceSummaryCard";
@@ -52,6 +53,22 @@ export default function ChecklistPage() {
   const [daysIncluded, setDaysIncluded] = useState(false);
 
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
+  const { data: excludedBranches = [] } = useExcludedBranches();
+  const excludedIds = useMemo(
+    () => new Set(excludedBranches.map((e) => e.branchId)),
+    [excludedBranches],
+  );
+
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (initialized || loadingBranches || branches.length === 0) return;
+    const nonExcluded = branches
+      .filter((b) => !excludedIds.has(b.id))
+      .map((b) => b.id);
+    setSelectedBranchIds(nonExcluded);
+    setInitialized(true);
+  }, [branches, excludedIds, loadingBranches, initialized]);
 
   const branchIds = useMemo(
     () => [...selectedBranchIds].sort((a, b) => a - b),
@@ -122,20 +139,12 @@ export default function ChecklistPage() {
             </Button>
           </Link>
           {isAdmin && (
-            <>
-              <Link to={`/business/${slug}/checklist/weights`}>
-                <Button color="light" size="sm">
-                  <HiCog aria-hidden className="mr-2 h-4 w-4" />
-                  Importancias
-                </Button>
-              </Link>
-              <Link to={`/business/${slug}/checklist/formulas`}>
-                <Button color="light" size="sm">
-                  <HiCog aria-hidden className="mr-2 h-4 w-4" />
-                  Configurar fórmulas
-                </Button>
-              </Link>
-            </>
+            <Link to={`/business/${slug}/checklist/admin`}>
+              <Button color="light" size="sm">
+                <HiCog aria-hidden className="mr-2 h-4 w-4" />
+                Configuración
+              </Button>
+            </Link>
           )}
         </div>
       </header>
