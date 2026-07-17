@@ -22,10 +22,12 @@ export const useFinancialSummary = (
 export const useCedisFinancialSummary = (
   cedisIds?: number[],
   entityType?: string,
+  from?: string,
+  to?: string,
 ) => {
   return useQuery({
-    queryKey: ["cedisFinancialSummary", cedisIds, entityType],
-    queryFn: () => getCedisFinancialSummary(cedisIds, entityType),
+    queryKey: ["cedisFinancialSummary", cedisIds, entityType, from, to],
+    queryFn: () => getCedisFinancialSummary(cedisIds, entityType, from, to),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -73,13 +75,12 @@ export const useDownloadFinancialSummaryPdf = () => {
 
 export const useDownloadCedisFinancialSummaryPdf = () => {
   return {
-    download: async (cedisIds?: number[], entityType?: string) => {
-      const blob = await downloadCedisFinancialSummaryPdf(cedisIds, entityType);
-      const rows = await getCedisFinancialSummary(
-        cedisIds && cedisIds.length > 0 ? cedisIds : undefined,
-        entityType,
-      );
-      const filename = buildFilename(cedisIds, rows, "reporte_financiero_cedis");
+    download: async (cedisIds?: number[], entityType?: string, from?: string, to?: string) => {
+      const blob = await downloadCedisFinancialSummaryPdf(cedisIds, entityType, from, to);
+      const buName = entityType === "EGGCEDIS" ? "huevo" : "pollo_vivo";
+      const now = new Date();
+      const datePart = `${now.getDate()}_de_${MONTHS_ES[now.getMonth()]}`;
+      const filename = `reporte_financiero_${buName}_${datePart}.pdf`;
       triggerDownload(blob, filename);
     },
   };

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button } from "flowbite-react";
+import { Button, ToggleSwitch } from "flowbite-react";
 import { HiClock, HiPlus } from "react-icons/hi";
 
 import { RegisterPaymentModal } from "../../../accounting/components/RegisterPaymentModal";
@@ -65,6 +65,8 @@ export const EggAccountsPage = () => {
   const internalClients = clients.filter((c) => c.isInternalBranch);
 
   const receivable = viewMode === "RECEIVABLE";
+  const isFinancial = viewMode === "FINANCIAL";
+  const [showFinancialDates, setShowFinancialDates] = useState(false);
 
   const handleSetViewMode = (next: ViewMode) => {
     if (next === viewMode) return;
@@ -209,8 +211,29 @@ export const EggAccountsPage = () => {
         </Button>
       </div>
 
+      {isFinancial && (
+        <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
+          <ToggleSwitch
+            checked={showFinancialDates}
+            label="Filtrar por fechas"
+            onChange={setShowFinancialDates}
+          />
+          {showFinancialDates && (
+            <DateRangeFilter
+              value={dateRange}
+              defaultRange={defaultRange}
+              onChange={setDateRange}
+            />
+          )}
+        </div>
+      )}
+
       {viewMode === "FINANCIAL" ? (
-        <CedisFinancialSummary entityType="EGGCEDIS" />
+        <CedisFinancialSummary
+          entityType="EGGCEDIS"
+          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
+        />
       ) : (
         <>
           <AccountingSummaryCards

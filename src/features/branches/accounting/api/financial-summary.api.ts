@@ -89,11 +89,14 @@ export interface CedisFinancialSummaryDTO {
   inventoryValue: number;
   netBalance: number;
   breakdown: ReceivableBreakdown[];
+  inventoryBreakdown: InventoryBreakdownDTO[];
 }
 
 export const getCedisFinancialSummary = async (
   cedisIds?: number[],
   entityType?: string,
+  from?: string,
+  to?: string,
 ): Promise<CedisFinancialSummaryDTO[]> => {
   const params = new URLSearchParams();
   if (cedisIds && cedisIds.length > 0) {
@@ -102,6 +105,8 @@ export const getCedisFinancialSummary = async (
     }
   }
   if (entityType) params.append("entityType", entityType);
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
   const query = params.toString();
   const { data } = await http.get<CedisFinancialSummaryDTO[]>(
     `${API_BASE}/cedis-financial-summary${query ? `?${query}` : ""}`,
@@ -112,6 +117,8 @@ export const getCedisFinancialSummary = async (
 export const downloadCedisFinancialSummaryPdf = async (
   cedisIds?: number[],
   entityType?: string,
+  from?: string,
+  to?: string,
 ): Promise<Blob> => {
   const params = new URLSearchParams();
   if (cedisIds && cedisIds.length > 0) {
@@ -120,6 +127,8 @@ export const downloadCedisFinancialSummaryPdf = async (
     }
   }
   if (entityType) params.append("entityType", entityType);
+  if (from) params.append("from", from);
+  if (to) params.append("to", to);
   const query = params.toString();
   const response = await http.get<Blob>(
     `${API_BASE}/cedis-financial-summary/pdf${query ? `?${query}` : ""}`,

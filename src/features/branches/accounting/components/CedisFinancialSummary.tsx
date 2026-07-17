@@ -11,6 +11,7 @@ import {
 } from "flowbite-react";
 import { HiDocumentDownload, HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { formatHumanDate } from "@/utils/date.utils";
 import {
   useCedisFinancialSummary,
   useDownloadCedisFinancialSummaryPdf,
@@ -19,9 +20,11 @@ import {
 interface Props {
   cedisIds?: number[];
   entityType?: string;
+  from?: string;
+  to?: string;
 }
 
-export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
+export const CedisFinancialSummary = ({ cedisIds, entityType, from, to }: Props) => {
   const {
     data: rows = [],
     isLoading,
@@ -29,6 +32,8 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
   } = useCedisFinancialSummary(
     cedisIds && cedisIds.length > 0 ? cedisIds : undefined,
     entityType,
+    from,
+    to,
   );
 
   const { download: downloadPdf } = useDownloadCedisFinancialSummaryPdf();
@@ -51,6 +56,8 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
       await downloadPdf(
         cedisIds && cedisIds.length > 0 ? cedisIds : undefined,
         entityType,
+        from,
+        to,
       );
     } finally {
       setIsDownloading(false);
@@ -106,17 +113,21 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalDebt)}
           </p>
-          <p className="text-[11px] text-gray-400">lo que debemos a proveedores</p>
+          <p className="text-[11px] text-gray-400">
+            Lo que debemos a proveedores
+          </p>
         </div>
 
         <div className="rounded-lg border border-yellow-900/40 bg-yellow-950/20 p-5">
           <p className="text-[10px] font-medium tracking-wider text-yellow-300 uppercase">
-            Por recibir
+            Por cobrar
           </p>
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalReceivable)}
           </p>
-          <p className="text-[11px] text-gray-400">lo que nos deben clientes internos</p>
+          <p className="text-[11px] text-gray-400">
+            Lo que nos deben clientes internos
+          </p>
         </div>
 
         <div className="rounded-lg border border-blue-900/40 bg-blue-950/20 p-5">
@@ -126,7 +137,9 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalInventory)}
           </p>
-          <p className="text-[11px] text-gray-400">valor de mercancía sin vender</p>
+          <p className="text-[11px] text-gray-400">
+            Lo que tenemos en inventario
+          </p>
         </div>
 
         <div
@@ -146,7 +159,7 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
           <p className="mt-2 text-3xl font-bold text-white">
             {formatMXN(totalNet)}
           </p>
-          <p className="text-[11px] text-gray-400">activos - deuda</p>
+          <p className="text-[11px] text-gray-400">Activos - Deuda</p>
         </div>
       </div>
 
@@ -155,7 +168,7 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
           <TableHead>
             <TableHeadCell>CEDIS</TableHeadCell>
             <TableHeadCell>Deuda</TableHeadCell>
-            <TableHeadCell>Por recibir</TableHeadCell>
+            <TableHeadCell>Por cobrar</TableHeadCell>
             <TableHeadCell>Inventario</TableHeadCell>
             <TableHeadCell>Balance neto</TableHeadCell>
           </TableHead>
@@ -173,26 +186,31 @@ export const CedisFinancialSummary = ({ cedisIds, entityType }: Props) => {
 const CedisRow: React.FC<{ row: any }> = ({ row }) => {
   const [expanded, setExpanded] = useState(false);
   const hasBreakdown = row.breakdown && row.breakdown.length > 0;
+  const hasInventoryBreakdown =
+    row.inventoryBreakdown && row.inventoryBreakdown.length > 0;
+  const canExpand = hasBreakdown || hasInventoryBreakdown;
 
   return (
     <>
       <TableRow>
         <TableCell>
           <div className="flex items-center gap-2">
-            {hasBreakdown && (
+            {canExpand && (
               <button
                 onClick={() => setExpanded(!expanded)}
                 className="text-gray-400 hover:text-white"
               >
-                {expanded ? <HiChevronUp size={14} /> : <HiChevronDown size={14} />}
+                {expanded ? (
+                  <HiChevronUp size={14} />
+                ) : (
+                  <HiChevronDown size={14} />
+                )}
               </button>
             )}
             <span className="font-medium text-white">{row.cedisName}</span>
           </div>
         </TableCell>
-        <TableCell className="text-red-300">
-          {formatMXN(row.debt)}
-        </TableCell>
+        <TableCell className="text-red-300">{formatMXN(row.debt)}</TableCell>
         <TableCell className="text-yellow-300">
           {formatMXN(row.receivable)}
         </TableCell>
@@ -214,13 +232,63 @@ const CedisRow: React.FC<{ row: any }> = ({ row }) => {
               </p>
               <div className="space-y-1">
                 {row.breakdown.map((b: any) => (
-                  <div key={b.clientId} className="flex justify-between text-xs">
+                  <div
+                    key={b.clientId}
+                    className="flex justify-between text-xs"
+                  >
                     <span className="text-gray-300">{b.clientName}</span>
                     <span className="font-medium text-yellow-300">
                       {formatMXN(b.amount)}
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+      {expanded && hasInventoryBreakdown && (
+        <TableRow>
+          <TableCell colSpan={5}>
+            <div className="ml-6 rounded border border-blue-800 bg-blue-950/10 p-3">
+              <p className="mb-2 text-xs font-semibold text-blue-400">
+                Desglose de inventario por remesa:
+              </p>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHead>
+                    <TableHeadCell>Remesa</TableHeadCell>
+                    <TableHeadCell>Fecha</TableHeadCell>
+                    <TableHeadCell>Iniciales</TableHeadCell>
+                    <TableHeadCell>Restantes</TableHeadCell>
+                    <TableHeadCell>Costo total</TableHeadCell>
+                    <TableHeadCell>Disponible</TableHeadCell>
+                  </TableHead>
+                  <TableBody>
+                    {row.inventoryBreakdown!.map((item: any) => (
+                      <TableRow key={item.batchId}>
+                        <TableCell className="font-medium text-white">
+                          #{item.batchId}
+                        </TableCell>
+                        <TableCell className="text-gray-300">
+                          {formatHumanDate(item.entryDate, "short")}
+                        </TableCell>
+                        <TableCell className="text-gray-300">
+                          {(item.initialQuantity ?? 0).toLocaleString("es-MX")}
+                        </TableCell>
+                        <TableCell className="text-blue-300 font-medium">
+                          {item.remainingQuantity.toLocaleString("es-MX")}
+                        </TableCell>
+                        <TableCell className="text-gray-300">
+                          {formatMXN(item.totalCost)}
+                        </TableCell>
+                        <TableCell className="text-blue-300 font-semibold">
+                          {formatMXN(item.availableCost)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </TableCell>

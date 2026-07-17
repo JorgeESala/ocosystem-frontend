@@ -24,6 +24,7 @@ import { WeeklyWeightDiffTable } from "../weight-diff/WeeklyWeightDiffTable";
 import { WeightDiffSummaryCards } from "../weight-diff/WeightDiffSummaryCards";
 import { WeightDiffToolbar } from "../weight-diff/WeightDiffToolbar";
 import { useWeeklyWeightDiff } from "../weight-diff/weight-diff.queries";
+import { ToggleSwitch } from "flowbite-react";
 
 const CEDIS_ID = 2;
 
@@ -89,6 +90,8 @@ export const AccountsPage = () => {
 
   const receivable = viewMode === "RECEIVABLE";
   const isWeightDiff = viewMode === "WEIGHT_DIFF";
+  const isFinancial = viewMode === "FINANCIAL";
+  const [showFinancialDates, setShowFinancialDates] = useState(false);
 
   const handleSetViewMode = (next: ViewMode) => {
     if (next === viewMode) return;
@@ -245,7 +248,7 @@ export const AccountsPage = () => {
         </Button>
       </div>
 
-      {!isWeightDiff && (
+      {!isWeightDiff && !isFinancial && (
         <>
           <AccountingSummaryCards
             data={data}
@@ -392,7 +395,28 @@ export const AccountsPage = () => {
       )}
 
       {viewMode === "FINANCIAL" && (
-        <CedisFinancialSummary entityType="CEDIS" />
+        <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
+          <ToggleSwitch
+            checked={showFinancialDates}
+            label="Filtrar por fechas"
+            onChange={setShowFinancialDates}
+          />
+          {showFinancialDates && (
+            <DateRangeFilter
+              value={dateRange}
+              defaultRange={defaultRange}
+              onChange={setDateRange}
+            />
+          )}
+        </div>
+      )}
+
+      {viewMode === "FINANCIAL" && (
+        <CedisFinancialSummary
+          entityType="CEDIS"
+          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
+        />
       )}
 
       <CreateAccountsPayableModal

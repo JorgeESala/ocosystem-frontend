@@ -11,6 +11,7 @@ import {
 } from "flowbite-react";
 import { HiDocumentDownload, HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { formatHumanDate } from "@/utils/date.utils";
 import {
   useFinancialSummary,
   useDownloadFinancialSummaryPdf,
@@ -255,15 +256,13 @@ export const BranchesAccountingSummary = ({
                                       #{item.batchId}
                                     </TableCell>
                                     <TableCell className="text-gray-300">
-                                      {new Date(
-                                        `${item.entryDate}T00:00:00`,
-                                      ).toLocaleDateString("es-MX")}
+                                      {formatHumanDate(item.entryDate, "short")}
                                     </TableCell>
                                     <TableCell className="text-gray-300">
-                                      {item.initialQuantity}
+                                      {item.initialQuantity.toLocaleString("es-MX")}
                                     </TableCell>
                                     <TableCell className="text-blue-300 font-medium">
-                                      {item.remainingQuantity}
+                                      {item.remainingQuantity.toLocaleString("es-MX")}
                                     </TableCell>
                                     <TableCell className="text-gray-300">
                                       {formatMXN(item.totalCost)}
