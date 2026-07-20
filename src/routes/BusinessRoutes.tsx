@@ -13,6 +13,7 @@ import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
+import CashReservePage from "@/features/cash-reserve/pages/CashReservePage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
 import AdminConfigPage from "@/features/branches/checklist/pages/AdminConfigPage";
@@ -61,6 +62,8 @@ export default function BusinessRoutes() {
         <Route path="checklist/admin" element={<RouteGuard><AdminConfigPage /></RouteGuard>} />
         <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
         <Route path="checklist/help" element={<HelpPage />} />
+
+        <Route path="cash-reserve" element={<CashReservePage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
