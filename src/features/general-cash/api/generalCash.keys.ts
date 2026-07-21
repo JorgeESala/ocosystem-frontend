@@ -1,5 +1,5 @@
 export const cashReserveKeys = {
-  all: ["cash-reserve"] as const,
+  all: ["general-cash"] as const,
   list: () => [...cashReserveKeys.all, "list"] as const,
   detail: (id: number) => [...cashReserveKeys.all, "detail", id] as const,
   flow: (id: number, start: string, end: string, frequency: string) =>

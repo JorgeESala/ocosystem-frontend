@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
-import type { CashReserveResponseDTO, UpdateCashReserveDTO } from "../types";
+import type { CashReserveResponseDTO, UpdateCashReserveDTO } from "@/features/general-cash/types";
 
 interface Props {
   open: boolean;
@@ -37,7 +37,7 @@ export default function SettingsModal({
 
   return (
     <Modal show={open} onClose={onClose} size="md" popup>
-      <ModalHeader>Configurar Reserva - {reserve?.branchName}</ModalHeader>
+      <ModalHeader>Configurar Caja - {reserve?.branchName}</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
           <div>

@@ -6,8 +6,8 @@ import type {
   UpdateCashAdjustmentDTO,
   UpdateCashReserveDTO,
 } from "../types";
-import { cashReserveApi, cashAdjustmentApi } from "./cashReserve.api";
-import { cashReserveKeys } from "./cashReserve.keys";
+import { cashReserveApi, cashAdjustmentApi } from "./generalCash.api";
+import { cashReserveKeys } from "./generalCash.keys";
 
 export const useCashReserves = () =>
   useQuery({
@@ -75,8 +75,8 @@ export const useCashFlowHistory = (
   useQuery({
     queryKey:
       id && start && end
-        ? ["cash-reserve", "history", id, start.toISOString(), end.toISOString()]
-        : ["cash-reserve", "history", "disabled"],
+        ? ["general-cash", "history", id, start.toISOString(), end.toISOString()]
+        : ["general-cash", "history", "disabled"],
     queryFn: () => cashReserveApi.getHistory(id!, start!, end!),
     enabled: Boolean(id && start && end),
   });
@@ -131,8 +131,8 @@ export const useCashAdjustments = (
   useQuery({
     queryKey:
       branchId && start && end
-        ? ["cash-adjustment", branchId, start.toISOString(), end.toISOString()]
-        : ["cash-adjustment", "disabled"],
+        ? ["general-cash-adjustment", branchId, start.toISOString(), end.toISOString()]
+        : ["general-cash-adjustment", "disabled"],
     queryFn: () => cashAdjustmentApi.getByBranch(branchId!, start!, end!),
     enabled: Boolean(branchId && start && end),
   });
@@ -144,7 +144,7 @@ export const useCreateCashAdjustment = () => {
       cashAdjustmentApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashReserveKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["cash-adjustment"] });
+      queryClient.invalidateQueries({ queryKey: ["general-cash-adjustment"] });
     },
   });
 };
@@ -156,7 +156,7 @@ export const useUpdateCashAdjustment = () => {
       cashAdjustmentApi.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashReserveKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["cash-adjustment"] });
+      queryClient.invalidateQueries({ queryKey: ["general-cash-adjustment"] });
     },
   });
 };
@@ -167,7 +167,7 @@ export const useDeleteCashAdjustment = () => {
     mutationFn: (id: number) => cashAdjustmentApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashReserveKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["cash-adjustment"] });
+      queryClient.invalidateQueries({ queryKey: ["general-cash-adjustment"] });
     },
   });
 };

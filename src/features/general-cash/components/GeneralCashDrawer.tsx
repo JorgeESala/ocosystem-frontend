@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button, Spinner, Datepicker } from "flowbite-react";
 import { HiX, HiPlus } from "react-icons/hi";
-import { useCashFlowHistory, useCreateCashAdjustment, useUpdateCashAdjustment } from "../api/cashReserve.queries";
+import { useCashFlowHistory, useCreateCashAdjustment, useUpdateCashAdjustment } from "@/features/general-cash/api/generalCash.queries";
 import CashAdjustmentModal from "./CashAdjustmentModal";
 import CashAdjustmentList from "./CashAdjustmentList";
-import type { CashReserveResponseDTO, CashFlowHistoryDTO, CashAdjustmentDTO, CreateCashAdjustmentDTO, UpdateCashAdjustmentDTO } from "../types";
+import type { CashReserveResponseDTO, CashFlowHistoryDTO, CashAdjustmentDTO, CreateCashAdjustmentDTO, UpdateCashAdjustmentDTO } from "@/features/general-cash/types";
 
 interface Props {
   open: boolean;
@@ -50,7 +50,7 @@ function formatDateTime(dt: string): string {
   });
 }
 
-export default function CashReserveDrawer({ open, onClose, reserve }: Props) {
+export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
   const defaults = getDefaultDates();
   const [startDate, setStartDate] = useState(formatDate(defaults.start));
   const [endDate, setEndDate] = useState(formatDate(defaults.end));
