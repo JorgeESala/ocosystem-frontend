@@ -13,7 +13,7 @@ import type {
   UpdateCashReserveDTO,
 } from "../types";
 
-const BASE_URL = "/api/v1/branches/cash-reserve";
+const BASE_URL = "/api/v1/branches/general-cash";
 
 export const cashReserveApi = {
   getAll: async (): Promise<CashReserveResponseDTO[]> => {
@@ -110,7 +110,7 @@ export const cashReserveApi = {
   },
 };
 
-const ADJUSTMENT_URL = "/api/v1/branches/cash-adjustments";
+const ADJUSTMENT_URL = "/api/v1/branches/general-cash-adjustments";
 
 export const cashAdjustmentApi = {
   getByBranch: async (

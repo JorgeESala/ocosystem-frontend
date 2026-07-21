@@ -1,19 +1,21 @@
 import { useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Button, Spinner } from "flowbite-react";
-import { HiCog, HiPlus } from "react-icons/hi";
+import { HiCog, HiPlus, HiQuestionMarkCircle } from "react-icons/hi";
 import { getLastDays } from "@/utils/date.utils";
 import { useBranches } from "@/features/branches/branch/branch.queries";
-import { useCashReserves, useGlobalCashFlow, useCashReserveAlerts, useUpdateCashReserve, useCreateCashReserve } from "../api/cashReserve.queries";
-import CashPositionCard from "../components/CashPositionCard";
-import CashFlowChart from "../components/CashFlowChart";
-import BranchBreakdown from "../components/BranchBreakdown";
-import AlertsPanel from "../components/AlertsPanel";
-import SettingsModal from "../components/SettingsModal";
-import CreateReserveModal from "../components/CreateReserveModal";
-import CashReserveDrawer from "../components/CashReserveDrawer";
-import type { CashFlowFrequency, CashReserveResponseDTO, UpdateCashReserveDTO, CreateCashReserveDTO } from "../types";
+import { useCashReserves, useGlobalCashFlow, useCashReserveAlerts, useUpdateCashReserve, useCreateCashReserve } from "@/features/general-cash/api/generalCash.queries";
+import CashPositionCard from "@/features/general-cash/components/CashPositionCard";
+import CashFlowChart from "@/features/general-cash/components/CashFlowChart";
+import BranchBreakdown from "@/features/general-cash/components/BranchBreakdown";
+import AlertsPanel from "@/features/general-cash/components/AlertsPanel";
+import SettingsModal from "@/features/general-cash/components/SettingsModal";
+import CreateGeneralCashModal from "@/features/general-cash/components/CreateGeneralCashModal";
+import GeneralCashDrawer from "@/features/general-cash/components/GeneralCashDrawer";
+import type { CashFlowFrequency, CashReserveResponseDTO, UpdateCashReserveDTO, CreateCashReserveDTO } from "@/features/general-cash/types";
 
-export default function CashReservePage() {
+export default function GeneralCashPage() {
+  const { slug } = useParams();
   const defaultRange = useMemo(() => getLastDays(30), []);
   const [frequency, setFrequency] = useState<CashFlowFrequency>("daily");
   const [selectedReserve, setSelectedReserve] = useState<CashReserveResponseDTO | null>(null);
@@ -76,16 +78,24 @@ export default function CashReservePage() {
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">
-            Reserva de Efectivo
+            Caja General
           </h1>
           <p className="text-sm text-slate-400">
             Posicion de efectivo por sucursal, flujo de caja y alertas.
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <HiPlus className="mr-2 h-4 w-4" />
-          Crear Reserva
-        </Button>
+        <div className="flex gap-2">
+          <Link to={`/business/${slug}/general-cash/help`}>
+            <Button color="light" size="sm">
+              <HiQuestionMarkCircle aria-hidden className="mr-2 h-4 w-4" />
+              Ayuda
+            </Button>
+          </Link>
+          <Button onClick={() => setShowCreate(true)}>
+            <HiPlus className="mr-2 h-4 w-4" />
+            Nueva Caja
+          </Button>
+        </div>
       </header>
 
       {isLoading ? (
@@ -123,7 +133,7 @@ export default function CashReservePage() {
             </div>
             {reserves.length === 0 ? (
               <div className="rounded-xl bg-slate-800 p-10 text-center text-slate-400">
-                No hay reservas creadas. Haz clic en "Crear Reserva" para empezar.
+                No hay cajas creadas. Haz clic en "Nueva Caja" para empezar.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,7 +180,7 @@ export default function CashReservePage() {
       />
 
       {/* Create modal */}
-      <CreateReserveModal
+      <CreateGeneralCashModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
         branches={branches}
@@ -180,7 +190,7 @@ export default function CashReservePage() {
       />
 
       {/* History drawer */}
-      <CashReserveDrawer
+      <GeneralCashDrawer
         open={showDrawer}
         onClose={() => setShowDrawer(false)}
         reserve={drawerReserve}

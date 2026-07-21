@@ -40,7 +40,7 @@ const BRANCHES_MENU = [
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
   { to: "expenses", label: "Gastos", icon: GiPayMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
-  { to: "cash-reserve", label: "Reserva de efectivo", icon: HiBanknotes },
+  { to: "general-cash", label: "Caja general", icon: HiBanknotes },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
 ];
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HiPencil, HiTrash } from "react-icons/hi";
-import { useCashAdjustments, useDeleteCashAdjustment } from "../api/cashReserve.queries";
-import type { CashAdjustmentDTO } from "../types";
+import { useCashAdjustments, useDeleteCashAdjustment } from "@/features/general-cash/api/generalCash.queries";
+import type { CashAdjustmentDTO } from "@/features/general-cash/types";
 
 interface Props {
   branchId: number;

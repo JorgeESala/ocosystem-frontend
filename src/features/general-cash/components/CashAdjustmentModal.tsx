@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { Datepicker } from "flowbite-react";
-import type { CashAdjustmentDTO, CreateCashAdjustmentDTO, UpdateCashAdjustmentDTO } from "../types";
+import type {
+  CashAdjustmentDTO,
+  CreateCashAdjustmentDTO,
+  UpdateCashAdjustmentDTO,
+} from "../types";
 
 interface Props {
   open: boolean;
@@ -9,7 +13,11 @@ interface Props {
   branchId: number;
   branchName: string;
   adjustment?: CashAdjustmentDTO | null;
-  onSave: (payload: CreateCashAdjustmentDTO | { id: number; payload: UpdateCashAdjustmentDTO }) => void;
+  onSave: (
+    payload:
+      | CreateCashAdjustmentDTO
+      | { id: number; payload: UpdateCashAdjustmentDTO },
+  ) => void;
   isSaving: boolean;
 }
 
@@ -71,7 +79,10 @@ export default function CashAdjustmentModal({
       <ModalBody>
         <div className="space-y-4">
           <div>
-            <label htmlFor="amount" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="amount"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Monto (MXN)
             </label>
             <input
@@ -89,7 +100,10 @@ export default function CashAdjustmentModal({
           </div>
 
           <div>
-            <label htmlFor="reason" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="reason"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Razon
             </label>
             <input
@@ -98,7 +112,7 @@ export default function CashAdjustmentModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full rounded-lg border border-slate-600 bg-slate-700 p-2.5 text-sm text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Ej: Diferencia de peso en POS"
+              placeholder="Ej: Faltante en cuenta recibida"
             />
           </div>
 
@@ -118,7 +132,11 @@ export default function CashAdjustmentModal({
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSaving || !reason}>
-              {isSaving ? "Guardando..." : isEditing ? "Actualizar" : "Crear Ajuste"}
+              {isSaving
+                ? "Guardando..."
+                : isEditing
+                  ? "Actualizar"
+                  : "Crear Ajuste"}
             </Button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Modal, ModalBody, ModalHeader, Select } from "flowbite-react";
-import type { CreateCashReserveDTO } from "../types";
+import type { CreateCashReserveDTO } from "@/features/general-cash/types";
 import type { Branch } from "@/features/branches/branch/types";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   isSaving: boolean;
 }
 
-export default function CreateReserveModal({
+export default function CreateGeneralCashModal({
   open,
   onClose,
   branches,
@@ -46,7 +46,7 @@ export default function CreateReserveModal({
 
   return (
     <Modal show={open} onClose={handleClose} size="md" popup>
-      <ModalHeader>Crear Reserva de Efectivo</ModalHeader>
+      <ModalHeader>Nueva Caja</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
           <div>
@@ -67,7 +67,7 @@ export default function CreateReserveModal({
             </Select>
             {availableBranches.length === 0 && (
               <p className="mt-1 text-xs text-amber-400">
-                Todas las sucursales ya tienen reserva asignada
+                Todas las sucursales ya tienen caja asignada
               </p>
             )}
           </div>
@@ -103,7 +103,7 @@ export default function CreateReserveModal({
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={isSaving || !branchId}>
-              {isSaving ? "Creando..." : "Crear Reserva"}
+              {isSaving ? "Creando..." : "Crear Caja"}
             </Button>
           </div>
         </div>
