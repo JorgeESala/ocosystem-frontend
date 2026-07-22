@@ -21,7 +21,11 @@ import { EggMovementsTable } from "../components/egg/EggMovementsTable";
 interface UnitConfigValue {
   label: string;
   description: string;
-  overviewComponent: React.FC<{ batch: any; autoExpandId?: number | null; tripId?: number | null }>;
+  overviewComponent: React.FC<{
+    batch: any;
+    autoExpandId?: number | null;
+    tripId?: number | null;
+  }>;
   renderMovementQuantity: (movement: any) => React.ReactNode;
   // 🔥 Agregamos setValue aquí:
   movementFormFields: React.FC<{
@@ -44,7 +48,7 @@ interface UnitConfigValue {
 export const UNIT_CONFIG: Record<BusinessUnitType, UnitConfigValue> = {
   EGG: {
     label: "Huevo",
-    description: "Control de inventario por cajas, cartones y piezas.",
+    description: "Control de inventario por cajas, casilleros y piezas.",
     overviewComponent: EggBatchOverview,
     renderMovementQuantity: (mov) => (
       <EggQuantityDisplay totalPieces={mov.quantity} />

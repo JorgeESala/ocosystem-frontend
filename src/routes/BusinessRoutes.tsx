@@ -15,6 +15,7 @@ import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpense
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 import GeneralCashPage from "@/features/general-cash/pages/GeneralCashPage";
 import GeneralCashHelpPage from "@/features/general-cash/pages/GeneralCashHelpPage";
+import DeliverySchedulePage from "@/features/order-prediction/pages/DeliverySchedulePage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
 import AdminConfigPage from "@/features/branches/checklist/pages/AdminConfigPage";
@@ -66,6 +67,7 @@ export default function BusinessRoutes() {
 
         <Route path="general-cash" element={<GeneralCashPage />} />
         <Route path="general-cash/help" element={<GeneralCashHelpPage />} />
+        <Route path="delivery-schedule" element={<DeliverySchedulePage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
