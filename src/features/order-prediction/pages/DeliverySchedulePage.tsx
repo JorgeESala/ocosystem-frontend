@@ -7,7 +7,6 @@ import {
   useDeliverySchedules,
   useUpdateDeliverySchedule,
 } from "../api/orderPrediction.queries";
-import type { DeliveryScheduleDTO } from "../types";
 
 const DAYS = [
   { id: 1, name: "Lun" },
@@ -40,9 +39,7 @@ export default function DeliverySchedulePage() {
     const existing = schedules.find((s) => s.branchId === branchId);
     if (existing) {
       const days =
-        type === "chicken"
-          ? existing.deliveryDays
-          : existing.eggDeliveryDays;
+        type === "chicken" ? existing.deliveryDays : existing.eggDeliveryDays;
       return new Set(days ?? []);
     }
     return new Set();
@@ -87,10 +84,10 @@ export default function DeliverySchedulePage() {
 
       const chickenDays = local?.chicken
         ? Array.from(local.chicken).sort()
-        : existing?.deliveryDays ?? [];
+        : (existing?.deliveryDays ?? []);
       const eggDays = local?.eggs
         ? Array.from(local.eggs).sort()
-        : existing?.eggDeliveryDays ?? [];
+        : (existing?.eggDeliveryDays ?? []);
 
       if (local || !existing) {
         await updateMutation.mutateAsync({

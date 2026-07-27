@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { HiArrowRight, HiCog } from "react-icons/hi";
+import { HiCog } from "react-icons/hi";
 import { useOrderPredictions } from "../api/orderPrediction.queries";
 import type { OrderPredictionDTO, PredictionPeriodDTO } from "../types";
 

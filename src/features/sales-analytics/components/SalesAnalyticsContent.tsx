@@ -294,7 +294,7 @@ export default function SalesAnalyticsContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.weeklySummary.map((week, weekIdx) => {
+                    {data.weeklySummary.map((week) => {
                       const source =
                         activeProduct === "chicken"
                           ? week.chickenByBranch
@@ -303,16 +303,6 @@ export default function SalesAnalyticsContent() {
                         activeProduct === "chicken"
                           ? week.totalChicken
                           : week.totalEggs;
-                      const prevWeek = data.weeklySummary[weekIdx - 1];
-                      const prevTotal = prevWeek
-                        ? activeProduct === "chicken"
-                          ? prevWeek.totalChicken
-                          : prevWeek.totalEggs
-                        : 0;
-                      const weekGrowth =
-                        prevTotal > 0
-                          ? ((total - prevTotal) / prevTotal) * 100
-                          : 0;
 
                       return (
                         <tr
@@ -335,7 +325,10 @@ export default function SalesAnalyticsContent() {
                           </td>
                           {activeBranchNames.slice(0, 5).map((name) => {
                             const val = source[name] ?? 0;
-                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : "0";
+                            const pct =
+                              total > 0
+                                ? ((val / total) * 100).toFixed(1)
+                                : "0";
                             return (
                               <td
                                 key={name}
@@ -361,7 +354,11 @@ export default function SalesAnalyticsContent() {
               {/* Expanded weekly detail */}
               {selectedWeek && (
                 <WeeklyDetail
-                  week={data.weeklySummary.find((w) => w.weekLabel === selectedWeek)!}
+                  week={
+                    data.weeklySummary.find(
+                      (w) => w.weekLabel === selectedWeek,
+                    )!
+                  }
                   activeProduct={activeProduct}
                   weeklySummary={data.weeklySummary}
                   selectedWeek={selectedWeek}
@@ -404,10 +401,8 @@ function SummaryCards({
       : summary.avgDailyEggs;
 
   const topBranch = [...branchGrowth].sort((a, b) => {
-    const aVal =
-      activeProduct === "chicken" ? a.currentChicken : a.currentEggs;
-    const bVal =
-      activeProduct === "chicken" ? b.currentChicken : b.currentEggs;
+    const aVal = activeProduct === "chicken" ? a.currentChicken : a.currentEggs;
+    const bVal = activeProduct === "chicken" ? b.currentChicken : b.currentEggs;
     return bVal - aVal;
   })[0];
 
@@ -438,12 +433,11 @@ function SummaryCards({
         <div
           className={`mt-1 text-xs font-semibold ${getGrowthColor(productGrowth)}`}
         >
-          {getGrowthArrow(productGrowth)}{" "}
-          {productGrowth > 0 ? "+" : ""}
+          {getGrowthArrow(productGrowth)} {productGrowth > 0 ? "+" : ""}
           {productGrowth}% vs periodo anterior
         </div>
         {hoveredCard === "total" && topBranch && (
-          <div className="absolute left-0 top-full z-10 mt-1 w-56 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
+          <div className="absolute top-full left-0 z-10 mt-1 w-56 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
             <div className="text-[11px] text-slate-400">
               Top sucursal:{" "}
               <span className="font-medium text-slate-200">
@@ -471,19 +465,22 @@ function SummaryCards({
           Total {activeProduct === "chicken" ? "Huevo" : "Pollo"}
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {(
-            activeProduct === "chicken"
-              ? summary.totalEggs
-              : summary.totalChicken
+          {(activeProduct === "chicken"
+            ? summary.totalEggs
+            : summary.totalChicken
           ).toLocaleString()}
         </div>
         <div
           className={`mt-1 text-xs font-semibold ${getGrowthColor(
-            activeProduct === "chicken" ? summary.eggsGrowth : summary.chickenGrowth,
+            activeProduct === "chicken"
+              ? summary.eggsGrowth
+              : summary.chickenGrowth,
           )}`}
         >
           {getGrowthArrow(
-            activeProduct === "chicken" ? summary.eggsGrowth : summary.chickenGrowth,
+            activeProduct === "chicken"
+              ? summary.eggsGrowth
+              : summary.chickenGrowth,
           )}{" "}
           {(activeProduct === "chicken"
             ? summary.eggsGrowth
@@ -590,20 +587,23 @@ function CustomTooltip({
           const prevWeekVal = prevWeekBranchDaily[entry.name] ?? 0;
 
           const dayChange =
-            prevDayVal > 0
-              ? ((currentVal - prevDayVal) / prevDayVal) * 100
-              : 0;
+            prevDayVal > 0 ? ((currentVal - prevDayVal) / prevDayVal) * 100 : 0;
           const weekChange =
             prevWeekVal > 0
               ? ((currentVal - prevWeekVal) / prevWeekVal) * 100
               : 0;
 
           return (
-            <div key={entry.name} className="flex items-center justify-between gap-4">
+            <div
+              key={entry.name}
+              className="flex items-center justify-between gap-4"
+            >
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: BRANCH_COLORS[entry.name] ?? "#999" }}
+                  style={{
+                    backgroundColor: BRANCH_COLORS[entry.name] ?? "#999",
+                  }}
                 />
                 <span className="text-[11px] text-slate-300">{entry.name}</span>
               </div>
@@ -762,9 +762,7 @@ function BranchComparisonPanel({
                 : branch.eggsGrowth;
             const maxVal = Math.max(
               ...data.branchGrowth.map((b) =>
-                activeProduct === "chicken"
-                  ? b.currentChicken
-                  : b.currentEggs,
+                activeProduct === "chicken" ? b.currentChicken : b.currentEggs,
               ),
               1,
             );
@@ -774,13 +772,9 @@ function BranchComparisonPanel({
                 ? summary.totalChicken
                 : summary.totalEggs;
             const contribution =
-              totalAll > 0
-                ? ((current / totalAll) * 100).toFixed(1)
-                : "0";
+              totalAll > 0 ? ((current / totalAll) * 100).toFixed(1) : "0";
             const dailyAvg =
-              summary.daysInRange > 0
-                ? current / summary.daysInRange
-                : 0;
+              summary.daysInRange > 0 ? current / summary.daysInRange : 0;
             const dailyAvgFormatted =
               dailyAvg === Math.floor(dailyAvg)
                 ? dailyAvg.toString()
@@ -800,8 +794,7 @@ function BranchComparisonPanel({
                   <span
                     className={`text-xs font-semibold ${getGrowthColor(growth)}`}
                   >
-                    {getGrowthArrow(growth)}{" "}
-                    {growth > 0 ? "+" : ""}
+                    {getGrowthArrow(growth)} {growth > 0 ? "+" : ""}
                     {growth}% vs mes ant.
                   </span>
                 </div>
@@ -818,7 +811,7 @@ function BranchComparisonPanel({
                 </div>
 
                 {hoveredBranch === branch.branchId && (
-                  <div className="absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
+                  <div className="absolute top-full left-0 z-20 mt-1 w-60 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
                     <div className="mb-2 border-b border-slate-600 pb-1.5 text-[10px] text-slate-500">
                       Comparado con el mismo periodo del mes anterior
                     </div>
@@ -827,8 +820,11 @@ function BranchComparisonPanel({
                         <span className="text-slate-400">Pollo:</span>
                         <span className="font-medium text-slate-200">
                           {branch.previousChicken} → {branch.currentChicken}
-                          <span className={`ml-1 ${getGrowthColor(branch.chickenGrowth)}`}>
-                            ({branch.chickenGrowth > 0 ? "+" : ""}{branch.chickenGrowth}%)
+                          <span
+                            className={`ml-1 ${getGrowthColor(branch.chickenGrowth)}`}
+                          >
+                            ({branch.chickenGrowth > 0 ? "+" : ""}
+                            {branch.chickenGrowth}%)
                           </span>
                         </span>
                       </div>
@@ -836,18 +832,25 @@ function BranchComparisonPanel({
                         <span className="text-slate-400">Huevo:</span>
                         <span className="font-medium text-slate-200">
                           {branch.previousEggs} → {branch.currentEggs}
-                          <span className={`ml-1 ${getGrowthColor(branch.eggsGrowth)}`}>
-                            ({branch.eggsGrowth > 0 ? "+" : ""}{branch.eggsGrowth}%)
+                          <span
+                            className={`ml-1 ${getGrowthColor(branch.eggsGrowth)}`}
+                          >
+                            ({branch.eggsGrowth > 0 ? "+" : ""}
+                            {branch.eggsGrowth}%)
                           </span>
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Prom. diario:</span>
-                        <span className="font-medium text-slate-200">{dailyAvgFormatted}</span>
+                        <span className="font-medium text-slate-200">
+                          {dailyAvgFormatted}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Contribucion:</span>
-                        <span className="font-medium text-slate-200">{contribution}%</span>
+                        <span className="font-medium text-slate-200">
+                          {contribution}%
+                        </span>
                       </div>
                     </div>
                   </div>
