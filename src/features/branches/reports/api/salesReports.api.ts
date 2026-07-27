@@ -16,6 +16,13 @@ export interface DailySalesDTO {
   realTickets: number;
 }
 
+export interface DailyCategorySalesDTO {
+  day: string;
+  categoryName: string;
+  totalSales: number;
+  quantitySold: number;
+}
+
 export interface ProductSalesDTO {
   productBarcode: string;
   productName: string;
@@ -43,6 +50,7 @@ export interface SalesReportDTO {
   products: ProductSalesDTO[];
   categories: CategorySalesDTO[];
   dailySales: DailySalesDTO[];
+  dailyCategorySales: DailyCategorySalesDTO[];
 }
 export const fetchSalesReport = async (
   branchId: number,

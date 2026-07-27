@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Spinner } from "flowbite-react";
+import { Spinner, Tooltip } from "flowbite-react";
 import {
   HiCheckCircle,
   HiExclamationCircle,
@@ -8,6 +8,7 @@ import {
   HiChevronRight,
 } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { formatHumanDate } from "@/utils/date.utils";
 
 export interface BranchChickenComparison {
   branchId: number;
@@ -16,13 +17,41 @@ export interface BranchChickenComparison {
   manualChicken: number;
 }
 
+export interface DailyComparison {
+  date: string;
+  importedTotal: number;
+  manualTotal: number;
+  diff: number;
+}
+
+export interface DailyQuantityDiff {
+  date: string;
+  matadosQty: number;
+  batchQty: number;
+  diff: number;
+}
+
+export interface BranchBreakdownItem {
+  branchId: number;
+  branchName: string;
+  importedChicken: number;
+  manualChicken: number;
+  matadosQty: number;
+  batchQty: number;
+  qtyDiff: number;
+}
+
 interface Props {
   byBranch: BranchChickenComparison[];
+  dailyComparison: DailyComparison[];
+  dailyQuantityComparison: DailyQuantityDiff[];
+  branchBreakdown: BranchBreakdownItem[];
   isLoading: boolean;
   isError: boolean;
 }
 
 const DIFF_EPSILON = 0.01;
+const QTY_EPSILON = 0.5;
 const SIGNIFICANT_DIFF_RATIO = 0.05;
 
 type Severity = "ok" | "warning" | "danger" | "info";
@@ -54,6 +83,14 @@ const formatSigned = (value: number) => {
   return `${sign}${formatMXN(Math.abs(value))}`;
 };
 
+const formatQty = (n: number) => Math.round(n).toLocaleString("es-MX");
+
+const formatSignedQty = (value: number) => {
+  if (Math.abs(value) < QTY_EPSILON) return "0";
+  const sign = value > 0 ? "+" : "−";
+  return `${sign}${formatQty(Math.abs(value))}`;
+};
+
 const rowSeverity = (
   diff: number,
   chickenBaseline: number,
@@ -63,12 +100,21 @@ const rowSeverity = (
   return ratio >= SIGNIFICANT_DIFF_RATIO ? "danger" : "warning";
 };
 
+const shortDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+};
+
 export default function BranchProfitSalesSourceBanner({
   byBranch,
+  dailyComparison,
+  dailyQuantityComparison,
+  branchBreakdown,
   isLoading,
   isError,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [datesExpanded, setDatesExpanded] = useState(false);
 
   const importedTotal = byBranch.reduce(
     (sum, b) => sum + b.importedChicken,
@@ -117,13 +163,35 @@ export default function BranchProfitSalesSourceBanner({
         ? HiExclamationCircle
         : HiInformationCircle;
 
-  const sortedByBranch = [...byBranch].sort(
-    (a, b) => Math.abs(b.manualChicken - b.importedChicken) - Math.abs(a.manualChicken - a.importedChicken),
-  );
-
   const hasAnyData = byBranch.some(
     (b) => b.importedChicken > 0 || b.manualChicken > 0,
   );
+
+  const datesWithDiffs = dailyComparison.filter((d) => {
+    const moneyDiff = Math.abs(d.diff) >= DIFF_EPSILON;
+    const qtyEntry = dailyQuantityComparison.find((q) => q.date === d.date);
+    const qtyDiff = qtyEntry ? Math.abs(qtyEntry.diff) >= QTY_EPSILON : false;
+    return moneyDiff || qtyDiff;
+  });
+  const showDateDots =
+    !isError && !isLoading && datesWithDiffs.length > 0 && hasAnyData;
+  const VISIBLE_DOTS = 12;
+  const visibleDates = datesExpanded
+    ? datesWithDiffs
+    : datesWithDiffs.slice(0, VISIBLE_DOTS);
+  const hiddenCount = datesWithDiffs.length - VISIBLE_DOTS;
+
+  const sortedByBranch = [...branchBreakdown].sort((a, b) => {
+    const aMax = Math.max(
+      Math.abs(a.manualChicken - a.importedChicken),
+      Math.abs(a.qtyDiff) * 100,
+    );
+    const bMax = Math.max(
+      Math.abs(b.manualChicken - b.importedChicken),
+      Math.abs(b.qtyDiff) * 100,
+    );
+    return bMax - aMax;
+  });
 
   return (
     <section
@@ -188,7 +256,86 @@ export default function BranchProfitSalesSourceBanner({
             </div>
           </div>
 
-          {byBranch.length > 1 && !isError && !isLoading && (
+          {showDateDots && (
+            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase mr-0.5">
+                Fechas con diferencia:
+              </span>
+              {visibleDates.map((d) => {
+                const qd = dailyQuantityComparison.find(
+                  (q) => q.date === d.date,
+                );
+                const hasMoneyDiff = Math.abs(d.diff) >= DIFF_EPSILON;
+                const hasQtyDiff = qd ? Math.abs(qd.diff) >= QTY_EPSILON : false;
+                return (
+                  <Tooltip
+                    key={d.date}
+                    content={
+                      <div className="text-xs space-y-0.5">
+                        <p className="font-semibold">
+                          {formatHumanDate(d.date, "long")}
+                        </p>
+                        <p>Subir reporte: {formatMXN(d.importedTotal)}</p>
+                        <p>Entradas y ventas: {formatMXN(d.manualTotal)}</p>
+                        <p
+                          className={
+                            hasMoneyDiff ? "text-rose-300 font-semibold" : ""
+                          }
+                        >
+                          Diferencia: {formatSigned(d.diff)}
+                        </p>
+                        {qd && (
+                          <>
+                            <div className="border-t border-slate-600 my-0.5" />
+                            <p>Matados: {formatQty(qd.matadosQty)} pzas</p>
+                            <p>Remesas: {formatQty(qd.batchQty)} pzas</p>
+                            <p
+                              className={
+                                hasQtyDiff ? "text-rose-300 font-semibold" : ""
+                              }
+                            >
+                              Diferencia: {formatSignedQty(qd.diff)} pzas
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <span
+                      className={`inline-block h-5 min-w-5 rounded-full px-1 text-center text-[9px] font-bold leading-5 cursor-default ${
+                        d.diff > 0
+                          ? "bg-amber-900/70 text-amber-200"
+                          : "bg-rose-900/70 text-rose-200"
+                      }`}
+                    >
+                      {shortDate(d.date)}
+                    </span>
+                  </Tooltip>
+                );
+              })}
+              {!datesExpanded && hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setDatesExpanded(true)}
+                  className="text-[10px] text-slate-400 underline decoration-dotted hover:text-slate-200"
+                >
+                  +{hiddenCount} más
+                </button>
+              )}
+              {datesExpanded && datesWithDiffs.length > VISIBLE_DOTS && (
+                <button
+                  type="button"
+                  onClick={() => setDatesExpanded(false)}
+                  className="text-[10px] text-slate-400 underline decoration-dotted hover:text-slate-200"
+                >
+                  Mostrar menos
+                </button>
+              )}
+            </div>
+          )}
+
+          {branchBreakdown.length > 1 && !isError && !isLoading && (
             <div className="mt-3">
               <button
                 type="button"
@@ -200,7 +347,7 @@ export default function BranchProfitSalesSourceBanner({
                 ) : (
                   <HiChevronRight className="h-3.5 w-3.5" />
                 )}
-                {expanded ? "Ocultar" : "Ver"} origen de la diferencia por sucursal
+                {expanded ? "Ocultar" : "Ver"} desglose por sucursal (ventas y cantidades)
               </button>
 
               {expanded && (
@@ -208,11 +355,16 @@ export default function BranchProfitSalesSourceBanner({
                   <table className="w-full text-left text-xs">
                     <thead className="text-[10px] tracking-wider text-slate-400 uppercase">
                       <tr className="border-b border-slate-800">
-                        <th className="px-3 py-2">Sucursal</th>
+                        <th className="px-3 py-2" rowSpan={2}>Sucursal</th>
+                        <th className="px-3 py-2 text-center border-b border-slate-700" colSpan={3}>Ventas ($)</th>
+                        <th className="px-3 py-2 text-center border-b border-slate-700" colSpan={3}>Cantidad (pzas)</th>
+                      </tr>
+                      <tr className="border-b border-slate-800">
                         <th className="px-3 py-2 text-right">Subir reporte</th>
-                        <th className="px-3 py-2 text-right">
-                          Entradas y ventas
-                        </th>
+                        <th className="px-3 py-2 text-right">Entradas y ventas</th>
+                        <th className="px-3 py-2 text-right">Diferencia</th>
+                        <th className="px-3 py-2 text-right">Matados</th>
+                        <th className="px-3 py-2 text-right">Remesas</th>
                         <th className="px-3 py-2 text-right">Diferencia</th>
                       </tr>
                     </thead>
@@ -220,6 +372,14 @@ export default function BranchProfitSalesSourceBanner({
                       {sortedByBranch.map((row) => {
                         const rowDiff = row.manualChicken - row.importedChicken;
                         const rowSev = rowSeverity(rowDiff, chickenTotal);
+                        const qtySev =
+                          Math.abs(row.qtyDiff) < QTY_EPSILON
+                            ? "ok"
+                            : (chickenTotal > 0
+                                ? Math.abs(row.qtyDiff) / chickenTotal
+                                : 0) >= SIGNIFICANT_DIFF_RATIO
+                              ? "danger"
+                              : "warning";
                         return (
                           <tr key={row.branchId} className="text-slate-200">
                             <td className="px-3 py-2 font-medium">
@@ -235,6 +395,17 @@ export default function BranchProfitSalesSourceBanner({
                               className={`px-3 py-2 text-right font-semibold ${diffTextClass[rowSev]}`}
                             >
                               {formatSigned(rowDiff)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-slate-300">
+                              {formatQty(row.matadosQty)}
+                            </td>
+                            <td className="px-3 py-2 text-right text-slate-300">
+                              {formatQty(row.batchQty)}
+                            </td>
+                            <td
+                              className={`px-3 py-2 text-right font-semibold ${diffTextClass[qtySev]}`}
+                            >
+                              {formatSignedQty(row.qtyDiff)}
                             </td>
                           </tr>
                         );
