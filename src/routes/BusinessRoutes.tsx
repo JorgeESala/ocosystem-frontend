@@ -15,6 +15,7 @@ import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpense
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 import GeneralCashPage from "@/features/general-cash/pages/GeneralCashPage";
 import GeneralCashHelpPage from "@/features/general-cash/pages/GeneralCashHelpPage";
+import DeliverySchedulePage from "@/features/order-prediction/pages/DeliverySchedulePage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
 import AdminConfigPage from "@/features/branches/checklist/pages/AdminConfigPage";
@@ -38,13 +39,22 @@ export default function BusinessRoutes() {
           path="salesAndBatches"
           element={<BatchPage unitType={"LIVE_CHICKEN"} />}
         />
-        <Route path="expenses" element={<ExpensesPage unitType="LIVE_CHICKEN" />} />
+        <Route
+          path="expenses"
+          element={<ExpensesPage unitType="LIVE_CHICKEN" />}
+        />
         <Route path="reports" element={<ReportPage />} />
-        <Route path="clients-routes" element={<ClientsRoutesPage unitType="LIVE_CHICKEN" />} />
+        <Route
+          path="clients-routes"
+          element={<ClientsRoutesPage unitType="LIVE_CHICKEN" />}
+        />
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
-        <Route path="profit" element={<ProfitReportPage unitType="LIVE_CHICKEN" />} />
+        <Route
+          path="profit"
+          element={<ProfitReportPage unitType="LIVE_CHICKEN" />}
+        />
       </Routes>
     );
   }
@@ -60,12 +70,23 @@ export default function BusinessRoutes() {
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
         <Route path="checklist" element={<ChecklistPage />} />
-        <Route path="checklist/admin" element={<RouteGuard><AdminConfigPage /></RouteGuard>} />
-        <Route path="checklist/calendar" element={<ExpectedEventCalendarPage />} />
+        <Route
+          path="checklist/admin"
+          element={
+            <RouteGuard>
+              <AdminConfigPage />
+            </RouteGuard>
+          }
+        />
+        <Route
+          path="checklist/calendar"
+          element={<ExpectedEventCalendarPage />}
+        />
         <Route path="checklist/help" element={<HelpPage />} />
 
         <Route path="general-cash" element={<GeneralCashPage />} />
         <Route path="general-cash/help" element={<GeneralCashHelpPage />} />
+        <Route path="delivery-schedule" element={<DeliverySchedulePage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
@@ -86,7 +107,10 @@ export default function BusinessRoutes() {
           element={<BatchPage unitType={"EGG"} />}
         />
         <Route path="expenses" element={<ExpensesPage unitType="EGG" />} />
-        <Route path="clients-routes" element={<ClientsRoutesPage unitType="EGG" />} />
+        <Route
+          path="clients-routes"
+          element={<ClientsRoutesPage unitType="EGG" />}
+        />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

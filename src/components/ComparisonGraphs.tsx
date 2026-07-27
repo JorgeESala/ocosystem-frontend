@@ -34,12 +34,13 @@ import {
 } from "../services/api";
 import BranchMultiSelect from "./BranchMultiSelect";
 import MermaComparison from "@/features/batch/components/live-chicken/MermaComparison";
+import SalesAnalyticsContent from "@/features/sales-analytics/components/SalesAnalyticsContent";
 import { useParams } from "react-router-dom";
 
 export default function ComparisonsGraphs() {
   const { slug } = useParams();
   const isBranches = slug === "sucursales";
-  const [activeTab, setActiveTab] = useState<"ventas" | "merma">("ventas");
+  const [activeTab, setActiveTab] = useState<"pollo-huevo" | "ventas" | "merma">("pollo-huevo");
   const [metric, setMetric] = useState<"sales" | "quantity">("sales");
   const [frequency, setFrequency] = useState<Frequency>("daily");
   const [isContinuous, setIsContinuous] = useState(true);
@@ -263,6 +264,16 @@ export default function ComparisonsGraphs() {
       {isBranches && (
         <div className="mb-4 flex gap-2">
           <button
+            onClick={() => setActiveTab("pollo-huevo")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === "pollo-huevo"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+            }`}
+          >
+            Pollo y Huevo
+          </button>
+          <button
             onClick={() => setActiveTab("ventas")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === "ventas"
@@ -283,6 +294,10 @@ export default function ComparisonsGraphs() {
             Merma
           </button>
         </div>
+      )}
+
+      {isBranches && activeTab === "pollo-huevo" && (
+        <SalesAnalyticsContent />
       )}
 
       {(!isBranches || activeTab === "ventas") && (

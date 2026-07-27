@@ -27,6 +27,8 @@ export interface ImportedByBranch {
 export interface UseImportedSalesByBranchesResult {
   totalImported: number;
   byBranch: ImportedByBranch[];
+  dailyTotalsByBranch: Map<number, Map<string, number>>;
+  dailyMatadosByBranch: Map<number, Map<string, number>>;
   isLoading: boolean;
   isError: boolean;
 }
@@ -92,12 +94,48 @@ export const useImportedSalesByBranches = ({
     [byBranch],
   );
 
+  const dailyTotalsByBranch = useMemo(() => {
+    const result = new Map<number, Map<string, number>>();
+    queries.forEach((q, index) => {
+      const branchId = branchIds[index];
+      const dayMap = new Map<string, number>();
+      if (q.data?.dailyCategorySales) {
+        for (const d of q.data.dailyCategorySales) {
+          if (normalizeCategory(d.categoryName) === "pollo") {
+            dayMap.set(d.day, (dayMap.get(d.day) ?? 0) + (Number(d.totalSales) || 0));
+          }
+        }
+      }
+      result.set(branchId, dayMap);
+    });
+    return result;
+  }, [queries, branchIds]);
+
+  const dailyMatadosByBranch = useMemo(() => {
+    const result = new Map<number, Map<string, number>>();
+    queries.forEach((q, index) => {
+      const branchId = branchIds[index];
+      const dayMap = new Map<string, number>();
+      if (q.data?.dailyCategorySales) {
+        for (const d of q.data.dailyCategorySales) {
+          if (normalizeCategory(d.categoryName) === "matados") {
+            dayMap.set(d.day, (dayMap.get(d.day) ?? 0) + (Number(d.quantitySold) || 0));
+          }
+        }
+      }
+      result.set(branchId, dayMap);
+    });
+    return result;
+  }, [queries, branchIds]);
+
   const isLoading = enabled && queries.some((q) => q.isLoading);
   const isError = enabled && queries.some((q) => q.isError);
 
   return {
     totalImported,
     byBranch,
+    dailyTotalsByBranch,
+    dailyMatadosByBranch,
     isLoading: isLoading && !queries.some((q) => q.data),
     isError,
   };

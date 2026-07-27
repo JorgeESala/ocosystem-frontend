@@ -93,6 +93,27 @@ export const salesApi = {
     return data.map(mapItem);
   },
 
+  searchByBranchAndDate: async (
+    branchIds: number[],
+    startDate: Date,
+    endDate: Date,
+  ): Promise<BranchesBatchSale[]> => {
+    const toISO = (d: Date) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      return x.toISOString().slice(0, 10);
+    };
+    const { data } = await http.post<{ items: BranchSaleItemApi[] }>(
+      `${API_URL}/search`,
+      {
+        branchIds,
+        startDate: toISO(startDate),
+        endDate: toISO(endDate),
+      },
+    );
+    return (data.items ?? []).map(mapItem);
+  },
+
   updateOfficeStatus: async (
     saleId: number,
     officeReceived: boolean,

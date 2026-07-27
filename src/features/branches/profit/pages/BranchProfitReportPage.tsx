@@ -13,6 +13,7 @@ import BranchProfitSalesSourceBanner from "../components/BranchProfitSalesSource
 import BranchProfitSummary from "../components/BranchProfitSummary";
 import { useBranchProfitReport } from "../api/branch-profit.queries";
 import { useImportedSalesByBranches } from "../api/useImportedSalesByBranches";
+import { useBatchSalesByDateRange } from "../api/useBatchSalesByDateRange";
 import type { BranchProfitFilters as BranchProfitFiltersDTO } from "../types";
 import { buildBranchProfitSummary } from "../utils/profit-summary";
 
@@ -37,6 +38,12 @@ export default function BranchProfitReportPage() {
     endDate: activeFilters?.endDate ?? null,
     branches,
   });
+
+  const batchSalesDaily = useBatchSalesByDateRange(
+    activeFilters?.branchIds ?? [],
+    activeFilters?.startDate ?? null,
+    activeFilters?.endDate ?? null,
+  );
 
   const summary = useMemo(
     () => buildBranchProfitSummary(report),
@@ -98,6 +105,65 @@ export default function BranchProfitReportPage() {
     manualChickenByBranch,
     branches,
   ]);
+
+  const dailyComparison = useMemo(() => {
+    const mergedDates = new Set<string>();
+    for (const dayMap of importedSales.dailyTotalsByBranch.values()) {
+      for (const d of dayMap.keys()) mergedDates.add(d);
+    }
+    for (const d of batchSalesDaily.dailyTotals.keys()) mergedDates.add(d);
+
+    return Array.from(mergedDates)
+      .sort()
+      .map((date) => {
+        let importedTotal = 0;
+        for (const dayMap of importedSales.dailyTotalsByBranch.values()) {
+          importedTotal += dayMap.get(date) ?? 0;
+        }
+        const manualTotal = batchSalesDaily.dailyTotals.get(date) ?? 0;
+        return { date, importedTotal, manualTotal, diff: manualTotal - importedTotal };
+      });
+  }, [importedSales.dailyTotalsByBranch, batchSalesDaily.dailyTotals]);
+
+  const dailyQuantityComparison = useMemo(() => {
+    const mergedDates = new Set<string>();
+    for (const dayMap of importedSales.dailyMatadosByBranch.values()) {
+      for (const d of dayMap.keys()) mergedDates.add(d);
+    }
+    for (const d of batchSalesDaily.dailyQuantityByDate.keys()) mergedDates.add(d);
+
+    return Array.from(mergedDates)
+      .sort()
+      .map((date) => {
+        let matadosQty = 0;
+        for (const dayMap of importedSales.dailyMatadosByBranch.values()) {
+          matadosQty += dayMap.get(date) ?? 0;
+        }
+        const batchQty = batchSalesDaily.dailyQuantityByDate.get(date) ?? 0;
+        return { date, matadosQty, batchQty, diff: batchQty - matadosQty };
+      });
+  }, [importedSales.dailyMatadosByBranch, batchSalesDaily.dailyQuantityByDate]);
+
+  const branchBreakdown = useMemo(() => {
+    return chickenComparison.map((row) => {
+      const matadosByDate = importedSales.dailyMatadosByBranch.get(row.branchId);
+      let matadosQty = 0;
+      if (matadosByDate) {
+        for (const qty of matadosByDate.values()) matadosQty += qty;
+      }
+      const batchByDate = batchSalesDaily.dailyQuantityByBranch.get(row.branchId);
+      let batchQty = 0;
+      if (batchByDate) {
+        for (const qty of batchByDate.values()) batchQty += qty;
+      }
+      return {
+        ...row,
+        matadosQty,
+        batchQty,
+        qtyDiff: batchQty - matadosQty,
+      };
+    });
+  }, [chickenComparison, importedSales.dailyMatadosByBranch, batchSalesDaily.dailyQuantityByBranch]);
 
   const showSpinner = (loadingBranches || reportQuery.isLoading) && !report;
   const showFullError = reportQuery.isError && !report;
@@ -195,6 +261,9 @@ export default function BranchProfitReportPage() {
         <>
           <BranchProfitSalesSourceBanner
             byBranch={chickenComparison}
+            dailyComparison={dailyComparison}
+            dailyQuantityComparison={dailyQuantityComparison}
+            branchBreakdown={branchBreakdown}
             isLoading={importedSales.isLoading}
             isError={importedSales.isError}
           />
