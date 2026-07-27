@@ -91,10 +91,7 @@ const formatSignedQty = (value: number) => {
   return `${sign}${formatQty(Math.abs(value))}`;
 };
 
-const rowSeverity = (
-  diff: number,
-  chickenBaseline: number,
-): Severity => {
+const rowSeverity = (diff: number, chickenBaseline: number): Severity => {
   if (Math.abs(diff) < DIFF_EPSILON) return "ok";
   const ratio = chickenBaseline > 0 ? Math.abs(diff) / chickenBaseline : 0;
   return ratio >= SIGNIFICANT_DIFF_RATIO ? "danger" : "warning";
@@ -116,10 +113,7 @@ export default function BranchProfitSalesSourceBanner({
   const [expanded, setExpanded] = useState(false);
   const [datesExpanded, setDatesExpanded] = useState(false);
 
-  const importedTotal = byBranch.reduce(
-    (sum, b) => sum + b.importedChicken,
-    0,
-  );
+  const importedTotal = byBranch.reduce((sum, b) => sum + b.importedChicken, 0);
   const manualTotal = byBranch.reduce((sum, b) => sum + b.manualChicken, 0);
   const chickenTotal = importedTotal + manualTotal;
   const diff = manualTotal - importedTotal;
@@ -202,7 +196,7 @@ export default function BranchProfitSalesSourceBanner({
         <Icon className="mt-0.5 h-5 w-5 flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">
+            <h3 className="text-sm font-semibold tracking-wider uppercase">
               {title}
             </h3>
             {isLoading && (
@@ -245,7 +239,9 @@ export default function BranchProfitSalesSourceBanner({
               <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Diferencia
               </p>
-              <p className={`mt-1 text-lg font-bold ${diffTextClass[severity]}`}>
+              <p
+                className={`mt-1 text-lg font-bold ${diffTextClass[severity]}`}
+              >
                 {isExactMatch ? formatMXN(0) : formatSigned(diff)}
               </p>
               <p className="text-[10px] text-slate-500">
@@ -257,8 +253,8 @@ export default function BranchProfitSalesSourceBanner({
           </div>
 
           {showDateDots && (
-            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase mr-0.5">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                 Fechas con diferencia:
               </span>
               {visibleDates.map((d) => {
@@ -266,12 +262,14 @@ export default function BranchProfitSalesSourceBanner({
                   (q) => q.date === d.date,
                 );
                 const hasMoneyDiff = Math.abs(d.diff) >= DIFF_EPSILON;
-                const hasQtyDiff = qd ? Math.abs(qd.diff) >= QTY_EPSILON : false;
+                const hasQtyDiff = qd
+                  ? Math.abs(qd.diff) >= QTY_EPSILON
+                  : false;
                 return (
                   <Tooltip
                     key={d.date}
                     content={
-                      <div className="text-xs space-y-0.5">
+                      <div className="space-y-0.5 text-xs">
                         <p className="font-semibold">
                           {formatHumanDate(d.date, "long")}
                         </p>
@@ -279,19 +277,19 @@ export default function BranchProfitSalesSourceBanner({
                         <p>Entradas y ventas: {formatMXN(d.manualTotal)}</p>
                         <p
                           className={
-                            hasMoneyDiff ? "text-rose-300 font-semibold" : ""
+                            hasMoneyDiff ? "font-semibold text-rose-300" : ""
                           }
                         >
                           Diferencia: {formatSigned(d.diff)}
                         </p>
                         {qd && (
                           <>
-                            <div className="border-t border-slate-600 my-0.5" />
+                            <div className="my-0.5 border-t border-slate-600" />
                             <p>Matados: {formatQty(qd.matadosQty)} pzas</p>
                             <p>Remesas: {formatQty(qd.batchQty)} pzas</p>
                             <p
                               className={
-                                hasQtyDiff ? "text-rose-300 font-semibold" : ""
+                                hasQtyDiff ? "font-semibold text-rose-300" : ""
                               }
                             >
                               Diferencia: {formatSignedQty(qd.diff)} pzas
@@ -303,7 +301,7 @@ export default function BranchProfitSalesSourceBanner({
                     placement="top"
                   >
                     <span
-                      className={`inline-block h-5 min-w-5 rounded-full px-1 text-center text-[9px] font-bold leading-5 cursor-default ${
+                      className={`inline-block h-5 min-w-5 cursor-default rounded-full px-1 text-center text-[9px] leading-5 font-bold ${
                         d.diff > 0
                           ? "bg-amber-900/70 text-amber-200"
                           : "bg-rose-900/70 text-rose-200"
@@ -347,7 +345,8 @@ export default function BranchProfitSalesSourceBanner({
                 ) : (
                   <HiChevronRight className="h-3.5 w-3.5" />
                 )}
-                {expanded ? "Ocultar" : "Ver"} desglose por sucursal (ventas y cantidades)
+                {expanded ? "Ocultar" : "Ver"} desglose por sucursal (ventas y
+                cantidades)
               </button>
 
               {expanded && (
@@ -355,15 +354,29 @@ export default function BranchProfitSalesSourceBanner({
                   <table className="w-full text-left text-xs">
                     <thead className="text-[10px] tracking-wider text-slate-400 uppercase">
                       <tr className="border-b border-slate-800">
-                        <th className="px-3 py-2" rowSpan={2}>Sucursal</th>
-                        <th className="px-3 py-2 text-center border-b border-slate-700" colSpan={3}>Ventas ($)</th>
-                        <th className="px-3 py-2 text-center border-b border-slate-700" colSpan={3}>Cantidad (pzas)</th>
+                        <th className="px-3 py-2" rowSpan={2}>
+                          Sucursal
+                        </th>
+                        <th
+                          className="border-b border-slate-700 px-3 py-2 text-center"
+                          colSpan={3}
+                        >
+                          Ventas ($)
+                        </th>
+                        <th
+                          className="border-b border-slate-700 px-3 py-2 text-center"
+                          colSpan={3}
+                        >
+                          Cantidad (pzas)
+                        </th>
                       </tr>
                       <tr className="border-b border-slate-800">
                         <th className="px-3 py-2 text-right">Subir reporte</th>
-                        <th className="px-3 py-2 text-right">Entradas y ventas</th>
+                        <th className="px-3 py-2 text-right">
+                          Entradas y ventas
+                        </th>
                         <th className="px-3 py-2 text-right">Diferencia</th>
-                        <th className="px-3 py-2 text-right">Matados</th>
+                        <th className="px-3 py-2 text-right">Reportes</th>
                         <th className="px-3 py-2 text-right">Remesas</th>
                         <th className="px-3 py-2 text-right">Diferencia</th>
                       </tr>
@@ -376,8 +389,8 @@ export default function BranchProfitSalesSourceBanner({
                           Math.abs(row.qtyDiff) < QTY_EPSILON
                             ? "ok"
                             : (chickenTotal > 0
-                                ? Math.abs(row.qtyDiff) / chickenTotal
-                                : 0) >= SIGNIFICANT_DIFF_RATIO
+                                  ? Math.abs(row.qtyDiff) / chickenTotal
+                                  : 0) >= SIGNIFICANT_DIFF_RATIO
                               ? "danger"
                               : "warning";
                         return (
