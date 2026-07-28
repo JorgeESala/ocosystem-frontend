@@ -242,9 +242,14 @@ export default function SalesAnalyticsContent() {
 
           {/* Daily Chart */}
           <div className="rounded-xl bg-slate-800 p-6">
-            <h3 className="mb-4 text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-white">
               {activeProduct === "chicken" ? "Pollo" : "Huevo"} - Ventas Diarias
             </h3>
+            {activeProduct === "eggs" && (
+              <p className="mb-4 text-xs text-slate-500">
+                Valores en casilleros
+              </p>
+            )}
             <ResponsiveContainer width="100%" height={350}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -277,9 +282,14 @@ export default function SalesAnalyticsContent() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Weekly Summary */}
             <div className="rounded-xl bg-slate-800 p-6">
-              <h3 className="mb-4 text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-white">
                 Resumen Semanal
               </h3>
+              {activeProduct === "eggs" && (
+                <p className="mb-4 text-xs text-slate-500">
+                  Valores en casilleros
+                </p>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -428,7 +438,9 @@ function SummaryCards({
           Total {activeProduct === "chicken" ? "Pollo" : "Huevo"}
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {productTotal.toLocaleString()}
+          {activeProduct === "eggs"
+            ? productTotal.toLocaleString()
+            : productTotal.toLocaleString()}
         </div>
         <div
           className={`mt-1 text-xs font-semibold ${getGrowthColor(productGrowth)}`}
@@ -465,10 +477,9 @@ function SummaryCards({
           Total {activeProduct === "chicken" ? "Huevo" : "Pollo"}
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {(activeProduct === "chicken"
-            ? summary.totalEggs
-            : summary.totalChicken
-          ).toLocaleString()}
+          {activeProduct === "chicken"
+            ? summary.totalEggs.toLocaleString()
+            : summary.totalChicken.toLocaleString()}
         </div>
         <div
           className={`mt-1 text-xs font-semibold ${getGrowthColor(
@@ -499,7 +510,9 @@ function SummaryCards({
           Promedio Diario {activeProduct === "chicken" ? "Pollo" : "Huevo"}
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {productAvg.toLocaleString()}
+          {activeProduct === "eggs"
+            ? productAvg.toLocaleString()
+            : productAvg.toLocaleString()}
         </div>
         <div className="mt-1 text-xs text-slate-500">
           {summary.daysInRange} dias
@@ -609,7 +622,9 @@ function CustomTooltip({
               </div>
               <div className="text-right">
                 <span className="text-[11px] font-medium text-slate-200">
-                  {entry.value}
+                  {activeProduct === "eggs"
+                    ? entry.value.toLocaleString()
+                    : entry.value}
                 </span>
                 {prevDayVal > 0 && (
                   <span
@@ -639,7 +654,9 @@ function CustomTooltip({
       <div className="mt-2 border-t border-slate-600 pt-1">
         <div className="flex justify-between text-[11px]">
           <span className="text-slate-400">Total</span>
-          <span className="font-semibold text-white">{total}</span>
+          <span className="font-semibold text-white">
+            {activeProduct === "eggs" ? total.toLocaleString() : total}
+          </span>
         </div>
       </div>
     </div>
@@ -691,7 +708,9 @@ function WeeklyDetail({
               >
                 <span className="text-slate-400">{name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-200">{qty}</span>
+                  <span className="font-medium text-slate-200">
+                    {activeProduct === "eggs" ? qty.toLocaleString() : qty}
+                  </span>
                   <span className="text-slate-500">({pct}%)</span>
                 </div>
               </div>
@@ -831,7 +850,8 @@ function BranchComparisonPanel({
                       <div className="flex justify-between">
                         <span className="text-slate-400">Huevo:</span>
                         <span className="font-medium text-slate-200">
-                          {branch.previousEggs} → {branch.currentEggs}
+                          {branch.previousEggs.toLocaleString()} →{" "}
+                          {branch.currentEggs.toLocaleString()}
                           <span
                             className={`ml-1 ${getGrowthColor(branch.eggsGrowth)}`}
                           >
