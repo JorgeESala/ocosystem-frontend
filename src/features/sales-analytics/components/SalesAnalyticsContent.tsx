@@ -446,7 +446,7 @@ function SummaryCards({
           className={`mt-1 text-xs font-semibold ${getGrowthColor(productGrowth)}`}
         >
           {getGrowthArrow(productGrowth)} {productGrowth > 0 ? "+" : ""}
-          {productGrowth}% vs periodo anterior
+          {productGrowth}% vs mes ant.
         </div>
         {hoveredCard === "total" && topBranch && (
           <div className="absolute top-full left-0 z-10 mt-1 w-56 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
@@ -501,7 +501,7 @@ function SummaryCards({
           {activeProduct === "chicken"
             ? summary.eggsGrowth
             : summary.chickenGrowth}
-          % vs periodo anterior
+          % vs mes ant.
         </div>
       </div>
 
@@ -832,7 +832,7 @@ function BranchComparisonPanel({
                 {hoveredBranch === branch.branchId && (
                   <div className="absolute top-full left-0 z-20 mt-1 w-60 rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
                     <div className="mb-2 border-b border-slate-600 pb-1.5 text-[10px] text-slate-500">
-                      Comparado con el mismo periodo del mes anterior
+                      Comparado con las mismas fechas del mes anterior
                     </div>
                     <div className="space-y-1.5 text-[11px]">
                       <div className="flex justify-between">

@@ -115,6 +115,10 @@ export default function DeliverySchedulePage() {
           <p className="text-sm text-slate-400">
             Configura los dias de entrega de pollo y huevo para cada sucursal.
           </p>
+          <p className="mt-1 text-xs text-amber-400/80">
+            Los días de entrega de pollo se usan automáticamente como fechas de
+            recepción de remesa en el checklist.
+          </p>
         </div>
         <div className="flex gap-2">
           <Link to={`/business/${slug}/general-cash`}>

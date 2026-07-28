@@ -1,8 +1,20 @@
 import { useMemo, useState } from "react";
-import { Alert, Button, Label, Modal, ModalBody, ModalHeader, Select, Spinner, TextInput, Textarea } from "flowbite-react";
+import {
+  Alert,
+  Button,
+  Label,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  Select,
+  Spinner,
+  TextInput,
+  Textarea,
+} from "flowbite-react";
 import { HiPlus, HiTrash, HiCalendar } from "react-icons/hi";
 import { Link, useParams } from "react-router-dom";
 import { useBranches } from "@/features/branches/branch/branch.queries";
+import { useDeliverySchedules } from "@/features/order-prediction/api/orderPrediction.queries";
 import { useAuthRole } from "@/hooks/useAuthRole";
 import {
   useCreateExpectedEvent,
@@ -16,7 +28,11 @@ import {
   useDeleteScheduleTemplate,
 } from "../api/schedule-templates.queries";
 import { fromIsoDateString, toIsoDateString } from "../utils/week";
-import { EXPECTED_EVENT_LABELS, type ExpectedEvent, type ExpectedEventType } from "../types/expected-event.types";
+import {
+  EXPECTED_EVENT_LABELS,
+  type ExpectedEvent,
+  type ExpectedEventType,
+} from "../types/expected-event.types";
 import { DAY_OF_WEEK_LABELS } from "../types/schedule-template.types";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -37,12 +53,15 @@ export default function ExpectedEventCalendarPage() {
   const { isAdmin } = useAuthRole();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
 
-  const [singleModal, setSingleModal] = useState<{ open: boolean; branchId?: number; date?: string }>(
-    { open: false },
-  );
-  const [bulkModal, setBulkModal] = useState<{ open: boolean; branchId?: number }>(
-    { open: false },
-  );
+  const [singleModal, setSingleModal] = useState<{
+    open: boolean;
+    branchId?: number;
+    date?: string;
+  }>({ open: false });
+  const [bulkModal, setBulkModal] = useState<{
+    open: boolean;
+    branchId?: number;
+  }>({ open: false });
 
   const today = useMemo(() => new Date(), []);
   const from = useMemo(() => {
@@ -62,6 +81,7 @@ export default function ExpectedEventCalendarPage() {
   });
 
   const { data: allTemplates = [] } = useScheduleTemplates();
+  const { data: deliverySchedules = [] } = useDeliverySchedules();
 
   const createSingle = useCreateExpectedEvent();
   const createBulk = useCreateExpectedEventsBulk();
@@ -85,6 +105,18 @@ export default function ExpectedEventCalendarPage() {
     return map;
   }, [allTemplates]);
 
+  const deliveryDaysByBranchId = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    for (const s of deliverySchedules) {
+      const days = new Set<number>();
+      for (const d of s.deliveryDays) {
+        days.add(d === 7 ? 0 : d);
+      }
+      map.set(s.branchId, days);
+    }
+    return map;
+  }, [deliverySchedules]);
+
   const days = useMemo(() => {
     const arr: Date[] = [];
     const cursor = new Date(from);
@@ -107,10 +139,13 @@ export default function ExpectedEventCalendarPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Calendario de fechas esperadas</h1>
+          <h1 className="text-2xl font-semibold text-white">
+            Calendario de fechas esperadas
+          </h1>
           <p className="text-sm text-slate-400">
-            Registra las fechas en que cada sucursal debe subir gastos, recibir lotes, etc.
-            El resultado diario se evalúa solo en esas fechas.
+            Registra las fechas en que cada sucursal debe subir gastos, recibir
+            remesas, etc. Los días de entrega de pollo se muestran
+            automáticamente como recepción de remesa.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -136,9 +171,12 @@ export default function ExpectedEventCalendarPage() {
             >
               <header className="flex flex-col gap-2 border-b border-slate-800/80 p-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">{branch.name}</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {branch.name}
+                  </h2>
                   <p className="text-xs text-slate-400">
-                    {events.filter((e) => e.branchId === branch.id).length} fechas registradas
+                    {events.filter((e) => e.branchId === branch.id).length}{" "}
+                    fechas registradas
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -147,7 +185,9 @@ export default function ExpectedEventCalendarPage() {
                       <Button
                         size="xs"
                         color="light"
-                        onClick={() => setBulkModal({ open: true, branchId: branch.id })}
+                        onClick={() =>
+                          setBulkModal({ open: true, branchId: branch.id })
+                        }
                       >
                         <HiPlus aria-hidden className="mr-1 h-3 w-3" />
                         Repetir
@@ -179,28 +219,40 @@ export default function ExpectedEventCalendarPage() {
                     <Spinner size="md" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-7 gap-2 min-w-[640px]">
+                  <div className="grid min-w-[640px] grid-cols-7 gap-2">
                     {days.map((d) => {
                       const key = `${branch.id}|${toIsoDateString(d)}`;
                       const event = eventsByBranchAndDate.get(key);
                       const dayOfWeek = d.getDay();
-                      const branchTemplates = templatesByBranchId.get(branch.id) ?? [];
+                      const branchTemplates =
+                        templatesByBranchId.get(branch.id) ?? [];
                       const templateEvent = !event
                         ? branchTemplates.find((t) => t.dayOfWeek === dayOfWeek)
                         : null;
+                      const branchDeliveryDays = deliveryDaysByBranchId.get(
+                        branch.id,
+                      );
+                      const isDeliveryDay =
+                        !event && !templateEvent
+                          ? (branchDeliveryDays?.has(dayOfWeek) ?? false)
+                          : false;
                       return (
                         <div
                           key={key}
                           className="flex flex-col items-center gap-1 rounded-lg border border-slate-800/60 bg-slate-900/40 p-2 text-center text-[11px]"
                         >
                           <div className="text-slate-400">
-                            {d.toLocaleDateString("es-MX", { weekday: "short" })}
+                            {d.toLocaleDateString("es-MX", {
+                              weekday: "short",
+                            })}
                           </div>
                           <div className="text-sm font-semibold text-white">
                             {d.getDate()}
                           </div>
                           {event ? (
-                            <div className={`mt-1 w-full rounded px-1.5 py-0.5 text-[10px] font-semibold ${TYPE_TONE[event.eventType]}`}>
+                            <div
+                              className={`mt-1 w-full rounded px-1.5 py-0.5 text-[10px] font-semibold ${TYPE_TONE[event.eventType]}`}
+                            >
                               {EXPECTED_EVENT_LABELS[event.eventType]}
                               {event.cutoffTime && (
                                 <div className="text-[9px] opacity-80">
@@ -211,16 +263,31 @@ export default function ExpectedEventCalendarPage() {
                                 <button
                                   type="button"
                                   className="ml-1 text-rose-200 hover:text-rose-100"
-                                  onClick={() => event.id != null && deleteEvent.mutate(event.id)}
+                                  onClick={() =>
+                                    event.id != null &&
+                                    deleteEvent.mutate(event.id)
+                                  }
                                   aria-label="Eliminar"
                                 >
-                                  <HiTrash aria-hidden className="inline h-3 w-3" />
+                                  <HiTrash
+                                    aria-hidden
+                                    className="inline h-3 w-3"
+                                  />
                                 </button>
                               )}
                             </div>
                           ) : templateEvent ? (
-                            <div className={`mt-1 w-full rounded border border-dashed px-1.5 py-0.5 text-[10px] font-semibold opacity-60 ${TYPE_TONE[templateEvent.eventType]}`}>
+                            <div
+                              className={`mt-1 w-full rounded border border-dashed px-1.5 py-0.5 text-[10px] font-semibold opacity-60 ${TYPE_TONE[templateEvent.eventType]}`}
+                            >
                               {EXPECTED_EVENT_LABELS[templateEvent.eventType]}
+                            </div>
+                          ) : isDeliveryDay ? (
+                            <div
+                              className={`mt-1 w-full rounded border border-dashed px-1.5 py-0.5 text-[10px] font-semibold opacity-60 ${TYPE_TONE.BATCH_RECEPTION}`}
+                            >
+                              {EXPECTED_EVENT_LABELS.BATCH_RECEPTION}
+                              <div className="text-[9px] opacity-70">auto</div>
                             </div>
                           ) : null}
                         </div>
@@ -257,12 +324,14 @@ export default function ExpectedEventCalendarPage() {
 
       {createSingle.isError && (
         <Alert color="failure">
-          No se pudo crear el evento: {(createSingle.error as Error)?.message ?? "error"}
+          No se pudo crear el evento:{" "}
+          {(createSingle.error as Error)?.message ?? "error"}
         </Alert>
       )}
       {createBulk.isError && (
         <Alert color="failure">
-          No se pudo crear el bloque: {(createBulk.error as Error)?.message ?? "error"}
+          No se pudo crear el bloque:{" "}
+          {(createBulk.error as Error)?.message ?? "error"}
         </Alert>
       )}
     </div>
@@ -272,19 +341,37 @@ export default function ExpectedEventCalendarPage() {
 function TemplateSection({ branchId }: { branchId: number }) {
   const { isAdmin } = useAuthRole();
   const [showForm, setShowForm] = useState(false);
-  const [eventType, setEventType] = useState<ExpectedEventType>("BATCH_RECEPTION");
+  const [eventType, setEventType] =
+    useState<ExpectedEventType>("BATCH_RECEPTION");
   const [dayOfWeek, setDayOfWeek] = useState<number>(1);
   const [cutoffTime, setCutoffTime] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
   const { data: templates = [] } = useScheduleTemplates(branchId);
+  const { data: deliverySchedules = [] } = useDeliverySchedules();
   const createTemplate = useCreateScheduleTemplate();
   const deleteTemplate = useDeleteScheduleTemplate();
+
+  const deliveryDays = useMemo(() => {
+    const schedule = deliverySchedules.find((s) => s.branchId === branchId);
+    if (!schedule) return new Set<number>();
+    const days = new Set<number>();
+    for (const d of schedule.deliveryDays) {
+      days.add(d === 7 ? 0 : d);
+    }
+    return days;
+  }, [deliverySchedules, branchId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createTemplate.mutate(
-      { branchId, eventType, dayOfWeek, cutoffTime: cutoffTime || null, note: note || null },
+      {
+        branchId,
+        eventType,
+        dayOfWeek,
+        cutoffTime: cutoffTime || null,
+        note: note || null,
+      },
       {
         onSuccess: () => {
           setShowForm(false);
@@ -300,11 +387,15 @@ function TemplateSection({ branchId }: { branchId: number }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
           Rutinas
         </h3>
         {isAdmin && (
-          <Button size="xs" color="light" onClick={() => setShowForm(!showForm)}>
+          <Button
+            size="xs"
+            color="light"
+            onClick={() => setShowForm(!showForm)}
+          >
             <HiPlus className="mr-1 h-3 w-3" />
             {showForm ? "Cancelar" : "Agregar rutina"}
           </Button>
@@ -338,22 +429,48 @@ function TemplateSection({ branchId }: { branchId: number }) {
         </div>
       )}
 
-      {templates.length === 0 && !showForm && (
+      {deliveryDays.size > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {[...deliveryDays]
+            .sort((a, b) => a - b)
+            .map((dow) => (
+              <div
+                key={`delivery-${dow}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-[11px] font-medium opacity-60 ${TYPE_TONE.BATCH_RECEPTION}`}
+              >
+                <span>{DAY_OF_WEEK_LABELS[dow]}</span>
+                <span className="opacity-60">·</span>
+                <span>{EXPECTED_EVENT_LABELS.BATCH_RECEPTION}</span>
+                <span className="opacity-50">(auto)</span>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {templates.length === 0 && deliveryDays.size === 0 && !showForm && (
         <p className="text-xs text-slate-500">
-          Sin rutinas. Las tareas se evaluarán solo en fechas creadas manualmente.
+          Sin rutinas ni días de entrega configurados. Las tareas se evaluarán
+          solo en fechas creadas manualmente.
         </p>
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-slate-700 bg-slate-900/40 p-3"
+        >
           <div>
             <Label className="text-xs">Tipo</Label>
             <Select
               value={eventType}
-              onChange={(e) => setEventType(e.target.value as ExpectedEventType)}
+              onChange={(e) =>
+                setEventType(e.target.value as ExpectedEventType)
+              }
             >
               {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -364,7 +481,9 @@ function TemplateSection({ branchId }: { branchId: number }) {
               onChange={(e) => setDayOfWeek(Number(e.target.value))}
             >
               {DAY_OF_WEEK_LABELS.map((label, i) => (
-                <option key={i} value={i}>{label}</option>
+                <option key={i} value={i}>
+                  {label}
+                </option>
               ))}
             </Select>
           </div>
@@ -384,7 +503,12 @@ function TemplateSection({ branchId }: { branchId: number }) {
               placeholder="Opcional"
             />
           </div>
-          <Button type="submit" size="xs" color="blue" disabled={createTemplate.isPending}>
+          <Button
+            type="submit"
+            size="xs"
+            color="blue"
+            disabled={createTemplate.isPending}
+          >
             Guardar
           </Button>
         </form>
@@ -407,7 +531,9 @@ function SingleEventModal({
   onCreated: () => void;
 }) {
   const [eventType, setEventType] = useState<ExpectedEventType>("EXPENSE");
-  const [date, setDate] = useState<string>(initialDate ?? toIsoDateString(new Date()));
+  const [date, setDate] = useState<string>(
+    initialDate ?? toIsoDateString(new Date()),
+  );
   const [cutoffTime, setCutoffTime] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
@@ -438,10 +564,14 @@ function SingleEventModal({
             <Label>Tipo</Label>
             <Select
               value={eventType}
-              onChange={(e) => setEventType(e.target.value as ExpectedEventType)}
+              onChange={(e) =>
+                setEventType(e.target.value as ExpectedEventType)
+              }
             >
               {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -471,7 +601,9 @@ function SingleEventModal({
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button color="gray" type="button" onClick={onClose}>Cancelar</Button>
+            <Button color="gray" type="button" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button type="submit" color="blue" disabled={create.isPending}>
               Guardar
             </Button>
@@ -493,7 +625,8 @@ function BulkEventModal({
   branchId?: number;
   onCreated: () => void;
 }) {
-  const [eventType, setEventType] = useState<ExpectedEventType>("BATCH_RECEPTION");
+  const [eventType, setEventType] =
+    useState<ExpectedEventType>("BATCH_RECEPTION");
   const [dayOfWeek, setDayOfWeek] = useState<number>(1);
   const [weeks, setWeeks] = useState<number>(4);
   const [cutoffTime, setCutoffTime] = useState<string>("");
@@ -515,7 +648,15 @@ function BulkEventModal({
   }, [dayOfWeek, weeks]);
 
   const dayLabel = (() => {
-    const names = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+    const names = [
+      "domingo",
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado",
+    ];
     return names[dayOfWeek];
   })();
 
@@ -544,10 +685,14 @@ function BulkEventModal({
             <Label>Tipo</Label>
             <Select
               value={eventType}
-              onChange={(e) => setEventType(e.target.value as ExpectedEventType)}
+              onChange={(e) =>
+                setEventType(e.target.value as ExpectedEventType)
+              }
             >
               {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -574,7 +719,11 @@ function BulkEventModal({
                 min={1}
                 max={26}
                 value={weeks}
-                onChange={(e) => setWeeks(Math.max(1, Math.min(26, Number(e.target.value) || 1)))}
+                onChange={(e) =>
+                  setWeeks(
+                    Math.max(1, Math.min(26, Number(e.target.value) || 1)),
+                  )
+                }
               />
             </div>
           </div>
@@ -595,7 +744,9 @@ function BulkEventModal({
             />
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-900/40 p-2 text-xs text-slate-300">
-            <p className="mb-1 font-semibold">Vista previa ({previewDates.length} fechas):</p>
+            <p className="mb-1 font-semibold">
+              Vista previa ({previewDates.length} fechas):
+            </p>
             <div className="flex flex-wrap gap-1">
               {previewDates.map((d) => {
                 const date = fromIsoDateString(d);
@@ -604,16 +755,23 @@ function BulkEventModal({
                     key={d}
                     className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-200"
                   >
-                    {date.toLocaleDateString("es-MX", { weekday: "short", day: "2-digit", month: "short" })}
+                    {date.toLocaleDateString("es-MX", {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "short",
+                    })}
                   </span>
                 );
               })}
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button color="gray" type="button" onClick={onClose}>Cancelar</Button>
+            <Button color="gray" type="button" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button type="submit" color="blue" disabled={create.isPending}>
-              Crear {previewDates.length} fecha{previewDates.length === 1 ? "" : "s"}
+              Crear {previewDates.length} fecha
+              {previewDates.length === 1 ? "" : "s"}
             </Button>
           </div>
         </form>
