@@ -20,4 +20,23 @@ export const salesAnalyticsApi = {
     );
     return data;
   },
+
+  downloadPdf: async (
+    branchIds: number[],
+    start: Date,
+    end: Date,
+    product: string,
+  ): Promise<Blob> => {
+    const params = new URLSearchParams();
+    branchIds.forEach((id) => params.append("branchIds", id.toString()));
+    params.append("start", toLocalDateString(start));
+    params.append("end", toLocalDateString(end));
+    params.append("product", product);
+
+    const { data } = await http.get<Blob>(
+      `${BASE_URL}/pdf?${params.toString()}`,
+      { responseType: "blob" },
+    );
+    return new Blob([data], { type: "application/pdf" });
+  },
 };

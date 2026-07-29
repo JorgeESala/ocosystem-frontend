@@ -121,7 +121,7 @@ export default function DeliverySchedulePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to={`/business/${slug}/general-cash`}>
+          <Link to={`/business/${slug}/`}>
             <Button color="light" size="sm">
               <HiArrowLeft className="mr-2 h-4 w-4" />
               Volver

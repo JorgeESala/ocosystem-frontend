@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Datepicker, Button, Spinner } from "flowbite-react";
 import { HiDownload } from "react-icons/hi";
+import * as XLSX from "xlsx";
 import {
   LineChart,
   Line,
@@ -14,6 +15,7 @@ import {
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import { useSalesAnalytics } from "../api/salesAnalytics.queries";
+import { salesAnalyticsApi } from "../api/salesAnalytics.api";
 import type { SalesAnalyticsDTO, DailySalesDTO } from "../types";
 
 const BRANCH_COLORS: Record<string, string> = {
@@ -137,24 +139,84 @@ export default function SalesAnalyticsContent() {
   const handleExport = () => {
     if (!data) return;
 
-    let csv = "Fecha,";
-    csv += activeBranchNames.join(",") + ",Total\n";
+    const wb = XLSX.utils.book_new();
 
-    for (const d of data.dailySales) {
-      const source =
-        activeProduct === "chicken" ? d.chickenByBranch : d.eggsByBranch;
+    const summaryData = [
+      ["Resumen de Ventas"],
+      [""],
+      ["Periodo", `${data.startDate} - ${data.endDate}`],
+      ["Días con datos", data.summary.daysInRange],
+      [""],
+      ["Total Pollo", data.summary.totalChicken],
+      ["Total Huevo (casilleros)", data.summary.totalEggs],
+      [""],
+      ["Promedio diario Pollo", data.summary.avgDailyChicken],
+      ["Promedio diario Huevo", data.summary.avgDailyEggs],
+      [""],
+      ["Crecimiento Pollo vs mes ant.", `${data.summary.chickenGrowth}%`],
+      ["Crecimiento Huevo vs mes ant.", `${data.summary.eggsGrowth}%`],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary["!cols"] = [{ wch: 30 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
+
+    const dailyHeaders = ["Fecha", ...activeBranchNames, "Total"];
+    const dailyRows = data.dailySales.map((d) => {
+      const source = activeProduct === "chicken" ? d.chickenByBranch : d.eggsByBranch;
       const total = activeProduct === "chicken" ? d.totalChicken : d.totalEggs;
-      const values = activeBranchNames.map(
-        (name) => source[name]?.toString() ?? "0",
-      );
-      csv += `${d.date},${values.join(",")},${total}\n`;
-    }
+      return [
+        d.date,
+        ...activeBranchNames.map((name) => source[name] ?? 0),
+        total,
+      ];
+    });
+    const wsDaily = XLSX.utils.aoa_to_sheet([dailyHeaders, ...dailyRows]);
+    wsDaily["!cols"] = [{ wch: 12 }, ...activeBranchNames.map(() => ({ wch: 15 })), { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDaily, "Ventas Diarias");
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    const weeklyHeaders = ["Semana", ...activeBranchNames, "Total"];
+    const weeklyRows = data.weeklySummary.map((w) => {
+      const source = activeProduct === "chicken" ? w.chickenByBranch : w.eggsByBranch;
+      const total = activeProduct === "chicken" ? w.totalChicken : w.totalEggs;
+      return [
+        w.weekLabel,
+        ...activeBranchNames.map((name) => source[name] ?? 0),
+        total,
+      ];
+    });
+    const wsWeekly = XLSX.utils.aoa_to_sheet([weeklyHeaders, ...weeklyRows]);
+    wsWeekly["!cols"] = [{ wch: 20 }, ...activeBranchNames.map(() => ({ wch: 15 })), { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsWeekly, "Resumen Semanal");
+
+    const growthHeaders = [
+      "Sucursal",
+      "Pollo Actual", "Pollo Anterior", "Pollo Crecimiento %",
+      "Huevo Actual", "Huevo Anterior", "Huevo Crecimiento %",
+    ];
+    const growthRows = data.branchGrowth.map((b) => [
+      b.branchName,
+      b.currentChicken, b.previousChicken, `${b.chickenGrowth}%`,
+      b.currentEggs, b.previousEggs, `${b.eggsGrowth}%`,
+    ]);
+    const wsGrowth = XLSX.utils.aoa_to_sheet([growthHeaders, ...growthRows]);
+    wsGrowth["!cols"] = [{ wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, wsGrowth, "Crecimiento");
+
+    XLSX.writeFile(wb, `ventas-${activeProduct}-${startDate.toISOString().split("T")[0]}.xlsx`);
+  };
+
+  const handleExportPdf = async () => {
+    if (!data || selectedBranchIds.length === 0) return;
+    const blob = await salesAnalyticsApi.downloadPdf(
+      selectedBranchIds,
+      startDate,
+      endDate,
+      activeProduct,
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ventas-${activeProduct}-${startDate.toISOString().split("T")[0]}.csv`;
+    a.download = `ventas-${activeProduct}-${startDate.toISOString().split("T")[0]}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -193,6 +255,10 @@ export default function SalesAnalyticsContent() {
         <Button size="sm" color="light" onClick={handleExport}>
           <HiDownload className="mr-1 h-4 w-4" />
           Excel
+        </Button>
+        <Button size="sm" color="light" onClick={handleExportPdf}>
+          <HiDownload className="mr-1 h-4 w-4" />
+          PDF
         </Button>
       </div>
 
