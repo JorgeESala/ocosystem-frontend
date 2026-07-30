@@ -3,6 +3,7 @@ import ChecklistDashboardWidget from "@/features/branches/checklist/components/C
 import PendingTasksWidget from "@/features/branches/checklist/components/PendingTasksWidget";
 import GeneralCashSummaryWidget from "@/features/general-cash/components/GeneralCashSummaryWidget";
 import OrderPredictionWidget from "@/features/order-prediction/components/OrderPredictionWidget";
+import SalesAccuracyWidget from "@/features/sales-accuracy/components/SalesAccuracyWidget";
 
 export default function BusinessDashboard() {
   const { slug } = useParams();
@@ -29,7 +30,10 @@ export default function BusinessDashboard() {
 
       {slug === "sucursales" && (
         <>
-          <OrderPredictionWidget />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <OrderPredictionWidget />
+            <SalesAccuracyWidget />
+          </div>
           <ChecklistDashboardWidget />
         </>
       )}

@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BASE_MENU, BUSINESSES } from "@/business/business.config";
+import NotificationBell from "@/features/notification/components/NotificationBell";
 
 export default function SidebarApp() {
   const { isAuthenticated, logout } = useAuth();
@@ -81,6 +82,9 @@ export default function SidebarApp() {
 
             {/* Spacer */}
             <div className="flex-1" />
+
+            {/* Notification bell - hidden when collapsed */}
+            {!effectiveCollapsed && <NotificationBell />}
 
             {/* Desktop collapse toggle */}
             <button
