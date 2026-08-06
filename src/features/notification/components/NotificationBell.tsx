@@ -10,11 +10,16 @@ import {
   useDismissNotification,
   useCheckAlerts,
 } from "../api/notification.queries";
+import { useNotificationStream } from "../api/useNotificationStream";
 import {
   ALERT_TYPE_LABELS,
   ALERT_TYPE_ICONS,
+  DETAIL_ALERT_TYPES,
+  type AlertType,
   type NotificationDTO,
 } from "../types";
+import { NotificationDetailDrawer } from "./NotificationDetailDrawer";
+import { NotificationHistoryDrawer } from "./NotificationHistoryDrawer";
 
 const SEVERITY_STYLE: Record<string, string> = {
   critical: "border-l-4 border-red-500 bg-red-900/20",
@@ -24,6 +29,9 @@ const SEVERITY_STYLE: Record<string, string> = {
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const [detailType, setDetailType] = useState<AlertType | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -31,17 +39,20 @@ export default function NotificationBell() {
   const { data: branches = [] } = useBranches();
   const branchIds = branches.map((b) => b.id);
 
+  useNotificationStream(branchIds);
   const { data: summary } = useNotificationSummary(branchIds);
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const dismiss = useDismissNotification();
   const checkAlerts = useCheckAlerts();
 
+  const branchIdsKey = branchIds.slice().sort((a, b) => a - b).join(",");
+
   useEffect(() => {
     if (branchIds.length > 0) {
       checkAlerts.mutate(branchIds);
     }
-  }, [branchIds.length > 0]);
+  }, [branchIdsKey]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -72,11 +83,19 @@ export default function NotificationBell() {
   const handleNotificationClick = (n: NotificationDTO) => {
     markRead.mutate(n.id);
     setOpen(false);
-    if (n.alertType === "LOW_BALANCE" || n.alertType === "NEGATIVE_BALANCE" || n.alertType === "NEGATIVE_FLOW") {
+    if (DETAIL_ALERT_TYPES.has(n.alertType)) {
+      setDetailId(n.id);
+      setDetailType(n.alertType);
+    } else if (n.alertType === "LOW_BALANCE" || n.alertType === "NEGATIVE_BALANCE" || n.alertType === "NEGATIVE_FLOW") {
       navigate("/business/sucursales/general-cash");
     } else if (n.alertType === "SALES_DISCREPANCY") {
       navigate("/business/sucursales/profit");
     }
+  };
+
+  const handleDetailClose = () => {
+    setDetailId(null);
+    setDetailType(null);
   };
 
   const handleMarkAllRead = () => {
@@ -168,9 +187,36 @@ export default function NotificationBell() {
                 ))
               )}
             </div>
+
+            <div className="border-t border-slate-700 px-4 py-2">
+              <button
+                type="button"
+                className="text-xs text-blue-400 hover:text-blue-300"
+                onClick={() => {
+                  setOpen(false);
+                  setHistoryOpen(true);
+                }}
+              >
+                Historial
+              </button>
+            </div>
           </div>,
           document.body,
         )}
+
+      <NotificationDetailDrawer
+        open={detailId !== null}
+        onClose={handleDetailClose}
+        notificationId={detailId}
+        alertType={detailType}
+      />
+
+      <NotificationHistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onNavigate={(path) => navigate(path)}
+        branchIds={branchIds}
+      />
     </>
   );
 }

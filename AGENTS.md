@@ -10,10 +10,14 @@ npm run dev        # Vite dev server (HMR)
 npm run build      # tsc -b && vite build (run before pushing)
 npm run lint       # eslint .
 npm run format     # prettier . --write
+npm run test       # vitest run (unit/component tests)
+npm run test:watch # vitest in watch mode
+npm run e2e        # playwright test (E2E, starts dev server automatically)
 ```
 
-No test framework is installed (no vitest, jest, playwright). Verification is
-typecheck + build + lint.
+**Testing**: Vitest for unit/component tests (jsdom), Playwright for E2E
+(chromium). Tests live in `__tests__/` co-located with features, and `e2e/` for
+E2E specs. Run `npx playwright install chromium` once to install the browser.
 
 ## Stack
 
@@ -146,12 +150,12 @@ inlined. Stay consistent with existing labels.
 
 ## Typecheck / build before pushing
 
-There is no CI, no pre-commit hook, and no test runner. Before considering a
-change done, run:
+There is no CI or pre-commit hook. Before considering a change done, run:
 
 ```bash
 npx tsc --noEmit
 npm run lint
+npm run test
 npm run build
 ```
 

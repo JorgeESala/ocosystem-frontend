@@ -7,7 +7,6 @@ import {
   HiInformationCircle,
 } from "react-icons/hi";
 import { useMonthlyAccuracy } from "../api/salesAccuracy.queries";
-import type { BranchAccuracyDTO } from "../types";
 
 function getAccuracyColor(accuracy: number): string {
   if (accuracy >= 98) return "text-emerald-400";

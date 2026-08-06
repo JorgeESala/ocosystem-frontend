@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationApi } from "./notification.api";
 import { notificationKeys } from "./notification.keys";
+import type { NotificationSummaryDTO, NotificationDTO } from "../types";
 
 export const useNotificationSummary = (branchIds: number[]) =>
   useQuery({
@@ -8,6 +9,7 @@ export const useNotificationSummary = (branchIds: number[]) =>
     queryFn: () => notificationApi.getSummary(branchIds),
     enabled: branchIds.length > 0,
     refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 
 export const useNotifications = (branchIds: number[]) =>
@@ -42,7 +44,37 @@ export const useDismissNotification = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => notificationApi.dismiss(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: notificationKeys.all });
+      const snapshots = qc.getQueriesData({ queryKey: notificationKeys.all });
+
+      qc.setQueriesData(
+        { queryKey: notificationKeys.all },
+        (old: NotificationSummaryDTO | NotificationDTO[] | undefined) => {
+          if (!old) return old;
+          if ("unreadCount" in old) {
+            return {
+              ...old,
+              unreadCount: Math.max(0, old.unreadCount - 1),
+              recent: (old as NotificationSummaryDTO).recent.filter(
+                (n) => n.id !== id,
+              ),
+            };
+          }
+          return (old as NotificationDTO[]).filter((n) => n.id !== id);
+        },
+      );
+
+      return { snapshots };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.snapshots) {
+        for (const [key, data] of context.snapshots) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
@@ -58,3 +90,17 @@ export const useCheckAlerts = () => {
     },
   });
 };
+
+export const useNotificationDetail = (id: number | null) =>
+  useQuery({
+    queryKey: notificationKeys.detail(id ?? 0),
+    queryFn: () => notificationApi.getDetail(id!),
+    enabled: id !== null,
+  });
+
+export const useNotificationHistory = (branchIds: number[], enabled: boolean) =>
+  useQuery({
+    queryKey: notificationKeys.history(branchIds),
+    queryFn: () => notificationApi.getHistory(branchIds, 0, 20),
+    enabled: enabled && branchIds.length > 0,
+  });
