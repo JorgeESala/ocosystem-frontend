@@ -120,7 +120,7 @@ describe("NotificationBell", () => {
 
   it("calls markAllRead on mark-all-read click", () => {
     const mutate = vi.fn();
-    mockUseMarkAllNotificationsRead.mockReturnValue({ mutate } as ReturnType<typeof useMarkAllNotificationsRead>);
+    mockUseMarkAllNotificationsRead.mockReturnValue({ mutate } as unknown as ReturnType<typeof useMarkAllNotificationsRead>);
 
     renderBell({
       unreadCount: 1,

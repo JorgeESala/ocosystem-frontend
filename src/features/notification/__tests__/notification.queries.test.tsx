@@ -69,7 +69,7 @@ describe("useNotificationSummary", () => {
 
 describe("useNotificationDetail", () => {
   it("fetches detail when id is not null", async () => {
-    const detail = { alertType: "HIGH_WASTE", branchId: 1, branchName: "Test", detail: {} };
+    const detail = { alertType: "HIGH_WASTE" as const, branchId: 1, branchName: "Test", detail: {} as unknown };
     mockedApi.getDetail.mockResolvedValue(detail);
 
     const wrapper = createWrapper();
