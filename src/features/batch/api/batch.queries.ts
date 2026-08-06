@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import * as api from "./batch.api";
 import { batchKeys } from "./batch.keys";
+import { accountsPayableKeys } from "@/features/accounting/api/accounts-payable.keys";
 
 // Hook para obtener remesas
 export const useBatches = (unit: string) => {
@@ -69,6 +70,7 @@ export const useCreateBatchSale = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["trips"] });
+      queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
     },
   });
 };
@@ -80,7 +82,7 @@ export const useCreateBatch = () => {
     onSuccess: () => {
       // Refrescamos la lista de las remesas de todas las unidades de negocio
       queryClient.invalidateQueries({ queryKey: batchKeys.lists() });
-      // Opcional: podrías invalidar solo la unidad actual si la tienes a mano
+      queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
     },
   });
 };
@@ -96,6 +98,7 @@ export const useUpdateBatch = () => {
       queryClient.invalidateQueries({
         queryKey: batchKeys.details(variables.id),
       });
+      queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
     },
   });
 };
@@ -130,6 +133,7 @@ export const useUpdateBatchSale = () => {
       });
 
       queryClient.invalidateQueries({ queryKey: ["trips"] });
+      queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
     },
 
     onError: (error: unknown) => {
