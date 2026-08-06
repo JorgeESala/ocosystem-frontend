@@ -8,7 +8,6 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
   useDismissNotification,
-  useCheckAlerts,
 } from "../api/notification.queries";
 import { useNotificationStream } from "../api/useNotificationStream";
 import {
@@ -44,15 +43,6 @@ export default function NotificationBell() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const dismiss = useDismissNotification();
-  const checkAlerts = useCheckAlerts();
-
-  const branchIdsKey = branchIds.slice().sort((a, b) => a - b).join(",");
-
-  useEffect(() => {
-    if (branchIds.length > 0) {
-      checkAlerts.mutate(branchIds);
-    }
-  }, [branchIdsKey]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
