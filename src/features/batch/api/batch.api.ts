@@ -8,8 +8,11 @@ import type {
 
 const API_BASE = "/api/v1";
 
-export const getBatches = async (unit: string) => {
-  const { data } = await http.get(`${API_BASE}/batches?unit=${unit}`);
+export const getBatches = async (unit: string, startDate?: string, endDate?: string) => {
+  const params = new URLSearchParams({ unit });
+  if (startDate) params.append("startDate", startDate);
+  if (endDate) params.append("endDate", endDate);
+  const { data } = await http.get(`${API_BASE}/batches?${params.toString()}`);
   return data;
 };
 

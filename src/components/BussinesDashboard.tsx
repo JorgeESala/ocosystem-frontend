@@ -4,9 +4,16 @@ import PendingTasksWidget from "@/features/branches/checklist/components/Pending
 import GeneralCashSummaryWidget from "@/features/general-cash/components/GeneralCashSummaryWidget";
 import OrderPredictionWidget from "@/features/order-prediction/components/OrderPredictionWidget";
 import SalesAccuracyWidget from "@/features/sales-accuracy/components/SalesAccuracyWidget";
+import ProductDashboard from "@/features/batch/dashboard/ProductDashboard";
+
+const PRODUCT_SLUGS = ["huevo", "pollo-vivo"];
 
 export default function BusinessDashboard() {
   const { slug } = useParams();
+
+  if (PRODUCT_SLUGS.includes(slug ?? "")) {
+    return <ProductDashboard />;
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">

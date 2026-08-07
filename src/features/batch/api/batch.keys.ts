@@ -1,8 +1,8 @@
 export const batchKeys = {
   all: ["batches"] as const,
-  lists: (unit?: string) =>
+  lists: (unit?: string, startDate?: string, endDate?: string) =>
     unit
-      ? ([...batchKeys.all, "list", unit] as const)
+      ? ([...batchKeys.all, "list", unit, startDate, endDate] as const)
       : ([...batchKeys.all, "list"] as const),
 
   details: (id: number | string) =>

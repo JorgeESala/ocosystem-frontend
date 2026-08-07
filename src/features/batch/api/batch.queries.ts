@@ -10,10 +10,10 @@ import { batchKeys } from "./batch.keys";
 import { accountsPayableKeys } from "@/features/accounting/api/accounts-payable.keys";
 
 // Hook para obtener remesas
-export const useBatches = (unit: string) => {
+export const useBatches = (unit: string, startDate?: string, endDate?: string) => {
   return useQuery({
-    queryKey: batchKeys.lists(unit),
-    queryFn: () => api.getBatches(unit),
+    queryKey: batchKeys.lists(unit, startDate, endDate),
+    queryFn: () => api.getBatches(unit, startDate, endDate),
   });
 };
 
