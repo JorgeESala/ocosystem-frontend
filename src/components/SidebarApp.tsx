@@ -83,8 +83,8 @@ export default function SidebarApp() {
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Notification bell - hidden when collapsed */}
-            {!effectiveCollapsed && <NotificationBell />}
+            {/* Notification bell - hidden when collapsed or no branches access */}
+            {!effectiveCollapsed && user?.allowedBusinesses.includes("BRANCHES") && <NotificationBell />}
 
             {/* Desktop collapse toggle */}
             <button

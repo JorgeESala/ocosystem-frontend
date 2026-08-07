@@ -35,8 +35,8 @@ export default function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { data: branches = [] } = useBranches();
-  const branchIds = branches.map((b) => b.id);
+  const { data: branches } = useBranches();
+  const branchIds = Array.isArray(branches) ? branches.map((b) => b.id) : [];
 
   useNotificationStream(branchIds);
   const { data: summary } = useNotificationSummary(branchIds);

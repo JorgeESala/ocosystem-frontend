@@ -11,7 +11,7 @@ interface Props<T> {
 }
 
 export function EntityMultiSelect<T extends { id: number; name: string }>({
-  items,
+  items: itemsProp,
   selected,
   onChange,
   label,
@@ -19,6 +19,7 @@ export function EntityMultiSelect<T extends { id: number; name: string }>({
   getValue = (item: T) => item.id,
   getLabel = (item: T) => item.name,
 }: Props<T>) {
+  const items = Array.isArray(itemsProp) ? itemsProp : [];
   const toggleItem = (id: number) => {
     if (selected.includes(id)) {
       onChange(selected.filter((s) => s !== id));
