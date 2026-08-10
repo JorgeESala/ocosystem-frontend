@@ -33,6 +33,7 @@ export const EggMovementsTable: React.FC<{
     if (isOtherBatch) return null;
     const isAdjustment = mov.type === "ADJUSTMENT";
     const qty = Number(mov.quantity || 0);
+    const isBrokenEggs = mov.metadata?.brokenEggs === true;
 
     if (isAdjustment) {
       return (
@@ -66,6 +67,11 @@ export const EggMovementsTable: React.FC<{
         </div>
         <div className="col-span-4 truncate text-xs text-white">
           {mov.concept ?? mov.clientName ?? "Venta directa"}
+          {isBrokenEggs && (
+            <span className="ml-2 inline-flex items-center rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+              🥚 Roto
+            </span>
+          )}
         </div>
         <div className="col-span-2 text-right">
           <EggQuantityDisplay totalPieces={qty} />

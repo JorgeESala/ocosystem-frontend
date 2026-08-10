@@ -94,6 +94,7 @@ export interface Movement {
   employeeId?: number;
   saleTotal?: number;
   reason?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface BatchDetailView {
@@ -169,6 +170,7 @@ export interface BatchSaleRequest {
   kgGut?: string;
   officeReceived?: boolean;
   notes?: string;
+  brokenEggs?: boolean;
 }
 
 export interface BatchAdjustmentRequest {

@@ -1,7 +1,4 @@
-import {
-  useCreateRoute,
-  useRoutes,
-} from "@/core/api/route/routes.queries";
+import { useCreateRoute, useRoutes } from "@/core/api/route/routes.queries";
 import { Button, Label } from "flowbite-react";
 import React, { useState } from "react";
 import { HiPlus, HiX, HiMap } from "react-icons/hi";
@@ -105,6 +102,7 @@ export const EggMovementFields: React.FC<EggFieldsProps> = ({
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-600 bg-gray-700 py-2 pr-10 pl-10 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                required
                 placeholder={
                   isLoadingRoutes
                     ? "Cargando rutas..."

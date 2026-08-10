@@ -18,6 +18,7 @@ import {
   HiPlus,
   HiLocationMarker,
 } from "react-icons/hi";
+import { Checkbox } from "flowbite-react";
 import { UNIT_CONFIG } from "../config/unitConfig";
 import { useCreateBatchSale, useUpdateBatchSale } from "../api/batch.queries";
 import {
@@ -87,6 +88,7 @@ export const BatchMovementModal: React.FC<{
         boxes,
         cartons,
         quantity: pieces, // 'quantity' en el form de huevo representa las piezas sueltas
+        brokenEggs: initialData.metadata?.brokenEggs === true,
       };
     }
 
@@ -729,6 +731,26 @@ export const BatchMovementModal: React.FC<{
                 icon={HiCurrencyDollar}
                 className="text-lg font-bold"
               />
+            </div>
+          )}
+
+          {/* 7. Checkbox Huevos Rotos (Solo EGG) */}
+          {watchMovementType === "SALE" && batch.type === "EGG" && (
+            <div className="col-span-2 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-900/20 p-4">
+              <Checkbox
+                id="brokenEggs"
+                {...register("brokenEggs")}
+                className="cursor-pointer"
+              />
+              <Label
+                htmlFor="brokenEggs"
+                className="cursor-pointer text-sm font-medium text-amber-300"
+              >
+                Huevos rotos
+              </Label>
+              <span className="text-xs text-gray-400">
+                (Marca esta venta como huevos dañados vendidos a menor precio)
+              </span>
             </div>
           )}
 
