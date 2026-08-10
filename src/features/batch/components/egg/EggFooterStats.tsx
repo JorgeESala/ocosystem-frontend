@@ -37,6 +37,7 @@ export const EggFooterStats: React.FC<{ batch: BatchResponseDTO }> = ({
   const adjustedPieces = Number(batch.adjustedQuantity || 0);
   const totalSales = Number(batch.totalSalesAmount || 0);
   const totalCost = Number(batch.totalAmount || 0);
+  const salesCount = Number(batch.salesCount || 0);
 
   // 1. DETECCIÓN DE ANOMALÍAS: % de Rotura/Merma sobre el inventario
   const breakageIndex =
@@ -71,6 +72,12 @@ export const EggFooterStats: React.FC<{ batch: BatchResponseDTO }> = ({
             label="Total Ventas ($)"
             value={formatMXN(totalSales)}
             className="font-semibold text-green-400"
+          />
+
+          <StatItem
+            label="Ventas Registradas"
+            value={`${salesCount} venta${salesCount !== 1 ? "s" : ""}`}
+            className="text-blue-400"
           />
 
           <StatItem

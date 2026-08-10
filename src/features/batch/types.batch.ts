@@ -56,6 +56,9 @@ export interface BatchResponseDTO {
   remainingCartons: number;
   remainingPieces: number;
 
+  // --- Sales Count (tickets) ---
+  salesCount?: number;
+
   // --- Sucursales (type === "BRANCHES") ---
   branchId?: number;
   provider?: string;
