@@ -76,6 +76,7 @@ export function EntityMultiSelect<T extends { id: number; name: string }>({
             <Checkbox
               checked={selected.length === items.length && items.length > 0}
               onChange={toggleAll}
+              onClick={(e) => e.stopPropagation()}
             />
             <span className="text-sm">Seleccionar todas</span>
           </div>
@@ -90,10 +91,8 @@ export function EntityMultiSelect<T extends { id: number; name: string }>({
               >
                 <Checkbox
                   checked={selected.includes(value)}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    toggleItem(value);
-                  }}
+                  onChange={() => toggleItem(value)}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <span>{getLabel(item)}</span>
               </DropdownItem>

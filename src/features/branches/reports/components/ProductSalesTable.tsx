@@ -48,7 +48,7 @@ export const ProductSalesTable = ({
 
   // Sorting logic
   const sortedProducts = useMemo(() => {
-    let sortableItems = [...filteredProducts];
+    const sortableItems = [...filteredProducts];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key])

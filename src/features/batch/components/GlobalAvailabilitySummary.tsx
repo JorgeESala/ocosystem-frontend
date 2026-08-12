@@ -20,6 +20,12 @@ export const GlobalAvailabilitySummary: React.FC<
     (b) => Number(b.remainingQuantity) > 0,
   );
 
+  const helpUnit: "aves" | "piezas" = unitType === "EGG" ? "piezas" : "aves";
+  const valorEnInventarioHelp = React.useMemo(
+    () => <ValorEnInventarioHelp unit={helpUnit} />,
+    [helpUnit],
+  );
+
   if (visibleBatches.length === 0) {
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
@@ -54,12 +60,6 @@ export const GlobalAvailabilitySummary: React.FC<
       return acc + n;
     },
     null,
-  );
-
-  const helpUnit: "aves" | "piezas" = unitType === "EGG" ? "piezas" : "aves";
-  const valorEnInventarioHelp = React.useMemo(
-    () => <ValorEnInventarioHelp unit={helpUnit} />,
-    [helpUnit],
   );
 
   return (

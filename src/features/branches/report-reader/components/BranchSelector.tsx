@@ -1,8 +1,5 @@
-// src/components/reports/BranchSelector.tsx
-
 import { Select, Label } from "flowbite-react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchBranches } from "@/services/api";
+import { useBranches } from "@/features/branches/branch/branch.queries";
 
 interface Props {
   value?: number;
@@ -10,10 +7,8 @@ interface Props {
 }
 
 export const BranchSelector = ({ value, onChange }: Props) => {
-  const { data: branches, isLoading } = useQuery({
-    queryKey: ["branches"],
-    queryFn: fetchBranches,
-  });
+  const { data, isLoading } = useBranches();
+  const branches = Array.isArray(data) ? data : [];
 
   return (
     <div className="space-y-2">
@@ -25,7 +20,7 @@ export const BranchSelector = ({ value, onChange }: Props) => {
         onChange={(e) => onChange(Number(e.target.value))}
       >
         <option value="">Selecciona una sucursal</option>
-        {branches?.map((branch: any) => (
+        {branches.map((branch) => (
           <option key={branch.id} value={branch.id}>
             {branch.name}
           </option>

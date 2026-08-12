@@ -143,7 +143,7 @@ export default function BatchEntryForm({
         onClose();
         setToastMessage(null);
       }, 500);
-    } catch (err) {
+    } catch {
       setToastMessage("Error al guardar la remesa.");
       setToastType("failure");
     }

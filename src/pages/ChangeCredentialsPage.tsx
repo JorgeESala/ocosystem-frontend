@@ -70,7 +70,7 @@ export default function ChangeCredentialsPage() {
           name: me.name,
           email: me.email,
         }));
-      } catch (err) {
+      } catch {
         // Si algo falla, cerrar sesión por seguridad
         logout();
         navigate("/login", { replace: true });

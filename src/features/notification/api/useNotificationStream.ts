@@ -205,8 +205,9 @@ export function useNotificationStream(branchIds: number[]) {
     connect();
 
     return () => {
-      reconnectTimeoutRef.current &&
+      if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+      }
       abortControllerRef.current?.abort();
     };
   }, [connect]);

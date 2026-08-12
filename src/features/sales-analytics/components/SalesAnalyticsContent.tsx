@@ -1,34 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect, useRef } from "react";
 import { Datepicker, Button, Spinner } from "flowbite-react";
 import { HiDownload } from "react-icons/hi";
 import * as XLSX from "xlsx";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import { useSalesAnalytics } from "../api/salesAnalytics.queries";
 import { salesAnalyticsApi } from "../api/salesAnalytics.api";
-import type { SalesAnalyticsDTO, DailySalesDTO } from "../types";
-
-const BRANCH_COLORS: Record<string, string> = {
-  Roneli: "#FF6B6B",
-  "Express JMM": "#4ECDC4",
-  Amanecer: "#FFA500",
-  "Express FCP": "#556270",
-  Saban: "#C44DFF",
-  Esperanza: "#3498DB",
-  "Express Chunhuhub": "#E67E22",
-  Procesado: "#2ECC71",
-  Cancabchen: "#9B59B6",
-};
+import { WeekProfilePanel } from "./WeekProfilePanel";
+import { AnomalyPanel } from "./AnomalyPanel";
+import type { SalesAnalyticsDTO } from "../types";
 
 function getGrowthColor(growth: number): string {
   if (growth > 5) return "text-emerald-400";
@@ -40,12 +20,6 @@ function getGrowthArrow(growth: number): string {
   if (growth > 5) return "\u2191";
   if (growth < -5) return "\u2193";
   return "\u2192";
-}
-
-function formatDayName(dateStr: string): string {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("es-MX", {
-    weekday: "long",
-  });
 }
 
 export default function SalesAnalyticsContent() {
@@ -61,12 +35,18 @@ export default function SalesAnalyticsContent() {
   );
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [hoveredBranch, setHoveredBranch] = useState<number | null>(null);
+  const autoSelectedBranches = useRef(false);
 
   useEffect(() => {
-    if (branches.length > 0 && selectedBranchIds.length === 0) {
+    if (
+      !autoSelectedBranches.current &&
+      branches.length > 0 &&
+      selectedBranchIds.length === 0
+    ) {
+      autoSelectedBranches.current = true;
       setSelectedBranchIds(branches.map((b) => b.id));
     }
-  }, [branches]);
+  }, [branches, selectedBranchIds.length]);
 
   const { data, isLoading, refetch } = useSalesAnalytics(
     selectedBranchIds,
@@ -93,29 +73,6 @@ export default function SalesAnalyticsContent() {
     setStartDate(start);
     setEndDate(end);
   };
-
-  const chartData = useMemo(() => {
-    if (!data?.dailySales) return [];
-    return data.dailySales.map((d) => {
-      const point: Record<string, string | number> = {
-        date: new Date(d.date + "T00:00:00").toLocaleDateString("es-MX", {
-          day: "numeric",
-          month: "short",
-        }),
-        _rawDate: d.date,
-      };
-      if (activeProduct === "chicken") {
-        for (const [branch, qty] of Object.entries(d.chickenByBranch)) {
-          point[branch] = qty;
-        }
-      } else {
-        for (const [branch, qty] of Object.entries(d.eggsByBranch)) {
-          point[branch] = qty;
-        }
-      }
-      return point;
-    });
-  }, [data, activeProduct]);
 
   const activeBranchNames = useMemo(() => {
     if (!data?.dailySales?.length) return [];
@@ -145,7 +102,7 @@ export default function SalesAnalyticsContent() {
       ["Resumen de Ventas"],
       [""],
       ["Periodo", `${data.startDate} - ${data.endDate}`],
-      ["Días con datos", data.summary.daysInRange],
+      ["DÃ­as con datos", data.summary.daysInRange],
       [""],
       ["Total Pollo", data.summary.totalChicken],
       ["Total Huevo (casilleros)", data.summary.totalEggs],
@@ -162,7 +119,8 @@ export default function SalesAnalyticsContent() {
 
     const dailyHeaders = ["Fecha", ...activeBranchNames, "Total"];
     const dailyRows = data.dailySales.map((d) => {
-      const source = activeProduct === "chicken" ? d.chickenByBranch : d.eggsByBranch;
+      const source =
+        activeProduct === "chicken" ? d.chickenByBranch : d.eggsByBranch;
       const total = activeProduct === "chicken" ? d.totalChicken : d.totalEggs;
       return [
         d.date,
@@ -171,12 +129,17 @@ export default function SalesAnalyticsContent() {
       ];
     });
     const wsDaily = XLSX.utils.aoa_to_sheet([dailyHeaders, ...dailyRows]);
-    wsDaily["!cols"] = [{ wch: 12 }, ...activeBranchNames.map(() => ({ wch: 15 })), { wch: 12 }];
+    wsDaily["!cols"] = [
+      { wch: 12 },
+      ...activeBranchNames.map(() => ({ wch: 15 })),
+      { wch: 12 },
+    ];
     XLSX.utils.book_append_sheet(wb, wsDaily, "Ventas Diarias");
 
     const weeklyHeaders = ["Semana", ...activeBranchNames, "Total"];
     const weeklyRows = data.weeklySummary.map((w) => {
-      const source = activeProduct === "chicken" ? w.chickenByBranch : w.eggsByBranch;
+      const source =
+        activeProduct === "chicken" ? w.chickenByBranch : w.eggsByBranch;
       const total = activeProduct === "chicken" ? w.totalChicken : w.totalEggs;
       return [
         w.weekLabel,
@@ -185,24 +148,47 @@ export default function SalesAnalyticsContent() {
       ];
     });
     const wsWeekly = XLSX.utils.aoa_to_sheet([weeklyHeaders, ...weeklyRows]);
-    wsWeekly["!cols"] = [{ wch: 20 }, ...activeBranchNames.map(() => ({ wch: 15 })), { wch: 12 }];
+    wsWeekly["!cols"] = [
+      { wch: 20 },
+      ...activeBranchNames.map(() => ({ wch: 15 })),
+      { wch: 12 },
+    ];
     XLSX.utils.book_append_sheet(wb, wsWeekly, "Resumen Semanal");
 
     const growthHeaders = [
       "Sucursal",
-      "Pollo Actual", "Pollo Anterior", "Pollo Crecimiento %",
-      "Huevo Actual", "Huevo Anterior", "Huevo Crecimiento %",
+      "Pollo Actual",
+      "Pollo Anterior",
+      "Pollo Crecimiento %",
+      "Huevo Actual",
+      "Huevo Anterior",
+      "Huevo Crecimiento %",
     ];
     const growthRows = data.branchGrowth.map((b) => [
       b.branchName,
-      b.currentChicken, b.previousChicken, `${b.chickenGrowth}%`,
-      b.currentEggs, b.previousEggs, `${b.eggsGrowth}%`,
+      b.currentChicken,
+      b.previousChicken,
+      `${b.chickenGrowth}%`,
+      b.currentEggs,
+      b.previousEggs,
+      `${b.eggsGrowth}%`,
     ]);
     const wsGrowth = XLSX.utils.aoa_to_sheet([growthHeaders, ...growthRows]);
-    wsGrowth["!cols"] = [{ wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+    wsGrowth["!cols"] = [
+      { wch: 20 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+    ];
     XLSX.utils.book_append_sheet(wb, wsGrowth, "Crecimiento");
 
-    XLSX.writeFile(wb, `ventas-${activeProduct}-${startDate.toISOString().split("T")[0]}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `ventas-${activeProduct}-${startDate.toISOString().split("T")[0]}.xlsx`,
+    );
   };
 
   const handleExportPdf = async () => {
@@ -306,43 +292,18 @@ export default function SalesAnalyticsContent() {
           {/* Summary Cards */}
           <SummaryCards data={data} activeProduct={activeProduct} />
 
-          {/* Daily Chart */}
-          <div className="rounded-xl bg-slate-800 p-6">
-            <h3 className="text-lg font-semibold text-white">
-              {activeProduct === "chicken" ? "Pollo" : "Huevo"} - Ventas Diarias
-            </h3>
-            {activeProduct === "eggs" && (
-              <p className="mb-4 text-xs text-slate-500">
-                Valores en casilleros
-              </p>
-            )}
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                <YAxis stroke="#9CA3AF" fontSize={12} />
-                <Tooltip
-                  content={
-                    <CustomTooltip
-                      dailySales={data.dailySales}
-                      activeProduct={activeProduct}
-                    />
-                  }
-                />
-                <Legend />
-                {activeBranchNames.map((name) => (
-                  <Line
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={BRANCH_COLORS[name] ?? "#999"}
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {/* Weekly comparison (manager view) */}
+          <WeekProfilePanel
+            dailySales={data.dailySales}
+            activeProduct={activeProduct}
+            branches={branches}
+            selectedBranchIds={selectedBranchIds}
+          />
+
+          <AnomalyPanel
+            dailySales={data.dailySales}
+            activeProduct={activeProduct}
+          />
 
           {/* Bottom: Weekly Summary + Branch Comparison */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -592,137 +553,6 @@ function SummaryCards({
         </div>
         <div className="mt-1 text-xs text-slate-500">
           de {branchGrowth.length} configuradas
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CustomTooltip({
-  active,
-  payload,
-  label,
-  dailySales,
-  activeProduct,
-}: {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number }>;
-  label?: string;
-  dailySales: DailySalesDTO[];
-  activeProduct: "chicken" | "eggs";
-}) {
-  if (!active || !payload || !label) return null;
-
-  const currentDay = dailySales.find((d) => {
-    const dateStr = new Date(d.date + "T00:00:00").toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-    });
-    return dateStr === label;
-  });
-
-  const currentIdx = dailySales.findIndex((d) => {
-    const dateStr = new Date(d.date + "T00:00:00").toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-    });
-    return dateStr === label;
-  });
-
-  const prevDay = currentIdx > 0 ? dailySales[currentIdx - 1] : null;
-  const prevWeek = currentIdx >= 7 ? dailySales[currentIdx - 7] : null;
-
-  const total = currentDay
-    ? activeProduct === "chicken"
-      ? currentDay.totalChicken
-      : currentDay.totalEggs
-    : 0;
-
-  return (
-    <div className="rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl">
-      <div className="mb-2 text-xs font-semibold text-slate-300">
-        {currentDay ? formatDayName(currentDay.date) : ""} {label}
-      </div>
-      <div className="space-y-1">
-        {payload.map((entry) => {
-          const branchDaily = currentDay
-            ? activeProduct === "chicken"
-              ? currentDay.chickenByBranch
-              : currentDay.eggsByBranch
-            : {};
-          const prevBranchDaily = prevDay
-            ? activeProduct === "chicken"
-              ? prevDay.chickenByBranch
-              : prevDay.eggsByBranch
-            : {};
-          const prevWeekBranchDaily = prevWeek
-            ? activeProduct === "chicken"
-              ? prevWeek.chickenByBranch
-              : prevWeek.eggsByBranch
-            : {};
-
-          const currentVal = branchDaily[entry.name] ?? 0;
-          const prevDayVal = prevBranchDaily[entry.name] ?? 0;
-          const prevWeekVal = prevWeekBranchDaily[entry.name] ?? 0;
-
-          const dayChange =
-            prevDayVal > 0 ? ((currentVal - prevDayVal) / prevDayVal) * 100 : 0;
-          const weekChange =
-            prevWeekVal > 0
-              ? ((currentVal - prevWeekVal) / prevWeekVal) * 100
-              : 0;
-
-          return (
-            <div
-              key={entry.name}
-              className="flex items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: BRANCH_COLORS[entry.name] ?? "#999",
-                  }}
-                />
-                <span className="text-[11px] text-slate-300">{entry.name}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[11px] font-medium text-slate-200">
-                  {activeProduct === "eggs"
-                    ? entry.value.toLocaleString()
-                    : entry.value}
-                </span>
-                {prevDayVal > 0 && (
-                  <span
-                    className={`ml-1 text-[10px] ${
-                      dayChange >= 0 ? "text-emerald-400" : "text-red-400"
-                    }`}
-                  >
-                    {dayChange >= 0 ? "+" : ""}
-                    {dayChange.toFixed(0)}% ayer
-                  </span>
-                )}
-                {prevWeekVal > 0 && (
-                  <span
-                    className={`ml-1 text-[10px] ${
-                      weekChange >= 0 ? "text-emerald-400" : "text-red-400"
-                    }`}
-                  >
-                    {weekChange >= 0 ? "+" : ""}
-                    {weekChange.toFixed(0)}% sem
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-2 border-t border-slate-600 pt-1">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-slate-400">Total</span>
-          <span className="font-semibold text-white">
-            {activeProduct === "eggs" ? total.toLocaleString() : total}
-          </span>
         </div>
       </div>
     </div>

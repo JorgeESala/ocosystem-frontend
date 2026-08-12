@@ -127,8 +127,11 @@ inlined. Stay consistent with existing labels.
 
 1. **`.flowbite-react/init.tsx` is auto-generated.** Don't edit it; edit
    `.flowbite-react/config.json` if you must.
-2. **`.env` is gitignored.** Only `.env.development` and `.env.production` are
-   committed. `VITE_API_URL` is the only env var consumed (see `shared/api/http.ts`).
+2. **`.env` files are gitignored (`.env*`).** No env files are tracked since
+   commit `5bdbf76`. For local dev, create `.env.development` with
+   `VITE_API_URL=http://localhost:8080`; production sets `VITE_API_URL` in the
+   host (e.g. Netlify/Render). `VITE_API_URL` is the only env var consumed (see
+   `shared/api/http.ts`).
 3. **Two route files exist**: `AppRoutes.tsx` (auth + global) and
    `BusinessRoutes.tsx` (per-business). Don't merge them; new business routes
    go in `BusinessRoutes.tsx` with a slug check.

@@ -23,15 +23,7 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
 );
-module.exports = {
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project: "./tsconfig.json",
-      },
-    },
-  },
-};
