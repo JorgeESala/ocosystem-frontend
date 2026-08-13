@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import { Button, Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
-import type { CashReserveResponseDTO, UpdateCashReserveDTO } from "@/features/general-cash/types";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  TextInput,
+} from "flowbite-react";
+import type {
+  CashReserveResponseDTO,
+  UpdateCashReserveDTO,
+} from "@/features/general-cash/types";
 
 interface Props {
   open: boolean;
@@ -41,7 +50,10 @@ export default function SettingsModal({
       <ModalBody>
         <div className="space-y-4">
           <div>
-            <label htmlFor="startingBalance" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="startingBalance"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Saldo Inicial (MXN)
             </label>
             <TextInput
@@ -52,7 +64,10 @@ export default function SettingsModal({
             />
           </div>
           <div>
-            <label htmlFor="alertThreshold" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="alertThreshold"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Umbral de Alerta (MXN)
             </label>
             <TextInput

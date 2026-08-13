@@ -36,8 +36,8 @@ export default function BranchExpensesPage() {
 
   const usingFilters = Boolean(activeFilters);
   const expenses = usingFilters
-    ? filteredExpensesQuery.data ?? []
-    : latestExpensesQuery.data ?? [];
+    ? (filteredExpensesQuery.data ?? [])
+    : (latestExpensesQuery.data ?? []);
   const isLoading = usingFilters
     ? filteredExpensesQuery.isLoading
     : latestExpensesQuery.isLoading;
@@ -126,7 +126,10 @@ export default function BranchExpensesPage() {
       />
 
       {validationError && (
-        <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+        <Alert
+          color="failure"
+          className="border border-red-900/40 bg-red-950/40"
+        >
           {validationError}
         </Alert>
       )}
@@ -161,7 +164,10 @@ export default function BranchExpensesPage() {
           <Spinner size="lg" />
         </div>
       ) : showFullError ? (
-        <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+        <Alert
+          color="failure"
+          className="border border-red-900/40 bg-red-950/40"
+        >
           No se pudieron cargar los gastos.
         </Alert>
       ) : (

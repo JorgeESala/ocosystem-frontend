@@ -1,5 +1,9 @@
 import { http } from "@/shared/api/http";
-import type { DeliveryScheduleDTO, UpdateDeliveryScheduleDTO, OrderPredictionDTO } from "../types";
+import type {
+  DeliveryScheduleDTO,
+  UpdateDeliveryScheduleDTO,
+  OrderPredictionDTO,
+} from "../types";
 
 const SCHEDULE_URL = "/api/v1/branches/delivery-schedule";
 const PREDICTION_URL = "/api/v1/branches/order-predictions";

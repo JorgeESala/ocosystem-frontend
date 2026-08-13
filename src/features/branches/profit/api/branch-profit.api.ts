@@ -1,9 +1,6 @@
 import { http } from "@/shared/api/http";
 import { toLocalDateString } from "@/utils/date.utils";
-import type {
-  BranchProfitFilters,
-  BranchProfitReportDTO,
-} from "../types";
+import type { BranchProfitFilters, BranchProfitReportDTO } from "../types";
 
 export const branchProfitApi = {
   getReport: async (
@@ -25,4 +22,3 @@ export const branchProfitApi = {
     return data;
   },
 };
-

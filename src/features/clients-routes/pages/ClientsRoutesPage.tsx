@@ -22,9 +22,7 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-white">
-            Clientes y Rutas
-          </h1>
+          <h1 className="text-xl font-semibold text-white">Clientes y Rutas</h1>
           <p className="text-sm text-gray-400">
             Catálogo de {unitLabel}. Crea, edita o elimina clientes y rutas
             registradas en este negocio.

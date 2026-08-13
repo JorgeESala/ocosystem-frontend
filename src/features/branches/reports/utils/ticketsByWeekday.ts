@@ -44,10 +44,7 @@ export const ticketsByWeekday = (
   ticketSource: (entry: DailySalesDTO) => number = (entry) =>
     entry.totalTickets ?? 0,
 ): WeekdayTicketsRow[] => {
-  const acc: Record<
-    WeekdayKey,
-    { tickets: number; days: number }
-  > = {
+  const acc: Record<WeekdayKey, { tickets: number; days: number }> = {
     L: { tickets: 0, days: 0 },
     M: { tickets: 0, days: 0 },
     X: { tickets: 0, days: 0 },

@@ -7,7 +7,9 @@ import type {
 
 const API_BASE = "/api/v1/branches/expected-events";
 
-const buildQueryString = (params: Record<string, string | number | undefined>): string => {
+const buildQueryString = (
+  params: Record<string, string | number | undefined>,
+): string => {
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) {
@@ -19,7 +21,11 @@ const buildQueryString = (params: Record<string, string | number | undefined>): 
 };
 
 export const expectedEventsApi = {
-  list: async (params: { branchId?: number; from?: string; to?: string }): Promise<ExpectedEvent[]> => {
+  list: async (params: {
+    branchId?: number;
+    from?: string;
+    to?: string;
+  }): Promise<ExpectedEvent[]> => {
     const qs = buildQueryString({
       branchId: params.branchId,
       from: params.from,
@@ -29,13 +35,20 @@ export const expectedEventsApi = {
     return data;
   },
 
-  create: async (event: Omit<ExpectedEvent, "id" | "branchName" | "createdBy">): Promise<ExpectedEvent> => {
+  create: async (
+    event: Omit<ExpectedEvent, "id" | "branchName" | "createdBy">,
+  ): Promise<ExpectedEvent> => {
     const { data } = await http.post<ExpectedEvent>(API_BASE, event);
     return data;
   },
 
-  createBulk: async (request: ExpectedEventBulkRequest): Promise<ExpectedEventBulkResponse> => {
-    const { data } = await http.post<ExpectedEventBulkResponse>(`${API_BASE}/bulk`, request);
+  createBulk: async (
+    request: ExpectedEventBulkRequest,
+  ): Promise<ExpectedEventBulkResponse> => {
+    const { data } = await http.post<ExpectedEventBulkResponse>(
+      `${API_BASE}/bulk`,
+      request,
+    );
     return data;
   },
 

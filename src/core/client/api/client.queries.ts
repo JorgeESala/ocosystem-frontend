@@ -37,9 +37,7 @@ export const useCreateClient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (
-      payload: ClientCreateRequestDTO,
-    ): Promise<Client> => {
+    mutationFn: async (payload: ClientCreateRequestDTO): Promise<Client> => {
       try {
         return await api.createClient(payload);
       } catch (error) {

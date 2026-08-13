@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { Button, Label, Select, Spinner } from "flowbite-react";
 import { HiPlus, HiX } from "react-icons/hi";
-import {
-  useCreateRoute,
-  useRoutes,
-} from "@/core/api/route/routes.queries";
+import { useCreateRoute, useRoutes } from "@/core/api/route/routes.queries";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useVehicles } from "@/core/vehicle/api/vehicle.queries";
 
@@ -15,8 +12,7 @@ export default function FuelFields({ form, setForm }: any) {
   const { data: drivers, isLoading: loadingDrivers } = useDrivers();
   const { data: vehicles, isLoading: loadingVehicles } = useVehicles();
   const { data: routes, isLoading: loadingRoutes } = useRoutes();
-  const { mutate: createRoute, isPending: isCreatingRoute } =
-    useCreateRoute();
+  const { mutate: createRoute, isPending: isCreatingRoute } = useCreateRoute();
 
   const isLoading = loadingDrivers || loadingVehicles || loadingRoutes;
 

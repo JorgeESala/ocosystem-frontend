@@ -111,7 +111,11 @@ export const mapBatchItem = (raw: BatchItemApi): Batch => {
         ? rawCost
         : toNumber(rawCost);
   const availableCost =
-    parsedCost === null ? null : Number.isFinite(parsedCost) && parsedCost > 0 ? parsedCost : null;
+    parsedCost === null
+      ? null
+      : Number.isFinite(parsedCost) && parsedCost > 0
+        ? parsedCost
+        : null;
   return {
     id: raw.id,
     branchId: raw.branchId,

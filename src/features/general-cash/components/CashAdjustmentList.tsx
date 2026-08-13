@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { HiPencil, HiTrash } from "react-icons/hi";
-import { useCashAdjustments, useDeleteCashAdjustment } from "@/features/general-cash/api/generalCash.queries";
+import {
+  useCashAdjustments,
+  useDeleteCashAdjustment,
+} from "@/features/general-cash/api/generalCash.queries";
 import type { CashAdjustmentDTO } from "@/features/general-cash/types";
 
 interface Props {
@@ -10,7 +13,12 @@ interface Props {
   onEdit: (adjustment: CashAdjustmentDTO) => void;
 }
 
-export default function CashAdjustmentList({ branchId, startDate, endDate, onEdit }: Props) {
+export default function CashAdjustmentList({
+  branchId,
+  startDate,
+  endDate,
+  onEdit,
+}: Props) {
   const adjustmentsQuery = useCashAdjustments(branchId, startDate, endDate);
   const deleteMutation = useDeleteCashAdjustment();
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
@@ -48,7 +56,10 @@ export default function CashAdjustmentList({ branchId, startDate, endDate, onEdi
                     isPositive ? "text-emerald-400" : "text-red-400"
                   }`}
                 >
-                  {isPositive ? "+" : ""}${adj.amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  {isPositive ? "+" : ""}$
+                  {adj.amount.toLocaleString("es-MX", {
+                    minimumFractionDigits: 2,
+                  })}
                 </span>
                 <button
                   onClick={() => onEdit(adj)}

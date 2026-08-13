@@ -8,8 +8,14 @@ import {
   TextInput,
 } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
-import { useBranchBusinessCategories, useExpenseCategories } from "../api/branch-categories.queries";
-import { useCreateBranchExpense, useUpdateBranchExpense } from "../api/branch-expenses.queries";
+import {
+  useBranchBusinessCategories,
+  useExpenseCategories,
+} from "../api/branch-categories.queries";
+import {
+  useCreateBranchExpense,
+  useUpdateBranchExpense,
+} from "../api/branch-expenses.queries";
 import type {
   BranchExpenseRequestDTO,
   BranchExpenseResponseDTO,
@@ -137,7 +143,9 @@ export default function BranchExpenseForm({
           disabled={loadingBranches}
         >
           <option value="">
-            {loadingBranches ? "Cargando sucursales..." : "Selecciona una sucursal"}
+            {loadingBranches
+              ? "Cargando sucursales..."
+              : "Selecciona una sucursal"}
           </option>
           {branches.map((branch) => (
             <option key={branch.id} value={branch.id}>

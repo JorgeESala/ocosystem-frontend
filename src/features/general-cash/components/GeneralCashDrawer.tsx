@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { Button, Spinner, Datepicker } from "flowbite-react";
 import { HiX, HiPlus } from "react-icons/hi";
-import { useCashFlowHistory, useCreateCashAdjustment, useUpdateCashAdjustment } from "@/features/general-cash/api/generalCash.queries";
+import {
+  useCashFlowHistory,
+  useCreateCashAdjustment,
+  useUpdateCashAdjustment,
+} from "@/features/general-cash/api/generalCash.queries";
 import CashAdjustmentModal from "./CashAdjustmentModal";
 import CashAdjustmentList from "./CashAdjustmentList";
-import type { CashReserveResponseDTO, CashFlowHistoryDTO, CashAdjustmentDTO, CreateCashAdjustmentDTO, UpdateCashAdjustmentDTO } from "@/features/general-cash/types";
+import type {
+  CashReserveResponseDTO,
+  CashFlowHistoryDTO,
+  CashAdjustmentDTO,
+  CreateCashAdjustmentDTO,
+  UpdateCashAdjustmentDTO,
+} from "@/features/general-cash/types";
 
 interface Props {
   open: boolean;
@@ -57,7 +67,8 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
   const [appliedStart, setAppliedStart] = useState<Date>(defaults.start);
   const [appliedEnd, setAppliedEnd] = useState<Date>(defaults.end);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
-  const [editingAdjustment, setEditingAdjustment] = useState<CashAdjustmentDTO | null>(null);
+  const [editingAdjustment, setEditingAdjustment] =
+    useState<CashAdjustmentDTO | null>(null);
 
   const historyQuery = useCashFlowHistory(
     reserve?.id ?? null,
@@ -96,11 +107,19 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
     setShowAdjustmentModal(true);
   };
 
-  const handleSaveAdjustment = (payload: CreateCashAdjustmentDTO | { id: number; payload: UpdateCashAdjustmentDTO }) => {
+  const handleSaveAdjustment = (
+    payload:
+      | CreateCashAdjustmentDTO
+      | { id: number; payload: UpdateCashAdjustmentDTO },
+  ) => {
     if ("id" in payload) {
-      updateAdjustment.mutate(payload, { onSuccess: () => setShowAdjustmentModal(false) });
+      updateAdjustment.mutate(payload, {
+        onSuccess: () => setShowAdjustmentModal(false),
+      });
     } else {
-      createAdjustment.mutate(payload, { onSuccess: () => setShowAdjustmentModal(false) });
+      createAdjustment.mutate(payload, {
+        onSuccess: () => setShowAdjustmentModal(false),
+      });
     }
   };
 
@@ -142,7 +161,10 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
         <div className="border-b border-slate-700 px-6 py-4">
           <div className="text-sm text-slate-400">Saldo actual</div>
           <div className="text-2xl font-bold text-white">
-            ${reserve.currentBalance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+            $
+            {reserve.currentBalance.toLocaleString("es-MX", {
+              minimumFractionDigits: 2,
+            })}
           </div>
         </div>
 
@@ -216,7 +238,9 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
             </div>
           ) : (
             <>
-              <h4 className="mb-2 text-sm font-semibold text-slate-400">Historial</h4>
+              <h4 className="mb-2 text-sm font-semibold text-slate-400">
+                Historial
+              </h4>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-700 text-left text-slate-400">
@@ -261,20 +285,24 @@ function HistoryRow({ entry }: { entry: CashFlowHistoryDTO }) {
 
   return (
     <tr className="border-b border-slate-800">
-      <td className="py-2 text-slate-300">
-        {formatDateTime(entry.createdAt)}
-      </td>
+      <td className="py-2 text-slate-300">{formatDateTime(entry.createdAt)}</td>
       <td className="py-2">
         <span className={`font-medium ${colorClass}`}>{label}</span>
       </td>
       <td className="max-w-[200px] truncate py-2 text-slate-400">
         {entry.description ?? "\u2014"}
       </td>
-      <td className={`py-2 text-right font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
-        {isPositive ? "+" : ""}${entry.amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+      <td
+        className={`py-2 text-right font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}
+      >
+        {isPositive ? "+" : ""}$
+        {entry.amount.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
       </td>
       <td className="py-2 text-right font-medium text-white">
-        ${entry.runningBalance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+        $
+        {entry.runningBalance.toLocaleString("es-MX", {
+          minimumFractionDigits: 2,
+        })}
       </td>
     </tr>
   );

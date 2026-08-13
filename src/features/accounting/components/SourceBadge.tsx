@@ -45,7 +45,9 @@ export const SourceBadge = ({
 
   if (!isClickable) {
     return (
-      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${config.color}`}
+      >
         {sourceType === "ADJUSTMENT" ? "Ajuste manual" : "Otro"}
       </span>
     );
@@ -61,9 +63,12 @@ export const SourceBadge = ({
       type="button"
       onClick={(e) => {
         e.stopPropagation();
-        onOpenSource(sourceBatchId!, sourceType === "DELIVERY" ? sourceId : undefined);
+        onOpenSource(
+          sourceBatchId!,
+          sourceType === "DELIVERY" ? sourceId : undefined,
+        );
       }}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer ${config.color} ${config.hoverColor}`}
+      className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${config.color} ${config.hoverColor}`}
     >
       {label}
       <HiOutlineExternalLink className="h-3 w-3" />

@@ -13,7 +13,12 @@ interface UseExpectedEventsParams {
   enabled?: boolean;
 }
 
-export const useExpectedEvents = ({ branchId, from, to, enabled = true }: UseExpectedEventsParams) =>
+export const useExpectedEvents = ({
+  branchId,
+  from,
+  to,
+  enabled = true,
+}: UseExpectedEventsParams) =>
   useQuery({
     queryKey: expectedEventsKeys.list(branchId, from, to),
     queryFn: () => expectedEventsApi.list({ branchId, from, to }),
@@ -24,8 +29,9 @@ export const useExpectedEvents = ({ branchId, from, to, enabled = true }: UseExp
 export const useCreateExpectedEvent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (event: Omit<ExpectedEvent, "id" | "branchName" | "createdBy">) =>
-      expectedEventsApi.create(event),
+    mutationFn: (
+      event: Omit<ExpectedEvent, "id" | "branchName" | "createdBy">,
+    ) => expectedEventsApi.create(event),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: expectedEventsKeys.all });
       qc.invalidateQueries({ queryKey: ["branch-checklist"] });
@@ -36,7 +42,8 @@ export const useCreateExpectedEvent = () => {
 export const useCreateExpectedEventsBulk = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (request: ExpectedEventBulkRequest) => expectedEventsApi.createBulk(request),
+    mutationFn: (request: ExpectedEventBulkRequest) =>
+      expectedEventsApi.createBulk(request),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: expectedEventsKeys.all });
       qc.invalidateQueries({ queryKey: ["branch-checklist"] });

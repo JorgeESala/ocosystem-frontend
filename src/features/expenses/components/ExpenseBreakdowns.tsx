@@ -32,7 +32,7 @@ const BreakdownTable = ({
     ) : (
       <div className="overflow-hidden rounded-2xl border border-slate-800">
         <table className="w-full border-collapse text-left">
-          <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-400">
+          <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
               <th className="px-4 py-3 font-semibold">Concepto</th>
               <th className="px-4 py-3 font-semibold">Monto</th>

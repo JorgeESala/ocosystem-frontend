@@ -1,6 +1,9 @@
 import { HiCalendar, HiUserCircle } from "react-icons/hi";
 import { FaCheck, FaTimes, FaClock, FaMinus } from "react-icons/fa";
-import type { DailyChecklist, ChecklistTaskEntry } from "../types/checklist.types";
+import type {
+  DailyChecklist,
+  ChecklistTaskEntry,
+} from "../types/checklist.types";
 import { fromIsoDateString } from "../utils/week";
 
 interface BranchDayRowProps {

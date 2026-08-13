@@ -39,7 +39,7 @@ export function PartyChecklist<T>({
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800/50">
       <div className="mb-1 flex items-center gap-2">
-        <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <span className="shrink-0 text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
           {label}
         </span>
         {hasFilter && (

@@ -75,8 +75,8 @@ export default function BranchProfitBatchTable({ batches }: Props) {
             Detalle por remesa
           </h3>
           <p className="text-sm text-slate-400">
-            El costo prorrateado y la utilidad estimada ayudan a detectar remesas
-            que presionan el margen.
+            El costo prorrateado y la utilidad estimada ayudan a detectar
+            remesas que presionan el margen.
           </p>
         </div>
         <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">

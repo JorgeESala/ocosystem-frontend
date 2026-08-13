@@ -1,4 +1,10 @@
-import { Drawer, Spinner, DrawerHeader, DrawerItems, Badge } from "flowbite-react";
+import {
+  Drawer,
+  Spinner,
+  DrawerHeader,
+  DrawerItems,
+  Badge,
+} from "flowbite-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useBatchFullDetail } from "../api/batch.queries";
@@ -17,7 +23,13 @@ interface Props {
   unitType?: BusinessUnitType;
 }
 
-export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, unitType }: Props) => {
+export const BatchPreviewDrawer = ({
+  open,
+  onClose,
+  batchId,
+  highlightSaleId,
+  unitType,
+}: Props) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -29,18 +41,23 @@ export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, un
   const batchType = data?.batch?.type ?? unitType;
   const config = batchType ? UNIT_CONFIG[batchType] : null;
 
-  const highlightedMov = highlightSaleId != null
-    ? data?.movements.find((m) => m.id === highlightSaleId)
-    : null;
+  const highlightedMov =
+    highlightSaleId != null
+      ? data?.movements.find((m) => m.id === highlightSaleId)
+      : null;
 
-  const otherMovements = highlightSaleId != null
-    ? data?.movements.filter((m) => m.id !== highlightSaleId) ?? []
-    : data?.movements ?? [];
+  const otherMovements =
+    highlightSaleId != null
+      ? (data?.movements.filter((m) => m.id !== highlightSaleId) ?? [])
+      : (data?.movements ?? []);
 
   useEffect(() => {
     if (highlightedMov && highlightRef.current) {
       const timeout = setTimeout(() => {
-        highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        highlightRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }, 200);
       return () => clearTimeout(timeout);
     }
@@ -53,7 +70,12 @@ export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, un
   };
 
   return (
-    <Drawer open={open} onClose={onClose} position="right" className="w-[550px]">
+    <Drawer
+      open={open}
+      onClose={onClose}
+      position="right"
+      className="w-[550px]"
+    >
       <DrawerHeader title={batchId ? `Remesa #${batchId}` : "Remesa"}>
         {batchId && (
           <button
@@ -94,29 +116,53 @@ export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, un
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <StatCard
                 label="Inicial"
-                value={batchType === "EGG"
-                  ? <EggQuantityDisplay totalPieces={Number(data.summary.initialPieces)} />
-                  : String(data.summary.initialPieces)}
+                value={
+                  batchType === "EGG" ? (
+                    <EggQuantityDisplay
+                      totalPieces={Number(data.summary.initialPieces)}
+                    />
+                  ) : (
+                    String(data.summary.initialPieces)
+                  )
+                }
               />
               <StatCard
                 label="Vendidos"
-                value={batchType === "EGG"
-                  ? <EggQuantityDisplay totalPieces={Number(data.summary.soldPieces)} />
-                  : String(data.summary.soldPieces)}
+                value={
+                  batchType === "EGG" ? (
+                    <EggQuantityDisplay
+                      totalPieces={Number(data.summary.soldPieces)}
+                    />
+                  ) : (
+                    String(data.summary.soldPieces)
+                  )
+                }
                 color="text-green-400"
               />
               <StatCard
                 label="Ajustes"
-                value={batchType === "EGG"
-                  ? <EggQuantityDisplay totalPieces={Number(data.summary.adjustedPieces)} />
-                  : String(data.summary.adjustedPieces)}
+                value={
+                  batchType === "EGG" ? (
+                    <EggQuantityDisplay
+                      totalPieces={Number(data.summary.adjustedPieces)}
+                    />
+                  ) : (
+                    String(data.summary.adjustedPieces)
+                  )
+                }
                 color="text-red-400"
               />
               <StatCard
                 label="Disponible"
-                value={batchType === "EGG"
-                  ? <EggQuantityDisplay totalPieces={Number(data.summary.availablePieces)} />
-                  : data.summary.formattedAvailable}
+                value={
+                  batchType === "EGG" ? (
+                    <EggQuantityDisplay
+                      totalPieces={Number(data.summary.availablePieces)}
+                    />
+                  ) : (
+                    data.summary.formattedAvailable
+                  )
+                }
                 color="text-blue-400"
                 bold
               />
@@ -148,10 +194,15 @@ export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, un
             {otherMovements.length > 0 && (
               <div>
                 <h4 className="mb-3 text-xs font-bold tracking-widest text-gray-500 uppercase">
-                  {highlightedMov ? "Otras ventas de esta remesa" : "Últimas ventas"}
+                  {highlightedMov
+                    ? "Otras ventas de esta remesa"
+                    : "Últimas ventas"}
                 </h4>
                 <div className="space-y-2">
-                  {(highlightedMov ? otherMovements.slice(0, 8) : otherMovements.slice(0, 10)).map((mov) => (
+                  {(highlightedMov
+                    ? otherMovements.slice(0, 8)
+                    : otherMovements.slice(0, 10)
+                  ).map((mov) => (
                     <div
                       key={mov.id}
                       className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/30 px-3 py-2"
@@ -162,7 +213,8 @@ export const BatchPreviewDrawer = ({ open, onClose, batchId, highlightSaleId, un
                 </div>
                 {otherMovements.length > (highlightedMov ? 8 : 10) && (
                   <p className="mt-2 text-center text-xs text-gray-500">
-                    +{otherMovements.length - (highlightedMov ? 8 : 10)} movimientos más
+                    +{otherMovements.length - (highlightedMov ? 8 : 10)}{" "}
+                    movimientos más
                   </p>
                 )}
               </div>
@@ -206,9 +258,7 @@ const MovementRow = ({
     <div className="text-right">
       {config?.renderMovementQuantity(movement)}
       {movement.saleTotal != null && (
-        <p className="text-xs text-gray-400">
-          {formatMXN(movement.saleTotal)}
-        </p>
+        <p className="text-xs text-gray-400">{formatMXN(movement.saleTotal)}</p>
       )}
     </div>
   </>

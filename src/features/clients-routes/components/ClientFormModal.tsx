@@ -10,12 +10,13 @@ import {
   TextInput,
 } from "flowbite-react";
 import { HiCheck, HiChevronDown, HiX } from "react-icons/hi";
-import { useClient, useCreateClient, useUpdateClient } from "@/core/client/api/client.queries";
-import { useLocalities } from "@/core/locality/api/locality.queries";
 import {
-  emptyClientForm,
-  type ClientFormState,
-} from "../types/forms";
+  useClient,
+  useCreateClient,
+  useUpdateClient,
+} from "@/core/client/api/client.queries";
+import { useLocalities } from "@/core/locality/api/locality.queries";
+import { emptyClientForm, type ClientFormState } from "../types/forms";
 
 interface ClientFormModalProps {
   show: boolean;
@@ -29,9 +30,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   onClose,
 }) => {
   const isEdit = clientIdToEdit !== null;
-  const { data: editingClient, isLoading: loadingClient } = useClient(
-    clientIdToEdit,
-  );
+  const { data: editingClient, isLoading: loadingClient } =
+    useClient(clientIdToEdit);
   const { data: localities, isLoading: loadingLocalities } = useLocalities();
 
   const [form, setForm] = useState<ClientFormState>(emptyClientForm);
@@ -134,9 +134,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
 
   return (
     <Modal show={show} size="md" popup onClose={onClose}>
-      <ModalHeader>
-        {isEdit ? "Editar cliente" : "Nuevo cliente"}
-      </ModalHeader>
+      <ModalHeader>{isEdit ? "Editar cliente" : "Nuevo cliente"}</ModalHeader>
       <ModalBody>
         {isEdit && loadingClient ? (
           <div className="flex items-center justify-center py-6">
@@ -243,10 +241,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                           >
                             <span>{l.name}</span>
                             {isSelected && (
-                              <HiCheck
-                                size={14}
-                                className="text-blue-400"
-                              />
+                              <HiCheck size={14} className="text-blue-400" />
                             )}
                           </button>
                         </li>

@@ -65,7 +65,11 @@ export default function TripInlineRow({
   const lastSavedValueRef = useRef<string>("");
 
   useEffect(() => {
-    if (externalTripId != null && group.trip?.id === externalTripId && !expanded) {
+    if (
+      externalTripId != null &&
+      group.trip?.id === externalTripId &&
+      !expanded
+    ) {
       setExpanded(true);
     }
   }, [externalTripId, group.trip?.id, expanded]);
@@ -82,7 +86,10 @@ export default function TripInlineRow({
     unitType,
     group.driverId,
     group.date,
-    { enabled: expanded && fetchSales && group.driverId != null && group.date != null },
+    {
+      enabled:
+        expanded && fetchSales && group.driverId != null && group.date != null,
+    },
   );
 
   const updateMutation = useUpdateTrip(unitType);
@@ -499,8 +506,7 @@ export default function TripInlineRow({
                                 title="Ir a la remesa"
                               >
                                 <span className="truncate">
-                                  {s.batchLabel ??
-                                    `Remesa #${s.batchId}`}
+                                  {s.batchLabel ?? `Remesa #${s.batchId}`}
                                 </span>
                                 <HiArrowRight className="h-3 w-3 flex-shrink-0" />
                               </Link>

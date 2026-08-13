@@ -45,10 +45,7 @@ export default function BranchProfitReportPage() {
     activeFilters?.endDate ?? null,
   );
 
-  const summary = useMemo(
-    () => buildBranchProfitSummary(report),
-    [report],
-  );
+  const summary = useMemo(() => buildBranchProfitSummary(report), [report]);
 
   const manualChickenByBranch = useMemo(() => {
     const map = new Map<
@@ -62,10 +59,7 @@ export default function BranchProfitReportPage() {
       if (!branch) continue;
       const manualChicken = batchDetails
         .filter((b) => b.branchName === branch.name)
-        .reduce(
-          (sum, b) => sum + (Number(b.totalSalesInRange) || 0),
-          0,
-        );
+        .reduce((sum, b) => sum + (Number(b.totalSalesInRange) || 0), 0);
       map.set(branchId, {
         branchId,
         branchName: branch.name,
@@ -100,11 +94,7 @@ export default function BranchProfitReportPage() {
         manualChicken: manual?.manualChicken ?? 0,
       };
     });
-  }, [
-    importedSales.byBranch,
-    manualChickenByBranch,
-    branches,
-  ]);
+  }, [importedSales.byBranch, manualChickenByBranch, branches]);
 
   const dailyComparison = useMemo(() => {
     const mergedDates = new Set<string>();
@@ -121,7 +111,12 @@ export default function BranchProfitReportPage() {
           importedTotal += dayMap.get(date) ?? 0;
         }
         const manualTotal = batchSalesDaily.dailyTotals.get(date) ?? 0;
-        return { date, importedTotal, manualTotal, diff: manualTotal - importedTotal };
+        return {
+          date,
+          importedTotal,
+          manualTotal,
+          diff: manualTotal - importedTotal,
+        };
       });
   }, [importedSales.dailyTotalsByBranch, batchSalesDaily.dailyTotals]);
 
@@ -130,7 +125,8 @@ export default function BranchProfitReportPage() {
     for (const dayMap of importedSales.dailyMatadosByBranch.values()) {
       for (const d of dayMap.keys()) mergedDates.add(d);
     }
-    for (const d of batchSalesDaily.dailyQuantityByDate.keys()) mergedDates.add(d);
+    for (const d of batchSalesDaily.dailyQuantityByDate.keys())
+      mergedDates.add(d);
 
     return Array.from(mergedDates)
       .sort()
@@ -146,12 +142,16 @@ export default function BranchProfitReportPage() {
 
   const branchBreakdown = useMemo(() => {
     return chickenComparison.map((row) => {
-      const matadosByDate = importedSales.dailyMatadosByBranch.get(row.branchId);
+      const matadosByDate = importedSales.dailyMatadosByBranch.get(
+        row.branchId,
+      );
       let matadosQty = 0;
       if (matadosByDate) {
         for (const qty of matadosByDate.values()) matadosQty += qty;
       }
-      const batchByDate = batchSalesDaily.dailyQuantityByBranch.get(row.branchId);
+      const batchByDate = batchSalesDaily.dailyQuantityByBranch.get(
+        row.branchId,
+      );
       let batchQty = 0;
       if (batchByDate) {
         for (const qty of batchByDate.values()) batchQty += qty;
@@ -163,7 +163,11 @@ export default function BranchProfitReportPage() {
         qtyDiff: batchQty - matadosQty,
       };
     });
-  }, [chickenComparison, importedSales.dailyMatadosByBranch, batchSalesDaily.dailyQuantityByBranch]);
+  }, [
+    chickenComparison,
+    importedSales.dailyMatadosByBranch,
+    batchSalesDaily.dailyQuantityByBranch,
+  ]);
 
   const showSpinner = (loadingBranches || reportQuery.isLoading) && !report;
   const showFullError = reportQuery.isError && !report;
@@ -244,7 +248,10 @@ export default function BranchProfitReportPage() {
       />
 
       {validationError && (
-        <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+        <Alert
+          color="failure"
+          className="border border-red-900/40 bg-red-950/40"
+        >
           {validationError}
         </Alert>
       )}
@@ -254,7 +261,10 @@ export default function BranchProfitReportPage() {
           <Spinner size="lg" />
         </div>
       ) : showFullError ? (
-        <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+        <Alert
+          color="failure"
+          className="border border-red-900/40 bg-red-950/40"
+        >
           No se pudo cargar el reporte de ganancias.
         </Alert>
       ) : report ? (

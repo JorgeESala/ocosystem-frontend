@@ -11,8 +11,6 @@ const POPOVER_THEME = {
   },
 };
 
-export default function Popover(
-  props: ComponentProps<typeof FlowbitePopover>,
-) {
+export default function Popover(props: ComponentProps<typeof FlowbitePopover>) {
   return <FlowbitePopover theme={POPOVER_THEME} {...props} />;
 }

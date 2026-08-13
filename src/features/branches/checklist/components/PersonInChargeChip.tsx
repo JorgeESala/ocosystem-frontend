@@ -7,10 +7,16 @@ interface PersonInChargeChipProps {
   className?: string;
 }
 
-export default function PersonInChargeChip({ person, className = "" }: PersonInChargeChipProps) {
+export default function PersonInChargeChip({
+  person,
+  className = "",
+}: PersonInChargeChipProps) {
   if (!person || !person.name) {
     return (
-      <Tooltip content="No hay un encargado identificable en el periodo" placement="top">
+      <Tooltip
+        content="No hay un encargado identificable en el periodo"
+        placement="top"
+      >
         <span
           className={`inline-flex items-center gap-1.5 rounded-full bg-slate-800/60 px-2.5 py-1 text-[11px] font-medium text-slate-400 ring-1 ring-slate-700/50 ${className}`}
         >

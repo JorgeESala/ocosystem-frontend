@@ -40,8 +40,11 @@ export const BatchEntryForm: React.FC<{
 
   const getInitialValues = () => {
     const initialPieces = Number(initialData?.initialQuantity || 0);
-    const { boxes: boxesFromQuantity, cartons: cartonsFromQuantity, pieces } =
-      calculateEggUnits(initialPieces);
+    const {
+      boxes: boxesFromQuantity,
+      cartons: cartonsFromQuantity,
+      pieces,
+    } = calculateEggUnits(initialPieces);
     const cedisId =
       initialData?.debtorEntityId ??
       allCedis.find((cedis) => cedis.name === initialData?.cedisName)?.id ??
@@ -51,7 +54,8 @@ export const BatchEntryForm: React.FC<{
       entryDate: initialData?.entryDate ?? toLocalDateString(new Date()),
       supplierId: initialData?.supplierId ? String(initialData.supplierId) : "",
       cedisId: String(cedisId),
-      quantity: unitType === "EGG" ? pieces : initialData?.initialQuantity ?? "",
+      quantity:
+        unitType === "EGG" ? pieces : (initialData?.initialQuantity ?? ""),
       weight: getMetadataNumber("declared_weight", "weight"),
       realWeight: initialData?.weightReal ?? getMetadataNumber("realWeight"),
       pricePerKg: getMetadataNumber("pricePerKg", "price_per_kg"),

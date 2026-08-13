@@ -15,9 +15,7 @@ import { useClients } from "@/core/client/api/client.queries";
 import { useSuppliers } from "@/core/supplier/supplier.queries";
 import SupplierMultiSelect from "@/components/SupplierMultiSelect";
 import InternalClientMultiSelect from "@/components/InternalClientMultiSelect";
-import DateRangeFilter, {
-  type DateRange,
-} from "@/components/DateRangeFilter";
+import DateRangeFilter, { type DateRange } from "@/components/DateRangeFilter";
 import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { CreateEggAccountsPayableModal } from "../components/CreateEggAccountsPayableModal";
@@ -170,17 +168,11 @@ export const EggAccountsPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            color="gray"
-            onClick={() => setIsRecentOpen(true)}
-          >
+          <Button color="gray" onClick={() => setIsRecentOpen(true)}>
             <HiClock className="mr-2 h-4 w-4" />
             Pagos recientes
           </Button>
-          <Button
-            color="gray"
-            onClick={() => setIsPaymentFirstOpen(true)}
-          >
+          <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
             <HiPlus className="mr-2 h-4 w-4" />
             Registrar pago
           </Button>
@@ -231,7 +223,9 @@ export const EggAccountsPage = () => {
       {viewMode === "FINANCIAL" ? (
         <CedisFinancialSummary
           entityType="EGGCEDIS"
-          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          from={
+            showFinancialDates ? formatDateToISO(dateRange.start) : undefined
+          }
           to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
         />
       ) : (

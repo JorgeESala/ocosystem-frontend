@@ -73,7 +73,9 @@ export const AccountingSummaryCards = ({ data, filterLabel }: Props) => {
           Documentos Abiertos
         </p>
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-blue-400">{data.length}</span>
+          <span className="text-3xl font-bold text-blue-400">
+            {data.length}
+          </span>
           <span className="text-sm text-nowrap text-gray-400">
             cuentas/remesas
           </span>

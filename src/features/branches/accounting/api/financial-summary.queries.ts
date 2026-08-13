@@ -33,8 +33,18 @@ export const useCedisFinancialSummary = (
 };
 
 const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
 ];
 
 const buildFilename = (
@@ -75,8 +85,18 @@ export const useDownloadFinancialSummaryPdf = () => {
 
 export const useDownloadCedisFinancialSummaryPdf = () => {
   return {
-    download: async (cedisIds?: number[], entityType?: string, from?: string, to?: string) => {
-      const blob = await downloadCedisFinancialSummaryPdf(cedisIds, entityType, from, to);
+    download: async (
+      cedisIds?: number[],
+      entityType?: string,
+      from?: string,
+      to?: string,
+    ) => {
+      const blob = await downloadCedisFinancialSummaryPdf(
+        cedisIds,
+        entityType,
+        from,
+        to,
+      );
       const buName = entityType === "EGGCEDIS" ? "huevo" : "pollo_vivo";
       const now = new Date();
       const datePart = `${now.getDate()}_de_${MONTHS_ES[now.getMonth()]}`;

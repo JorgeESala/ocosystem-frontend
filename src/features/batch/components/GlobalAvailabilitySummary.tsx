@@ -16,9 +16,7 @@ interface GlobalAvailabilitySummaryProps {
 export const GlobalAvailabilitySummary: React.FC<
   GlobalAvailabilitySummaryProps
 > = ({ batches, unitType, onBatchClick }) => {
-  const visibleBatches = batches.filter(
-    (b) => Number(b.remainingQuantity) > 0,
-  );
+  const visibleBatches = batches.filter((b) => Number(b.remainingQuantity) > 0);
 
   const helpUnit: "aves" | "piezas" = unitType === "EGG" ? "piezas" : "aves";
   const valorEnInventarioHelp = React.useMemo(
@@ -71,7 +69,10 @@ export const GlobalAvailabilitySummary: React.FC<
           </h3>
           <span className="flex items-center gap-2 rounded-full bg-blue-900/40 px-2.5 py-0.5 text-xs font-medium text-blue-300">
             {unitType === "EGG" ? (
-              <EggQuantityDisplay totalPieces={totalRemainingPieces} className="text-xs" />
+              <EggQuantityDisplay
+                totalPieces={totalRemainingPieces}
+                className="text-xs"
+              />
             ) : (
               <>{totalRemaining}</>
             )}{" "}
@@ -91,9 +92,7 @@ export const GlobalAvailabilitySummary: React.FC<
               ? formatMXN(totalValorEnInventario)
               : "—"}
           </p>
-          <p className="text-[10px] text-gray-400">
-            MXN restantes en remesas
-          </p>
+          <p className="text-[10px] text-gray-400">MXN restantes en remesas</p>
         </div>
       </div>
 

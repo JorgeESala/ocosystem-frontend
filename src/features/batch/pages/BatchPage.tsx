@@ -1,6 +1,12 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Spinner, Alert, Button, Datepicker, ToggleSwitch } from "flowbite-react";
+import {
+  Spinner,
+  Alert,
+  Button,
+  Datepicker,
+  ToggleSwitch,
+} from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import type { Batch, BatchPageProps } from "../types.batch";
 
@@ -24,7 +30,8 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [activeTab, setActiveTab] = useState<TabKey>("availability");
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
-  const [showOnlyWithAvailability, setShowOnlyWithAvailability] = useState(true);
+  const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
+    useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -54,7 +61,9 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const handleBatchClick = useCallback((batchId: number) => {
     setExpandedBatchId(batchId);
     setTimeout(() => {
-      document.getElementById(`batch-${batchId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`batch-${batchId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
   }, []);
 

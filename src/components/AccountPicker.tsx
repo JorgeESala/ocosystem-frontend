@@ -101,20 +101,20 @@ export function AccountPicker<T>({
     >
       <div className="border-b border-gray-200 px-2 py-1.5 dark:border-gray-700">
         <div className="relative">
-          <HiSearch className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <HiSearch className="pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={searchPlaceholder}
             disabled={disabled}
-            className="w-full rounded-md border border-gray-200 bg-white py-1 pl-7 pr-2 text-xs text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 dark:focus:border-cyan-500"
+            className="w-full rounded-md border border-gray-200 bg-white py-1 pr-2 pl-7 text-xs text-gray-900 placeholder-gray-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 dark:focus:border-cyan-500"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+              className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
               aria-label="Limpiar búsqueda"
             >
               <HiX className="h-3 w-3" />
@@ -125,11 +125,11 @@ export function AccountPicker<T>({
 
       <div className={`overflow-y-auto ${maxHeightClass}`}>
         {loading ? (
-          <div className="px-3 py-4 text-center text-xs italic text-gray-500 dark:text-gray-400">
+          <div className="px-3 py-4 text-center text-xs text-gray-500 italic dark:text-gray-400">
             Cargando...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="px-3 py-4 text-center text-xs italic text-gray-500 dark:text-gray-400">
+          <div className="px-3 py-4 text-center text-xs text-gray-500 italic dark:text-gray-400">
             {searchTerm.trim() ? "Sin coincidencias" : emptyMessage}
           </div>
         ) : (

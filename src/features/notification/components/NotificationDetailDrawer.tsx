@@ -40,7 +40,12 @@ export function NotificationDetailDrawer({
     ALERT_TYPE_LABELS[alertType ?? "LOW_BALANCE"];
 
   return (
-    <Drawer open={open} onClose={onClose} position="right" className="w-[550px]">
+    <Drawer
+      open={open}
+      onClose={onClose}
+      position="right"
+      className="w-[550px]"
+    >
       <DrawerHeader title={title} />
       <DrawerItems>
         {isLoading && (
@@ -56,7 +61,10 @@ export function NotificationDetailDrawer({
         )}
 
         {!isLoading && showDetail && alertType && (
-          <DetailContent alertType={alertType} detail={data!.detail as Record<string, unknown>} />
+          <DetailContent
+            alertType={alertType}
+            detail={data!.detail as Record<string, unknown>}
+          />
         )}
       </DrawerItems>
     </Drawer>

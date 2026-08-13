@@ -7,10 +7,15 @@ interface BranchTaskGroupProps {
   slug: string;
 }
 
-export default function BranchTaskGroup({ branch, slug }: BranchTaskGroupProps) {
+export default function BranchTaskGroup({
+  branch,
+  slug,
+}: BranchTaskGroupProps) {
   const pending = branch.tasks.filter((t) => t.status === "EMPTY");
   const done = branch.tasks.filter((t) => t.status === "DONE");
-  const notApplicable = branch.tasks.filter((t) => t.status === "NOT_APPLICABLE");
+  const notApplicable = branch.tasks.filter(
+    (t) => t.status === "NOT_APPLICABLE",
+  );
   const allDone = pending.length === 0 && done.length > 0;
 
   return (
@@ -35,18 +40,35 @@ export default function BranchTaskGroup({ branch, slug }: BranchTaskGroupProps) 
 
       <div className="flex flex-wrap gap-2">
         {pending.map((task) => (
-          <TaskActionCard key={task.taskId} task={task} slug={slug} branchId={branch.branchId} />
+          <TaskActionCard
+            key={task.taskId}
+            task={task}
+            slug={slug}
+            branchId={branch.branchId}
+          />
         ))}
         {done.map((task) => (
-          <TaskActionCard key={task.taskId} task={task} slug={slug} branchId={branch.branchId} />
+          <TaskActionCard
+            key={task.taskId}
+            task={task}
+            slug={slug}
+            branchId={branch.branchId}
+          />
         ))}
         {notApplicable.map((task) => (
-          <TaskActionCard key={task.taskId} task={task} slug={slug} branchId={branch.branchId} />
+          <TaskActionCard
+            key={task.taskId}
+            task={task}
+            slug={slug}
+            branchId={branch.branchId}
+          />
         ))}
       </div>
 
       {allDone && (
-        <p className="mt-2 text-xs text-emerald-400">Todas las tareas completadas</p>
+        <p className="mt-2 text-xs text-emerald-400">
+          Todas las tareas completadas
+        </p>
       )}
     </div>
   );

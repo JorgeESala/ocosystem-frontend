@@ -35,7 +35,11 @@ export interface CashFlowResponseDTO {
 export interface CashReserveAlertDTO {
   branchId: number;
   branchName: string;
-  type: "LOW_BALANCE" | "NEGATIVE_BALANCE" | "NEGATIVE_FLOW" | "DECLINING_TREND";
+  type:
+    | "LOW_BALANCE"
+    | "NEGATIVE_BALANCE"
+    | "NEGATIVE_FLOW"
+    | "DECLINING_TREND";
   severity: "critical" | "warning";
   message: string;
   currentBalance: number;

@@ -14,13 +14,15 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-function renderDrawer(overrides: {
-  open?: boolean;
-  notificationId?: number | null;
-  alertType?: string | null;
-  detailData?: unknown;
-  isLoading?: boolean;
-} = {}) {
+function renderDrawer(
+  overrides: {
+    open?: boolean;
+    notificationId?: number | null;
+    alertType?: string | null;
+    detailData?: unknown;
+    isLoading?: boolean;
+  } = {},
+) {
   const {
     open = true,
     notificationId = 1,
@@ -30,7 +32,9 @@ function renderDrawer(overrides: {
   } = overrides;
 
   mockUseNotificationDetail.mockReturnValue({
-    data: detailData ? { alertType, branchId: 1, branchName: "Test", detail: detailData } : null,
+    data: detailData
+      ? { alertType, branchId: 1, branchName: "Test", detail: detailData }
+      : null,
     isLoading,
   } as ReturnType<typeof useNotificationDetail>);
 
@@ -39,7 +43,9 @@ function renderDrawer(overrides: {
       open={open}
       onClose={vi.fn()}
       notificationId={notificationId}
-      alertType={alertType as "HIGH_WASTE" | "OVERDUE_TASKS" | "DELIVERY_NOT_RECEIVED"}
+      alertType={
+        alertType as "HIGH_WASTE" | "OVERDUE_TASKS" | "DELIVERY_NOT_RECEIVED"
+      }
     />,
   );
 }
@@ -52,7 +58,9 @@ describe("NotificationDetailDrawer", () => {
 
   it("shows empty state when no detail data", () => {
     renderDrawer({ detailData: null });
-    expect(screen.getByText("Sin datos detallados disponibles.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Sin datos detallados disponibles."),
+    ).toBeInTheDocument();
   });
 
   it("renders title for HIGH_WASTE", () => {
@@ -102,8 +110,22 @@ describe("NotificationDetailDrawer", () => {
         completedTasks: 2,
         totalTasks: 5,
         tasks: [
-          { taskId: "T1", label: "Tarea 1", status: "DONE", detail: "Hecho", late: null, optional: null },
-          { taskId: "T2", label: "Tarea 2", status: "EMPTY", detail: "Pendiente", late: true, optional: null },
+          {
+            taskId: "T1",
+            label: "Tarea 1",
+            status: "DONE",
+            detail: "Hecho",
+            late: null,
+            optional: null,
+          },
+          {
+            taskId: "T2",
+            label: "Tarea 2",
+            status: "EMPTY",
+            detail: "Pendiente",
+            late: true,
+            optional: null,
+          },
         ],
       },
     });

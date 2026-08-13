@@ -17,7 +17,7 @@ export const useBranchExpensesSearch = (filters: BranchExpenseFilters | null) =>
           filters.startDate.toISOString(),
           filters.endDate.toISOString(),
         )
-      : [...branchExpensesKeys.all, "search", "disabled"] as const,
+      : ([...branchExpensesKeys.all, "search", "disabled"] as const),
     queryFn: () => branchExpensesApi.search(filters!),
     enabled: Boolean(filters),
   });
@@ -40,7 +40,8 @@ export const useCreateBranchExpense = () => {
     onSuccess: (savedExpense) => {
       queryClient.setQueriesData(
         { queryKey: branchExpensesKeys.all },
-        (current) => upsertExpenseInCache(current as any[] | undefined, savedExpense),
+        (current) =>
+          upsertExpenseInCache(current as any[] | undefined, savedExpense),
       );
       queryClient.invalidateQueries({ queryKey: branchExpensesKeys.all });
     },
@@ -61,7 +62,8 @@ export const useUpdateBranchExpense = () => {
     onSuccess: (savedExpense) => {
       queryClient.setQueriesData(
         { queryKey: branchExpensesKeys.all },
-        (current) => upsertExpenseInCache(current as any[] | undefined, savedExpense),
+        (current) =>
+          upsertExpenseInCache(current as any[] | undefined, savedExpense),
       );
       queryClient.invalidateQueries({ queryKey: branchExpensesKeys.all });
     },

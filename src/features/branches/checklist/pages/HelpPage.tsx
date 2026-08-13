@@ -57,7 +57,11 @@ function useDynamicExamples() {
 
     const base = getParam(salesConfig?.parameters, "base", 50);
     const multiplier = getParam(salesConfig?.parameters, "multiplier", 50);
-    const freshnessDays = getParam(apConfig?.parameters, "freshnessMaxAgeDays", 90);
+    const freshnessDays = getParam(
+      apConfig?.parameters,
+      "freshnessMaxAgeDays",
+      90,
+    );
 
     return {
       SALES_GROWTH: `Semana pasada: $10,000\nEsta semana: $12,000\nCrecimiento: 20%\nPuntaje: ${base} + (20 × ${multiplier / 100}) = ${base + 20 * (multiplier / 100)}`,
@@ -75,7 +79,9 @@ export default function HelpPage() {
   const displayMetrics = useMemo(() => {
     return Object.values(METRIC_HELP).map((metric) => ({
       ...metric,
-      example: dynamicExamples[metric.id as keyof typeof dynamicExamples] || metric.example,
+      example:
+        dynamicExamples[metric.id as keyof typeof dynamicExamples] ||
+        metric.example,
     }));
   }, [dynamicExamples]);
 

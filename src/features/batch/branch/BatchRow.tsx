@@ -60,7 +60,8 @@ export const BatchRow: React.FC<BatchRowProps> = ({
     (sum: number, a: { quantity?: number }) => sum + (Number(a.quantity) || 0),
     0,
   );
-  const chickensRemaining = batch.chickenQuantity - chickensSold - chickensAdjusted;
+  const chickensRemaining =
+    batch.chickenQuantity - chickensSold - chickensAdjusted;
 
   function getRemainingStyle(remaining: number, total: number) {
     if (total <= 0) return { color: "hsl(0, 80%, 50%)" };

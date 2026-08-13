@@ -1,4 +1,8 @@
-import { scoreToTone, TONE_BAR_CLASSES, type ScoreTone } from "../utils/performance-color";
+import {
+  scoreToTone,
+  TONE_BAR_CLASSES,
+  type ScoreTone,
+} from "../utils/performance-color";
 
 interface PerformanceBarProps {
   value: number | null | undefined;
@@ -14,7 +18,10 @@ export default function PerformanceBar({
   className = "",
 }: PerformanceBarProps) {
   const resolvedTone = tone ?? scoreToTone(value);
-  const v = value == null || Number.isNaN(value) ? 0 : Math.max(0, Math.min(100, value));
+  const v =
+    value == null || Number.isNaN(value)
+      ? 0
+      : Math.max(0, Math.min(100, value));
   const colorClass = TONE_BAR_CLASSES[resolvedTone];
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -25,7 +32,7 @@ export default function PerformanceBar({
         />
       </div>
       {showValue && (
-        <span className="min-w-[3.5rem] text-right text-xs font-semibold tabular-nums text-slate-300">
+        <span className="min-w-[3.5rem] text-right text-xs font-semibold text-slate-300 tabular-nums">
           {value == null ? "—" : `${Math.round(value)}%`}
         </span>
       )}

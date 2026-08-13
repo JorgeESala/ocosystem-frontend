@@ -55,7 +55,7 @@ export default function MetricHelp({ metricId }: MetricHelpProps) {
         <h4 className="mb-1 text-xs font-medium tracking-wide text-slate-300 uppercase">
           Fórmula
         </h4>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-slate-800/50 p-2 text-xs text-slate-400">
+        <pre className="overflow-x-auto rounded bg-slate-800/50 p-2 text-xs whitespace-pre-wrap text-slate-400">
           {help.formula}
         </pre>
       </div>
@@ -64,7 +64,7 @@ export default function MetricHelp({ metricId }: MetricHelpProps) {
         <h4 className="mb-1 text-xs font-medium tracking-wide text-slate-300 uppercase">
           Ejemplo
         </h4>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-slate-800/50 p-2 font-mono text-xs text-slate-400">
+        <pre className="overflow-x-auto rounded bg-slate-800/50 p-2 font-mono text-xs whitespace-pre-wrap text-slate-400">
           {dynamicExample}
         </pre>
       </div>

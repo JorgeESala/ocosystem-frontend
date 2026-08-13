@@ -27,7 +27,7 @@ const CardWithTooltip: React.FC<CardWithTooltipProps> = ({
     className={`group relative rounded-lg border p-3 text-center ${borderClass} ${bgClass}`}
   >
     <div className="flex items-center justify-center gap-1">
-      <p className={`text-[10px] uppercase tracking-wider ${labelClass}`}>
+      <p className={`text-[10px] tracking-wider uppercase ${labelClass}`}>
         {label}
       </p>
       <HiInformationCircle className="text-[11px] text-gray-500 transition-colors group-hover:text-blue-400" />
@@ -90,9 +90,8 @@ export const ProfitSummaryCards: React.FC<Props> = ({
           <>
             <p>
               Suma del costo proporcional de cada remesa para las unidades
-              vendidas dentro del rango. El backend reparte el costo total de
-              la remesa entre las unidades vendidas según el costo por
-              pieza/ave.
+              vendidas dentro del rango. El backend reparte el costo total de la
+              remesa entre las unidades vendidas según el costo por pieza/ave.
             </p>
             <p className="mt-1 font-semibold text-gray-400">
               Fórmula (por remesa):
@@ -145,7 +144,8 @@ export const ProfitSummaryCards: React.FC<Props> = ({
             </p>
             <p className="mt-1 font-semibold text-gray-400">Ejemplo real:</p>
             <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
-              {formatMXN(totalSales)} - {formatMXN(totalChickenCostsProRated)} - {formatMXN(totalExpenses)} = {formatMXN(profit)}
+              {formatMXN(totalSales)} - {formatMXN(totalChickenCostsProRated)} -{" "}
+              {formatMXN(totalExpenses)} = {formatMXN(profit)}
             </p>
           </>
         }

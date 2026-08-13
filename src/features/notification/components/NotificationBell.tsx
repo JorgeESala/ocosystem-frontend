@@ -76,7 +76,11 @@ export default function NotificationBell() {
     if (DETAIL_ALERT_TYPES.has(n.alertType)) {
       setDetailId(n.id);
       setDetailType(n.alertType);
-    } else if (n.alertType === "LOW_BALANCE" || n.alertType === "NEGATIVE_BALANCE" || n.alertType === "NEGATIVE_FLOW") {
+    } else if (
+      n.alertType === "LOW_BALANCE" ||
+      n.alertType === "NEGATIVE_BALANCE" ||
+      n.alertType === "NEGATIVE_FLOW"
+    ) {
       navigate("/business/sucursales/general-cash");
     } else if (n.alertType === "SALES_DISCREPANCY") {
       navigate("/business/sucursales/profit");
@@ -105,7 +109,7 @@ export default function NotificationBell() {
       >
         <HiBell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

@@ -14,8 +14,9 @@ export const useScheduleTemplates = (branchId?: number) =>
 export const useCreateScheduleTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (template: Omit<ScheduleTemplate, "id" | "branchName" | "createdBy">) =>
-      scheduleTemplatesApi.create(template),
+    mutationFn: (
+      template: Omit<ScheduleTemplate, "id" | "branchName" | "createdBy">,
+    ) => scheduleTemplatesApi.create(template),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: scheduleTemplatesKeys.all });
       qc.invalidateQueries({ queryKey: expectedEventsKeys.all });

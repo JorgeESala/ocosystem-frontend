@@ -46,9 +46,7 @@ export const useMarkCuentasReceived = () => {
   return useMutation({
     mutationFn: async (entries: Array<{ saleId: number; batchId: number }>) => {
       await Promise.all(
-        entries.map(({ saleId }) =>
-          salesApi.updateOfficeStatus(saleId, true),
-        ),
+        entries.map(({ saleId }) => salesApi.updateOfficeStatus(saleId, true)),
       );
     },
     onSuccess: (_, entries) => {

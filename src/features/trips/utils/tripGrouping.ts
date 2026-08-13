@@ -59,10 +59,7 @@ export function buildTripGroups(
 
   const tripIndexByKey = new Map<string, TripSummaryDTO>();
   for (const t of trips) {
-    tripIndexByKey.set(
-      groupKey(t.driverId, dateOnly(t.departureDate)),
-      t,
-    );
+    tripIndexByKey.set(groupKey(t.driverId, dateOnly(t.departureDate)), t);
   }
 
   const groupMap = new Map<string, TripGroup>();

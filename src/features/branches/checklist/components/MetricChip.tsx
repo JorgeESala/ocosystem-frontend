@@ -20,10 +20,14 @@ export default function MetricChip({ metric }: MetricChipProps) {
   return (
     <div className="inline-flex items-center gap-2">
       <Tooltip content={sentence} placement="top">
-        <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 ${toneClass}`}>
+        <div
+          className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 ${toneClass}`}
+        >
           <Icon aria-hidden className="text-sm" />
-          <span className="text-xs font-semibold text-slate-200">{meta.shortLabel}</span>
-          <span className="text-xs font-bold tabular-nums text-white">
+          <span className="text-xs font-semibold text-slate-200">
+            {meta.shortLabel}
+          </span>
+          <span className="text-xs font-bold text-white tabular-nums">
             {metric.score == null ? "—" : `${Math.round(metric.score)}%`}
           </span>
         </div>

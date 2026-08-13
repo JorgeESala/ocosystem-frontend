@@ -120,7 +120,7 @@ export function SearchableSelect<T>({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 z-50 mt-1 rounded-lg border border-gray-300 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800">
+        <div className="absolute right-0 left-0 z-50 mt-1 rounded-lg border border-gray-300 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800">
           <div className="border-b border-gray-200 p-2 dark:border-gray-700">
             <input
               autoFocus
@@ -133,7 +133,7 @@ export function SearchableSelect<T>({
           </div>
           <ul className="max-h-60 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-center text-xs italic text-gray-500 dark:text-gray-400">
+              <li className="px-3 py-2 text-center text-xs text-gray-500 italic dark:text-gray-400">
                 {emptyMessage}
               </li>
             ) : (
@@ -149,11 +149,7 @@ export function SearchableSelect<T>({
                       isDisabled
                         ? "cursor-not-allowed opacity-50"
                         : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                    } ${
-                      isSelected
-                        ? "bg-cyan-50 dark:bg-cyan-900/30"
-                        : ""
-                    }`}
+                    } ${isSelected ? "bg-cyan-50 dark:bg-cyan-900/30" : ""}`}
                   >
                     <span
                       className={`${

@@ -146,7 +146,10 @@ describe("BatchMovementModal - Pre-populated brokenEggs when editing", () => {
     };
 
     const qc = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     render(
       <QueryClientProvider client={qc}>
@@ -173,7 +176,10 @@ describe("BatchMovementModal - Pre-populated brokenEggs when editing", () => {
     };
 
     const qc = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     render(
       <QueryClientProvider client={qc}>

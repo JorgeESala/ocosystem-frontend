@@ -84,7 +84,10 @@ export default function SidebarApp() {
             <div className="flex-1" />
 
             {/* Notification bell - hidden when collapsed or no branches access */}
-            {!effectiveCollapsed && user?.allowedBusinesses.includes("BRANCHES") && <NotificationBell />}
+            {!effectiveCollapsed &&
+              user?.allowedBusinesses.includes("BRANCHES") && (
+                <NotificationBell />
+              )}
 
             {/* Desktop collapse toggle */}
             <button
@@ -102,72 +105,76 @@ export default function SidebarApp() {
           >
             <SidebarItems>
               <SidebarItemGroup>
-                {allowedBusinesses.length === 1 ? (
-                  (() => {
-                    const b = allowedBusinesses[0];
-                    const menu = b.menu ?? BASE_MENU;
+                {allowedBusinesses.length === 1
+                  ? (() => {
+                      const b = allowedBusinesses[0];
+                      const menu = b.menu ?? BASE_MENU;
 
-                    if (effectiveCollapsed) {
-                      return (
-                        <SidebarItem
-                          key={b.slug}
-                          icon={b.icon}
-                          title={b.name}
-                          onClick={() => navigate(`/business/${b.slug}`)}
-                        />
-                      );
-                    }
+                      if (effectiveCollapsed) {
+                        return (
+                          <SidebarItem
+                            key={b.slug}
+                            icon={b.icon}
+                            title={b.name}
+                            onClick={() => navigate(`/business/${b.slug}`)}
+                          />
+                        );
+                      }
 
-                    return menu.map((m) => {
-                      const MIcon = m.icon;
-                      return (
-                        <Link
-                          key={m.to}
-                          to={`/business/${b.slug}/${m.to}`}
-                          onClick={() => setMobileOpen(false)}
-                          className="block"
-                        >
-                          <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
-                        </Link>
-                      );
-                    });
-                  })()
-                ) : (
-                  allowedBusinesses.map((b) => {
-                    const menu = b.menu ?? BASE_MENU;
-                    const Icon = b.icon;
+                      return menu.map((m) => {
+                        const MIcon = m.icon;
+                        return (
+                          <Link
+                            key={m.to}
+                            to={`/business/${b.slug}/${m.to}`}
+                            onClick={() => setMobileOpen(false)}
+                            className="block"
+                          >
+                            <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
+                          </Link>
+                        );
+                      });
+                    })()
+                  : allowedBusinesses.map((b) => {
+                      const menu = b.menu ?? BASE_MENU;
+                      const Icon = b.icon;
 
-                    if (effectiveCollapsed) {
+                      if (effectiveCollapsed) {
+                        return (
+                          <SidebarItem
+                            key={b.slug}
+                            icon={Icon}
+                            title={b.name}
+                            onClick={() => navigate(`/business/${b.slug}`)}
+                          />
+                        );
+                      }
+
                       return (
-                        <SidebarItem
+                        <SidebarCollapse
                           key={b.slug}
                           icon={Icon}
-                          title={b.name}
-                          onClick={() => navigate(`/business/${b.slug}`)}
-                        />
+                          label={b.name}
+                        >
+                          {menu.map((m) => {
+                            const MIcon = m.icon;
+
+                            return (
+                              <Link
+                                key={m.to}
+                                to={`/business/${b.slug}/${m.to}`}
+                                onClick={() => setMobileOpen(false)}
+                                className="block"
+                              >
+                                <SidebarItem icon={MIcon}>
+                                  {m.label}
+                                </SidebarItem>
+                              </Link>
+                            );
+                          })}
+                        </SidebarCollapse>
                       );
-                    }
-
-                    return (
-                      <SidebarCollapse key={b.slug} icon={Icon} label={b.name}>
-                        {menu.map((m) => {
-                          const MIcon = m.icon;
-
-                          return (
-                            <Link
-                              key={m.to}
-                              to={`/business/${b.slug}/${m.to}`}
-                              onClick={() => setMobileOpen(false)}
-                              className="block"
-                            >
-                              <SidebarItem icon={MIcon}>{m.label}</SidebarItem>
-                            </Link>
-                          );
-                        })}
-                      </SidebarCollapse>
-                    );
-                  })
-                )}
+                    })}
               </SidebarItemGroup>
             </SidebarItems>
           </Sidebar>

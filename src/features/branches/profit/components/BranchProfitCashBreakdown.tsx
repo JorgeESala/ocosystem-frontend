@@ -7,13 +7,7 @@ interface Props {
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
-const StatLine = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
+const StatLine = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-2xl border border-slate-800 bg-slate-950/40 px-3 py-2">
     <p className="text-[10px] font-semibold tracking-[0.18em] text-slate-500 uppercase">
       {label}
@@ -31,7 +25,8 @@ export default function BranchProfitCashBreakdown({ items }: Props) {
             Efectivo por unidad de negocio
           </h3>
           <p className="text-sm text-slate-400">
-            Cada tarjeta prioriza el efectivo esperado antes que ventas o gastos.
+            Cada tarjeta prioriza el efectivo esperado antes que ventas o
+            gastos.
           </p>
         </div>
         <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
@@ -75,8 +70,14 @@ export default function BranchProfitCashBreakdown({ items }: Props) {
 
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatLine label="Ventas" value={formatMXN(item.totalSales)} />
-                <StatLine label="Gastos" value={formatMXN(item.totalExpenses)} />
-                <StatLine label="% caja" value={formatPercent(item.percentage)} />
+                <StatLine
+                  label="Gastos"
+                  value={formatMXN(item.totalExpenses)}
+                />
+                <StatLine
+                  label="% caja"
+                  value={formatPercent(item.percentage)}
+                />
               </div>
 
               <div className="mt-4 h-1.5 rounded-full bg-slate-800">
@@ -91,7 +92,8 @@ export default function BranchProfitCashBreakdown({ items }: Props) {
       )}
 
       <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-slate-400">
-        En esta vista se ocultan las unidades <span className="text-slate-200">Merma</span> y{" "}
+        En esta vista se ocultan las unidades{" "}
+        <span className="text-slate-200">Merma</span> y{" "}
         <span className="text-slate-200">Matados</span>.
       </div>
     </section>

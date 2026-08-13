@@ -1,4 +1,8 @@
-import { ExpenseCategoryCode, ExpenseCategoryLabels, ExpenseTypeLabels } from "@/core/api/types";
+import {
+  ExpenseCategoryCode,
+  ExpenseCategoryLabels,
+  ExpenseTypeLabels,
+} from "@/core/api/types";
 
 export interface FilterChipOption {
   value: string;
@@ -7,22 +11,66 @@ export interface FilterChipOption {
 }
 
 export const CATEGORY_CHIP_OPTIONS: FilterChipOption[] = [
-  { value: ExpenseCategoryCode.WATER, label: ExpenseCategoryLabels.WATER, color: "blue" },
-  { value: ExpenseCategoryCode.ELECTRICITY, label: ExpenseCategoryLabels.ELECTRICITY, color: "yellow" },
-  { value: ExpenseCategoryCode.INTERNET, label: ExpenseCategoryLabels.INTERNET, color: "purple" },
-  { value: ExpenseCategoryCode.RENT, label: ExpenseCategoryLabels.RENT, color: "indigo" },
-  { value: ExpenseCategoryCode.PAYROLL, label: ExpenseCategoryLabels.PAYROLL, color: "pink" },
-  { value: ExpenseCategoryCode.FUEL, label: ExpenseCategoryLabels.FUEL, color: "cyan" },
-  { value: ExpenseCategoryCode.FOOD, label: ExpenseCategoryLabels.FOOD, color: "green" },
-  { value: ExpenseCategoryCode.VEHICLE, label: ExpenseCategoryLabels.VEHICLE, color: "orange" },
-  { value: ExpenseCategoryCode.OTHER, label: ExpenseCategoryLabels.OTHER, color: "slate" },
+  {
+    value: ExpenseCategoryCode.WATER,
+    label: ExpenseCategoryLabels.WATER,
+    color: "blue",
+  },
+  {
+    value: ExpenseCategoryCode.ELECTRICITY,
+    label: ExpenseCategoryLabels.ELECTRICITY,
+    color: "yellow",
+  },
+  {
+    value: ExpenseCategoryCode.INTERNET,
+    label: ExpenseCategoryLabels.INTERNET,
+    color: "purple",
+  },
+  {
+    value: ExpenseCategoryCode.RENT,
+    label: ExpenseCategoryLabels.RENT,
+    color: "indigo",
+  },
+  {
+    value: ExpenseCategoryCode.PAYROLL,
+    label: ExpenseCategoryLabels.PAYROLL,
+    color: "pink",
+  },
+  {
+    value: ExpenseCategoryCode.FUEL,
+    label: ExpenseCategoryLabels.FUEL,
+    color: "cyan",
+  },
+  {
+    value: ExpenseCategoryCode.FOOD,
+    label: ExpenseCategoryLabels.FOOD,
+    color: "green",
+  },
+  {
+    value: ExpenseCategoryCode.VEHICLE,
+    label: ExpenseCategoryLabels.VEHICLE,
+    color: "orange",
+  },
+  {
+    value: ExpenseCategoryCode.OTHER,
+    label: ExpenseCategoryLabels.OTHER,
+    color: "slate",
+  },
 ];
 
 export const EXPENSE_TYPE_CHIP_OPTIONS: FilterChipOption[] = [
   { value: "SERVICIOS", label: ExpenseTypeLabels.SERVICIOS, color: "blue" },
   { value: "INSUMOS", label: ExpenseTypeLabels.INSUMOS, color: "green" },
-  { value: "COMBUSTIBLE", label: ExpenseTypeLabels.COMBUSTIBLE, color: "orange" },
-  { value: "MANTENIMIENTO", label: ExpenseTypeLabels.MANTENIMIENTO, color: "yellow" },
+  {
+    value: "COMBUSTIBLE",
+    label: ExpenseTypeLabels.COMBUSTIBLE,
+    color: "orange",
+  },
+  {
+    value: "MANTENIMIENTO",
+    label: ExpenseTypeLabels.MANTENIMIENTO,
+    color: "yellow",
+  },
   { value: "RENTA", label: ExpenseTypeLabels.RENTA, color: "indigo" },
   { value: "NOMINA", label: ExpenseTypeLabels.NOMINA, color: "pink" },
   { value: "OTROS", label: ExpenseTypeLabels.OTROS, color: "slate" },

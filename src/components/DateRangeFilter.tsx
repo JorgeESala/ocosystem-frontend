@@ -48,7 +48,8 @@ export function DateRangeFilter({ value, onChange, defaultRange }: Props) {
       </div>
       <div className="flex flex-col items-start gap-1 pb-1">
         <span className="text-[10px] text-gray-500 italic">
-          {formatUiDate(value.start, "short")} → {formatUiDate(value.end, "short")}
+          {formatUiDate(value.start, "short")} →{" "}
+          {formatUiDate(value.end, "short")}
         </span>
         {isModified && (
           <button

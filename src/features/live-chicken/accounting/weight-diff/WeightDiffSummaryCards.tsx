@@ -121,7 +121,8 @@ export const WeightDiffSummaryCards = ({ rows }: Props) => {
                 {topSupplier.name}
               </span>
               <span className={`text-sm font-semibold ${diffColor}`}>
-                {formatKg(topSupplier.diff)} kg · {formatMXN(topSupplier.monetary)}
+                {formatKg(topSupplier.diff)} kg ·{" "}
+                {formatMXN(topSupplier.monetary)}
               </span>
             </>
           ) : (

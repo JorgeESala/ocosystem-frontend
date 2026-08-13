@@ -7,7 +7,10 @@ import {
   Button,
 } from "flowbite-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { notificationApi, type NotificationPage } from "../api/notification.api";
+import {
+  notificationApi,
+  type NotificationPage,
+} from "../api/notification.api";
 import { notificationKeys } from "../api/notification.keys";
 import {
   ALERT_TYPE_LABELS,
@@ -135,49 +138,49 @@ export function NotificationHistoryDrawer({
               <table className="w-full text-left text-sm">
                 <thead className="border-b text-xs text-gray-500">
                   <tr>
-                    <th className="pb-2 pr-2">Fecha</th>
-                    <th className="pb-2 pr-2">Tipo</th>
-                    <th className="pb-2 pr-2">Sev.</th>
-                    <th className="pb-2 pr-2">Sucursal</th>
+                    <th className="pr-2 pb-2">Fecha</th>
+                    <th className="pr-2 pb-2">Tipo</th>
+                    <th className="pr-2 pb-2">Sev.</th>
+                    <th className="pr-2 pb-2">Sucursal</th>
                     <th className="pb-2">Mensaje</th>
                   </tr>
                 </thead>
-              <tbody>
-                {data.content.map((n) => (
-                  <tr
-                    key={n.id}
-                    className="border-b last:border-0 cursor-pointer hover:bg-gray-700/50"
-                    onClick={() => handleRowClick(n)}
-                  >
-                        <td className="py-2 pr-2 text-xs whitespace-nowrap">
-                          {formatDate(n.createdAt)}
-                        </td>
-                        <td className="py-2 pr-2">
-                          <span className="mr-1 text-xs">
-                            {ALERT_TYPE_ICONS[n.alertType as AlertType] ?? "🔔"}
-                          </span>
-                          <span className="text-xs">
-                            {ALERT_TYPE_LABELS[n.alertType as AlertType] ??
-                              n.alertType}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-2">
-                          <span
-                            className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                              n.severity === "critical"
-                                ? "bg-red-900/40 text-red-300"
-                                : "bg-amber-900/40 text-amber-300"
-                            }`}
-                          >
-                            {n.severity === "critical" ? "Crítico" : "Aviso"}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-2 text-xs">{n.branchName}</td>
-                        <td className="py-2 text-xs text-gray-400 max-w-[200px] truncate">
-                          {n.message}
-                        </td>
-                      </tr>
-                ))}
+                <tbody>
+                  {data.content.map((n) => (
+                    <tr
+                      key={n.id}
+                      className="cursor-pointer border-b last:border-0 hover:bg-gray-700/50"
+                      onClick={() => handleRowClick(n)}
+                    >
+                      <td className="py-2 pr-2 text-xs whitespace-nowrap">
+                        {formatDate(n.createdAt)}
+                      </td>
+                      <td className="py-2 pr-2">
+                        <span className="mr-1 text-xs">
+                          {ALERT_TYPE_ICONS[n.alertType as AlertType] ?? "🔔"}
+                        </span>
+                        <span className="text-xs">
+                          {ALERT_TYPE_LABELS[n.alertType as AlertType] ??
+                            n.alertType}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2">
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            n.severity === "critical"
+                              ? "bg-red-900/40 text-red-300"
+                              : "bg-amber-900/40 text-amber-300"
+                          }`}
+                        >
+                          {n.severity === "critical" ? "Crítico" : "Aviso"}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-2 text-xs">{n.branchName}</td>
+                      <td className="max-w-[200px] truncate py-2 text-xs text-gray-400">
+                        {n.message}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 

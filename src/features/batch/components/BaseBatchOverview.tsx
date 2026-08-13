@@ -23,10 +23,17 @@ export const BaseBatchOverview: React.FC<{
   const { data, isLoading } = useBatchFullDetail(batch.id, { enabled: isOpen });
 
   useEffect(() => {
-    if (autoExpandId !== null && autoExpandId !== undefined && autoExpandId === batch.id) {
+    if (
+      autoExpandId !== null &&
+      autoExpandId !== undefined &&
+      autoExpandId === batch.id
+    ) {
       if (!isOpen) setIsOpen(true);
       setTimeout(() => {
-        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        cardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       }, 150);
     }
   }, [autoExpandId, batch.id]);

@@ -49,7 +49,11 @@ function InventoryCard({
   const startDate = `${currentMonth}-01`;
   const endDate = toIsoDateString(now);
 
-  const { data: batches = [], isLoading } = useBatches(unit, startDate, endDate);
+  const { data: batches = [], isLoading } = useBatches(
+    unit,
+    startDate,
+    endDate,
+  );
 
   const stats = useMemo(() => {
     const active = batches.filter(

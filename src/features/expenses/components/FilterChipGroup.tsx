@@ -39,7 +39,7 @@ export default function FilterChipGroup({
             >
               <Badge
                 color={isSelected ? (option.color as any) : "gray"}
-                className={`cursor-pointer select-none px-3 py-1.5 text-xs font-medium ${
+                className={`cursor-pointer px-3 py-1.5 text-xs font-medium select-none ${
                   isSelected
                     ? "ring-1 ring-white/20"
                     : "opacity-50 hover:opacity-80"

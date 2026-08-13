@@ -48,96 +48,96 @@ export const BranchesAccountsOpenTable = ({
 
   return (
     <>
-    <Table>
-      <TableHead>
-        <TableHeadCell>Relación</TableHeadCell>
-        <TableHeadCell>Origen</TableHeadCell>
-        <TableHeadCell>Total</TableHeadCell>
-        <TableHeadCell>Saldo</TableHeadCell>
-        <TableHeadCell>
-          <button
-            type="button"
-            onClick={() =>
-              setDateSort((prev) => (prev === "desc" ? "asc" : "desc"))
-            }
-            className="inline-flex items-center gap-1 text-xs font-medium uppercase text-gray-700 hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400"
-          >
-            Creada
-            {dateSort === "desc" ? (
-              <HiSortDescending className="h-3.5 w-3.5" />
-            ) : (
-              <HiSortAscending className="h-3.5 w-3.5" />
-            )}
-          </button>
-        </TableHeadCell>
-        <TableHeadCell> Acciones</TableHeadCell>
-      </TableHead>
+      <Table>
+        <TableHead>
+          <TableHeadCell>Relación</TableHeadCell>
+          <TableHeadCell>Origen</TableHeadCell>
+          <TableHeadCell>Total</TableHeadCell>
+          <TableHeadCell>Saldo</TableHeadCell>
+          <TableHeadCell>
+            <button
+              type="button"
+              onClick={() =>
+                setDateSort((prev) => (prev === "desc" ? "asc" : "desc"))
+              }
+              className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 uppercase hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400"
+            >
+              Creada
+              {dateSort === "desc" ? (
+                <HiSortDescending className="h-3.5 w-3.5" />
+              ) : (
+                <HiSortAscending className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </TableHeadCell>
+          <TableHeadCell> Acciones</TableHeadCell>
+        </TableHead>
 
-      <TableBody>
-        {sortedData.map((row) => (
-          <TableRow key={row.id}>
-            <TableCell>
-              {row.debtorName} → {row.creditorName}
-            </TableCell>
+        <TableBody>
+          {sortedData.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell>
+                {row.debtorName} → {row.creditorName}
+              </TableCell>
 
-            <TableCell>
-              <SourceBadge
-                sourceType={row.sourceType}
-                sourceBatchId={row.sourceBatchId}
-                sourceId={row.sourceId}
-                onOpenSource={(batchId, saleId) => {
-                  setPreviewBatchId(batchId);
-                  setPreviewSaleId(saleId ?? null);
-                }}
-              />
-            </TableCell>
-
-            <TableCell>{formatMXN(row.totalAmount)}</TableCell>
-
-            <TableCell className="font-semibold">
-              {formatMXN(row.balance)}
-            </TableCell>
-
-            <TableCell>{formatHumanDate(row.date)}</TableCell>
-
-            <TableCell className="flex gap-2">
-              <Tooltip content="Registrar pago">
-                <Button
-                  size="xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPay(row);
+              <TableCell>
+                <SourceBadge
+                  sourceType={row.sourceType}
+                  sourceBatchId={row.sourceBatchId}
+                  sourceId={row.sourceId}
+                  onOpenSource={(batchId, saleId) => {
+                    setPreviewBatchId(batchId);
+                    setPreviewSaleId(saleId ?? null);
                   }}
-                >
-                  <FaMoneyBillWave size={20} />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Mostrar información">
-                <Button
-                  size="xs"
-                  color="gray"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onViewHistory(row);
-                  }}
-                >
-                  <FaRegFileLines size={20} />
-                </Button>
-              </Tooltip>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-    <BatchPreviewDrawer
-      open={previewBatchId != null}
-      onClose={() => {
-        setPreviewBatchId(null);
-        setPreviewSaleId(null);
-      }}
-      batchId={previewBatchId}
-      highlightSaleId={previewSaleId}
-    />
+                />
+              </TableCell>
+
+              <TableCell>{formatMXN(row.totalAmount)}</TableCell>
+
+              <TableCell className="font-semibold">
+                {formatMXN(row.balance)}
+              </TableCell>
+
+              <TableCell>{formatHumanDate(row.date)}</TableCell>
+
+              <TableCell className="flex gap-2">
+                <Tooltip content="Registrar pago">
+                  <Button
+                    size="xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPay(row);
+                    }}
+                  >
+                    <FaMoneyBillWave size={20} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Mostrar información">
+                  <Button
+                    size="xs"
+                    color="gray"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewHistory(row);
+                    }}
+                  >
+                    <FaRegFileLines size={20} />
+                  </Button>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <BatchPreviewDrawer
+        open={previewBatchId != null}
+        onClose={() => {
+          setPreviewBatchId(null);
+          setPreviewSaleId(null);
+        }}
+        batchId={previewBatchId}
+        highlightSaleId={previewSaleId}
+      />
     </>
   );
 };

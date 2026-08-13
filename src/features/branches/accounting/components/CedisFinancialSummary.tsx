@@ -24,7 +24,12 @@ interface Props {
   to?: string;
 }
 
-export const CedisFinancialSummary = ({ cedisIds, entityType, from, to }: Props) => {
+export const CedisFinancialSummary = ({
+  cedisIds,
+  entityType,
+  from,
+  to,
+}: Props) => {
   const {
     data: rows = [],
     isLoading,
@@ -276,13 +281,13 @@ const CedisRow: React.FC<{ row: any }> = ({ row }) => {
                         <TableCell className="text-gray-300">
                           {(item.initialQuantity ?? 0).toLocaleString("es-MX")}
                         </TableCell>
-                        <TableCell className="text-blue-300 font-medium">
+                        <TableCell className="font-medium text-blue-300">
                           {item.remainingQuantity.toLocaleString("es-MX")}
                         </TableCell>
                         <TableCell className="text-gray-300">
                           {formatMXN(item.totalCost)}
                         </TableCell>
-                        <TableCell className="text-blue-300 font-semibold">
+                        <TableCell className="font-semibold text-blue-300">
                           {formatMXN(item.availableCost)}
                         </TableCell>
                       </TableRow>

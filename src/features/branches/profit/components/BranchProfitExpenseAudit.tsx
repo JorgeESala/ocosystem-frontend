@@ -84,7 +84,7 @@ const SummaryTable = ({
     ) : (
       <div className="overflow-hidden rounded-2xl border border-slate-800">
         <table className="w-full border-collapse text-left">
-          <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-400">
+          <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
               <th className="px-4 py-3 font-semibold">Concepto</th>
               <th className="px-4 py-3 font-semibold">Monto</th>
@@ -135,7 +135,9 @@ export default function BranchProfitExpenseAudit({
         date: expense.date,
         branchName: expense.branchName,
         businessUnitName:
-          expense.businessUnitCategoryName ?? expense.businessUnitName ?? "Sin unidad",
+          expense.businessUnitCategoryName ??
+          expense.businessUnitName ??
+          "Sin unidad",
         expenseCategoryName: expense.expenseCategoryName,
         reason: expense.reason,
         amount: Number(expense.amount || 0),
@@ -169,7 +171,9 @@ export default function BranchProfitExpenseAudit({
           <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
             Auditoría de gastos
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-white">{scopeLabel}</h2>
+          <h2 className="mt-1 text-lg font-semibold text-white">
+            {scopeLabel}
+          </h2>
         </div>
         <p className="text-sm text-slate-400">
           Los gastos se cargan con los mismos filtros del reporte para explicar
@@ -228,7 +232,9 @@ export default function BranchProfitExpenseAudit({
             <HiOutlineSwitchHorizontal className="h-4 w-4" />
             Vista explicativa
           </span>
-          <span>Las tablas muestran qué gastos empujan el efectivo esperado.</span>
+          <span>
+            Las tablas muestran qué gastos empujan el efectivo esperado.
+          </span>
         </div>
       </div>
 

@@ -13,7 +13,8 @@ export const describeMetric = (
   if (result.score == null) {
     return `${baseLabel}: sin puntaje en el periodo`;
   }
-  const detail = (result as MetricResult).detail ?? (result as MetricSummary).detail;
+  const detail =
+    (result as MetricResult).detail ?? (result as MetricSummary).detail;
   if (detail && detail.trim().length > 0) {
     return detail;
   }

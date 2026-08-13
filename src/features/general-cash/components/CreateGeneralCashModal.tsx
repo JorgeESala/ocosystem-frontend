@@ -50,7 +50,10 @@ export default function CreateGeneralCashModal({
       <ModalBody>
         <div className="space-y-4">
           <div>
-            <label htmlFor="branch" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="branch"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Sucursal
             </label>
             <Select
@@ -72,7 +75,10 @@ export default function CreateGeneralCashModal({
             )}
           </div>
           <div>
-            <label htmlFor="startingBalance" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="startingBalance"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Saldo Inicial (MXN)
             </label>
             <input
@@ -84,7 +90,10 @@ export default function CreateGeneralCashModal({
             />
           </div>
           <div>
-            <label htmlFor="alertThreshold" className="mb-1 block text-sm font-medium text-slate-300">
+            <label
+              htmlFor="alertThreshold"
+              className="mb-1 block text-sm font-medium text-slate-300"
+            >
               Umbral de Alerta (MXN)
             </label>
             <input

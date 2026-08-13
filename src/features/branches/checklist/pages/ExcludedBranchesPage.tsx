@@ -12,7 +12,8 @@ import {
 export default function ExcludedBranchesPage() {
   const { slug } = useParams();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
-  const { data: excluded = [], isLoading: loadingExcluded } = useExcludedBranches();
+  const { data: excluded = [], isLoading: loadingExcluded } =
+    useExcludedBranches();
   const createExclusion = useCreateExcludedBranch();
   const deleteExclusion = useDeleteExcludedBranch();
 
@@ -20,7 +21,9 @@ export default function ExcludedBranchesPage() {
   const [reason, setReason] = useState("");
 
   const excludedBranchIds = new Set(excluded.map((e) => e.branchId));
-  const availableBranches = branches.filter((b) => !excludedBranchIds.has(b.id));
+  const availableBranches = branches.filter(
+    (b) => !excludedBranchIds.has(b.id),
+  );
 
   const handleAdd = () => {
     if (!selectedBranchId) return;
@@ -68,13 +71,15 @@ export default function ExcludedBranchesPage() {
           Excluir sucursal
         </h2>
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[200px]">
+          <div className="min-w-[200px] flex-1">
             <label className="mb-1 block text-xs font-medium text-slate-400">
               Sucursal
             </label>
             <Select
               value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(Number(e.target.value) || "")}
+              onChange={(e) =>
+                setSelectedBranchId(Number(e.target.value) || "")
+              }
             >
               <option value="">Seleccionar sucursal</option>
               {availableBranches.map((b) => (
@@ -84,7 +89,7 @@ export default function ExcludedBranchesPage() {
               ))}
             </Select>
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div className="min-w-[200px] flex-1">
             <label className="mb-1 block text-xs font-medium text-slate-400">
               Razón (opcional)
             </label>

@@ -77,18 +77,18 @@ in axios. Both are acceptable; the choice is up to you.
 
 ### Performance impact
 
-| Scenario | Before | After |
-|---|---|---|
-| Initial page mount (15 batches) | 17 requests | **3 requests** |
-| Search click returning 10 new batches | 11 requests | **2 requests** |
-| Re-mount within 5 min | 0 (cache hit) | 0 (cache hit) |
+| Scenario                              | Before        | After          |
+| ------------------------------------- | ------------- | -------------- |
+| Initial page mount (15 batches)       | 17 requests   | **3 requests** |
+| Search click returning 10 new batches | 11 requests   | **2 requests** |
+| Re-mount within 5 min                 | 0 (cache hit) | 0 (cache hit)  |
 
 ### Frontend changes (will happen in this repo after the backend lands)
 
 - `src/features/batch/branch/BranchGlobalSummary.tsx`: replace the
   `useQueries({ queries: batches.map(...) })` block with a single
   `useQuery({ queryKey: ["batchSales", "by-batches", batchIds],
-  queryFn: fetchSalesByBatches })`.
+queryFn: fetchSalesByBatches })`.
 - `src/features/batch/branch/BatchRow.tsx`: keep
   `useSalesByBatch(batchId)` for the lazy "expanded card" case — it now
   reads from a single key the bulk query also writes to, OR falls back to a

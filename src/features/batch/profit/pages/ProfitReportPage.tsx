@@ -33,7 +33,11 @@ export const ProfitReportPage: React.FC<ProfitReportPageProps> = ({
   }, []);
 
   const title =
-    unitType === "LIVE_CHICKEN" ? "Pollo vivo" : unitType === "EGG" ? "Huevo" : "";
+    unitType === "LIVE_CHICKEN"
+      ? "Pollo vivo"
+      : unitType === "EGG"
+        ? "Huevo"
+        : "";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4">

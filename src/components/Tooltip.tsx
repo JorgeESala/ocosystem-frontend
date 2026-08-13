@@ -23,8 +23,6 @@ const TOOLTIP_THEME = {
   content: "relative z-20",
 };
 
-export default function Tooltip(
-  props: ComponentProps<typeof FlowbiteTooltip>,
-) {
+export default function Tooltip(props: ComponentProps<typeof FlowbiteTooltip>) {
   return <FlowbiteTooltip theme={TOOLTIP_THEME} {...props} />;
 }

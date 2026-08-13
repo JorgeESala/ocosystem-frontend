@@ -1,4 +1,6 @@
-export const getCurrentWeek = (today: Date = new Date()): { from: Date; to: Date } => {
+export const getCurrentWeek = (
+  today: Date = new Date(),
+): { from: Date; to: Date } => {
   const day = today.getDay();
   const diffToMonday = (day + 6) % 7;
   const from = new Date(today);
@@ -10,7 +12,9 @@ export const getCurrentWeek = (today: Date = new Date()): { from: Date; to: Date
   return { from, to };
 };
 
-export const getLastWeek = (today: Date = new Date()): { from: Date; to: Date } => {
+export const getLastWeek = (
+  today: Date = new Date(),
+): { from: Date; to: Date } => {
   const current = getCurrentWeek(today);
   const from = new Date(current.from);
   from.setDate(from.getDate() - 7);
@@ -19,7 +23,9 @@ export const getLastWeek = (today: Date = new Date()): { from: Date; to: Date } 
   return { from, to };
 };
 
-export const getLast7Days = (today: Date = new Date()): { from: Date; to: Date } => {
+export const getLast7Days = (
+  today: Date = new Date(),
+): { from: Date; to: Date } => {
   const to = new Date(today);
   to.setHours(23, 59, 59, 999);
   const from = new Date(to);
@@ -28,7 +34,9 @@ export const getLast7Days = (today: Date = new Date()): { from: Date; to: Date }
   return { from, to };
 };
 
-export const getLast30Days = (today: Date = new Date()): { from: Date; to: Date } => {
+export const getLast30Days = (
+  today: Date = new Date(),
+): { from: Date; to: Date } => {
   const to = new Date(today);
   to.setHours(23, 59, 59, 999);
   const from = new Date(to);
@@ -37,9 +45,19 @@ export const getLast30Days = (today: Date = new Date()): { from: Date; to: Date 
   return { from, to };
 };
 
-export const getCurrentMonth = (today: Date = new Date()): { from: Date; to: Date } => {
+export const getCurrentMonth = (
+  today: Date = new Date(),
+): { from: Date; to: Date } => {
   const from = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
-  const to = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+  const to = new Date(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
   return { from, to };
 };
 

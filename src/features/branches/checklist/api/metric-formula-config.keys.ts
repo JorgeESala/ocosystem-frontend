@@ -1,3 +1,3 @@
 export const metricFormulaConfigKeys = {
-  all: ['metric-formula-config'] as const,
+  all: ["metric-formula-config"] as const,
 };

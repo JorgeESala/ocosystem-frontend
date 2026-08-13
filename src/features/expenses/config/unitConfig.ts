@@ -5,13 +5,14 @@ export interface ExpenseUnitConfig {
   description: string;
 }
 
-export const EXPENSE_UNIT_CONFIG: Record<ExpensesUnitType, ExpenseUnitConfig> = {
-  LIVE_CHICKEN: {
-    label: "Pollo Vivo",
-    description: "Control de gastos del negocio de pollo vivo.",
-  },
-  EGG: {
-    label: "Huevo",
-    description: "Control de gastos del negocio de huevo.",
-  },
-};
+export const EXPENSE_UNIT_CONFIG: Record<ExpensesUnitType, ExpenseUnitConfig> =
+  {
+    LIVE_CHICKEN: {
+      label: "Pollo Vivo",
+      description: "Control de gastos del negocio de pollo vivo.",
+    },
+    EGG: {
+      label: "Huevo",
+      description: "Control de gastos del negocio de huevo.",
+    },
+  };

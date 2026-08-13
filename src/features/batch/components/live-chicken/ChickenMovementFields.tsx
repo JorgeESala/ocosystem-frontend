@@ -1,7 +1,4 @@
-import {
-  useCreateRoute,
-  useRoutes,
-} from "@/core/api/route/routes.queries";
+import { useCreateRoute, useRoutes } from "@/core/api/route/routes.queries";
 import { Button, Label, TextInput } from "flowbite-react";
 import React, { useState } from "react";
 import { HiPlus, HiX, HiMap } from "react-icons/hi";

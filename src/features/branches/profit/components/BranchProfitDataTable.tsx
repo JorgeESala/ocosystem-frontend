@@ -52,7 +52,7 @@ export default function BranchProfitDataTable({
     <div className="w-full">
       <div className="hidden overflow-x-auto rounded-2xl border border-slate-800 md:block">
         <table className="min-w-full border-collapse bg-slate-950/40 text-white">
-          <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-400">
+          <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
               {columns.map((col) => (
                 <th
@@ -83,7 +83,10 @@ export default function BranchProfitDataTable({
             {sortedData.map((row, index) => (
               <tr key={index} className="hover:bg-slate-900/40">
                 {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 text-sm text-slate-100">
+                  <td
+                    key={col.key}
+                    className="px-4 py-3 text-sm text-slate-100"
+                  >
                     {renderCell(col, row)}
                   </td>
                 ))}
@@ -101,7 +104,10 @@ export default function BranchProfitDataTable({
           >
             <div className="space-y-2">
               {columns.map((col) => (
-                <div key={col.key} className="flex items-start justify-between gap-4">
+                <div
+                  key={col.key}
+                  className="flex items-start justify-between gap-4"
+                >
                   <span className="text-sm font-semibold text-slate-400">
                     {col.label}
                   </span>

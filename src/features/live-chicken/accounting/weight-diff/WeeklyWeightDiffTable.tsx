@@ -20,10 +20,7 @@ import {
 } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
-import type {
-  WeeklyWeightDiffBatchRow,
-  WeeklyWeightDiffRow,
-} from "./types";
+import type { WeeklyWeightDiffBatchRow, WeeklyWeightDiffRow } from "./types";
 import { useWeeklyWeightDiffBatches } from "./weight-diff.queries";
 import {
   downloadWeeklyWeightDiffExcel,
@@ -55,8 +52,7 @@ const formatKg = (n: number) =>
     maximumFractionDigits: 3,
   }).format(n);
 
-const formatInt = (n: number) =>
-  new Intl.NumberFormat("es-MX").format(n);
+const formatInt = (n: number) => new Intl.NumberFormat("es-MX").format(n);
 
 const formatPct = (n: number) =>
   new Intl.NumberFormat("es-MX", {
@@ -174,7 +170,9 @@ const BatchSubTable = ({
               size="xs"
               color="gray"
               onClick={() => handleExport("pdf")}
-              disabled={exporting !== null || isLoading || !data || data.length === 0}
+              disabled={
+                exporting !== null || isLoading || !data || data.length === 0
+              }
             >
               {exporting === "pdf" ? (
                 <Spinner size="sm" className="mr-1" />
@@ -189,7 +187,9 @@ const BatchSubTable = ({
               size="xs"
               color="gray"
               onClick={() => handleExport("xlsx")}
-              disabled={exporting !== null || isLoading || !data || data.length === 0}
+              disabled={
+                exporting !== null || isLoading || !data || data.length === 0
+              }
             >
               {exporting === "xlsx" ? (
                 <Spinner size="sm" className="mr-1" />
@@ -265,7 +265,7 @@ const BatchSubTable = ({
             ))}
             {totals && (
               <TableRow className="border-t-2 border-gray-600 bg-gray-800/60 font-semibold">
-                <TableCell className="uppercase text-white">Total</TableCell>
+                <TableCell className="text-white uppercase">Total</TableCell>
                 <TableCell className="text-right text-white">
                   {formatInt(totals.birds)}
                 </TableCell>
@@ -278,9 +278,7 @@ const BatchSubTable = ({
                 <TableCell className="text-right text-white">
                   {formatKg(totals.real)}
                 </TableCell>
-                <TableCell
-                  className={`text-right ${diffColor(totals.diff)}`}
-                >
+                <TableCell className={`text-right ${diffColor(totals.diff)}`}>
                   {formatKg(totals.diff)}
                 </TableCell>
                 <TableCell
@@ -360,11 +358,7 @@ export const WeeklyWeightDiffTable = ({
           primary = compare(a.weightDiff ?? 0, b.weightDiff ?? 0, sortDir);
           break;
         case "monetaryDiff":
-          primary = compare(
-            a.monetaryDiff ?? 0,
-            b.monetaryDiff ?? 0,
-            sortDir,
-          );
+          primary = compare(a.monetaryDiff ?? 0, b.monetaryDiff ?? 0, sortDir);
           break;
         case "weightDiffPct":
           primary = compare(
@@ -429,7 +423,7 @@ export const WeeklyWeightDiffTable = ({
     <button
       type="button"
       onClick={() => handleSort(k)}
-      className={`inline-flex items-center gap-1 text-xs font-medium uppercase text-gray-700 hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400 ${align === "right" ? "ml-auto" : ""}`}
+      className={`inline-flex items-center gap-1 text-xs font-medium text-gray-700 uppercase hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400 ${align === "right" ? "ml-auto" : ""}`}
     >
       {label}
       {sortKey === k ? (
@@ -467,11 +461,7 @@ export const WeeklyWeightDiffTable = ({
               />
             </TableHeadCell>
             <TableHeadCell className="text-right">
-              <SortHeader
-                k="totalRealWeight"
-                label="Real (kg)"
-                align="right"
-              />
+              <SortHeader k="totalRealWeight" label="Real (kg)" align="right" />
             </TableHeadCell>
             <TableHeadCell className="text-right">
               <SortHeader k="weightDiff" label="Dif. (kg)" align="right" />
@@ -514,14 +504,9 @@ export const WeeklyWeightDiffTable = ({
                     )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-gray-200">
-                    {r.weekStart
-                      ? formatHumanDate(r.weekStart, "long")
-                      : "—"}
+                    {r.weekStart ? formatHumanDate(r.weekStart, "long") : "—"}
                     {partial && (
-                      <Tooltip
-                        content={PARTIAL_WEEK_TOOLTIP}
-                        placement="top"
-                      >
+                      <Tooltip content={PARTIAL_WEEK_TOOLTIP} placement="top">
                         <span className="ml-2 cursor-help rounded bg-yellow-900/40 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-yellow-300 uppercase">
                           Datos parciales
                         </span>
@@ -574,7 +559,7 @@ export const WeeklyWeightDiffTable = ({
           })}
           <TableRow className="border-t-2 border-gray-600 bg-gray-900/80 font-semibold">
             <TableCell></TableCell>
-            <TableCell className="uppercase text-white">Total</TableCell>
+            <TableCell className="text-white uppercase">Total</TableCell>
             <TableCell className="text-white">—</TableCell>
             <TableCell className="text-right text-white">
               {totals.count}
@@ -585,14 +570,10 @@ export const WeeklyWeightDiffTable = ({
             <TableCell className="text-right text-white">
               {formatKg(totals.real)}
             </TableCell>
-            <TableCell
-              className={`text-right ${diffColor(totals.diff)}`}
-            >
+            <TableCell className={`text-right ${diffColor(totals.diff)}`}>
               {formatKg(totals.diff)}
             </TableCell>
-            <TableCell
-              className={`text-right ${diffColor(totals.monetary)}`}
-            >
+            <TableCell className={`text-right ${diffColor(totals.monetary)}`}>
               {formatMXN(totals.monetary)}
             </TableCell>
             <TableCell

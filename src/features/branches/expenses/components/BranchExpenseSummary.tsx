@@ -60,7 +60,9 @@ export default function BranchExpenseSummary({
           <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
             Resumen Ejecutivo
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-white">{scopeLabel}</h2>
+          <h2 className="mt-1 text-lg font-semibold text-white">
+            {scopeLabel}
+          </h2>
         </div>
         <p className="text-sm text-slate-400">
           Totales calculados con los gastos cargados en pantalla.

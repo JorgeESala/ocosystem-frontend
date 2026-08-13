@@ -12,7 +12,10 @@ vi.mock("@/features/branches/branch/branch.queries", () => ({
 }));
 
 vi.mock("../api/notification.queries", () => ({
-  useNotificationSummary: vi.fn(() => ({ data: { unreadCount: 0, recent: [] }, isLoading: false })),
+  useNotificationSummary: vi.fn(() => ({
+    data: { unreadCount: 0, recent: [] },
+    isLoading: false,
+  })),
   useMarkNotificationRead: vi.fn(() => ({ mutate: vi.fn() })),
   useMarkAllNotificationsRead: vi.fn(() => ({ mutate: vi.fn() })),
   useDismissNotification: vi.fn(() => ({ mutate: vi.fn() })),
@@ -24,18 +27,35 @@ vi.mock("../api/useNotificationStream", () => ({
   useNotificationStream: vi.fn(() => ({ isConnected: true })),
 }));
 
-import { useNotificationSummary, useMarkAllNotificationsRead } from "../api/notification.queries";
+import {
+  useNotificationSummary,
+  useMarkAllNotificationsRead,
+} from "../api/notification.queries";
 
 const mockUseNotificationSummary = vi.mocked(useNotificationSummary);
 const mockUseMarkAllNotificationsRead = vi.mocked(useMarkAllNotificationsRead);
 
-function renderBell(summary: { unreadCount: number; recent: { id: number; branchId: number; branchName: string; alertType: string; severity: string; message: string; read: boolean; createdAt: string }[] }) {
+function renderBell(summary: {
+  unreadCount: number;
+  recent: {
+    id: number;
+    branchId: number;
+    branchName: string;
+    alertType: string;
+    severity: string;
+    message: string;
+    read: boolean;
+    createdAt: string;
+  }[];
+}) {
   mockUseNotificationSummary.mockReturnValue({
     data: summary,
     isLoading: false,
   } as ReturnType<typeof useNotificationSummary>);
 
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter>
@@ -111,7 +131,18 @@ describe("NotificationBell", () => {
   it("shows mark-all-read button when unread > 0", () => {
     renderBell({
       unreadCount: 1,
-      recent: [{ id: 10, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "x", read: false, createdAt: "" }],
+      recent: [
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "x",
+          read: false,
+          createdAt: "",
+        },
+      ],
     });
     const buttons = screen.getAllByRole("button");
     fireEvent.click(buttons[0]);
@@ -120,11 +151,24 @@ describe("NotificationBell", () => {
 
   it("calls markAllRead on mark-all-read click", () => {
     const mutate = vi.fn();
-    mockUseMarkAllNotificationsRead.mockReturnValue({ mutate } as unknown as ReturnType<typeof useMarkAllNotificationsRead>);
+    mockUseMarkAllNotificationsRead.mockReturnValue({
+      mutate,
+    } as unknown as ReturnType<typeof useMarkAllNotificationsRead>);
 
     renderBell({
       unreadCount: 1,
-      recent: [{ id: 10, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "x", read: false, createdAt: "" }],
+      recent: [
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "x",
+          read: false,
+          createdAt: "",
+        },
+      ],
     });
 
     const buttons = screen.getAllByRole("button");

@@ -9,8 +9,14 @@ export const excludedBranchesApi = {
     return data;
   },
 
-  create: async (branchId: number, reason?: string): Promise<ExcludedBranch> => {
-    const { data } = await http.post<ExcludedBranch>(API_BASE, { branchId, reason });
+  create: async (
+    branchId: number,
+    reason?: string,
+  ): Promise<ExcludedBranch> => {
+    const { data } = await http.post<ExcludedBranch>(API_BASE, {
+      branchId,
+      reason,
+    });
     return data;
   },
 

@@ -35,11 +35,11 @@ automatically by the frontend based on URL prefix, no change there.)
   "totalUnits": 0,
   "totalSlaughtered": 0,
   "totalTickets": 0,
-  "realTickets": 0,           // <-- NEW
+  "realTickets": 0, // <-- NEW
   "totalChickenTickets": 0,
   "ticketsWithComplements": 0,
   "avgChickenOnlyTicketValue": 0,
-  "avgFullTicketValue": 0
+  "avgFullTicketValue": 0,
 }
 ```
 
@@ -51,8 +51,8 @@ automatically by the frontend based on URL prefix, no change there.)
     "day": "2026-06-15",
     "totalSales": 0,
     "totalTickets": 0,
-    "realTickets": 0          // <-- NEW
-  }
+    "realTickets": 0, // <-- NEW
+  },
 ]
 ```
 
@@ -66,14 +66,14 @@ keep every other ticket, even if it also contains a `Merma` line.
 
 ### Worked examples
 
-| Ticket contents                          | `totalTickets` | `realTickets` |
-|------------------------------------------|----------------|---------------|
-| Pollo, Verduras                          | +1             | +1            |
+| Ticket contents                          | `totalTickets` | `realTickets`                          |
+| ---------------------------------------- | -------------- | -------------------------------------- |
+| Pollo, Verduras                          | +1             | +1                                     |
 | Pollo, Merma, Verduras                   | +1             | +1 (has a non-Merma, non-Matados line) |
-| Merma only                               | +1             | +0            |
-| Matados only                             | +1             | +0            |
-| Merma + Matados                          | +1             | +0            |
-| Empty ticket (shouldn't exist, but safe) | +1             | +0            |
+| Merma only                               | +1             | +0                                     |
+| Matados only                             | +1             | +0                                     |
+| Merma + Matados                          | +1             | +0                                     |
+| Empty ticket (shouldn't exist, but safe) | +1             | +0                                     |
 
 This matches the existing `ventasReales` filter on the frontend, which
 excludes `Merma` and `Matados` products from `$ sales` but does not penalize
@@ -119,5 +119,5 @@ deployed.
    `wasteTickets` is the count of Merma+Matados-only tickets.
 4. Day in range with zero transactions → per-day `realTickets === 0`,
    `totalTickets === 0`.
-5. Boundary: ticket that contains `Merma` *and* a real product → counted in
+5. Boundary: ticket that contains `Merma` _and_ a real product → counted in
    `realTickets`, not excluded.

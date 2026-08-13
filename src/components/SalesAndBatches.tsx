@@ -31,9 +31,7 @@ export default function SalesAndBatches() {
     new Date(new Date().setDate(new Date().getDate() - 30)),
   );
   const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [hasSearched, setHasSearched] = useState(
-    !!searchParams.get("branch"),
-  );
+  const [hasSearched, setHasSearched] = useState(!!searchParams.get("branch"));
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
   const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
     useState(true);

@@ -8,10 +8,7 @@ export default function BranchBreakdown({ reserves }: Props) {
   const sorted = [...reserves].sort(
     (a, b) => b.currentBalance - a.currentBalance,
   );
-  const maxAbs = Math.max(
-    ...sorted.map((r) => Math.abs(r.currentBalance)),
-    1,
-  );
+  const maxAbs = Math.max(...sorted.map((r) => Math.abs(r.currentBalance)), 1);
 
   return (
     <div className="rounded-xl bg-slate-800 p-6">
@@ -40,7 +37,10 @@ export default function BranchBreakdown({ reserves }: Props) {
                   isPositive ? "text-emerald-400" : "text-red-400"
                 }`}
               >
-                ${r.currentBalance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                $
+                {r.currentBalance.toLocaleString("es-MX", {
+                  minimumFractionDigits: 2,
+                })}
               </div>
             </div>
           );

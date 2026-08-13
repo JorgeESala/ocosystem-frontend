@@ -47,7 +47,10 @@ export const branchExpensesApi = {
   create: async (
     payload: BranchExpenseRequestDTO,
   ): Promise<BranchExpenseResponseDTO> => {
-    const { data } = await http.post<BranchExpenseResponseDTO>(API_BASE, payload);
+    const { data } = await http.post<BranchExpenseResponseDTO>(
+      API_BASE,
+      payload,
+    );
     return normalizeExpense(data);
   },
 

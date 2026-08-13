@@ -4,7 +4,13 @@ import { Button, Spinner } from "flowbite-react";
 import { HiCog, HiPlus, HiQuestionMarkCircle } from "react-icons/hi";
 import { getLastDays } from "@/utils/date.utils";
 import { useBranches } from "@/features/branches/branch/branch.queries";
-import { useCashReserves, useGlobalCashFlow, useCashReserveAlerts, useUpdateCashReserve, useCreateCashReserve } from "@/features/general-cash/api/generalCash.queries";
+import {
+  useCashReserves,
+  useGlobalCashFlow,
+  useCashReserveAlerts,
+  useUpdateCashReserve,
+  useCreateCashReserve,
+} from "@/features/general-cash/api/generalCash.queries";
 import CashPositionCard from "@/features/general-cash/components/CashPositionCard";
 import CashFlowChart from "@/features/general-cash/components/CashFlowChart";
 import BranchBreakdown from "@/features/general-cash/components/BranchBreakdown";
@@ -12,16 +18,23 @@ import AlertsPanel from "@/features/general-cash/components/AlertsPanel";
 import SettingsModal from "@/features/general-cash/components/SettingsModal";
 import CreateGeneralCashModal from "@/features/general-cash/components/CreateGeneralCashModal";
 import GeneralCashDrawer from "@/features/general-cash/components/GeneralCashDrawer";
-import type { CashFlowFrequency, CashReserveResponseDTO, UpdateCashReserveDTO, CreateCashReserveDTO } from "@/features/general-cash/types";
+import type {
+  CashFlowFrequency,
+  CashReserveResponseDTO,
+  UpdateCashReserveDTO,
+  CreateCashReserveDTO,
+} from "@/features/general-cash/types";
 
 export default function GeneralCashPage() {
   const { slug } = useParams();
   const defaultRange = useMemo(() => getLastDays(30), []);
   const [frequency, setFrequency] = useState<CashFlowFrequency>("daily");
-  const [selectedReserve, setSelectedReserve] = useState<CashReserveResponseDTO | null>(null);
+  const [selectedReserve, setSelectedReserve] =
+    useState<CashReserveResponseDTO | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [drawerReserve, setDrawerReserve] = useState<CashReserveResponseDTO | null>(null);
+  const [drawerReserve, setDrawerReserve] =
+    useState<CashReserveResponseDTO | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
 
   const { data: branches = [] } = useBranches();
@@ -49,7 +62,10 @@ export default function GeneralCashPage() {
     [reserves],
   );
 
-  const handleOpenSettings = (e: React.MouseEvent, reserve: CashReserveResponseDTO) => {
+  const handleOpenSettings = (
+    e: React.MouseEvent,
+    reserve: CashReserveResponseDTO,
+  ) => {
     e.stopPropagation();
     setSelectedReserve(reserve);
     setShowSettings(true);
@@ -77,9 +93,7 @@ export default function GeneralCashPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">
-            Caja General
-          </h1>
+          <h1 className="text-2xl font-semibold text-white">Caja General</h1>
           <p className="text-sm text-slate-400">
             Posicion de efectivo por sucursal, flujo de caja y alertas.
           </p>
@@ -114,10 +128,14 @@ export default function GeneralCashPage() {
               Saldo Global
             </div>
             <div className="mt-1 text-3xl font-bold text-white">
-              ${totalBalance.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              $
+              {totalBalance.toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+              })}
             </div>
             <div className="mt-1 text-sm text-slate-400">
-              {reserves.length} sucursal{reserves.length !== 1 ? "es" : ""} registrada{reserves.length !== 1 ? "s" : ""}
+              {reserves.length} sucursal{reserves.length !== 1 ? "es" : ""}{" "}
+              registrada{reserves.length !== 1 ? "s" : ""}
             </div>
           </div>
 
@@ -146,7 +164,7 @@ export default function GeneralCashPage() {
                     <CashPositionCard reserve={r} />
                     <button
                       onClick={(e) => handleOpenSettings(e, r)}
-                      className="absolute right-3 top-3 rounded-md p-1 text-slate-500 hover:bg-slate-700 hover:text-white"
+                      className="absolute top-3 right-3 rounded-md p-1 text-slate-500 hover:bg-slate-700 hover:text-white"
                     >
                       <HiCog className="h-4 w-4" />
                     </button>

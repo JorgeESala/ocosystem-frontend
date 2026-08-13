@@ -105,7 +105,7 @@ inlined. Stay consistent with existing labels.
 ## Code style
 
 - **No comments.** Project preference (see commit `526b3ac "removed
-  comments"`). Don't add code comments, JSDoc, or file headers.
+comments"`). Don't add code comments, JSDoc, or file headers.
 - For the EGG unit, always display piece quantities using
   `EggQuantityDisplay`
   (`src/features/batch/components/egg/EggQuantityDisplay.tsx`), which renders

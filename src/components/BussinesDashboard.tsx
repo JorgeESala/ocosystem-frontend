@@ -21,9 +21,7 @@ export default function BusinessDashboard() {
         <h1 className="text-2xl font-semibold text-white">
           {slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : ""}
         </h1>
-        <p className="text-sm text-slate-400">
-          Vista general de la operación
-        </p>
+        <p className="text-sm text-slate-400">Vista general de la operación</p>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">

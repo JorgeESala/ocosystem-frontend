@@ -118,7 +118,11 @@ export const RegisterBranchPaymentModal = ({
     Number.isFinite(value) && value > CONFIRMATION_THRESHOLD;
 
   return (
-    <Modal show={open} onClose={onClose} size={pendingConfirmation ? "md" : "xl"}>
+    <Modal
+      show={open}
+      onClose={onClose}
+      size={pendingConfirmation ? "md" : "xl"}
+    >
       <ModalHeader>Registrar pago</ModalHeader>
 
       <ModalBody>
@@ -271,7 +275,9 @@ const BranchConfirmationPanel = ({
       <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 bg-white text-sm dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex justify-between px-4 py-2">
           <dt className="text-gray-500 dark:text-gray-400">Tipo</dt>
-          <dd className="font-medium text-gray-800 dark:text-gray-100">Pago directo</dd>
+          <dd className="font-medium text-gray-800 dark:text-gray-100">
+            Pago directo
+          </dd>
         </div>
         <div className="flex justify-between px-4 py-2">
           <dt className="text-gray-500 dark:text-gray-400">Monto</dt>

@@ -91,7 +91,9 @@ describe("useNotificationStream", () => {
     });
     qc.setQueryData(notificationKeys.list([1]), []);
 
-    let onmessage: ((event: { event: string; data: string }) => void) | undefined;
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
 
     mockedFetchEventSource.mockImplementation(async (_url, opts) => {
       onmessage = opts?.onmessage as typeof onmessage;
@@ -117,7 +119,10 @@ describe("useNotificationStream", () => {
     };
 
     act(() => {
-      onmessage?.({ event: "notification", data: JSON.stringify(notification) });
+      onmessage?.({
+        event: "notification",
+        data: JSON.stringify(notification),
+      });
     });
 
     const summary = qc.getQueryData(notificationKeys.summary([1])) as {
@@ -128,7 +133,9 @@ describe("useNotificationStream", () => {
     expect(summary.recent).toHaveLength(1);
     expect(summary.recent[0].id).toBe(10);
 
-    const list = qc.getQueryData(notificationKeys.list([1])) as { id: number }[];
+    const list = qc.getQueryData(notificationKeys.list([1])) as {
+      id: number;
+    }[];
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe(10);
   });
@@ -138,11 +145,22 @@ describe("useNotificationStream", () => {
     qc.setQueryData(notificationKeys.summary([1]), {
       unreadCount: 1,
       recent: [
-        { id: 10, branchId: 1, branchName: "Test", alertType: "LOW_BALANCE", severity: "warning", message: "old", read: false, createdAt: "" },
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "Test",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "old",
+          read: false,
+          createdAt: "",
+        },
       ],
     });
 
-    let onmessage: ((event: { event: string; data: string }) => void) | undefined;
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
     mockedFetchEventSource.mockImplementation(async (_url, opts) => {
       onmessage = opts?.onmessage as typeof onmessage;
       return undefined;
@@ -185,16 +203,54 @@ describe("useNotificationStream", () => {
     qc.setQueryData(notificationKeys.summary([1]), {
       unreadCount: 2,
       recent: [
-        { id: 10, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "a", read: false, createdAt: "" },
-        { id: 20, branchId: 1, branchName: "A", alertType: "HIGH_WASTE", severity: "critical", message: "b", read: false, createdAt: "" },
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "a",
+          read: false,
+          createdAt: "",
+        },
+        {
+          id: 20,
+          branchId: 1,
+          branchName: "A",
+          alertType: "HIGH_WASTE",
+          severity: "critical",
+          message: "b",
+          read: false,
+          createdAt: "",
+        },
       ],
     });
     qc.setQueryData(notificationKeys.list([1]), [
-      { id: 10, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "a", read: false, createdAt: "" },
-      { id: 20, branchId: 1, branchName: "A", alertType: "HIGH_WASTE", severity: "critical", message: "b", read: false, createdAt: "" },
+      {
+        id: 10,
+        branchId: 1,
+        branchName: "A",
+        alertType: "LOW_BALANCE",
+        severity: "warning",
+        message: "a",
+        read: false,
+        createdAt: "",
+      },
+      {
+        id: 20,
+        branchId: 1,
+        branchName: "A",
+        alertType: "HIGH_WASTE",
+        severity: "critical",
+        message: "b",
+        read: false,
+        createdAt: "",
+      },
     ]);
 
-    let onmessage: ((event: { event: string; data: string }) => void) | undefined;
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
     mockedFetchEventSource.mockImplementation(async (_url, opts) => {
       onmessage = opts?.onmessage as typeof onmessage;
       return undefined;
@@ -210,7 +266,11 @@ describe("useNotificationStream", () => {
     act(() => {
       onmessage?.({
         event: "notification-cleared",
-        data: JSON.stringify({ notificationId: 10, branchId: 1, alertType: "LOW_BALANCE" }),
+        data: JSON.stringify({
+          notificationId: 10,
+          branchId: 1,
+          alertType: "LOW_BALANCE",
+        }),
       });
     });
 
@@ -222,7 +282,9 @@ describe("useNotificationStream", () => {
     expect(summary.recent).toHaveLength(1);
     expect(summary.recent[0].id).toBe(20);
 
-    const list = qc.getQueryData(notificationKeys.list([1])) as { id: number }[];
+    const list = qc.getQueryData(notificationKeys.list([1])) as {
+      id: number;
+    }[];
     expect(list).toHaveLength(1);
     expect(list[0].id).toBe(20);
   });
@@ -234,7 +296,9 @@ describe("useNotificationStream", () => {
       recent: [],
     });
 
-    let onmessage: ((event: { event: string; data: string }) => void) | undefined;
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
     mockedFetchEventSource.mockImplementation(async (_url, opts) => {
       onmessage = opts?.onmessage as typeof onmessage;
       return undefined;
@@ -263,7 +327,9 @@ describe("useNotificationStream", () => {
   it("does not update cache when summary data is undefined", async () => {
     const qc = createQueryClient();
 
-    let onmessage: ((event: { event: string; data: string }) => void) | undefined;
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
     mockedFetchEventSource.mockImplementation(async (_url, opts) => {
       onmessage = opts?.onmessage as typeof onmessage;
       return undefined;
@@ -280,7 +346,16 @@ describe("useNotificationStream", () => {
       act(() => {
         onmessage?.({
           event: "notification",
-          data: JSON.stringify({ id: 1, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "x", read: false, createdAt: "" }),
+          data: JSON.stringify({
+            id: 1,
+            branchId: 1,
+            branchName: "A",
+            alertType: "LOW_BALANCE",
+            severity: "warning",
+            message: "x",
+            read: false,
+            createdAt: "",
+          }),
         });
       });
     }).not.toThrow();

@@ -7,7 +7,12 @@ export const checklistKeys = {
       date,
       [...branchIds].sort((a, b) => a - b).join(","),
     ] as const,
-  performance: (from: string, to: string, branchIds: number[], includeDays: boolean) =>
+  performance: (
+    from: string,
+    to: string,
+    branchIds: number[],
+    includeDays: boolean,
+  ) =>
     [
       ...checklistKeys.all,
       "performance",

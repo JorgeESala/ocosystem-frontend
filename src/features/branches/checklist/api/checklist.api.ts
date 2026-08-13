@@ -7,7 +7,9 @@ import type {
 
 const API_BASE = "/api/v1/branches/checklist";
 
-const buildQueryString = (params: Record<string, string | number | number[] | undefined>): string => {
+const buildQueryString = (
+  params: Record<string, string | number | number[] | undefined>,
+): string => {
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) {
@@ -25,26 +27,39 @@ const buildQueryString = (params: Record<string, string | number | number[] | un
 };
 
 export const checklistApi = {
-  getDaily: async (params: ChecklistQueryParams): Promise<ChecklistResponse> => {
-    const qs = buildQueryString({ date: params.date, branchIds: params.branchIds });
+  getDaily: async (
+    params: ChecklistQueryParams,
+  ): Promise<ChecklistResponse> => {
+    const qs = buildQueryString({
+      date: params.date,
+      branchIds: params.branchIds,
+    });
     const { data } = await http.get<ChecklistResponse>(`${API_BASE}?${qs}`);
     return data;
   },
 
-  getPerformance: async (params: PerformanceQueryParams): Promise<ChecklistResponse> => {
+  getPerformance: async (
+    params: PerformanceQueryParams,
+  ): Promise<ChecklistResponse> => {
     const qs = buildQueryString({
       from: params.from,
       to: params.to,
       branchIds: params.branchIds,
       include: params.includeDays ? "days" : undefined,
     });
-    const { data } = await http.get<ChecklistResponse>(`${API_BASE}/performance?${qs}`);
+    const { data } = await http.get<ChecklistResponse>(
+      `${API_BASE}/performance?${qs}`,
+    );
     return data;
   },
 
-  getCurrentWeekPerformance: async (branchIds?: number[]): Promise<ChecklistResponse> => {
+  getCurrentWeekPerformance: async (
+    branchIds?: number[],
+  ): Promise<ChecklistResponse> => {
     const qs = buildQueryString({ branchIds });
-    const { data } = await http.get<ChecklistResponse>(`${API_BASE}/performance/current-week?${qs}`);
+    const { data } = await http.get<ChecklistResponse>(
+      `${API_BASE}/performance/current-week?${qs}`,
+    );
     return data;
   },
 };

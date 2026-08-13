@@ -40,7 +40,9 @@ import { useParams } from "react-router-dom";
 export default function ComparisonsGraphs() {
   const { slug } = useParams();
   const isBranches = slug === "sucursales";
-  const [activeTab, setActiveTab] = useState<"pollo-huevo" | "ventas" | "merma">("pollo-huevo");
+  const [activeTab, setActiveTab] = useState<
+    "pollo-huevo" | "ventas" | "merma"
+  >("pollo-huevo");
   const [metric, setMetric] = useState<"sales" | "quantity">("sales");
   const [frequency, setFrequency] = useState<Frequency>("daily");
   const [isContinuous, setIsContinuous] = useState(true);
@@ -296,255 +298,253 @@ export default function ComparisonsGraphs() {
         </div>
       )}
 
-      {isBranches && activeTab === "pollo-huevo" && (
-        <SalesAnalyticsContent />
-      )}
+      {isBranches && activeTab === "pollo-huevo" && <SalesAnalyticsContent />}
 
       {(!isBranches || activeTab === "ventas") && (
         <>
-      <div className="mb-6 flex flex-wrap items-end gap-2">
-        <Select
-          id="periods"
-          className="bg-indigo"
-          value={frequency}
-          onChange={(e) =>
-            setFrequency(
-              e.target.value as
-                | "hourly"
-                | "daily"
-                | "weekly"
-                | "monthly"
-                | "daily_custom"
-                | "weekly_custom",
-            )
-          }
-        >
-          <option value="hourly" disabled>
-            Por hora
-          </option>
-          <option disabled={!isContinuous} value="daily">
-            Diario
-          </option>
-          <option value="weekly">Semanal</option>
-          <option value="monthly">Mensual</option>
-          <option value="weekly_custom">Anual por semana</option>
-          <option value="daily_custom">Anual por día</option>
-        </Select>
+          <div className="mb-6 flex flex-wrap items-end gap-2">
+            <Select
+              id="periods"
+              className="bg-indigo"
+              value={frequency}
+              onChange={(e) =>
+                setFrequency(
+                  e.target.value as
+                    | "hourly"
+                    | "daily"
+                    | "weekly"
+                    | "monthly"
+                    | "daily_custom"
+                    | "weekly_custom",
+                )
+              }
+            >
+              <option value="hourly" disabled>
+                Por hora
+              </option>
+              <option disabled={!isContinuous} value="daily">
+                Diario
+              </option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensual</option>
+              <option value="weekly_custom">Anual por semana</option>
+              <option value="daily_custom">Anual por día</option>
+            </Select>
 
-        <div className="max-w-60">
-          <BranchMultiSelect
-            branches={branches}
-            selected={selectedBranches}
-            onChange={setSelectedBranches}
-          />
-        </div>
-
-        <Dropdown
-          className="!rounded-lg !border !border-gray-700 !bg-gray-700 !text-gray-100 !shadow-sm focus:!ring-2 focus:!ring-blue-500"
-          dismissOnClick={false}
-          label="Categorías"
-        >
-          {categories.map((category) => (
-            <div key={category.id} className="px-1 py-1">
-              <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-gray-100 dark:hover:bg-gray-700">
-                <Checkbox
-                  checked={selectedCategories.includes(category.name)}
-                  onChange={() => toggleCategory(category.name)}
-                />
-                <span>{category.name}</span>
-              </label>
+            <div className="max-w-60">
+              <BranchMultiSelect
+                branches={branches}
+                selected={selectedBranches}
+                onChange={setSelectedBranches}
+              />
             </div>
-          ))}
-        </Dropdown>
 
-        <Select
-          id="indicator"
-          className="bg-indigo"
-          value={metric}
-          onChange={(e) => setMetric(e.target.value as "sales" | "quantity")}
-        >
-          <option value="sales">Ventas</option>
-          <option value="quantity">Cantidad</option>
-        </Select>
-
-        <Datepicker
-          language="es-MX"
-          value={startDate}
-          onChange={(date) => {
-            if (date) setStartDate(date);
-          }}
-        />
-        <Datepicker
-          language="es-MX"
-          value={endDate || undefined}
-          onChange={(date) => {
-            if (date) setEndDate(date);
-          }}
-        />
-
-        <ToggleSwitch
-          className="items-center"
-          checked={isContinuous}
-          label="Vista continua"
-          onChange={setIsContinuous}
-        />
-        <Button onClick={handleGraph} className="blue">
-          Graficar
-        </Button>
-      </div>
-
-      {/* Gráfico */}
-      <ResponsiveContainer width="100%" height={400} className="bg-white">
-        <LineChart
-          data={graphData}
-          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" />
-          <YAxis />
-          <Tooltip
-            formatter={(value, name) => [
-              Number(value).toLocaleString("en-US"),
-              name,
-            ]}
-            labelStyle={{ color: "black" }}
-            contentStyle={{ border: "none", color: "#333" }}
-          />
-          <Legend
-            formatter={(value: string) => {
-              // Calculamos el total de esa serie
-              let total = 0;
-              graphData.forEach((row) => {
-                const v = row[value];
-                if (typeof v === "number") total += v;
-              });
-
-              return (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <span>{value}</span>
-                  <span style={{ fontWeight: "bold" }}>
-                    {total.toLocaleString("en-US")}
-                  </span>
+            <Dropdown
+              className="!rounded-lg !border !border-gray-700 !bg-gray-700 !text-gray-100 !shadow-sm focus:!ring-2 focus:!ring-blue-500"
+              dismissOnClick={false}
+              label="Categorías"
+            >
+              {categories.map((category) => (
+                <div key={category.id} className="px-1 py-1">
+                  <label className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 select-none hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Checkbox
+                      checked={selectedCategories.includes(category.name)}
+                      onChange={() => toggleCategory(category.name)}
+                    />
+                    <span>{category.name}</span>
+                  </label>
                 </div>
-              );
-            }}
-          />
-
-          {keys.length > 0 &&
-            Object.keys(graphData[0] ?? {})
-              .filter((k) => k !== "label")
-              .map((key) => (
-                <Line
-                  key={key}
-                  type="monotone"
-                  dataKey={key}
-                  stroke={getColorForKey(key)}
-                  strokeWidth={3}
-                  strokeDasharray={isPastYear(key) ? "5 5" : ""}
-                  dot={{ r: 3 }}
-                />
               ))}
-          {/* Etiqueta flotante dentro del SVG */}
-          <text
-            x="98%"
-            y="92%"
-            textAnchor="end"
-            dominantBaseline="central"
-            fontSize="14"
-            fill="#000"
-            opacity="0.8"
-            style={{ fontWeight: "bold" }}
-          >
-            TOTAL: {grandTotal.toLocaleString("en-US")}
-          </text>
-        </LineChart>
-      </ResponsiveContainer>
+            </Dropdown>
 
-      <ResponsiveContainer width="100%" height={400} className="bg-white">
-        <BarChart
-          data={graphData}
-          margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
-          barCategoryGap="0%" // ← elimina los espacios vacíos EN EL GRUPO
-          barGap={0} // ← elimina espacios entre barras del mismo grupo
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" />
-          <YAxis />
-          <Tooltip
-            formatter={(value, name) => [
-              Number(value).toLocaleString("en-US"),
-              name,
-            ]}
-            labelStyle={{ color: "black" }}
-            contentStyle={{ border: "none", color: "#333" }}
-          />
-          <Legend />
+            <Select
+              id="indicator"
+              className="bg-indigo"
+              value={metric}
+              onChange={(e) =>
+                setMetric(e.target.value as "sales" | "quantity")
+              }
+            >
+              <option value="sales">Ventas</option>
+              <option value="quantity">Cantidad</option>
+            </Select>
 
-          {Object.keys(graphData[0] ?? {})
-            .filter((k) => k !== "label")
-            .map((key) => {
-              const color = getColorForKey(key); // ← aquí ya decides el color final
+            <Datepicker
+              language="es-MX"
+              value={startDate}
+              onChange={(date) => {
+                if (date) setStartDate(date);
+              }}
+            />
+            <Datepicker
+              language="es-MX"
+              value={endDate || undefined}
+              onChange={(date) => {
+                if (date) setEndDate(date);
+              }}
+            />
 
-              return (
-                <Bar key={key} dataKey={key} fill={color}>
-                  <LabelList
-                    dataKey={key}
-                    content={(props) => {
-                      const { x, y, width, value } = props;
+            <ToggleSwitch
+              className="items-center"
+              checked={isContinuous}
+              label="Vista continua"
+              onChange={setIsContinuous}
+            />
+            <Button onClick={handleGraph} className="blue">
+              Graficar
+            </Button>
+          </div>
 
-                      // Convertir TODO a número
-                      const numX = Number(x);
-                      const numY = Number(y);
-                      const numWidth = Number(width);
-                      const numValue = Number(value);
+          {/* Gráfico */}
+          <ResponsiveContainer width="100%" height={400} className="bg-white">
+            <LineChart
+              data={graphData}
+              margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" />
+              <YAxis />
+              <Tooltip
+                formatter={(value, name) => [
+                  Number(value).toLocaleString("en-US"),
+                  name,
+                ]}
+                labelStyle={{ color: "black" }}
+                contentStyle={{ border: "none", color: "#333" }}
+              />
+              <Legend
+                formatter={(value: string) => {
+                  // Calculamos el total de esa serie
+                  let total = 0;
+                  graphData.forEach((row) => {
+                    const v = row[value];
+                    if (typeof v === "number") total += v;
+                  });
 
-                      // Si algo no es número → no dibujar
-                      if (
-                        isNaN(numX) ||
-                        isNaN(numY) ||
-                        isNaN(numWidth) ||
-                        isNaN(numValue)
-                      ) {
-                        return null;
-                      }
+                  return (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>{value}</span>
+                      <span style={{ fontWeight: "bold" }}>
+                        {total.toLocaleString("en-US")}
+                      </span>
+                    </div>
+                  );
+                }}
+              />
 
-                      // No mostrar si la barra es demasiado angosta
-                      if (numWidth < 15) return null;
+              {keys.length > 0 &&
+                Object.keys(graphData[0] ?? {})
+                  .filter((k) => k !== "label")
+                  .map((key) => (
+                    <Line
+                      key={key}
+                      type="monotone"
+                      dataKey={key}
+                      stroke={getColorForKey(key)}
+                      strokeWidth={3}
+                      strokeDasharray={isPastYear(key) ? "5 5" : ""}
+                      dot={{ r: 3 }}
+                    />
+                  ))}
+              {/* Etiqueta flotante dentro del SVG */}
+              <text
+                x="98%"
+                y="92%"
+                textAnchor="end"
+                dominantBaseline="central"
+                fontSize="14"
+                fill="#000"
+                opacity="0.8"
+                style={{ fontWeight: "bold" }}
+              >
+                TOTAL: {grandTotal.toLocaleString("en-US")}
+              </text>
+            </LineChart>
+          </ResponsiveContainer>
 
-                      // Ajustar separación para valores grandes
-                      const offset = numValue < 1000 ? 12 : 18;
+          <ResponsiveContainer width="100%" height={400} className="bg-white">
+            <BarChart
+              data={graphData}
+              margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
+              barCategoryGap="0%" // ← elimina los espacios vacíos EN EL GRUPO
+              barGap={0} // ← elimina espacios entre barras del mismo grupo
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" />
+              <YAxis />
+              <Tooltip
+                formatter={(value, name) => [
+                  Number(value).toLocaleString("en-US"),
+                  name,
+                ]}
+                labelStyle={{ color: "black" }}
+                contentStyle={{ border: "none", color: "#333" }}
+              />
+              <Legend />
 
-                      return (
-                        <text
-                          x={numX + numWidth / 2}
-                          y={numY - offset}
-                          textAnchor="middle"
-                          fontSize={12}
-                          fill="#333"
-                          style={{ pointerEvents: "none" }}
-                        >
-                          {numValue.toLocaleString()}
-                        </text>
-                      );
-                    }}
-                  />
-                </Bar>
-              );
-            })}
-        </BarChart>
-      </ResponsiveContainer>
+              {Object.keys(graphData[0] ?? {})
+                .filter((k) => k !== "label")
+                .map((key) => {
+                  const color = getColorForKey(key); // ← aquí ya decides el color final
+
+                  return (
+                    <Bar key={key} dataKey={key} fill={color}>
+                      <LabelList
+                        dataKey={key}
+                        content={(props) => {
+                          const { x, y, width, value } = props;
+
+                          // Convertir TODO a número
+                          const numX = Number(x);
+                          const numY = Number(y);
+                          const numWidth = Number(width);
+                          const numValue = Number(value);
+
+                          // Si algo no es número → no dibujar
+                          if (
+                            isNaN(numX) ||
+                            isNaN(numY) ||
+                            isNaN(numWidth) ||
+                            isNaN(numValue)
+                          ) {
+                            return null;
+                          }
+
+                          // No mostrar si la barra es demasiado angosta
+                          if (numWidth < 15) return null;
+
+                          // Ajustar separación para valores grandes
+                          const offset = numValue < 1000 ? 12 : 18;
+
+                          return (
+                            <text
+                              x={numX + numWidth / 2}
+                              y={numY - offset}
+                              textAnchor="middle"
+                              fontSize={12}
+                              fill="#333"
+                              style={{ pointerEvents: "none" }}
+                            >
+                              {numValue.toLocaleString()}
+                            </text>
+                          );
+                        }}
+                      />
+                    </Bar>
+                  );
+                })}
+            </BarChart>
+          </ResponsiveContainer>
         </>
       )}
 
-      {isBranches && activeTab === "merma" && (
-        <MermaComparison />
-      )}
+      {isBranches && activeTab === "merma" && <MermaComparison />}
     </div>
   );
 }

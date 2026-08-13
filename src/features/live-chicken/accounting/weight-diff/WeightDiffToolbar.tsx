@@ -66,13 +66,21 @@ export const WeightDiffToolbar = ({
     }
   };
 
-  const supplierId = selectedSupplier === "ALL" ? null : Number(selectedSupplier);
+  const supplierId =
+    selectedSupplier === "ALL" ? null : Number(selectedSupplier);
 
   const handleExportPdf = async () => {
     setBusyAction("pdf");
     try {
-      const blob = await downloadWeeklyWeightDiffPdf(startDate, endDate, supplierId);
-      triggerDownload(blob, buildFilename(startDate, endDate, supplierId, "pdf"));
+      const blob = await downloadWeeklyWeightDiffPdf(
+        startDate,
+        endDate,
+        supplierId,
+      );
+      triggerDownload(
+        blob,
+        buildFilename(startDate, endDate, supplierId, "pdf"),
+      );
     } finally {
       setBusyAction(null);
     }
@@ -81,8 +89,15 @@ export const WeightDiffToolbar = ({
   const handleExportExcel = async () => {
     setBusyAction("xlsx");
     try {
-      const blob = await downloadWeeklyWeightDiffExcel(startDate, endDate, supplierId);
-      triggerDownload(blob, buildFilename(startDate, endDate, supplierId, "xlsx"));
+      const blob = await downloadWeeklyWeightDiffExcel(
+        startDate,
+        endDate,
+        supplierId,
+      );
+      triggerDownload(
+        blob,
+        buildFilename(startDate, endDate, supplierId, "xlsx"),
+      );
     } finally {
       setBusyAction(null);
     }

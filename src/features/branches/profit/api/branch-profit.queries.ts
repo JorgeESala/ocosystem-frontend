@@ -11,8 +11,7 @@ export const useBranchProfitReport = (filters: BranchProfitFilters | null) =>
           filters.startDate.toISOString(),
           filters.endDate.toISOString(),
         )
-      : [...branchProfitKeys.all, "report", "disabled"] as const,
+      : ([...branchProfitKeys.all, "report", "disabled"] as const),
     queryFn: () => branchProfitApi.getReport(filters!),
     enabled: Boolean(filters && filters.branchIds.length > 0),
   });
-

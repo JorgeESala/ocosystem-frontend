@@ -17,7 +17,9 @@ export const useCashReserves = () =>
 
 export const useCashReserve = (id: number | null) =>
   useQuery({
-    queryKey: id ? cashReserveKeys.detail(id) : [...cashReserveKeys.all, "disabled"],
+    queryKey: id
+      ? cashReserveKeys.detail(id)
+      : [...cashReserveKeys.all, "disabled"],
     queryFn: () => cashReserveApi.getById(id!),
     enabled: Boolean(id),
   });
@@ -75,7 +77,13 @@ export const useCashFlowHistory = (
   useQuery({
     queryKey:
       id && start && end
-        ? ["general-cash", "history", id, start.toISOString(), end.toISOString()]
+        ? [
+            "general-cash",
+            "history",
+            id,
+            start.toISOString(),
+            end.toISOString(),
+          ]
         : ["general-cash", "history", "disabled"],
     queryFn: () => cashReserveApi.getHistory(id!, start!, end!),
     enabled: Boolean(id && start && end),
@@ -95,8 +103,13 @@ export const useCreateCashReserve = () => {
 export const useUpdateCashReserve = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: UpdateCashReserveDTO }) =>
-      cashReserveApi.update(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: UpdateCashReserveDTO;
+    }) => cashReserveApi.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashReserveKeys.all });
     },
@@ -131,7 +144,12 @@ export const useCashAdjustments = (
   useQuery({
     queryKey:
       branchId && start && end
-        ? ["general-cash-adjustment", branchId, start.toISOString(), end.toISOString()]
+        ? [
+            "general-cash-adjustment",
+            branchId,
+            start.toISOString(),
+            end.toISOString(),
+          ]
         : ["general-cash-adjustment", "disabled"],
     queryFn: () => cashAdjustmentApi.getByBranch(branchId!, start!, end!),
     enabled: Boolean(branchId && start && end),
@@ -152,8 +170,13 @@ export const useCreateCashAdjustment = () => {
 export const useUpdateCashAdjustment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: UpdateCashAdjustmentDTO }) =>
-      cashAdjustmentApi.update(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: UpdateCashAdjustmentDTO;
+    }) => cashAdjustmentApi.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashReserveKeys.all });
       queryClient.invalidateQueries({ queryKey: ["general-cash-adjustment"] });

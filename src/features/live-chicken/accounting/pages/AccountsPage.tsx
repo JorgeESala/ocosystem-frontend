@@ -414,7 +414,9 @@ export const AccountsPage = () => {
       {viewMode === "FINANCIAL" && (
         <CedisFinancialSummary
           entityType="CEDIS"
-          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          from={
+            showFinancialDates ? formatDateToISO(dateRange.start) : undefined
+          }
           to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
         />
       )}

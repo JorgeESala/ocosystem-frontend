@@ -12,9 +12,7 @@ import { AccountingToast } from "@/features/accounting/components/AccountingToas
 import { RegisterPaymentFirstModal } from "@/features/accounting/components/RegisterPaymentFirstModal";
 import { RecentPaymentsDrawer } from "@/features/accounting/components/RecentPaymentsDrawer";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
-import DateRangeFilter, {
-  type DateRange,
-} from "@/components/DateRangeFilter";
+import DateRangeFilter, { type DateRange } from "@/components/DateRangeFilter";
 import { formatDateToISO, getLastDays } from "@/utils/date.utils";
 import { RegisterBranchPaymentModal } from "../components/RegisterBranchPaymentModal";
 import { CreateBranchAccountsPayableModal } from "../components/CreateBranchAccountsPayableModal";
@@ -118,10 +116,7 @@ export const BranchAccountsPage = () => {
             <HiPlus className="mr-2 h-4 w-4" />
             Registrar pago
           </Button>
-          <Button
-            color="gray"
-            onClick={() => setOpenCreateModal(true)}
-          >
+          <Button color="gray" onClick={() => setOpenCreateModal(true)}>
             Crear Nueva Cuenta
           </Button>
         </div>
@@ -145,9 +140,7 @@ export const BranchAccountsPage = () => {
       {/* Barra de Filtros (compartida entre ambas vistas) */}
       <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-300">
-            Sucursales:
-          </span>
+          <span className="text-sm font-medium text-gray-300">Sucursales:</span>
           <div className="w-80">
             <BranchMultiSelect
               branches={branches ?? []}
@@ -230,7 +223,9 @@ export const BranchAccountsPage = () => {
       {viewMode === "FINANCIAL" && (
         <BranchesAccountingSummary
           selectedBranchIds={selectedBranches}
-          from={showFinancialDates ? formatDateToISO(dateRange.start) : undefined}
+          from={
+            showFinancialDates ? formatDateToISO(dateRange.start) : undefined
+          }
           to={showFinancialDates ? formatDateToISO(dateRange.end) : undefined}
         />
       )}

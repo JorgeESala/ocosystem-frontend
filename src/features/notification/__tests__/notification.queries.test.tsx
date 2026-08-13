@@ -51,7 +51,9 @@ describe("useNotificationSummary", () => {
     mockedApi.getSummary.mockResolvedValue(summary);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useNotificationSummary([1, 2]), { wrapper });
+    const { result } = renderHook(() => useNotificationSummary([1, 2]), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(summary);
@@ -60,7 +62,9 @@ describe("useNotificationSummary", () => {
 
   it("does not fetch when branchIds is empty", () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useNotificationSummary([]), { wrapper });
+    const { result } = renderHook(() => useNotificationSummary([]), {
+      wrapper,
+    });
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(mockedApi.getSummary).not.toHaveBeenCalled();
@@ -69,7 +73,12 @@ describe("useNotificationSummary", () => {
 
 describe("useNotificationDetail", () => {
   it("fetches detail when id is not null", async () => {
-    const detail = { alertType: "HIGH_WASTE" as const, branchId: 1, branchName: "Test", detail: {} as unknown };
+    const detail = {
+      alertType: "HIGH_WASTE" as const,
+      branchId: 1,
+      branchName: "Test",
+      detail: {} as unknown,
+    };
     mockedApi.getDetail.mockResolvedValue(detail);
 
     const wrapper = createWrapper();
@@ -81,7 +90,9 @@ describe("useNotificationDetail", () => {
 
   it("does not fetch when id is null", () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useNotificationDetail(null), { wrapper });
+    const { result } = renderHook(() => useNotificationDetail(null), {
+      wrapper,
+    });
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(mockedApi.getDetail).not.toHaveBeenCalled();
@@ -90,14 +101,16 @@ describe("useNotificationDetail", () => {
 
 describe("useNotificationHistory", () => {
   it("fetches history when enabled and branchIds non-empty", async () => {
-    const page = { content: [], page: { size: 20, number: 0, totalElements: 0, totalPages: 0 } };
+    const page = {
+      content: [],
+      page: { size: 20, number: 0, totalElements: 0, totalPages: 0 },
+    };
     mockedApi.getHistory.mockResolvedValue(page);
 
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useNotificationHistory([1], true),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useNotificationHistory([1], true), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockedApi.getHistory).toHaveBeenCalledWith([1], 0, 20);
@@ -105,10 +118,9 @@ describe("useNotificationHistory", () => {
 
   it("does not fetch when disabled", () => {
     const wrapper = createWrapper();
-    const { result } = renderHook(
-      () => useNotificationHistory([1], false),
-      { wrapper },
-    );
+    const { result } = renderHook(() => useNotificationHistory([1], false), {
+      wrapper,
+    });
 
     expect(result.current.fetchStatus).toBe("idle");
   });
@@ -120,8 +132,26 @@ describe("useDismissNotification", () => {
     qc.setQueryData(["notifications", "summary", [1]], {
       unreadCount: 3,
       recent: [
-        { id: 10, branchId: 1, branchName: "A", alertType: "LOW_BALANCE", severity: "warning", message: "test", read: false, createdAt: "" },
-        { id: 20, branchId: 1, branchName: "A", alertType: "HIGH_WASTE", severity: "critical", message: "test2", read: false, createdAt: "" },
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "test",
+          read: false,
+          createdAt: "",
+        },
+        {
+          id: 20,
+          branchId: 1,
+          branchName: "A",
+          alertType: "HIGH_WASTE",
+          severity: "critical",
+          message: "test2",
+          read: false,
+          createdAt: "",
+        },
       ],
     });
 

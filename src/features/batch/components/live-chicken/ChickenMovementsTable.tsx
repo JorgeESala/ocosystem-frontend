@@ -199,7 +199,9 @@ export const ChickenMovementsTable: React.FC<{
               Ventas sin agrupar ({singleSaleSales.length})
             </span>
             <span className="text-[10px] tracking-wider text-slate-500 uppercase">
-              Click en <span className="font-semibold text-blue-400">Editar</span> para asignar chofer + ruta + fecha
+              Click en{" "}
+              <span className="font-semibold text-blue-400">Editar</span> para
+              asignar chofer + ruta + fecha
             </span>
           </div>
           <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800/40 bg-slate-950/20 px-3 py-1.5">

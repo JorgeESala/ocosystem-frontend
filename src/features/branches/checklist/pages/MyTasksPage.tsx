@@ -52,7 +52,8 @@ export default function MyTasksPage() {
     });
   };
 
-  const isToday = toLocalDateString(selectedDate) === toLocalDateString(new Date());
+  const isToday =
+    toLocalDateString(selectedDate) === toLocalDateString(new Date());
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
@@ -88,12 +89,15 @@ export default function MyTasksPage() {
       {!isLoading && totalTasks > 0 && (
         <div className="flex items-center gap-4 rounded-lg bg-slate-800/60 px-4 py-3 text-sm">
           <span className="text-slate-400">
-            {branches.length} {branches.length === 1 ? "sucursal" : "sucursales"}
+            {branches.length}{" "}
+            {branches.length === 1 ? "sucursal" : "sucursales"}
           </span>
           <span className="text-slate-600">|</span>
           <span className="text-emerald-400">{doneTasks} completadas</span>
           <span className="text-slate-600">|</span>
-          <span className={pendingTasks > 0 ? "text-amber-400" : "text-slate-400"}>
+          <span
+            className={pendingTasks > 0 ? "text-amber-400" : "text-slate-400"}
+          >
             {pendingTasks} pendientes
           </span>
         </div>
@@ -102,7 +106,10 @@ export default function MyTasksPage() {
       {isLoading && (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-slate-800/60" />
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-xl bg-slate-800/60"
+            />
           ))}
         </div>
       )}
@@ -118,7 +125,11 @@ export default function MyTasksPage() {
 
       <div className="space-y-3">
         {branches.map((branch) => (
-          <BranchTaskGroup key={branch.branchId} branch={branch} slug={slug ?? ""} />
+          <BranchTaskGroup
+            key={branch.branchId}
+            branch={branch}
+            slug={slug ?? ""}
+          />
         ))}
       </div>
     </div>

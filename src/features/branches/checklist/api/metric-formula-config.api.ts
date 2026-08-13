@@ -1,4 +1,4 @@
-import { http } from '@/shared/api/http';
+import { http } from "@/shared/api/http";
 
 export interface ParameterSchema {
   key: string;
@@ -18,18 +18,18 @@ export interface MetricFormulaConfig {
 export const metricFormulaConfigApi = {
   getAll: async (): Promise<MetricFormulaConfig[]> => {
     const { data } = await http.get<MetricFormulaConfig[]>(
-      '/api/v1/branches/metric-formula-config'
+      "/api/v1/branches/metric-formula-config",
     );
     return data;
   },
 
   update: async (
     metricId: string,
-    parameters: Record<string, number>
+    parameters: Record<string, number>,
   ): Promise<MetricFormulaConfig> => {
     const { data } = await http.put<MetricFormulaConfig>(
       `/api/v1/branches/metric-formula-config/${metricId}`,
-      parameters
+      parameters,
     );
     return data;
   },

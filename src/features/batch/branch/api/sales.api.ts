@@ -86,10 +86,9 @@ export const salesApi = {
   searchByBatchIds: async (
     batchIds: number[],
   ): Promise<BranchesBatchSale[]> => {
-    const { data } = await http.post<BranchSaleItemApi[]>(
-      `${API_URL}/search`,
-      { batchIds },
-    );
+    const { data } = await http.post<BranchSaleItemApi[]>(`${API_URL}/search`, {
+      batchIds,
+    });
     return data.map(mapItem);
   },
 

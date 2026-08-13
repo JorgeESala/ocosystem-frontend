@@ -3,22 +3,14 @@ import {
   getWeeklyWeightDiff,
   getWeeklyWeightDiffBatches,
 } from "./weight-diff.api";
-import type {
-  WeeklyWeightDiffBatchRow,
-  WeeklyWeightDiffRow,
-} from "./types";
+import type { WeeklyWeightDiffBatchRow, WeeklyWeightDiffRow } from "./types";
 
 export const weightDiffKeys = {
   all: ["live-chicken", "weight-diff"] as const,
   list: (startDate: string, endDate: string) =>
     [...weightDiffKeys.all, "list", startDate, endDate] as const,
   batches: (weekStart: string, supplierId: number | null) =>
-    [
-      ...weightDiffKeys.all,
-      "batches",
-      weekStart,
-      supplierId ?? "ALL",
-    ] as const,
+    [...weightDiffKeys.all, "batches", weekStart, supplierId ?? "ALL"] as const,
 };
 
 export const useWeeklyWeightDiff = (startDate: string, endDate: string) =>

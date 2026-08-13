@@ -1,4 +1,7 @@
-export const formatScore = (n: number | null | undefined, digits = 1): string => {
+export const formatScore = (
+  n: number | null | undefined,
+  digits = 1,
+): string => {
   if (n == null || Number.isNaN(n)) {
     return "—";
   }
@@ -8,7 +11,10 @@ export const formatScore = (n: number | null | undefined, digits = 1): string =>
   });
 };
 
-export const formatPercent = (n: number | null | undefined, digits = 1): string => {
+export const formatPercent = (
+  n: number | null | undefined,
+  digits = 1,
+): string => {
   if (n == null || Number.isNaN(n)) {
     return "—";
   }

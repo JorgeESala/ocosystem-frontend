@@ -10,7 +10,9 @@ export const scheduleTemplatesApi = {
     return data;
   },
 
-  create: async (template: Omit<ScheduleTemplate, "id" | "branchName" | "createdBy">): Promise<ScheduleTemplate> => {
+  create: async (
+    template: Omit<ScheduleTemplate, "id" | "branchName" | "createdBy">,
+  ): Promise<ScheduleTemplate> => {
     const { data } = await http.post<ScheduleTemplate>(API_BASE, template);
     return data;
   },

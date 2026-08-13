@@ -8,15 +8,23 @@ import type {
 
 const API_BASE = "/api/v1";
 
-export const getBatches = async (unit: string, startDate?: string, endDate?: string): Promise<import("../types.batch").BatchResponseDTO[]> => {
+export const getBatches = async (
+  unit: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<import("../types.batch").BatchResponseDTO[]> => {
   const params = new URLSearchParams({ unit });
   if (startDate) params.append("startDate", startDate);
   if (endDate) params.append("endDate", endDate);
-  const { data } = await http.get<import("../types.batch").BatchResponseDTO[]>(`${API_BASE}/batches?${params.toString()}`);
+  const { data } = await http.get<import("../types.batch").BatchResponseDTO[]>(
+    `${API_BASE}/batches?${params.toString()}`,
+  );
   return data;
 };
 
-export const getBatchById = async (id: number): Promise<import("../types.batch").BatchResponseDTO> => {
+export const getBatchById = async (
+  id: number,
+): Promise<import("../types.batch").BatchResponseDTO> => {
   const { data } = await http.get<import("../types.batch").BatchResponseDTO>(
     `${API_BASE}/batches/${id}`,
   );
@@ -59,9 +67,7 @@ export const getBatchSales = async (batchId: number) => {
 };
 
 export const getBatchAdjustments = async (batchId: number) => {
-  const { data } = await http.get(
-    `${API_BASE}/batches/${batchId}/adjustments`,
-  );
+  const { data } = await http.get(`${API_BASE}/batches/${batchId}/adjustments`);
   return data;
 };
 export const getBatchFullDetail = async (

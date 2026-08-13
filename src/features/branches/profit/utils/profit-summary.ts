@@ -51,10 +51,7 @@ const normalizeText = (value: string) => value.trim().toLowerCase();
 const formatBranchItems = (
   report: BranchProfitReportDTO,
 ): ProfitSummaryItem[] => {
-  const map = new Map<
-    string,
-    Omit<ProfitSummaryItem, "percentage">
-  >();
+  const map = new Map<string, Omit<ProfitSummaryItem, "percentage">>();
 
   for (const item of report.batchDetails ?? []) {
     const key = item.branchName || "Sin sucursal";

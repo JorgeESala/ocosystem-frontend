@@ -1,9 +1,5 @@
 import type { ComponentType } from "react";
-import {
-  HiChartBar,
-  HiClipboardList,
-  HiCurrencyDollar,
-} from "react-icons/hi";
+import { HiChartBar, HiClipboardList, HiCurrencyDollar } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 
 interface ExpenseSummaryProps {

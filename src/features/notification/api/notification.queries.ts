@@ -83,8 +83,7 @@ export const useDismissNotification = () => {
 export const useCheckAlerts = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (branchIds: number[]) =>
-      notificationApi.checkAlerts(branchIds),
+    mutationFn: (branchIds: number[]) => notificationApi.checkAlerts(branchIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },

@@ -102,7 +102,10 @@ export const useImportedSalesByBranches = ({
       if (q.data?.dailyCategorySales) {
         for (const d of q.data.dailyCategorySales) {
           if (normalizeCategory(d.categoryName) === "pollo") {
-            dayMap.set(d.day, (dayMap.get(d.day) ?? 0) + (Number(d.totalSales) || 0));
+            dayMap.set(
+              d.day,
+              (dayMap.get(d.day) ?? 0) + (Number(d.totalSales) || 0),
+            );
           }
         }
       }
@@ -119,7 +122,10 @@ export const useImportedSalesByBranches = ({
       if (q.data?.dailyCategorySales) {
         for (const d of q.data.dailyCategorySales) {
           if (normalizeCategory(d.categoryName) === "matados") {
-            dayMap.set(d.day, (dayMap.get(d.day) ?? 0) + (Number(d.quantitySold) || 0));
+            dayMap.set(
+              d.day,
+              (dayMap.get(d.day) ?? 0) + (Number(d.quantitySold) || 0),
+            );
           }
         }
       }

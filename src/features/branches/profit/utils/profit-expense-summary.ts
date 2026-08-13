@@ -21,9 +21,7 @@ export interface BranchProfitExpenseSummary {
 }
 
 const getExpenseLabel = (expense: BranchExpenseResponseDTO) =>
-  expense.businessUnitCategoryName ??
-  expense.businessUnitName ??
-  "Sin unidad";
+  expense.businessUnitCategoryName ?? expense.businessUnitName ?? "Sin unidad";
 
 const sumBy = (
   expenses: BranchExpenseResponseDTO[],
@@ -104,4 +102,3 @@ export const buildBranchProfitExpenseSummary = (
     byBusinessUnit,
   };
 };
-

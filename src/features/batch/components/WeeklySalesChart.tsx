@@ -50,7 +50,10 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
         <div key={i} className="flex items-center gap-2 text-sm">
           {item.name === "totalQuantity" ? (
             unitType === "EGG" ? (
-              <EggQuantityDisplay totalPieces={item.value} className="text-xs" />
+              <EggQuantityDisplay
+                totalPieces={item.value}
+                className="text-xs"
+              />
             ) : (
               <span className="font-medium text-white">
                 {item.value.toLocaleString("es-MX")}{" "}
@@ -100,9 +103,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
   startDate,
   endDate,
 }) => {
-  const startDateStr = startDate
-    ? startDate.toISOString().split("T")[0]
-    : null;
+  const startDateStr = startDate ? startDate.toISOString().split("T")[0] : null;
   const endDateStr = endDate ? endDate.toISOString().split("T")[0] : null;
 
   const { data: rawData = [], isLoading } = useWeeklySalesReport(
@@ -151,10 +152,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
     );
   }
 
-  const totalQuantity = weeklyData.reduce(
-    (sum, w) => sum + w.totalQuantity,
-    0,
-  );
+  const totalQuantity = weeklyData.reduce((sum, w) => sum + w.totalQuantity, 0);
   const totalSales = weeklyData.reduce((sum, w) => sum + w.totalSales, 0);
   const weeklyAvg =
     weeklyData.length > 0 ? totalQuantity / weeklyData.length : 0;
@@ -221,7 +219,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Total Vendido
           </p>
           <div className="mt-1 flex items-center justify-center">
@@ -241,7 +239,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
           </div>
           {supplierTotals.length > 0 && (
             <div className="mt-3 border-t border-gray-700 pt-2 text-left">
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-gray-500">
+              <p className="mb-1 text-[10px] tracking-wider text-gray-500 uppercase">
                 Por proveedor
               </p>
               <ul className="space-y-1">
@@ -273,7 +271,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
           )}
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Total Ventas
           </p>
           <p className="mt-1 text-lg font-bold text-green-400">
@@ -281,7 +279,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
           </p>
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Promedio / Semana
           </p>
           <div className="mt-1 flex items-center justify-center">
@@ -301,7 +299,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
           </div>
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-800 p-3 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
             Mejor Semana
           </p>
           <div className="mt-1 flex items-center justify-center">

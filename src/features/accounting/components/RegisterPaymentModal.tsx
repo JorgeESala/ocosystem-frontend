@@ -272,7 +272,11 @@ export const RegisterPaymentModal = ({
     Number.isFinite(value) && value > CONFIRMATION_THRESHOLD;
 
   return (
-    <Modal show={open} onClose={onClose} size={pendingConfirmation ? "md" : "xl"}>
+    <Modal
+      show={open}
+      onClose={onClose}
+      size={pendingConfirmation ? "md" : "xl"}
+    >
       <ModalHeader>Registrar pago</ModalHeader>
 
       <ModalBody>
@@ -368,8 +372,7 @@ export const RegisterPaymentModal = ({
                       {validPayables.map((ap) => (
                         <option key={ap.id} value={ap.id}>
                           {ap.creditorName} - {ap.solicitorName} -{" "}
-                          {formatHumanDate(ap.date)} -{" "}
-                          {formatMXN(ap.balance)}
+                          {formatHumanDate(ap.date)} - {formatMXN(ap.balance)}
                         </option>
                       ))}
                     </Select>
@@ -382,7 +385,9 @@ export const RegisterPaymentModal = ({
                       value={amount}
                       min={0}
                       max={
-                        selectedPayable ? maxCompensationAmount : account.balance
+                        selectedPayable
+                          ? maxCompensationAmount
+                          : account.balance
                       }
                       onChange={(e) => {
                         setAmount(e.target.value);
@@ -559,12 +564,18 @@ const NormalFormFields = ({
         <div className="mt-3 space-y-3">
           <div>
             <Label>Folio / referencia (Sólo para depósito)</Label>
-            <TextInput value={folio} onChange={(e) => setFolio(e.target.value)} />
+            <TextInput
+              value={folio}
+              onChange={(e) => setFolio(e.target.value)}
+            />
           </div>
 
           <div>
             <Label>Chofer (Opcional)</Label>
-            <Select value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+            <Select
+              value={driverId}
+              onChange={(e) => setDriverId(e.target.value)}
+            >
               <option value="">Seleccione un chofer</option>
               {drivers?.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -576,7 +587,10 @@ const NormalFormFields = ({
 
           <div>
             <Label>Ruta (Opcional)</Label>
-            <Select value={routeId} onChange={(e) => setRouteId(e.target.value)}>
+            <Select
+              value={routeId}
+              onChange={(e) => setRouteId(e.target.value)}
+            >
               <option value="">Seleccione una ruta</option>
               {routes?.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -588,7 +602,11 @@ const NormalFormFields = ({
 
           <div>
             <Label>Notas (Opcional)</Label>
-            <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+            <Textarea
+              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
           </div>
         </div>
       </details>
@@ -612,7 +630,7 @@ const CompensationFlowDiagram = () => {
           Proveedor
         </span>
       </div>
-      <p className="mt-2 text-center text-xs italic text-blue-700 dark:text-blue-200">
+      <p className="mt-2 text-center text-xs text-blue-700 italic dark:text-blue-200">
         Ambas deudas se reducen en el mismo monto.
       </p>
     </div>
@@ -673,7 +691,9 @@ const ConfirmationPanel = ({
         </div>
         {!isNormal && payload.kind === "COMPENSATION" && (
           <div className="flex justify-between px-4 py-2">
-            <dt className="text-gray-500 dark:text-gray-400">Cuenta a compensar</dt>
+            <dt className="text-gray-500 dark:text-gray-400">
+              Cuenta a compensar
+            </dt>
             <dd className="text-right text-gray-800 dark:text-gray-100">
               {payload.selectedPayable.debtorName} →{" "}
               {payload.selectedPayable.creditorName}

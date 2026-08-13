@@ -41,9 +41,7 @@ export default function CashFlowChart({
             <YAxis
               stroke="#9CA3AF"
               fontSize={12}
-              tickFormatter={(v) =>
-                `$${(v / 1000).toFixed(0)}k`
-              }
+              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
             />
             <Tooltip
               contentStyle={{
@@ -52,9 +50,10 @@ export default function CashFlowChart({
                 borderRadius: "8px",
               }}
               labelStyle={{ color: "#E5E7EB" }}
-              formatter={(value: number) =>
-                [`$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`, undefined]
-              }
+              formatter={(value: number) => [
+                `$${value.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`,
+                undefined,
+              ]}
             />
             <Legend />
             <Area

@@ -8,8 +8,20 @@ const baseDetail = {
   expectedDays: ["Lunes", "Miercoles", "Viernes"],
   eggExpectedDays: ["Martes", "Jueves"],
   recentBatches: [
-    { batchId: 1, entryDate: "2026-01-13", chickenQuantity: 50, kgTotal: 100, provider: "Proveedor A" },
-    { batchId: 2, entryDate: "2026-01-10", chickenQuantity: 30, kgTotal: 60, provider: null },
+    {
+      batchId: 1,
+      entryDate: "2026-01-13",
+      chickenQuantity: 50,
+      kgTotal: 100,
+      provider: "Proveedor A",
+    },
+    {
+      batchId: 2,
+      entryDate: "2026-01-10",
+      chickenQuantity: 30,
+      kgTotal: 60,
+      provider: null,
+    },
   ],
 };
 
@@ -60,7 +72,10 @@ describe("DeliveryDetailContent", () => {
   it("shows --- for null provider in batch", () => {
     const { container } = render(<DeliveryDetailContent detail={baseDetail} />);
     const cells = container.querySelectorAll("td");
-    const dashCells = Array.from(cells).filter((c) => c.textContent?.includes("---") || c.textContent?.includes("\u2014"));
+    const dashCells = Array.from(cells).filter(
+      (c) =>
+        c.textContent?.includes("---") || c.textContent?.includes("\u2014"),
+    );
     expect(dashCells.length).toBeGreaterThanOrEqual(1);
   });
 

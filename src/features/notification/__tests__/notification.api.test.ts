@@ -27,7 +27,9 @@ beforeEach(() => {
 describe("notificationApi", () => {
   describe("getSummary", () => {
     it("builds URL with branchIds as repeated params", async () => {
-      mockedHttp.get.mockResolvedValue({ data: { unreadCount: 3, recent: [] } });
+      mockedHttp.get.mockResolvedValue({
+        data: { unreadCount: 3, recent: [] },
+      });
 
       const result = await notificationApi.getSummary([1, 2, 3]);
 
@@ -87,9 +89,7 @@ describe("notificationApi", () => {
 
       await notificationApi.dismiss(7);
 
-      expect(mockedHttp.delete).toHaveBeenCalledWith(
-        "/api/v1/notifications/7",
-      );
+      expect(mockedHttp.delete).toHaveBeenCalledWith("/api/v1/notifications/7");
     });
   });
 
@@ -107,7 +107,12 @@ describe("notificationApi", () => {
 
   describe("getDetail", () => {
     it("returns data on success", async () => {
-      const detail = { alertType: "HIGH_WASTE", branchId: 1, branchName: "Test", detail: {} };
+      const detail = {
+        alertType: "HIGH_WASTE",
+        branchId: 1,
+        branchName: "Test",
+        detail: {},
+      };
       mockedHttp.get.mockResolvedValue({ data: detail });
 
       const result = await notificationApi.getDetail(5);
@@ -130,7 +135,10 @@ describe("notificationApi", () => {
   describe("getHistory", () => {
     it("builds URL with branchIds, page, and size", async () => {
       mockedHttp.get.mockResolvedValue({
-        data: { content: [], page: { size: 20, number: 0, totalElements: 0, totalPages: 0 } },
+        data: {
+          content: [],
+          page: { size: 20, number: 0, totalElements: 0, totalPages: 0 },
+        },
       });
 
       await notificationApi.getHistory([1, 2], 1, 10);

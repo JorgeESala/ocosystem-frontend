@@ -200,7 +200,9 @@ export const BranchesAccountingSummary = ({
                 <>
                   <TableRow
                     key={m.branchId}
-                    className={hasBreakdown ? "cursor-pointer hover:bg-gray-700/40" : ""}
+                    className={
+                      hasBreakdown ? "cursor-pointer hover:bg-gray-700/40" : ""
+                    }
                     onClick={() =>
                       hasBreakdown &&
                       setExpandedBranch(isExpanded ? null : m.branchId)
@@ -212,7 +214,10 @@ export const BranchesAccountingSummary = ({
                           (isExpanded ? (
                             <HiChevronUp size={14} className="text-gray-400" />
                           ) : (
-                            <HiChevronDown size={14} className="text-gray-400" />
+                            <HiChevronDown
+                              size={14}
+                              className="text-gray-400"
+                            />
                           ))}
                         {m.branchName}
                       </span>
@@ -259,15 +264,19 @@ export const BranchesAccountingSummary = ({
                                       {formatHumanDate(item.entryDate, "short")}
                                     </TableCell>
                                     <TableCell className="text-gray-300">
-                                      {item.initialQuantity.toLocaleString("es-MX")}
+                                      {item.initialQuantity.toLocaleString(
+                                        "es-MX",
+                                      )}
                                     </TableCell>
-                                    <TableCell className="text-blue-300 font-medium">
-                                      {item.remainingQuantity.toLocaleString("es-MX")}
+                                    <TableCell className="font-medium text-blue-300">
+                                      {item.remainingQuantity.toLocaleString(
+                                        "es-MX",
+                                      )}
                                     </TableCell>
                                     <TableCell className="text-gray-300">
                                       {formatMXN(item.totalCost)}
                                     </TableCell>
-                                    <TableCell className="text-blue-300 font-semibold">
+                                    <TableCell className="font-semibold text-blue-300">
                                       {formatMXN(item.availableCost)}
                                     </TableCell>
                                   </TableRow>

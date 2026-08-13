@@ -61,7 +61,10 @@ const addPercentages = (
 export const buildBranchExpenseSummary = (
   expenses: BranchExpenseResponseDTO[],
 ): BranchExpenseSummary => {
-  const totalAmount = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+  const totalAmount = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount || 0),
+    0,
+  );
   const expenseCount = expenses.length;
   const averageAmount = expenseCount > 0 ? totalAmount / expenseCount : 0;
 

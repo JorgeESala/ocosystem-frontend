@@ -6,7 +6,9 @@ import { useBranches } from "@/features/branches/branch/branch.queries";
 import { useBranchPerformance } from "../api/checklist.queries";
 import { useExcludedBranches } from "../api/excluded-branches.queries";
 import ChecklistGrid from "../components/ChecklistGrid";
-import ChecklistHeader, { type DateRangePreset } from "../components/ChecklistHeader";
+import ChecklistHeader, {
+  type DateRangePreset,
+} from "../components/ChecklistHeader";
 import PerformanceSummaryCard from "../components/PerformanceSummaryCard";
 import { toIsoDateString } from "../utils/week";
 import {
@@ -18,7 +20,10 @@ import {
 } from "../utils/week";
 import { useAuthRole } from "@/hooks/useAuthRole";
 
-const RANGE_PRESETS: Record<Exclude<DateRangePreset, "custom">, () => { from: Date; to: Date }> = {
+const RANGE_PRESETS: Record<
+  Exclude<DateRangePreset, "custom">,
+  () => { from: Date; to: Date }
+> = {
   "current-week": getCurrentWeek,
   "last-week": getLastWeek,
   "last-7": getLast7Days,
@@ -46,7 +51,7 @@ export default function ChecklistPage() {
   // Pending state - what the user is editing
   const [pendingFrom, setPendingFrom] = useState<Date>(initial.from);
   const [pendingTo, setPendingTo] = useState<Date>(clampToToday(initial.to));
-  
+
   const [preset, setPreset] = useState<DateRangePreset>("current-week");
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
   const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
@@ -77,9 +82,19 @@ export default function ChecklistPage() {
 
   // Compute unsaved days for the badge
   const unsavedDays = useMemo(() => {
-    const appliedDays = Math.floor((appliedTo.getTime() - appliedFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const pendingDays = Math.floor((pendingTo.getTime() - pendingFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return appliedDays !== pendingDays || appliedFrom.getTime() !== pendingFrom.getTime() || appliedTo.getTime() !== pendingTo.getTime();
+    const appliedDays =
+      Math.floor(
+        (appliedTo.getTime() - appliedFrom.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
+    const pendingDays =
+      Math.floor(
+        (pendingTo.getTime() - pendingFrom.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
+    return (
+      appliedDays !== pendingDays ||
+      appliedFrom.getTime() !== pendingFrom.getTime() ||
+      appliedTo.getTime() !== pendingTo.getTime()
+    );
   }, [appliedFrom, appliedTo, pendingFrom, pendingTo]);
 
   const query = useBranchPerformance({
@@ -128,7 +143,8 @@ export default function ChecklistPage() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Desempeño</h1>
           <p className="text-sm text-slate-400">
-            Resultado por sucursal y por todas las sucursales a partir de las tareas y ventas registradas.
+            Resultado por sucursal y por todas las sucursales a partir de las
+            tareas y ventas registradas.
           </p>
         </div>
         <div className="flex gap-2">
@@ -174,7 +190,8 @@ export default function ChecklistPage() {
           color="warning"
           className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
         >
-          No se pudo refrescar el resultado. Se muestra la última respuesta disponible.
+          No se pudo refrescar el resultado. Se muestra la última respuesta
+          disponible.
         </Alert>
       )}
 
@@ -194,8 +211,10 @@ export default function ChecklistPage() {
           No hay sucursales registradas.
         </div>
       ) : query.data &&
-        (query.data.branches.every((b) => (b.metricResults ?? []).every((m) => !m.evaluable)) &&
-          query.data.summary.evaluableBranches === 0) ? (
+        query.data.branches.every((b) =>
+          (b.metricResults ?? []).every((m) => !m.evaluable),
+        ) &&
+        query.data.summary.evaluableBranches === 0 ? (
         <Alert
           color="info"
           className="border border-blue-900/40 bg-blue-950/40 text-blue-100"
@@ -204,8 +223,8 @@ export default function ChecklistPage() {
           fechas esperadas para empezar a medir el resultado.
         </Alert>
       ) : (
-        <ChecklistGrid 
-          branches={query.data?.branches ?? []} 
+        <ChecklistGrid
+          branches={query.data?.branches ?? []}
           expandedBranchId={expandedBranchId}
           onToggleRow={handleToggleRow}
         />

@@ -29,7 +29,9 @@ interface SummaryUpdateEvent {
 export function useNotificationStream(branchIds: number[]) {
   const queryClient = useQueryClient();
   const abortControllerRef = useRef<AbortController | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const reconnectAttemptsRef = useRef(0);
   const branchIdsKey = branchIds.slice().sort().join(",");
   const [isConnected, setIsConnected] = useState(false);
@@ -106,7 +108,11 @@ export function useNotificationStream(branchIds: number[]) {
 
             queryClient.setQueryData(
               notificationKeys.summary(branchIds),
-              (old: { unreadCount: number; recent: NotificationDTO[] } | undefined) => {
+              (
+                old:
+                  | { unreadCount: number; recent: NotificationDTO[] }
+                  | undefined,
+              ) => {
                 if (!old) return old;
                 const exists = old.recent.some((n) => n.id === notification.id);
                 if (exists) {
@@ -142,7 +148,11 @@ export function useNotificationStream(branchIds: number[]) {
 
             queryClient.setQueryData(
               notificationKeys.summary(branchIds),
-              (old: { unreadCount: number; recent: NotificationDTO[] } | undefined) => {
+              (
+                old:
+                  | { unreadCount: number; recent: NotificationDTO[] }
+                  | undefined,
+              ) => {
                 if (!old) return old;
                 return {
                   unreadCount: Math.max(0, old.unreadCount - 1),
@@ -164,7 +174,11 @@ export function useNotificationStream(branchIds: number[]) {
             const data: SummaryUpdateEvent = JSON.parse(event.data);
             queryClient.setQueryData(
               notificationKeys.summary(branchIds),
-              (old: { unreadCount: number; recent: NotificationDTO[] } | undefined) => {
+              (
+                old:
+                  | { unreadCount: number; recent: NotificationDTO[] }
+                  | undefined,
+              ) => {
                 if (!old) return old;
                 return { ...old, unreadCount: data.unreadCount };
               },

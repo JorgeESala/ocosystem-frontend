@@ -20,8 +20,26 @@ const baseDetail = {
   thresholdWarning: 240,
   thresholdCritical: 300,
   sales: [
-    { saleId: 100, saleDate: "2026-01-15", clientName: "Cliente A", employeeId: null, quantity: 10, kgTotal: 35, kgGut: 1.2, saleTotal: 500 },
-    { saleId: 101, saleDate: "2026-01-15", clientName: "Cliente B", employeeId: 5, quantity: 20, kgTotal: 52, kgGut: 2.5, saleTotal: 1200 },
+    {
+      saleId: 100,
+      saleDate: "2026-01-15",
+      clientName: "Cliente A",
+      employeeId: null,
+      quantity: 10,
+      kgTotal: 35,
+      kgGut: 1.2,
+      saleTotal: 500,
+    },
+    {
+      saleId: 101,
+      saleDate: "2026-01-15",
+      clientName: "Cliente B",
+      employeeId: 5,
+      quantity: 20,
+      kgTotal: 52,
+      kgGut: 2.5,
+      saleTotal: 1200,
+    },
   ],
 };
 
@@ -53,7 +71,11 @@ describe("WasteDetailContent", () => {
   });
 
   it("renders merma color as red when above critical threshold", () => {
-    const detail = { ...baseDetail, mermaConTripa: 350, thresholdCritical: 300 };
+    const detail = {
+      ...baseDetail,
+      mermaConTripa: 350,
+      thresholdCritical: 300,
+    };
     render(<WasteDetailContent detail={detail} />);
     const mermaEls = screen.getAllByText("350 g/ave");
     expect(mermaEls.length).toBeGreaterThanOrEqual(1);
@@ -61,7 +83,12 @@ describe("WasteDetailContent", () => {
   });
 
   it("renders merma color as yellow when between warning and critical", () => {
-    const detail = { ...baseDetail, mermaConTripa: 260, thresholdWarning: 240, thresholdCritical: 300 };
+    const detail = {
+      ...baseDetail,
+      mermaConTripa: 260,
+      thresholdWarning: 240,
+      thresholdCritical: 300,
+    };
     render(<WasteDetailContent detail={detail} />);
     const mermaEls = screen.getAllByText("260 g/ave");
     expect(mermaEls.length).toBeGreaterThanOrEqual(1);
@@ -69,7 +96,12 @@ describe("WasteDetailContent", () => {
   });
 
   it("renders merma color as green when below warning", () => {
-    const detail = { ...baseDetail, mermaConTripa: 200, thresholdWarning: 240, thresholdCritical: 300 };
+    const detail = {
+      ...baseDetail,
+      mermaConTripa: 200,
+      thresholdWarning: 240,
+      thresholdCritical: 300,
+    };
     render(<WasteDetailContent detail={detail} />);
     const mermaEls = screen.getAllByText("200 g/ave");
     expect(mermaEls.length).toBeGreaterThanOrEqual(1);

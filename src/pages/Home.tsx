@@ -76,7 +76,11 @@ function MultiBuHome({
           return (
             <Link
               key={b.slug}
-              to={b.hasTasks ? `/business/${b.slug}/mis-tareas` : `/business/${b.slug}`}
+              to={
+                b.hasTasks
+                  ? `/business/${b.slug}/mis-tareas`
+                  : `/business/${b.slug}`
+              }
               className="flex flex-col items-center justify-center rounded-xl bg-gray-800 p-6 shadow-lg transition hover:bg-gray-700"
             >
               <Icon className="mb-3 text-4xl text-blue-400" />

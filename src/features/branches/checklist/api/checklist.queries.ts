@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { checklistApi } from "./checklist.api";
 import { checklistKeys } from "./checklist.keys";
-import type { ChecklistResponse, PerformanceQueryParams } from "../types/checklist.types";
+import type {
+  ChecklistResponse,
+  PerformanceQueryParams,
+} from "../types/checklist.types";
 
 interface UseDailyChecklistParams {
   date: string;
@@ -39,7 +42,12 @@ export const useBranchPerformance = ({
   useQuery({
     queryKey: checklistKeys.performance(from, to, branchIds ?? [], includeDays),
     queryFn: () => {
-      const params: PerformanceQueryParams = { from, to, branchIds, includeDays };
+      const params: PerformanceQueryParams = {
+        from,
+        to,
+        branchIds,
+        includeDays,
+      };
       return checklistApi.getPerformance(params);
     },
     enabled,

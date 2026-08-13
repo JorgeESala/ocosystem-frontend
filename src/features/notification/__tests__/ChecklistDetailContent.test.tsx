@@ -7,9 +7,30 @@ const baseDetail = {
   completedTasks: 3,
   totalTasks: 5,
   tasks: [
-    { taskId: "T1", label: "Subir reporte", status: "DONE", detail: "Cargado a las 14:30", late: null, optional: null },
-    { taskId: "T2", label: "Verificar inventario", status: "EMPTY", detail: "Pendiente", late: true, optional: null },
-    { taskId: "T3", label: "Llamar proveedor", status: "NOT_APPLICABLE", detail: "No aplica hoy", late: null, optional: true },
+    {
+      taskId: "T1",
+      label: "Subir reporte",
+      status: "DONE",
+      detail: "Cargado a las 14:30",
+      late: null,
+      optional: null,
+    },
+    {
+      taskId: "T2",
+      label: "Verificar inventario",
+      status: "EMPTY",
+      detail: "Pendiente",
+      late: true,
+      optional: null,
+    },
+    {
+      taskId: "T3",
+      label: "Llamar proveedor",
+      status: "NOT_APPLICABLE",
+      detail: "No aplica hoy",
+      late: null,
+      optional: true,
+    },
   ],
 };
 
@@ -20,7 +41,9 @@ describe("ChecklistDetailContent", () => {
   });
 
   it("renders progress bar with correct width", () => {
-    const { container } = render(<ChecklistDetailContent detail={baseDetail} />);
+    const { container } = render(
+      <ChecklistDetailContent detail={baseDetail} />,
+    );
     const bar = container.querySelector(".bg-green-500");
     expect(bar).toBeInTheDocument();
     expect(bar).toHaveStyle({ width: "60%" });
@@ -58,7 +81,12 @@ describe("ChecklistDetailContent", () => {
   });
 
   it("renders 0% width when totalTasks is 0", () => {
-    const detail = { ...baseDetail, completedTasks: 0, totalTasks: 0, tasks: [] };
+    const detail = {
+      ...baseDetail,
+      completedTasks: 0,
+      totalTasks: 0,
+      tasks: [],
+    };
     const { container } = render(<ChecklistDetailContent detail={detail} />);
     const bar = container.querySelector(".bg-green-500");
     expect(bar).toHaveStyle({ width: "0%" });

@@ -68,18 +68,20 @@ export function WasteDetailContent({ detail }: { detail: unknown }) {
             <Table>
               <TableHead>
                 <TableHeadCell>Fecha</TableHeadCell>
-                <TableHeadCell className="text-right">Merma g/ave</TableHeadCell>
+                <TableHeadCell className="text-right">
+                  Merma g/ave
+                </TableHeadCell>
                 <TableHeadCell className="text-right">Cant.</TableHeadCell>
-                <TableHeadCell className="text-right">Kg vendidos</TableHeadCell>
+                <TableHeadCell className="text-right">
+                  Kg vendidos
+                </TableHeadCell>
                 <TableHeadCell className="text-right">Tripa (kg)</TableHeadCell>
                 <TableHeadCell className="text-right">Total</TableHeadCell>
               </TableHead>
               <TableBody>
                 {d.sales.map((s) => {
                   const avgReceivedWeight =
-                    d.chickensReceived > 0
-                      ? d.kgTotal / d.chickensReceived
-                      : 0;
+                    d.chickensReceived > 0 ? d.kgTotal / d.chickensReceived : 0;
                   const avgSoldWeight =
                     s.quantity > 0 && s.kgTotal > 0
                       ? s.kgTotal / s.quantity
@@ -90,16 +92,20 @@ export function WasteDetailContent({ detail }: { detail: unknown }) {
                       : null;
                   return (
                     <TableRow key={s.saleId}>
-                      <TableCell className="text-xs whitespace-nowrap">{s.saleDate}</TableCell>
-                      <TableCell className={`text-right text-xs font-medium ${
-                        mermaPerSale !== null
-                          ? mermaPerSale > d.thresholdCritical
-                            ? "text-red-400"
-                            : mermaPerSale > d.thresholdWarning
-                              ? "text-amber-400"
-                              : "text-green-400"
-                          : "text-gray-500"
-                      }`}>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {s.saleDate}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right text-xs font-medium ${
+                          mermaPerSale !== null
+                            ? mermaPerSale > d.thresholdCritical
+                              ? "text-red-400"
+                              : mermaPerSale > d.thresholdWarning
+                                ? "text-amber-400"
+                                : "text-green-400"
+                            : "text-gray-500"
+                        }`}
+                      >
                         {mermaPerSale !== null ? mermaPerSale : "—"}
                       </TableCell>
                       <TableCell className="text-right text-xs">

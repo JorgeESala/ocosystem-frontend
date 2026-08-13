@@ -3,7 +3,10 @@ import { Button, Card, Label, Spinner, TextInput } from "flowbite-react";
 import { Link, useParams } from "react-router-dom";
 import { HiArrowLeft, HiCheck } from "react-icons/hi";
 import { Alert } from "flowbite-react";
-import { useMetricWeights, useUpdateMetricWeights } from "../api/metric-weights.queries";
+import {
+  useMetricWeights,
+  useUpdateMetricWeights,
+} from "../api/metric-weights.queries";
 import { metricRegistry } from "../config/metricRegistry";
 import type { MetricWeights } from "../types/metric-weights.types";
 
@@ -30,7 +33,9 @@ export default function MetricWeightsPage() {
 
   if (isError) {
     return (
-      <Alert color="failure">No se pudieron cargar las importancias de los indicadores.</Alert>
+      <Alert color="failure">
+        No se pudieron cargar las importancias de los indicadores.
+      </Alert>
     );
   }
 
@@ -42,7 +47,9 @@ export default function MetricWeightsPage() {
     const parsed = Number(raw);
     setDraft({
       weights: draft.weights.map((w) =>
-        w.metricId === metricId ? { ...w, weight: Number.isFinite(parsed) ? parsed : 0 } : w,
+        w.metricId === metricId
+          ? { ...w, weight: Number.isFinite(parsed) ? parsed : 0 }
+          : w,
       ),
     });
   };
@@ -57,9 +64,12 @@ export default function MetricWeightsPage() {
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Importancia de cada indicador</h1>
+          <h1 className="text-2xl font-semibold text-white">
+            Importancia de cada indicador
+          </h1>
           <p className="text-sm text-slate-400">
-            Ajusta cuánto pesa cada indicador en el puntaje general de las sucursales.
+            Ajusta cuánto pesa cada indicador en el puntaje general de las
+            sucursales.
           </p>
         </div>
         <Link to={`/business/${slug}/checklist`}>
@@ -80,7 +90,9 @@ export default function MetricWeightsPage() {
                 key={w.metricId}
                 className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-3"
               >
-                {Icon && <Icon aria-hidden className="text-base text-slate-300" />}
+                {Icon && (
+                  <Icon aria-hidden className="text-base text-slate-300" />
+                )}
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-white">
                     {meta?.longLabel ?? w.metricId}
@@ -100,7 +112,9 @@ export default function MetricWeightsPage() {
                     min={0}
                     max={1}
                     value={w.weight}
-                    onChange={(e) => handleWeightChange(w.metricId, e.target.value)}
+                    onChange={(e) =>
+                      handleWeightChange(w.metricId, e.target.value)
+                    }
                   />
                 </div>
               </div>
@@ -112,18 +126,15 @@ export default function MetricWeightsPage() {
             Los valores son decimales entre 0 y 1. El agregador usa el promedio
             ponderado para combinar los indicadores.
           </p>
-          <Button
-            color="blue"
-            onClick={handleSave}
-            disabled={update.isPending}
-          >
+          <Button color="blue" onClick={handleSave} disabled={update.isPending}>
             <HiCheck aria-hidden className="mr-2 h-4 w-4" />
             Guardar importancias
           </Button>
         </div>
         {update.isError && (
           <Alert color="failure" className="mt-3">
-            No se pudieron guardar las importancias: {(update.error as Error)?.message ?? "error"}
+            No se pudieron guardar las importancias:{" "}
+            {(update.error as Error)?.message ?? "error"}
           </Alert>
         )}
         {update.isSuccess && (

@@ -28,9 +28,8 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
   onClose,
 }) => {
   const isEdit = routeIdToEdit !== null;
-  const { data: editingRoute, isLoading: loadingRoute } = useRoute(
-    routeIdToEdit,
-  );
+  const { data: editingRoute, isLoading: loadingRoute } =
+    useRoute(routeIdToEdit);
 
   const [form, setForm] = useState<RouteFormState>(emptyRouteForm);
   const [error, setError] = useState<string | null>(null);
@@ -91,9 +90,7 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
               <TextInput
                 id="route-name"
                 value={form.name}
-                onChange={(e) =>
-                  setForm({ name: e.target.value })
-                }
+                onChange={(e) => setForm({ name: e.target.value })}
                 placeholder="Ej. Ruta Centro"
                 required
                 disabled={isSaving}

@@ -30,7 +30,9 @@ export default function BranchExpensesTable({
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
       <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
         <div>
-          <h3 className="text-base font-semibold text-white">Detalle de gastos</h3>
+          <h3 className="text-base font-semibold text-white">
+            Detalle de gastos
+          </h3>
           <p className="text-sm text-slate-400">
             Ordenado para revision rapida y edicion directa.
           </p>
@@ -42,15 +44,15 @@ export default function BranchExpensesTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse text-left">
-          <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-slate-400">
+          <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
               <th className="px-5 py-3 font-semibold">Fecha</th>
               <th className="px-5 py-3 font-semibold">Sucursal</th>
               <th className="px-5 py-3 font-semibold">Tipo</th>
               <th className="px-5 py-3 font-semibold">Unidad</th>
               <th className="px-5 py-3 font-semibold">Motivo</th>
-              <th className="px-5 py-3 font-semibold text-right">Monto</th>
-              <th className="px-5 py-3 font-semibold text-right">Accion</th>
+              <th className="px-5 py-3 text-right font-semibold">Monto</th>
+              <th className="px-5 py-3 text-right font-semibold">Accion</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800 bg-slate-950/40">
@@ -60,7 +62,7 @@ export default function BranchExpensesTable({
                 onClick={() => onSelect?.(expense)}
                 className="group cursor-pointer transition hover:bg-slate-900/50"
               >
-                <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-300">
+                <td className="px-5 py-4 text-sm whitespace-nowrap text-slate-300">
                   {formatHumanDate(expense.date, "short")}
                 </td>
                 <td className="px-5 py-4">
@@ -75,13 +77,15 @@ export default function BranchExpensesTable({
                 </td>
                 <td className="px-5 py-4">
                   <Badge color="success" className="inline-flex">
-                    {expense.businessUnitCategoryName ?? expense.businessUnitName ?? "Sin unidad"}
+                    {expense.businessUnitCategoryName ??
+                      expense.businessUnitName ??
+                      "Sin unidad"}
                   </Badge>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-200">
                   <div className="max-w-[18rem] truncate">{expense.reason}</div>
                 </td>
-                <td className="whitespace-nowrap px-5 py-4 text-right font-mono text-base font-semibold text-white">
+                <td className="px-5 py-4 text-right font-mono text-base font-semibold whitespace-nowrap text-white">
                   {formatCurrency(expense.amount)}
                 </td>
                 <td className="px-5 py-4 text-right">

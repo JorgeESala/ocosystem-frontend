@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Spinner } from "flowbite-react";
 import { HiPencil, HiTrash } from "react-icons/hi";
-import {
-  useDeleteRoute,
-  useRoutes,
-} from "@/core/api/route/routes.queries";
+import { useDeleteRoute, useRoutes } from "@/core/api/route/routes.queries";
 import type { Route } from "@/core/api/types";
 import { RouteFormModal } from "./RouteFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
@@ -70,7 +67,7 @@ export const RoutesTab: React.FC = () => {
           </div>
         ) : (
           <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-slate-900/80 text-xs uppercase tracking-[0.18em] text-gray-400">
+            <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-gray-400 uppercase">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3 text-right">Acciones</th>

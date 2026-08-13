@@ -39,7 +39,9 @@ export default function BranchExpensesList({
               <Badge color="gray">{expense.branchName}</Badge>
               <Badge color="info">{expense.expenseCategoryName}</Badge>
               <Badge color="success">
-                {expense.businessUnitCategoryName ?? expense.businessUnitName ?? "Unidad sin nombre"}
+                {expense.businessUnitCategoryName ??
+                  expense.businessUnitName ??
+                  "Unidad sin nombre"}
               </Badge>
             </div>
 

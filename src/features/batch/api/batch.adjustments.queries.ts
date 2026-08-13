@@ -47,14 +47,13 @@ export const useUpdateBatchAdjustment = () => {
     },
 
     onError: (error: unknown) => {
-      const message =
-        axios.isAxiosError(error)
-          ? (error.response?.data as any)?.message ??
-            error.response?.statusText ??
-            error.message
-          : error instanceof Error
-            ? error.message
-            : "No se pudo guardar la baja";
+      const message = axios.isAxiosError(error)
+        ? ((error.response?.data as any)?.message ??
+          error.response?.statusText ??
+          error.message)
+        : error instanceof Error
+          ? error.message
+          : "No se pudo guardar la baja";
       throw new Error(message);
     },
   });
