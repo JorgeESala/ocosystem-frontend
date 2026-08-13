@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import { cloneElement } from "react";
-import type { ReactNode } from "react";
 import {
   AnomalyPanel,
   AnomalyTooltip,
@@ -11,17 +9,8 @@ import type { DailySalesDTO } from "../types";
 
 vi.mock("recharts", async () => {
   const actual = await vi.importActual("recharts");
-  return {
-    ...actual,
-    ResponsiveContainer: ({ children }: { children: ReactNode }) => (
-      <div data-testid="responsive-container">
-        {cloneElement(
-          children as React.ReactElement<{ width?: number; height?: number }>,
-          { width: 600, height: 300 },
-        )}
-      </div>
-    ),
-  };
+  const { MockResponsiveContainer } = await import("@/test/rechartsMock");
+  return { ...actual, ResponsiveContainer: MockResponsiveContainer };
 });
 
 const day = (

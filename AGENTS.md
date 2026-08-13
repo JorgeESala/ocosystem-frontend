@@ -150,6 +150,18 @@ comments"`). Don't add code comments, JSDoc, or file headers.
    instance from `@/shared/api/http`.
 8. **Backend CORS + `withCredentials: true`** is set on the axios instance —
    don't remove it.
+9. **Testing charts**: in chart tests, mock `ResponsiveContainer` with
+   `MockResponsiveContainer` from `@/test/rechartsMock`. flowbite and recharts
+   both export `Tooltip` — alias flowbite's (`Tooltip as FlowbiteTooltip`).
+   flowbite tooltip content isn't hover-testable in jsdom, so export the
+   content as its own component (see `AnomalyHelpContent`).
+10. **Windows PowerShell corrupts UTF-8** in this repo when writing source
+    files (happened twice, e.g. `→` → `â†'`). Never write `.ts`/`.tsx` files
+    via PowerShell; use the editor.
+11. **Branches sales data model**: the sales-analytics API returns every
+    calendar day in the range; a branch missing from that day's map means "no
+    report that day" (≠ zero sales). Anomaly baselines use the median of the
+    same weekday (min 3 samples, excluding the day itself).
 
 ## Typecheck / build before pushing
 
@@ -162,8 +174,21 @@ npm run test
 npm run build
 ```
 
-The build runs `tsc -b && vite build`, so the explicit `tsc --noEmit` is a
-faster pre-check.
+The build runs `tsc -b && vite build` and is the authoritative typecheck —
+project-references mode catches extra errors that plain `tsc --noEmit` misses
+(e.g. recharts prop types).
+
+Caveats:
+
+- `npm run lint` passes with ~160 pre-existing warnings (`no-explicit-any`,
+  `exhaustive-deps`). They are expected; don't mass-fix them, keep new code
+  clean.
+- `npm run test` can hang on some machines in `src/features/batch`
+  (orchestration-level, not a code bug). Workaround: run suites per folder,
+  e.g. `npx vitest run src/features/notification src/features/sales-analytics`.
+- Prettier is clean repo-wide: `npm run format` and `npx prettier --check .`
+  are real gates. `.flowbite-react/` is prettier-ignored because it is
+  regenerated on every run.
 
 ## Git
 

@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
-import {
-  RangeSlider,
-  ToggleSwitch,
-  Tooltip as FlowbiteTooltip,
-} from "flowbite-react";
+import { ToggleSwitch, Tooltip as FlowbiteTooltip } from "flowbite-react";
 import { HiInformationCircle } from "react-icons/hi";
+import { NumberRangeSlider } from "@/components/NumberRangeSlider";
 import {
   LineChart,
   Line,
@@ -314,13 +311,13 @@ export function AnomalyPanel({
           />
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Umbral</span>
-            <RangeSlider
+            <NumberRangeSlider
               aria-label="Umbral de anomalía"
               min={10}
               max={50}
               step={5}
               value={thresholdPct}
-              onChange={(e) => setThresholdPct(Number(e.target.value))}
+              onChange={(value) => setThresholdPct(value)}
               className="w-32"
               sizing="sm"
             />
