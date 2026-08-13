@@ -331,6 +331,92 @@ export function AnomalyPanel({
         </div>
       </div>
 
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={series}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <XAxis dataKey="label" stroke="#9CA3AF" fontSize={12} />
+          <YAxis
+            stroke="#9CA3AF"
+            fontSize={12}
+            label={{
+              value: unitLabel,
+              angle: -90,
+              position: "insideLeft",
+              style: { fill: "#9CA3AF", fontSize: 11 },
+            }}
+          />
+          <Tooltip content={<AnomalyTooltip />} />
+          <Legend content={legendContent} />
+          {showDetails &&
+            branchNames.map((name) => {
+              const color = BRANCH_COLORS[name] ?? "#999";
+              return (
+                <Line
+                  key={`${name}.hi`}
+                  type="monotone"
+                  dataKey={`${name}.hi`}
+                  stroke={color}
+                  strokeOpacity={0.35}
+                  strokeWidth={1.25}
+                  strokeDasharray="4 3"
+                  dot={false}
+                />
+              );
+            })}
+          {showDetails &&
+            branchNames.map((name) => {
+              const color = BRANCH_COLORS[name] ?? "#999";
+              return (
+                <Line
+                  key={`${name}.lo`}
+                  type="monotone"
+                  dataKey={`${name}.lo`}
+                  stroke={color}
+                  strokeOpacity={0.35}
+                  strokeWidth={1.25}
+                  strokeDasharray="4 3"
+                  dot={false}
+                />
+              );
+            })}
+          {showDetails &&
+            branchNames.map((name) => {
+              const color = BRANCH_COLORS[name] ?? "#999";
+              return (
+                <Line
+                  key={`${name}.exp`}
+                  type="monotone"
+                  dataKey={`${name}.exp`}
+                  stroke={color}
+                  strokeOpacity={0.65}
+                  strokeWidth={1.5}
+                  strokeDasharray="5 4"
+                  dot={false}
+                />
+              );
+            })}
+          {branchNames.map((name) => (
+            <Line
+              key={name}
+              type="monotone"
+              dataKey={name}
+              stroke={BRANCH_COLORS[name] ?? "#999"}
+              strokeWidth={2}
+              dot={
+                showDetails
+                  ? (props) => (
+                      <AnomalyDot
+                        {...props}
+                        anomalyDirections={anomalyDirections}
+                      />
+                    )
+                  : false
+              }
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+
       {anomalies.length === 0 ? (
         <div className="py-2 text-center text-sm text-emerald-400">
           Sin anomalías en el periodo
@@ -373,92 +459,6 @@ export function AnomalyPanel({
           </div>
         </div>
       )}
-
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={series}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-          <XAxis dataKey="label" stroke="#9CA3AF" fontSize={12} />
-          <YAxis
-            stroke="#9CA3AF"
-            fontSize={12}
-            label={{
-              value: unitLabel,
-              angle: -90,
-              position: "insideLeft",
-              style: { fill: "#9CA3AF", fontSize: 11 },
-            }}
-          />
-          <Tooltip content={<AnomalyTooltip />} />
-          <Legend content={legendContent} />
-          {showDetails &&
-            branchNames.map((name) => {
-              const color = BRANCH_COLORS[name] ?? "#999";
-              return (
-                <Line
-                  key={`${name}.hi`}
-                  type="monotone"
-                  dataKey={`${name}.hi`}
-                  stroke={color}
-                  strokeOpacity={0.15}
-                  strokeWidth={1}
-                  strokeDasharray="3 3"
-                  dot={false}
-                />
-              );
-            })}
-          {showDetails &&
-            branchNames.map((name) => {
-              const color = BRANCH_COLORS[name] ?? "#999";
-              return (
-                <Line
-                  key={`${name}.lo`}
-                  type="monotone"
-                  dataKey={`${name}.lo`}
-                  stroke={color}
-                  strokeOpacity={0.15}
-                  strokeWidth={1}
-                  strokeDasharray="3 3"
-                  dot={false}
-                />
-              );
-            })}
-          {showDetails &&
-            branchNames.map((name) => {
-              const color = BRANCH_COLORS[name] ?? "#999";
-              return (
-                <Line
-                  key={`${name}.exp`}
-                  type="monotone"
-                  dataKey={`${name}.exp`}
-                  stroke={color}
-                  strokeOpacity={0.4}
-                  strokeWidth={1}
-                  strokeDasharray="5 5"
-                  dot={false}
-                />
-              );
-            })}
-          {branchNames.map((name) => (
-            <Line
-              key={name}
-              type="monotone"
-              dataKey={name}
-              stroke={BRANCH_COLORS[name] ?? "#999"}
-              strokeWidth={2}
-              dot={
-                showDetails
-                  ? (props) => (
-                      <AnomalyDot
-                        {...props}
-                        anomalyDirections={anomalyDirections}
-                      />
-                    )
-                  : false
-              }
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
     </div>
   );
 }

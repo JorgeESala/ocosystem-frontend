@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { cloneElement } from "react";
 import type { ReactNode } from "react";
-import { WeekProfilePanel } from "../components/WeekProfilePanel";
+import {
+  WeekProfilePanel,
+  WeekChipHelpContent,
+  WeekTooltip,
+} from "../components/WeekProfilePanel";
 import type { DailySalesDTO } from "../types";
 
 vi.mock("recharts", async () => {
@@ -51,12 +55,61 @@ const bothBranches = [
   day("2026-08-01", { Roneli: 140, Saban: 80 }),
 ];
 
+const morningData = [
+  day("2026-07-20", { Roneli: 100 }),
+  day("2026-07-21", { Roneli: 110 }),
+  day("2026-07-22", { Roneli: 120 }),
+  day("2026-07-27", { Roneli: 130 }),
+  day("2026-07-28", { Roneli: 140 }),
+  day("2026-07-29"),
+];
+
+const prevGapData = [
+  day("2026-07-20", { Roneli: 100 }),
+  day("2026-07-27", { Roneli: 130 }),
+  day("2026-07-28", { Roneli: 140 }),
+];
+
+const fullWeeks = [
+  day("2026-07-20", { Roneli: 100 }),
+  day("2026-07-21", { Roneli: 110 }),
+  day("2026-07-22", { Roneli: 120 }),
+  day("2026-07-23", { Roneli: 130 }),
+  day("2026-07-24", { Roneli: 140 }),
+  day("2026-07-25", { Roneli: 150 }),
+  day("2026-07-26", { Roneli: 160 }),
+  day("2026-07-27", { Roneli: 170 }),
+  day("2026-07-28", { Roneli: 180 }),
+  day("2026-07-29", { Roneli: 190 }),
+  day("2026-07-30", { Roneli: 200 }),
+  day("2026-07-31", { Roneli: 210 }),
+  day("2026-08-01", { Roneli: 220 }),
+  day("2026-08-02", { Roneli: 230 }),
+];
+
 describe("WeekProfilePanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders a KPI chip per selected branch with like-for-like change", () => {
+  it("renders a KPI chip with a fair comparison before the report upload", () => {
+    render(
+      <WeekProfilePanel
+        dailySales={morningData}
+        activeProduct="chicken"
+        branches={branches}
+        selectedBranchIds={[1]}
+      />,
+    );
+
+    const chip = screen.getByTestId("week-total-Roneli");
+    expect(chip).toHaveTextContent("270");
+    expect(chip).toHaveTextContent("(hoy sin reporte)");
+    expect(chip).toHaveTextContent("+28.6% vs la semana pasada");
+    expect(chip).toHaveTextContent("(210)");
+  });
+
+  it("shows the partial marker when data exists up to today", () => {
     render(
       <WeekProfilePanel
         dailySales={roneliTwoWeeks}
@@ -67,30 +120,40 @@ describe("WeekProfilePanel", () => {
     );
 
     const chip = screen.getByTestId("week-total-Roneli");
-    expect(chip).toHaveTextContent("270");
     expect(chip).toHaveTextContent("(hasta hoy)");
-    expect(chip).toHaveTextContent("+28.6% vs misma sem. anterior");
-    expect(chip).toHaveTextContent("(210)");
+    expect(chip).not.toHaveTextContent("hoy sin reporte");
+  });
+
+  it("keeps the chip clean without inline missing-day warnings", () => {
+    render(
+      <WeekProfilePanel
+        dailySales={prevGapData}
+        activeProduct="chicken"
+        branches={branches}
+        selectedBranchIds={[1]}
+      />,
+    );
+
+    const chip = screen.getByTestId("week-total-Roneli");
+    expect(chip).not.toHaveTextContent("falta");
+  });
+
+  it("explains missing previous days in the chip tooltip content", () => {
+    render(
+      <WeekChipHelpContent
+        windowDays={2}
+        missingToday={false}
+        missingPrevDays={1}
+      />,
+    );
+
+    expect(
+      screen.getByText("Falta 1 día de la semana pasada."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 días comparados")).toBeInTheDocument();
   });
 
   it("omits the partial-week marker when the range ends on Sunday", () => {
-    const fullWeeks = [
-      day("2026-07-20", { Roneli: 100 }),
-      day("2026-07-21", { Roneli: 110 }),
-      day("2026-07-22", { Roneli: 120 }),
-      day("2026-07-23", { Roneli: 130 }),
-      day("2026-07-24", { Roneli: 140 }),
-      day("2026-07-25", { Roneli: 150 }),
-      day("2026-07-26", { Roneli: 160 }),
-      day("2026-07-27", { Roneli: 170 }),
-      day("2026-07-28", { Roneli: 180 }),
-      day("2026-07-29", { Roneli: 190 }),
-      day("2026-07-30", { Roneli: 200 }),
-      day("2026-07-31", { Roneli: 210 }),
-      day("2026-08-01", { Roneli: 220 }),
-      day("2026-08-02", { Roneli: 230 }),
-    ];
-
     render(
       <WeekProfilePanel
         dailySales={fullWeeks}
@@ -103,7 +166,7 @@ describe("WeekProfilePanel", () => {
     const chip = screen.getByTestId("week-total-Roneli");
     expect(chip).toHaveTextContent("1400");
     expect(chip).not.toHaveTextContent("hasta hoy");
-    expect(chip).toHaveTextContent("+53.8% vs misma sem. anterior");
+    expect(chip).toHaveTextContent("+53.8% vs la semana pasada");
     expect(chip).toHaveTextContent("(910)");
   });
 
@@ -201,6 +264,25 @@ describe("WeekProfilePanel", () => {
     expect(chip).toHaveTextContent("15");
   });
 
+  it("defaults to showing two weeks and lets the manager show more", () => {
+    render(
+      <WeekProfilePanel
+        dailySales={fullWeeks}
+        activeProduct="chicken"
+        branches={branches}
+        selectedBranchIds={[1]}
+      />,
+    );
+
+    const select = screen.getByLabelText("Semanas a mostrar");
+    expect(select).toHaveValue("2");
+
+    fireEvent.change(select, { target: { value: "4" } });
+
+    expect(select).toHaveValue("4");
+    expect(screen.getByTestId("responsive-container")).toBeInTheDocument();
+  });
+
   it("renders the chart inside the panel", () => {
     render(
       <WeekProfilePanel
@@ -212,11 +294,40 @@ describe("WeekProfilePanel", () => {
     );
 
     const panel = screen
-      .getByText("Comparación semanal")
+      .getByText("¿Cómo va la semana?")
       .closest(".rounded-xl");
     expect(panel).not.toBeNull();
     expect(
       within(panel as HTMLElement).getByTestId("responsive-container"),
     ).toBeInTheDocument();
+  });
+
+  it("shows the actual date of the hovered day in the tooltip", () => {
+    const { container } = render(
+      <WeekTooltip
+        active
+        label="Mié"
+        payload={[
+          { dataKey: "Roneli|2026-07-20", value: 120 },
+          { dataKey: "Saban|2026-07-27", value: 60 },
+        ]}
+      />,
+    );
+
+    expect(container).toHaveTextContent("Roneli · 22 jul");
+    expect(container).toHaveTextContent("Saban · 29 jul");
+    expect(container).toHaveTextContent("120");
+  });
+
+  it("maps Sunday to the end of the week in the tooltip", () => {
+    const { container } = render(
+      <WeekTooltip
+        active
+        label="Dom"
+        payload={[{ dataKey: "Roneli|2026-07-20", value: 160 }]}
+      />,
+    );
+
+    expect(container).toHaveTextContent("Roneli · 26 jul");
   });
 });

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildWeekProfiles, computeWeekTotals } from "../utils/weekProfile";
+import {
+  buildWeekProfiles,
+  computeWeekTotals,
+  filterDrawableProfiles,
+} from "../utils/weekProfile";
 import type { DailySalesDTO } from "../types";
 
 const day = (
@@ -126,13 +130,109 @@ describe("buildWeekProfiles", () => {
   });
 });
 
+describe("filterDrawableProfiles", () => {
+  const rangeStartingMidWeek = [
+    day("2026-07-22", { Roneli: 100 }),
+    day("2026-07-27", { Roneli: 110 }),
+    day("2026-07-29", { Roneli: 120 }),
+    day("2026-08-03", { Roneli: 130 }),
+    day("2026-08-05", { Roneli: 140 }),
+  ];
+
+  it("drops previous weeks truncated by the range start and keeps the current partial week", () => {
+    const profiles = buildWeekProfiles(
+      rangeStartingMidWeek,
+      (d) => d.chickenByBranch,
+    );
+
+    const drawable = filterDrawableProfiles(profiles, rangeStartingMidWeek, 4);
+
+    expect(drawable.map((p) => p.weekStart)).toEqual([
+      "2026-07-27",
+      "2026-08-03",
+    ]);
+  });
+
+  it("caps the number of weeks shown per branch", () => {
+    const profiles = buildWeekProfiles(
+      rangeStartingMidWeek,
+      (d) => d.chickenByBranch,
+    );
+
+    const drawable = filterDrawableProfiles(profiles, rangeStartingMidWeek, 1);
+
+    expect(drawable.map((p) => p.weekStart)).toEqual(["2026-08-03"]);
+  });
+
+  it("keeps previous weeks fully inside the range", () => {
+    const fullRange = [
+      day("2026-07-20", { Roneli: 100 }),
+      day("2026-07-21", { Roneli: 110 }),
+      day("2026-07-27", { Roneli: 120 }),
+      day("2026-07-28", { Roneli: 130 }),
+    ];
+
+    const profiles = buildWeekProfiles(fullRange, (d) => d.chickenByBranch);
+
+    const drawable = filterDrawableProfiles(profiles, fullRange, 4);
+
+    expect(drawable.map((p) => p.weekStart)).toEqual([
+      "2026-07-20",
+      "2026-07-27",
+    ]);
+  });
+
+  it("keeps the current week even when the range starts mid-week", () => {
+    const onlyCurrent = [
+      day("2026-08-03", { Roneli: 130 }),
+      day("2026-08-05", { Roneli: 140 }),
+    ];
+
+    const profiles = buildWeekProfiles(onlyCurrent, (d) => d.chickenByBranch);
+
+    const drawable = filterDrawableProfiles(profiles, onlyCurrent, 4);
+
+    expect(drawable.map((p) => p.weekStart)).toEqual(["2026-08-03"]);
+  });
+
+  it("caps weeks independently per branch", () => {
+    const twoBranches = [
+      day("2026-07-22", { Roneli: 100, Saban: 50 }),
+      day("2026-07-27", { Roneli: 110, Saban: 55 }),
+      day("2026-07-29", { Roneli: 120, Saban: 60 }),
+      day("2026-08-03", { Roneli: 130, Saban: 65 }),
+      day("2026-08-05", { Roneli: 140, Saban: 70 }),
+    ];
+
+    const profiles = buildWeekProfiles(twoBranches, (d) => d.chickenByBranch);
+
+    const drawable = filterDrawableProfiles(profiles, twoBranches, 1);
+
+    expect(drawable).toHaveLength(2);
+    expect(drawable.map((p) => p.weekStart)).toEqual([
+      "2026-08-03",
+      "2026-08-03",
+    ]);
+    expect(drawable.map((p) => p.branch)).toEqual(["Roneli", "Saban"]);
+  });
+
+  it("returns an empty array when dailySales or profiles are empty", () => {
+    expect(filterDrawableProfiles([], [], 4)).toEqual([]);
+    expect(
+      filterDrawableProfiles([], [day("2026-08-03", { Roneli: 130 })], 4),
+    ).toEqual([]);
+  });
+});
+
 describe("computeWeekTotals", () => {
-  it("compares the same weekday slice of the current week against the previous week", () => {
+  it("compares only the days with data in the current week (morning before the report upload)", () => {
     const dailySales = [
       day("2026-07-20", { Roneli: 100 }),
       day("2026-07-21", { Roneli: 110 }),
+      day("2026-07-22", { Roneli: 120 }),
       day("2026-07-27", { Roneli: 130 }),
-      day("2026-08-01", { Roneli: 140 }),
+      day("2026-07-28", { Roneli: 140 }),
+      day("2026-07-29"),
     ];
 
     const totals = computeWeekTotals(dailySales, (d) => d.chickenByBranch);
@@ -142,8 +242,10 @@ describe("computeWeekTotals", () => {
       branch: "Roneli",
       currentWeek: 270,
       previousWeek: 210,
-      windowDays: 6,
+      windowDays: 2,
       currentPartial: true,
+      missingToday: true,
+      missingPrevDays: 0,
     });
     expect(totals[0].changePct).toBeCloseTo(28.6, 1);
   });
@@ -173,6 +275,8 @@ describe("computeWeekTotals", () => {
       previousWeek: 910,
       windowDays: 7,
       currentPartial: false,
+      missingToday: false,
+      missingPrevDays: 0,
     });
     expect(totals[0].changePct).toBeCloseTo(53.8, 1);
   });
@@ -190,6 +294,40 @@ describe("computeWeekTotals", () => {
     expect(totals[0].changePct).toBeNull();
     expect(totals[0].currentPartial).toBe(true);
     expect(totals[0].windowDays).toBe(2);
+    expect(totals[0].missingToday).toBe(false);
+    expect(totals[0].missingPrevDays).toBe(2);
+  });
+
+  it("treats a missing previous day as zero and counts it", () => {
+    const dailySales = [
+      day("2026-07-20", { Roneli: 100 }),
+      day("2026-07-27", { Roneli: 130 }),
+      day("2026-07-28", { Roneli: 140 }),
+    ];
+
+    const totals = computeWeekTotals(dailySales, (d) => d.chickenByBranch);
+
+    expect(totals[0]).toMatchObject({
+      currentWeek: 270,
+      previousWeek: 100,
+      changePct: 170,
+      missingToday: false,
+      missingPrevDays: 1,
+    });
+  });
+
+  it("returns a null change when every previous day is missing", () => {
+    const dailySales = [
+      day("2026-07-27", { Roneli: 130 }),
+      day("2026-07-28", { Roneli: 140 }),
+    ];
+
+    const totals = computeWeekTotals(dailySales, (d) => d.chickenByBranch);
+
+    expect(totals[0].currentWeek).toBe(270);
+    expect(totals[0].previousWeek).toBe(0);
+    expect(totals[0].changePct).toBeNull();
+    expect(totals[0].missingPrevDays).toBe(2);
   });
 
   it("computes totals per branch", () => {

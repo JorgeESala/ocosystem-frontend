@@ -14,6 +14,8 @@ export interface WeekTotals {
   changePct: number | null;
   currentPartial: boolean;
   windowDays: number;
+  missingToday: boolean;
+  missingPrevDays: number;
 }
 
 export interface WeekOptions {
@@ -90,6 +92,38 @@ const addDays = (date: string, days: number): string => {
   return `${d.getFullYear()}-${month}-${dayOfMonth}`;
 };
 
+export function filterDrawableProfiles(
+  profiles: WeekProfile[],
+  dailySales: DailySalesDTO[],
+  weeks: number,
+): WeekProfile[] {
+  if (profiles.length === 0 || dailySales.length === 0) return [];
+
+  const rangeStart = dailySales[0].date;
+  const rangeEnd = dailySales[dailySales.length - 1].date;
+  const currentWeekStart = weekStartOf(rangeEnd);
+
+  const kept = profiles.filter((p) => {
+    if (p.weekStart === currentWeekStart) return true;
+    const weekEnd = addDays(p.weekStart, 6);
+    return p.weekStart >= rangeStart && weekEnd <= rangeEnd;
+  });
+
+  const byBranch = new Map<string, WeekProfile[]>();
+  for (const p of kept) {
+    const list = byBranch.get(p.branch) ?? [];
+    list.push(p);
+    byBranch.set(p.branch, list);
+  }
+
+  const result: WeekProfile[] = [];
+  for (const [, list] of byBranch) {
+    list.sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+    result.push(...list.slice(-weeks));
+  }
+  return result;
+}
+
 export function computeWeekTotals(
   dailySales: DailySalesDTO[],
   getQty: (d: DailySalesDTO) => Record<string, number>,
@@ -108,10 +142,6 @@ export function computeWeekTotals(
     windowDates.push(cursor);
     cursor = addDays(cursor, 1);
   }
-  const windowDays = windowDates.length;
-  const prevWindowDates = windowDates.map((d) => addDays(d, -7));
-  const prevCovered = prevWindowDates.every((d) => d >= rangeStart);
-  const currentPartial = windowDays < 7;
 
   const branchNames = new Set<string>();
   for (const sale of dailySales) {
@@ -120,27 +150,32 @@ export function computeWeekTotals(
     }
   }
 
-  const sumWindow = (dates: string[]): Map<string, number> => {
-    const sums = new Map<string, number>();
-    for (const date of dates) {
-      const qty = byDate.get(date);
-      if (!qty) continue;
-      for (const [name, value] of Object.entries(qty)) {
-        sums.set(name, (sums.get(name) ?? 0) + value);
-      }
-    }
-    return sums;
-  };
-
-  const current = sumWindow(windowDates);
-  const previous = prevCovered
-    ? sumWindow(prevWindowDates)
-    : new Map<string, number>();
-
   const result: WeekTotals[] = [];
   for (const name of branchNames) {
-    const currentWeek = current.get(name) ?? 0;
-    const previousWeek = prevCovered ? (previous.get(name) ?? 0) : 0;
+    const dataDays = windowDates.filter(
+      (d) => byDate.get(d)?.[name] !== undefined,
+    );
+    const prevDays = dataDays.map((d) => addDays(d, -7));
+    const prevCovered = prevDays.every((d) => d >= rangeStart);
+
+    const currentWeek = dataDays.reduce(
+      (sum, d) => sum + (byDate.get(d)?.[name] ?? 0),
+      0,
+    );
+    const missingToday = byDate.get(rangeEnd)?.[name] === undefined;
+
+    let previousWeek = 0;
+    let missingPrevDays = 0;
+    for (const d of prevDays) {
+      if (byDate.get(d)?.[name] === undefined) {
+        missingPrevDays += 1;
+      }
+      previousWeek += byDate.get(d)?.[name] ?? 0;
+    }
+    if (!prevCovered) {
+      previousWeek = 0;
+      missingPrevDays = prevDays.length;
+    }
 
     let changePct: number | null = null;
     if (previousWeek > 0) {
@@ -153,8 +188,10 @@ export function computeWeekTotals(
       currentWeek,
       previousWeek,
       changePct,
-      currentPartial,
-      windowDays,
+      currentPartial: dataDays.length < 7,
+      windowDays: dataDays.length,
+      missingToday,
+      missingPrevDays,
     });
   }
   return result;

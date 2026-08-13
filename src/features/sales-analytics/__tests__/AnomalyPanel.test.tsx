@@ -252,4 +252,17 @@ describe("AnomalyPanel", () => {
     expect(list.className).toContain("max-h-72");
     expect(list.className).toContain("overflow-y-auto");
   });
+
+  it("renders the chart above the anomaly list", () => {
+    render(
+      <AnomalyPanel dailySales={multiAnomalies} activeProduct="chicken" />,
+    );
+
+    const chart = screen.getByTestId("responsive-container");
+    const list = screen.getByTestId("anomaly-list");
+
+    expect(
+      chart.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
