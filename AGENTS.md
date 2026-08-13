@@ -102,6 +102,31 @@ UI is in Spanish (e.g., "Nuevo gasto", "Buscar", "Limpiar", "Sucursales").
 Datepickers use `language="es-MX"`. There is no i18n library — strings are
 inlined. Stay consistent with existing labels.
 
+## Glossary of business terms
+
+The company uses specific Spanish terms. Never invent synonyms (e.g. "lote",
+"tienda", or "ajuste" on its own). When unsure, grep the codebase before
+writing UI copy.
+
+| EN                    | ES (use this)                      |
+| --------------------- | ---------------------------------- |
+| batch                 | remesa                             |
+| batch entry           | entrada de remesa / "Nueva remesa" |
+| batch sale            | venta de remesa                    |
+| branch                | sucursal                           |
+| adjustment (movement) | baja / ajuste                      |
+| waste / shrinkage     | merma                              |
+| slaughtered birds     | matados                            |
+| chicken / birds       | pollos / aves                      |
+| egg units             | cajas / casilleros / piezas        |
+| account payable       | cuenta por pagar                   |
+| supplier              | proveedor                          |
+| client                | cliente                            |
+| expense               | gasto                              |
+| sale                  | venta                              |
+| CEDIS                 | CEDIS (do not translate)           |
+| checklist             | checklist (kept in English)        |
+
 ## Code style
 
 - **No comments.** Project preference (see commit `526b3ac "removed
