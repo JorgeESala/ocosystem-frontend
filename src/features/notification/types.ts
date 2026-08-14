@@ -2,7 +2,6 @@ export type AlertType =
   | "LOW_BALANCE"
   | "NEGATIVE_BALANCE"
   | "NEGATIVE_FLOW"
-  | "SALES_DISCREPANCY"
   | "HIGH_WASTE"
   | "OVERDUE_TASKS"
   | "DELIVERY_NOT_RECEIVED";
@@ -95,7 +94,6 @@ export const ALERT_TYPE_LABELS: Record<AlertType, string> = {
   LOW_BALANCE: "Saldo bajo",
   NEGATIVE_BALANCE: "Saldo negativo",
   NEGATIVE_FLOW: "Tendencia negativa",
-  SALES_DISCREPANCY: "Discrepancia de ventas",
   HIGH_WASTE: "Merma elevada",
   OVERDUE_TASKS: "Tareas pendientes",
   DELIVERY_NOT_RECEIVED: "Entrega no recibida",
@@ -105,7 +103,6 @@ export const ALERT_TYPE_ICONS: Record<AlertType, string> = {
   LOW_BALANCE: "⚠",
   NEGATIVE_BALANCE: "🔴",
   NEGATIVE_FLOW: "📉",
-  SALES_DISCREPANCY: "📊",
   HIGH_WASTE: "🗑",
   OVERDUE_TASKS: "📋",
   DELIVERY_NOT_RECEIVED: "🚚",

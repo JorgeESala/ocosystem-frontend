@@ -25,7 +25,6 @@ const NAVIGATION_MAP: Partial<Record<AlertType, string>> = {
   LOW_BALANCE: "/business/sucursales/general-cash",
   NEGATIVE_BALANCE: "/business/sucursales/general-cash",
   NEGATIVE_FLOW: "/business/sucursales/general-cash",
-  SALES_DISCREPANCY: "/business/sucursales/profit",
 };
 
 interface Props {

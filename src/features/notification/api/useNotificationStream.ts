@@ -95,6 +95,7 @@ export function useNotificationStream(branchIds: number[]) {
 
           if (eventName === "notification") {
             const data: NotificationSSEEvent = JSON.parse(event.data);
+            if (!branchIds.includes(data.branchId)) return;
             const notification: NotificationDTO = {
               id: data.id,
               branchId: data.branchId,
@@ -105,6 +106,15 @@ export function useNotificationStream(branchIds: number[]) {
               read: data.read,
               createdAt: data.createdAt,
             };
+
+            const summaryCache = queryClient.getQueryData<{
+              unreadCount: number;
+              recent: NotificationDTO[];
+            }>(notificationKeys.summary(branchIds));
+            const alreadyKnown = summaryCache?.recent.some(
+              (n) => n.id === notification.id,
+            );
+            if (notification.read && !alreadyKnown) return;
 
             queryClient.setQueryData(
               notificationKeys.summary(branchIds),
@@ -145,6 +155,7 @@ export function useNotificationStream(branchIds: number[]) {
             );
           } else if (eventName === "notification-cleared") {
             const data: NotificationClearedEvent = JSON.parse(event.data);
+            if (!branchIds.includes(data.branchId)) return;
 
             queryClient.setQueryData(
               notificationKeys.summary(branchIds),

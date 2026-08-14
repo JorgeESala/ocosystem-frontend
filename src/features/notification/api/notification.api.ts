@@ -46,10 +46,6 @@ export const notificationApi = {
     await http.put(`${BASE_URL}/read-all?${params.toString()}`);
   },
 
-  dismiss: async (id: number): Promise<void> => {
-    await http.delete(`${BASE_URL}/${id}`);
-  },
-
   checkAlerts: async (branchIds: number[]): Promise<void> => {
     const params = new URLSearchParams();
     branchIds.forEach((id) => params.append("branchIds", id.toString()));

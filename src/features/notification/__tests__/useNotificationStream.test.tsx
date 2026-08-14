@@ -360,4 +360,177 @@ describe("useNotificationStream", () => {
       });
     }).not.toThrow();
   });
+
+  it("ignores notification event for a branch not in branchIds", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(notificationKeys.summary([1]), {
+      unreadCount: 0,
+      recent: [],
+    });
+    qc.setQueryData(notificationKeys.list([1]), []);
+
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
+    mockedFetchEventSource.mockImplementation(async (_url, opts) => {
+      onmessage = opts?.onmessage as typeof onmessage;
+      return undefined;
+    });
+
+    const wrapper = createWrapper(qc);
+    renderHook(() => useNotificationStream([1]), { wrapper });
+
+    await waitFor(() => {
+      expect(mockedFetchEventSource).toHaveBeenCalled();
+    });
+
+    act(() => {
+      onmessage?.({
+        event: "notification",
+        data: JSON.stringify({
+          id: 10,
+          branchId: 999,
+          branchName: "Otra",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "otra sucursal",
+          read: false,
+          createdAt: "",
+        }),
+      });
+    });
+
+    const summary = qc.getQueryData(notificationKeys.summary([1])) as {
+      unreadCount: number;
+      recent: { id: number }[];
+    };
+    expect(summary.unreadCount).toBe(0);
+    expect(summary.recent).toHaveLength(0);
+
+    const list = qc.getQueryData(notificationKeys.list([1])) as {
+      id: number;
+    }[];
+    expect(list).toHaveLength(0);
+  });
+
+  it("does not re-add a notification the user already read", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(notificationKeys.summary([1]), {
+      unreadCount: 0,
+      recent: [],
+    });
+    qc.setQueryData(notificationKeys.list([1]), []);
+
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
+    mockedFetchEventSource.mockImplementation(async (_url, opts) => {
+      onmessage = opts?.onmessage as typeof onmessage;
+      return undefined;
+    });
+
+    const wrapper = createWrapper(qc);
+    renderHook(() => useNotificationStream([1]), { wrapper });
+
+    await waitFor(() => {
+      expect(mockedFetchEventSource).toHaveBeenCalled();
+    });
+
+    act(() => {
+      onmessage?.({
+        event: "notification",
+        data: JSON.stringify({
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "HIGH_WASTE",
+          severity: "warning",
+          message: "Merma elevada en A: 350 gramos por pollo",
+          read: true,
+          createdAt: "",
+        }),
+      });
+    });
+
+    const summary = qc.getQueryData(notificationKeys.summary([1])) as {
+      unreadCount: number;
+      recent: { id: number }[];
+    };
+    expect(summary.unreadCount).toBe(0);
+    expect(summary.recent).toHaveLength(0);
+
+    const list = qc.getQueryData(notificationKeys.list([1])) as {
+      id: number;
+    }[];
+    expect(list).toHaveLength(0);
+  });
+
+  it("ignores notification-cleared event for a branch not in branchIds", async () => {
+    const qc = createQueryClient();
+    qc.setQueryData(notificationKeys.summary([1]), {
+      unreadCount: 1,
+      recent: [
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "a",
+          read: false,
+          createdAt: "",
+        },
+      ],
+    });
+    qc.setQueryData(notificationKeys.list([1]), [
+      {
+        id: 10,
+        branchId: 1,
+        branchName: "A",
+        alertType: "LOW_BALANCE",
+        severity: "warning",
+        message: "a",
+        read: false,
+        createdAt: "",
+      },
+    ]);
+
+    let onmessage:
+      | ((event: { event: string; data: string }) => void)
+      | undefined;
+    mockedFetchEventSource.mockImplementation(async (_url, opts) => {
+      onmessage = opts?.onmessage as typeof onmessage;
+      return undefined;
+    });
+
+    const wrapper = createWrapper(qc);
+    renderHook(() => useNotificationStream([1]), { wrapper });
+
+    await waitFor(() => {
+      expect(mockedFetchEventSource).toHaveBeenCalled();
+    });
+
+    act(() => {
+      onmessage?.({
+        event: "notification-cleared",
+        data: JSON.stringify({
+          notificationId: 10,
+          branchId: 999,
+          alertType: "LOW_BALANCE",
+        }),
+      });
+    });
+
+    const summary = qc.getQueryData(notificationKeys.summary([1])) as {
+      unreadCount: number;
+      recent: { id: number }[];
+    };
+    expect(summary.unreadCount).toBe(1);
+    expect(summary.recent).toHaveLength(1);
+
+    const list = qc.getQueryData(notificationKeys.list([1])) as {
+      id: number;
+    }[];
+    expect(list).toHaveLength(1);
+  });
 });

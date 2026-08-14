@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationApi } from "./notification.api";
 import { notificationKeys } from "./notification.keys";
-import type { NotificationSummaryDTO, NotificationDTO } from "../types";
 
 export const useNotificationSummary = (branchIds: number[]) =>
   useQuery({
@@ -35,46 +34,6 @@ export const useMarkAllNotificationsRead = () => {
     mutationFn: (branchIds: number[]) =>
       notificationApi.markAllAsRead(branchIds),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: notificationKeys.all });
-    },
-  });
-};
-
-export const useDismissNotification = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => notificationApi.dismiss(id),
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: notificationKeys.all });
-      const snapshots = qc.getQueriesData({ queryKey: notificationKeys.all });
-
-      qc.setQueriesData(
-        { queryKey: notificationKeys.all },
-        (old: NotificationSummaryDTO | NotificationDTO[] | undefined) => {
-          if (!old) return old;
-          if ("unreadCount" in old) {
-            return {
-              ...old,
-              unreadCount: Math.max(0, old.unreadCount - 1),
-              recent: (old as NotificationSummaryDTO).recent.filter(
-                (n) => n.id !== id,
-              ),
-            };
-          }
-          return (old as NotificationDTO[]).filter((n) => n.id !== id);
-        },
-      );
-
-      return { snapshots };
-    },
-    onError: (_err, _id, context) => {
-      if (context?.snapshots) {
-        for (const [key, data] of context.snapshots) {
-          qc.setQueryData(key, data);
-        }
-      }
-    },
-    onSettled: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });

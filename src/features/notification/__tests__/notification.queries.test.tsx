@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
   useNotificationSummary,
   useNotificationDetail,
   useNotificationHistory,
-  useDismissNotification,
 } from "../api/notification.queries";
 import { notificationApi } from "../api/notification.api";
 
@@ -18,7 +17,6 @@ vi.mock("../api/notification.api", () => ({
     getHistory: vi.fn(),
     markAsRead: vi.fn(),
     markAllAsRead: vi.fn(),
-    dismiss: vi.fn(),
     checkAlerts: vi.fn(),
   },
 }));
@@ -123,57 +121,5 @@ describe("useNotificationHistory", () => {
     });
 
     expect(result.current.fetchStatus).toBe("idle");
-  });
-});
-
-describe("useDismissNotification", () => {
-  it("optimistically removes notification from summary cache", async () => {
-    const qc = createQueryClient();
-    qc.setQueryData(["notifications", "summary", [1]], {
-      unreadCount: 3,
-      recent: [
-        {
-          id: 10,
-          branchId: 1,
-          branchName: "A",
-          alertType: "LOW_BALANCE",
-          severity: "warning",
-          message: "test",
-          read: false,
-          createdAt: "",
-        },
-        {
-          id: 20,
-          branchId: 1,
-          branchName: "A",
-          alertType: "HIGH_WASTE",
-          severity: "critical",
-          message: "test2",
-          read: false,
-          createdAt: "",
-        },
-      ],
-    });
-
-    mockedApi.dismiss.mockResolvedValue(undefined);
-
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-    );
-
-    const { result } = renderHook(() => useDismissNotification(), { wrapper });
-
-    await act(async () => {
-      result.current.mutate(10);
-      await waitFor(() => result.current.isSuccess);
-    });
-
-    const data = qc.getQueryData(["notifications", "summary", [1]]) as {
-      unreadCount: number;
-      recent: { id: number }[];
-    };
-    expect(data.unreadCount).toBe(2);
-    expect(data.recent).toHaveLength(1);
-    expect(data.recent[0].id).toBe(20);
   });
 });

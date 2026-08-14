@@ -7,7 +7,6 @@ import {
   useNotificationSummary,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
-  useDismissNotification,
 } from "../api/notification.queries";
 import { useNotificationStream } from "../api/useNotificationStream";
 import {
@@ -42,7 +41,6 @@ export default function NotificationBell() {
   const { data: summary } = useNotificationSummary(branchIds);
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
-  const dismiss = useDismissNotification();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -82,8 +80,6 @@ export default function NotificationBell() {
       n.alertType === "NEGATIVE_FLOW"
     ) {
       navigate("/business/sucursales/general-cash");
-    } else if (n.alertType === "SALES_DISCREPANCY") {
-      navigate("/business/sucursales/profit");
     }
   };
 
@@ -166,13 +162,13 @@ export default function NotificationBell() {
                           </span>
                           <button
                             type="button"
-                            className="text-[10px] text-slate-500 hover:text-red-400"
+                            className="text-[10px] text-slate-500 hover:text-blue-400"
                             onClick={(e) => {
                               e.stopPropagation();
-                              dismiss.mutate(n.id);
+                              markRead.mutate(n.id);
                             }}
                           >
-                            Descartar
+                            Marcar como leído
                           </button>
                         </div>
                       </div>

@@ -83,16 +83,6 @@ describe("notificationApi", () => {
     });
   });
 
-  describe("dismiss", () => {
-    it("calls DELETE with notification id", async () => {
-      mockedHttp.delete.mockResolvedValue({});
-
-      await notificationApi.dismiss(7);
-
-      expect(mockedHttp.delete).toHaveBeenCalledWith("/api/v1/notifications/7");
-    });
-  });
-
   describe("checkAlerts", () => {
     it("calls POST with branchIds", async () => {
       mockedHttp.post.mockResolvedValue({});
