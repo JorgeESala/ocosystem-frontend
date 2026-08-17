@@ -1,4 +1,5 @@
 import { Badge } from "flowbite-react";
+import { formatLongDate } from "@/utils/notificationDates";
 import type { ChecklistDetail } from "../types";
 
 const STATUS_CONFIG: Record<
@@ -15,6 +16,9 @@ export function ChecklistDetailContent({ detail }: { detail: unknown }) {
 
   return (
     <div className="space-y-4">
+      <p className="text-sm font-medium text-white">
+        Checklist del {formatLongDate(d.date)}
+      </p>
       <div className="flex items-center gap-3">
         <p className="text-sm text-gray-400">
           {d.completedTasks} de {d.totalTasks} tareas completadas

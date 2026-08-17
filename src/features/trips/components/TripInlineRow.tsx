@@ -385,6 +385,14 @@ export default function TripInlineRow({
           </div>
           <div>
             <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Total
+            </p>
+            <p className="font-mono font-semibold text-white">
+              {formatMXN(group.totals.saleTotal)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-wider text-slate-500 uppercase">
               {isEgg ? "Piezas" : "Vendido"}
             </p>
             {isEgg ? (

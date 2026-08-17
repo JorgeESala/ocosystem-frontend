@@ -25,6 +25,17 @@ export interface CashSummaryItem {
   percentage: number;
 }
 
+export interface CashBreakdownTotals {
+  totalSales: number;
+  totalExpenses: number;
+  totalExpectedCash: number;
+}
+
+export interface CashBreakdown {
+  items: CashSummaryItem[];
+  totals: CashBreakdownTotals;
+}
+
 export interface BranchProfitSummary {
   totalSales: number;
   totalExpenses: number;
@@ -36,7 +47,7 @@ export interface BranchProfitSummary {
   expenseRatio: number;
   chickenCostRatio: number;
   byBranch: ProfitSummaryItem[];
-  byBusinessUnit: CashSummaryItem[];
+  byBusinessUnit: CashBreakdown;
   topBranch?: ProfitSummaryItem;
   topBusinessUnit?: CashSummaryItem;
 }
@@ -95,7 +106,7 @@ const formatBranchItems = (
 
 const formatCashItems = (
   cashDetails: BranchProfitCashDetailDTO[] = [],
-): CashSummaryItem[] => {
+): CashBreakdown => {
   const visibleCashDetails = cashDetails.filter(
     (item) =>
       !excludedBusinessUnitNames.has(normalizeText(item.businessUnitName)),
@@ -121,8 +132,13 @@ const formatCashItems = (
     (sum, item) => sum + item.expectedCash,
     0,
   );
+  const totals: CashBreakdownTotals = {
+    totalSales: enriched.reduce((sum, item) => sum + item.totalSales, 0),
+    totalExpenses: enriched.reduce((sum, item) => sum + item.totalExpenses, 0),
+    totalExpectedCash,
+  };
 
-  return enriched
+  const items = enriched
     .map((item) => ({
       ...item,
       percentage:
@@ -131,6 +147,8 @@ const formatCashItems = (
           : 0,
     }))
     .sort((a, b) => b.expectedCash - a.expectedCash);
+
+  return { items, totals };
 };
 
 export const buildBranchProfitSummary = (
@@ -148,7 +166,10 @@ export const buildBranchProfitSummary = (
       expenseRatio: 0,
       chickenCostRatio: 0,
       byBranch: [],
-      byBusinessUnit: [],
+      byBusinessUnit: {
+        items: [],
+        totals: { totalSales: 0, totalExpenses: 0, totalExpectedCash: 0 },
+      },
     };
   }
 
@@ -180,6 +201,6 @@ export const buildBranchProfitSummary = (
     byBranch,
     byBusinessUnit,
     topBranch: byBranch[0],
-    topBusinessUnit: byBusinessUnit[0],
+    topBusinessUnit: byBusinessUnit.items[0],
   };
 };

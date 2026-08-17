@@ -284,7 +284,7 @@ export default function BranchProfitReportPage() {
             selectedBranchLabel={selectedBranchLabel}
           />
 
-          <BranchProfitCashBreakdown items={summary.byBusinessUnit} />
+          <BranchProfitCashBreakdown breakdown={summary.byBusinessUnit} />
 
           <BranchProfitBranchBreakdown items={summary.byBranch} />
 

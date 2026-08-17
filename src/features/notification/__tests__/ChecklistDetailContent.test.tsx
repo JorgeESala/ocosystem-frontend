@@ -35,6 +35,11 @@ const baseDetail = {
 };
 
 describe("ChecklistDetailContent", () => {
+  it("renders the checklist date", () => {
+    render(<ChecklistDetailContent detail={baseDetail} />);
+    expect(screen.getByText(/15 de enero/)).toBeInTheDocument();
+  });
+
   it("renders progress summary", () => {
     render(<ChecklistDetailContent detail={baseDetail} />);
     expect(screen.getByText("3 de 5 tareas completadas")).toBeInTheDocument();

@@ -18,6 +18,7 @@ import {
 } from "../types";
 import { NotificationDetailDrawer } from "./NotificationDetailDrawer";
 import { NotificationHistoryDrawer } from "./NotificationHistoryDrawer";
+import { formatRelativeDate } from "@/utils/notificationDates";
 
 const SEVERITY_STYLE: Record<string, string> = {
   critical: "border-l-4 border-red-500 bg-red-900/20",
@@ -155,6 +156,9 @@ export default function NotificationBell() {
                         </div>
                         <div className="mt-0.5 text-[11px] text-slate-400">
                           {n.message}
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-slate-500">
+                          {formatRelativeDate(n.createdAt)}
                         </div>
                         <div className="mt-1 flex items-center gap-2">
                           <span className="text-[10px] text-slate-500">

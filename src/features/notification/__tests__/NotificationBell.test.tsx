@@ -177,6 +177,52 @@ describe("NotificationBell", () => {
     expect(mutate).toHaveBeenCalledWith([1]);
   });
 
+  it("shows relative date 'hoy' for today's notification", () => {
+    renderBell({
+      unreadCount: 1,
+      recent: [
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "x",
+          read: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+
+    const buttons = screen.getAllByRole("button");
+    fireEvent.click(buttons[0]);
+    expect(screen.getByText(/^hoy \d{2}:\d{2}$/)).toBeInTheDocument();
+  });
+
+  it("shows relative date 'ayer' for yesterday's notification", () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    renderBell({
+      unreadCount: 1,
+      recent: [
+        {
+          id: 10,
+          branchId: 1,
+          branchName: "A",
+          alertType: "LOW_BALANCE",
+          severity: "warning",
+          message: "x",
+          read: false,
+          createdAt: yesterday.toISOString(),
+        },
+      ],
+    });
+
+    const buttons = screen.getAllByRole("button");
+    fireEvent.click(buttons[0]);
+    expect(screen.getByText(/^ayer \d{2}:\d{2}$/)).toBeInTheDocument();
+  });
+
   it("shows historial button", () => {
     renderBell({ unreadCount: 0, recent: [] });
     const buttons = screen.getAllByRole("button");

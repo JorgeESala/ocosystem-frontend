@@ -1,8 +1,8 @@
 import { formatMXN } from "@/utils/moneyNumbers";
-import type { CashSummaryItem } from "../utils/profit-summary";
+import type { CashBreakdown } from "../utils/profit-summary";
 
 interface Props {
-  items: CashSummaryItem[];
+  breakdown: CashBreakdown;
 }
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
@@ -16,7 +16,8 @@ const StatLine = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-export default function BranchProfitCashBreakdown({ items }: Props) {
+export default function BranchProfitCashBreakdown({ breakdown }: Props) {
+  const { items, totals } = breakdown;
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -32,6 +33,22 @@ export default function BranchProfitCashBreakdown({ items }: Props) {
         <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
           Ordenado por efectivo esperado
         </span>
+      </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
+          <p className="text-[10px] font-semibold tracking-[0.18em] text-cyan-300 uppercase">
+            Efectivo total esperado
+          </p>
+          <p className="mt-1 font-mono text-2xl font-semibold text-cyan-300">
+            {formatMXN(totals.totalExpectedCash)}
+          </p>
+        </div>
+        <StatLine label="Ventas totales" value={formatMXN(totals.totalSales)} />
+        <StatLine
+          label="Gastos totales"
+          value={formatMXN(totals.totalExpenses)}
+        />
       </div>
 
       {items.length === 0 ? (
