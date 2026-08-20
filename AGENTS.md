@@ -223,3 +223,16 @@ Caveats:
   prefix.
 - Never commit `dist/`, `node_modules/`, `.env`, or the `git-diagnostics-*.zip`
   artifact in the repo root.
+
+## CI / deploys
+
+- GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `lint`, `tsc`,
+  `build`, `vitest` on every push to `dev`/`main` and on pull requests.
+- Deploy jobs run only after tests pass (green-only) using the Netlify action:
+  `deploy-dev` on the `dev` branch, `deploy-prod` on `main`. Secrets
+  (`NETLIFY_AUTH_TOKEN`, `NETLIFY_DEV_SITE_ID`, `NETLIFY_PROD_SITE_ID`) are
+  repository secrets, not in the repo.
+- Build output is `dist/` (Vite), publish dir for Netlify.
+- `workflow_dispatch` (Run workflow button) only works when the workflow file is
+  on the default branch (`main`).
+
