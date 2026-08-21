@@ -4,9 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BatchMovementModal } from "../components/BatchMovementModal";
 import type { Batch } from "../types.batch";
 
+const { employeesData } = vi.hoisted(() => ({
+  employeesData: [{ id: 1, name: "Juan Perez" }],
+}));
+
 vi.mock("@/features/employee/api/employees.queries", () => ({
   useEmployees: vi.fn(() => ({
-    data: [{ id: 1, name: "Juan Perez" }],
+    data: employeesData,
     isLoading: false,
   })),
 }));
