@@ -13,3 +13,15 @@ export const getProfitReport = async (
   );
   return data;
 };
+
+export const downloadProfitReportPdf = async (
+  start: string,
+  end: string,
+): Promise<Blob> => {
+  const params = new URLSearchParams({ start, end });
+  const response = await http.get<Blob>(
+    `${API_BASE}/reports/profit/pdf?${params}`,
+    { responseType: "blob" },
+  );
+  return new Blob([response.data], { type: "application/pdf" });
+};
