@@ -86,10 +86,13 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
 
   const first = details[0];
   const firstCostPerUnit =
-    first.chickenQuantity && first.chickenQuantity > 0
-      ? first.totalBatchCost / first.chickenQuantity
+    first.initialQuantity && first.initialQuantity > 0
+      ? first.totalBatchCost / first.initialQuantity
       : null;
-  const firstMargin = first.totalSalesInRange - first.computedCostForRange;
+  const firstMargin =
+    first.totalSalesInRange -
+    first.computedCostForRange -
+    first.mermaCostForRange;
 
   return (
     <>
@@ -125,7 +128,7 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 }
               />
               <ColumnHeaderWithTooltip
-                label="Vendidos"
+                label="Vendido"
                 align="right"
                 tooltipTitle="Unidades vendidas en el rango"
                 tooltipDesc={
@@ -138,11 +141,32 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                     <p className="mt-1 font-semibold text-gray-400">
                       Ejemplo real (remesa #{first.batchId}):
                     </p>
-                    <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
-                      {formatNumber(first.quantitySoldInRange)}{" "}
-                      {unitType === "EGG" ? "piezas" : "aves"}
-                    </p>
+                    {unitType === "EGG" ? (
+                      <div className="rounded bg-gray-900 px-1 py-0.5">
+                        <EggQuantityDisplay
+                          totalPieces={first.quantitySoldInRange}
+                          className="text-xs"
+                        />
+                      </div>
+                    ) : (
+                      <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
+                        {formatNumber(first.quantitySoldInRange)} aves
+                      </p>
+                    )}
                   </>
+                }
+              />
+              <ColumnHeaderWithTooltip
+                label="Merma"
+                align="right"
+                tooltipTitle="Costo de merma del rango"
+                tooltipDesc={
+                  <p>
+                    Valor prorrateado de las piezas o aves dadas de baja (merma
+                    natural, producto dañado, consumo interno u otro) dentro del
+                    periodo seleccionado. Pasa el cursor sobre el monto para ver
+                    la cantidad en unidades.
+                  </p>
                 }
               />
               <ColumnHeaderWithTooltip
@@ -177,7 +201,7 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 }
               />
               <ColumnHeaderWithTooltip
-                label="Ventas rango"
+                label="Ventas en rango"
                 align="right"
                 tooltipTitle="Ventas en rango"
                 tooltipDesc={
@@ -215,25 +239,27 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 }
               />
               <ColumnHeaderWithTooltip
-                label="Margen"
+                label="Margen de contribución"
                 align="right"
-                tooltipTitle="Margen del rango"
+                tooltipTitle="Margen de contribución del rango"
                 tooltipDesc={
                   <>
                     <p>
-                      Diferencia entre las ventas y el costo proporcional dentro
-                      del rango. Positivo = ganancia, negativo = pérdida.
+                      Lo que esta remesa contribuye a cubrir los gastos
+                      operativos: ventas menos el costo proporcional y menos la
+                      merma. No descuenta gastos (son globales del periodo).
                     </p>
                     <p className="mt-1 font-semibold text-gray-400">Fórmula:</p>
                     <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
-                      Ventas rango - Costo proporcional
+                      Ventas rango - Costo proporcional - Costo de merma
                     </p>
                     <p className="mt-1 font-semibold text-gray-400">
                       Ejemplo real (remesa #{first.batchId}):
                     </p>
                     <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
                       {formatMXN(first.totalSalesInRange)} -{" "}
-                      {formatMXN(first.computedCostForRange)} ={" "}
+                      {formatMXN(first.computedCostForRange)} -{" "}
+                      {formatMXN(first.mermaCostForRange)} ={" "}
                       {formatMXN(firstMargin)}
                     </p>
                   </>
@@ -243,7 +269,10 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
           </TableHead>
           <TableBody className="divide-y">
             {details.map((row) => {
-              const margin = row.totalSalesInRange - row.computedCostForRange;
+              const margin =
+                row.totalSalesInRange -
+                row.computedCostForRange -
+                row.mermaCostForRange;
               const marginClass =
                 margin >= 0 ? "text-emerald-300" : "text-rose-300";
               return (
@@ -279,6 +308,26 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                         <span className="text-xs text-gray-500">aves</span>
                       </span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="group relative inline-flex items-center justify-end gap-1">
+                      <span className="text-rose-300">
+                        {formatMXN(row.mermaCostForRange)}
+                      </span>
+                      <HiInformationCircle className="text-[11px] text-gray-500 transition-colors group-hover:text-blue-400" />
+                      <div className="absolute top-full right-0 z-50 mt-1 hidden w-44 rounded-lg border border-gray-800 bg-gray-950 p-2 text-center shadow-xl group-hover:block">
+                        {unitType === "EGG" ? (
+                          <EggQuantityDisplay
+                            totalPieces={row.adjustedQuantityInRange}
+                            className="justify-center text-xs"
+                          />
+                        ) : (
+                          <span className="text-[11px] text-gray-300">
+                            {formatNumber(row.adjustedQuantityInRange)} aves
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right text-orange-300">
                     {formatMXN(row.computedCostForRange)}
