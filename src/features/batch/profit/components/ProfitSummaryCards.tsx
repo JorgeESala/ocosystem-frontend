@@ -46,6 +46,7 @@ const CardWithTooltip: React.FC<CardWithTooltipProps> = ({
 interface Props {
   totalSales: number;
   totalChickenCostsProRated: number;
+  totalMermaCost: number;
   totalExpenses: number;
   profit: number;
 }
@@ -53,6 +54,7 @@ interface Props {
 export const ProfitSummaryCards: React.FC<Props> = ({
   totalSales,
   totalChickenCostsProRated,
+  totalMermaCost,
   totalExpenses,
   profit,
 }) => {
@@ -61,7 +63,7 @@ export const ProfitSummaryCards: React.FC<Props> = ({
   const profitBg = profit >= 0 ? "bg-emerald-900/50" : "bg-rose-900/50";
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <CardWithTooltip
         label="Ventas Totales"
         value={formatMXN(totalSales)}
@@ -108,6 +110,31 @@ export const ProfitSummaryCards: React.FC<Props> = ({
       />
 
       <CardWithTooltip
+        label="Costo de merma"
+        value={formatMXN(totalMermaCost)}
+        className="text-rose-300"
+        borderClass="border-rose-800"
+        bgClass="bg-rose-900/50"
+        labelClass="text-rose-400"
+        tooltipTitle="Costo de merma del periodo"
+        tooltipDesc={
+          <>
+            <p>
+              Valor de las piezas dadas de baja (merma natural, producto dañado,
+              consumo interno u otro) dentro del rango seleccionado. Se
+              prorratea con el mismo costo por unidad de la remesa.
+            </p>
+            <p className="mt-1 font-semibold text-gray-400">
+              Fórmula (por remesa):
+            </p>
+            <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
+              costoPorUnidad × piezasDadasDeBajaEnRango
+            </p>
+          </>
+        }
+      />
+
+      <CardWithTooltip
         label="Gastos"
         value={formatMXN(totalExpenses)}
         className="text-yellow-300"
@@ -119,7 +146,7 @@ export const ProfitSummaryCards: React.FC<Props> = ({
           <p>
             Suma de todos los gastos operativos registrados para la unidad de
             negocio activa (Pollo vivo o Huevo) con fecha dentro del rango
-            seleccionado. No incluye el costo de las remesas.
+            seleccionado. No incluye el costo de las remesas ni la merma.
           </p>
         }
       />
@@ -140,12 +167,13 @@ export const ProfitSummaryCards: React.FC<Props> = ({
             </p>
             <p className="mt-1 font-semibold text-gray-400">Fórmula:</p>
             <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
-              Ventas totales - Costos proporcionales - Gastos
+              Ventas totales - Costos proporcionales - Costo de merma - Gastos
             </p>
             <p className="mt-1 font-semibold text-gray-400">Ejemplo real:</p>
             <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
               {formatMXN(totalSales)} - {formatMXN(totalChickenCostsProRated)} -{" "}
-              {formatMXN(totalExpenses)} = {formatMXN(profit)}
+              {formatMXN(totalMermaCost)} - {formatMXN(totalExpenses)} ={" "}
+              {formatMXN(profit)}
             </p>
           </>
         }

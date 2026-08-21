@@ -4,9 +4,10 @@ export interface ProfitReport {
   totalSales: number;
   totalExpenses: number;
   totalChickenCostsProRated: number;
+  totalMermaCost: number;
   profit: number;
   batchDetails: BatchProfitDetail[];
-  cashDetails: CashDetail[];
+  expenseBreakdown: ExpenseBreakdownItem[];
 }
 
 export interface BatchProfitDetail {
@@ -24,11 +25,14 @@ export interface BatchProfitDetail {
   entityName: string;
   entryDate: string;
   type: "EGG" | "LIVE_CHICKEN" | "PORK";
+  initialQuantity: number;
+  adjustedQuantityInRange: number;
+  mermaCostForRange: number;
 }
 
-export interface CashDetail {
-  businessUnit: string;
-  totalCashSales: number;
-  totalExpenses: number;
-  netCash: number;
+export interface ExpenseBreakdownItem {
+  categoryCode: string;
+  categoryName: string;
+  amount: number;
+  count: number;
 }

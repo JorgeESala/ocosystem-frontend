@@ -86,8 +86,8 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
 
   const first = details[0];
   const firstCostPerUnit =
-    first.chickenQuantity && first.chickenQuantity > 0
-      ? first.totalBatchCost / first.chickenQuantity
+    first.initialQuantity && first.initialQuantity > 0
+      ? first.totalBatchCost / first.initialQuantity
       : null;
   const firstMargin = first.totalSalesInRange - first.computedCostForRange;
 
@@ -125,7 +125,7 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 }
               />
               <ColumnHeaderWithTooltip
-                label="Vendidos"
+                label="Vendido"
                 align="right"
                 tooltipTitle="Unidades vendidas en el rango"
                 tooltipDesc={
@@ -138,9 +138,38 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                     <p className="mt-1 font-semibold text-gray-400">
                       Ejemplo real (remesa #{first.batchId}):
                     </p>
+                    {unitType === "EGG" ? (
+                      <div className="rounded bg-gray-900 px-1 py-0.5">
+                        <EggQuantityDisplay
+                          totalPieces={first.quantitySoldInRange}
+                          className="text-xs"
+                        />
+                      </div>
+                    ) : (
+                      <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
+                        {formatNumber(first.quantitySoldInRange)} aves
+                      </p>
+                    )}
+                  </>
+                }
+              />
+              <ColumnHeaderWithTooltip
+                label="Merma"
+                align="right"
+                tooltipTitle="Bajas registradas en el rango"
+                tooltipDesc={
+                  <>
+                    <p>
+                      Cantidad de piezas o aves dadas de baja (merma natural,
+                      producto dañado, consumo interno u otro) dentro del
+                      periodo seleccionado. No cuenta como inventario disponible
+                      ni como venta.
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-400">
+                      Costo de merma (remesa #{first.batchId}):
+                    </p>
                     <p className="rounded bg-gray-900 px-1 py-0.5 font-mono text-[10px] text-blue-400">
-                      {formatNumber(first.quantitySoldInRange)}{" "}
-                      {unitType === "EGG" ? "piezas" : "aves"}
+                      {formatMXN(first.mermaCostForRange)}
                     </p>
                   </>
                 }
@@ -177,7 +206,7 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                 }
               />
               <ColumnHeaderWithTooltip
-                label="Ventas rango"
+                label="Ventas en rango"
                 align="right"
                 tooltipTitle="Ventas en rango"
                 tooltipDesc={
@@ -276,6 +305,21 @@ export const ProfitBatchTable: React.FC<Props> = ({ details, unitType }) => {
                     ) : (
                       <span className="text-gray-300">
                         {formatNumber(row.quantitySoldInRange)}{" "}
+                        <span className="text-xs text-gray-500">aves</span>
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {unitType === "EGG" ? (
+                      <div className="flex justify-end">
+                        <EggQuantityDisplay
+                          totalPieces={row.adjustedQuantityInRange}
+                          className="text-xs"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-gray-300">
+                        {formatNumber(row.adjustedQuantityInRange)}{" "}
                         <span className="text-xs text-gray-500">aves</span>
                       </span>
                     )}
