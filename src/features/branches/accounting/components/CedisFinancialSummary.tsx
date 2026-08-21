@@ -12,6 +12,7 @@ import {
 import { HiDocumentDownload, HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
+import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import {
   useCedisFinancialSummary,
   useDownloadCedisFinancialSummaryPdf,
@@ -43,6 +44,7 @@ export const CedisFinancialSummary = ({
 
   const { download: downloadPdf } = useDownloadCedisFinancialSummaryPdf();
   const [isDownloading, setIsDownloading] = useState(false);
+  const isEgg = entityType === "EGGCEDIS";
 
   const totalDebt = rows.reduce((sum, r) => sum + Number(r.debt), 0);
   const totalReceivable = rows.reduce(
@@ -179,7 +181,7 @@ export const CedisFinancialSummary = ({
           </TableHead>
           <TableBody>
             {rows.map((m) => (
-              <CedisRow key={m.cedisId} row={m} />
+              <CedisRow key={m.cedisId} row={m} isEgg={isEgg} />
             ))}
           </TableBody>
         </Table>
@@ -188,7 +190,10 @@ export const CedisFinancialSummary = ({
   );
 };
 
-const CedisRow: React.FC<{ row: any }> = ({ row }) => {
+const CedisRow: React.FC<{ row: any; isEgg?: boolean }> = ({
+  row,
+  isEgg = false,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const hasBreakdown = row.breakdown && row.breakdown.length > 0;
   const hasInventoryBreakdown =
@@ -279,10 +284,22 @@ const CedisRow: React.FC<{ row: any }> = ({ row }) => {
                           {formatHumanDate(item.entryDate, "short")}
                         </TableCell>
                         <TableCell className="text-gray-300">
-                          {(item.initialQuantity ?? 0).toLocaleString("es-MX")}
+                          {isEgg ? (
+                            <EggQuantityDisplay
+                              totalPieces={item.initialQuantity ?? 0}
+                            />
+                          ) : (
+                            (item.initialQuantity ?? 0).toLocaleString("es-MX")
+                          )}
                         </TableCell>
                         <TableCell className="font-medium text-blue-300">
-                          {item.remainingQuantity.toLocaleString("es-MX")}
+                          {isEgg ? (
+                            <EggQuantityDisplay
+                              totalPieces={item.remainingQuantity}
+                            />
+                          ) : (
+                            item.remainingQuantity.toLocaleString("es-MX")
+                          )}
                         </TableCell>
                         <TableCell className="text-gray-300">
                           {formatMXN(item.totalCost)}
