@@ -13,6 +13,8 @@ export interface SalesImportPreviewDTO {
   files: FileImportPreviewDTO[];
 
   newProducts: NewProductPreviewDTO[];
+
+  missingCategories: string[];
 }
 export interface FileImportPreviewDTO {
   fileName: string;
@@ -42,14 +44,6 @@ export interface ConfirmSalesImportRequestDTO {
     categoryId: number | null;
     unitId: number;
   }[];
-}
 
-export interface ConfirmSalesImportRequestDTO {
-  previewId: number;
-  newProducts: {
-    barcode: string;
-    name: string;
-    categoryId: number | null;
-    unitId: number;
-  }[];
+  confirmedMissingCategories?: boolean;
 }

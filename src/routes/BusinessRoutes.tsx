@@ -24,6 +24,7 @@ import MyTasksPage from "@/features/branches/checklist/pages/MyTasksPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
 import RouteGuard from "./RouteGuard";
+import ProductApprovalsPage from "@/features/branches/product-approvals/pages/ProductApprovalsPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -91,6 +92,14 @@ export default function BusinessRoutes() {
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
         <Route path="profit" element={<BranchProfitReportPage />} />
+        <Route
+          path="aprobaciones"
+          element={
+            <RouteGuard>
+              <ProductApprovalsPage />
+            </RouteGuard>
+          }
+        />
       </Routes>
     );
   }
