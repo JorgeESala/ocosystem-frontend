@@ -37,6 +37,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_DEV }}
       - name: deploy to netlify (dev)
         uses: nwtgck/actions-netlify@v3.0
         with:
@@ -63,6 +65,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_PROD }}
       - name: deploy to netlify (prod)
         uses: nwtgck/actions-netlify@v3.0
         with:
