@@ -81,6 +81,8 @@ export default function NotificationBell() {
       n.alertType === "NEGATIVE_FLOW"
     ) {
       navigate("/business/sucursales/general-cash");
+    } else if (n.alertType === "PRODUCT_APPROVAL_PENDING") {
+      navigate("/business/sucursales/aprobaciones");
     }
   };
 

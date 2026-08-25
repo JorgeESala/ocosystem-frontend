@@ -59,6 +59,8 @@ export const UploadStep = ({ onPreviewSuccess }: Props) => {
         onError: (error) => {
           if (axios.isAxiosError(error) && error.response?.status === 409) {
             const duplicated = error.response.data.duplicatedFiles as string[];
+            const reasons = (error.response.data.duplicateReasons ??
+              {}) as Record<string, string>;
 
             setFiles((prev) =>
               prev.map((f) => {
@@ -74,9 +76,16 @@ export const UploadStep = ({ onPreviewSuccess }: Props) => {
               }),
             );
 
+            const dateDuplicates = duplicated.filter(
+              (name) => reasons[name] === "date",
+            );
+
             setToastState({
               type: "error",
-              message: `Se detectaron ${duplicated.length} archivo(s) duplicado(s)`,
+              message:
+                dateDuplicates.length > 0
+                  ? `El reporte del día ya fue subido (${dateDuplicates.length} archivo(s))`
+                  : `Se detectaron ${duplicated.length} archivo(s) duplicado(s)`,
             });
 
             return;

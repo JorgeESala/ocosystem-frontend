@@ -9,6 +9,10 @@ import {
   TableRow,
   TableCell,
   Select,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "flowbite-react";
 import type { SalesImportPreviewDTO } from "../types";
 import { useCategories } from "../../product/api/categories.queries";
@@ -29,6 +33,7 @@ interface ConfirmPayload {
     categoryId: number | null;
     unitId: number;
   }[];
+  confirmedMissingCategories: boolean;
 }
 
 export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
@@ -40,6 +45,8 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
       unitId: p.suggestedUnitId,
     })),
   );
+  const [missingConfirmed, setMissingConfirmed] = useState(false);
+  const [showMissingModal, setShowMissingModal] = useState(false);
   const {
     data: categories,
     isLoading: isLoadingCat,
@@ -51,22 +58,30 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
     isError: isErrorUnit,
   } = useMeasurementUnits();
   const [isConfirming, setIsConfirming] = useState(false);
+
+  const missingCategories = data.missingCategories ?? [];
+
   if (isLoadingUnit) return <p>Cargando unidades...</p>;
   if (isErrorUnit) return <p>Error al cargar unidades</p>;
   if (isLoadingCat) return <p>Cargando categorías...</p>;
   if (isErrorCat) return <p>Error al cargar categorías</p>;
 
   const hasInvalidProducts = editedProducts.some(
-    (p) => !p.name || p.name.trim() === "",
+    (p) =>
+      !p.name ||
+      p.name.trim() === "" ||
+      p.categoryId === null ||
+      p.categoryId === undefined,
   );
 
-  const handleConfirm = async () => {
+  const doConfirm = async (confirmedMissing: boolean) => {
     try {
       setIsConfirming(true);
 
       await onConfirm({
         previewId: data.previewId,
         newProducts: editedProducts,
+        confirmedMissingCategories: confirmedMissing,
       });
     } catch (error) {
       console.error(error);
@@ -74,9 +89,38 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
       setIsConfirming(false);
     }
   };
+
+  const handleConfirm = () => {
+    if (missingCategories.length > 0 && !missingConfirmed) {
+      setShowMissingModal(true);
+      return;
+    }
+
+    doConfirm(missingConfirmed);
+  };
+
+  const handleConfirmMissing = () => {
+    setShowMissingModal(false);
+    setMissingConfirmed(true);
+    doConfirm(true);
+  };
+
   return (
     <div className="space-y-6">
-      {/* 🔹 Resumen General */}
+      {missingCategories.length > 0 && (
+        <Card className="border-red-300 bg-red-50">
+          <h3 className="text-lg font-semibold text-red-700">
+            Reporte sin categorías obligatorias
+          </h3>
+          <p className="text-sm text-red-600">
+            Este reporte no contiene ventas de{" "}
+            <strong>{missingCategories.join(", ")}</strong>. Todo reporte debe
+            incluir al menos una venta de merma y de matados. Confirma si
+            deseas guardarlo de todos modos.
+          </p>
+        </Card>
+      )}
+
       <Card>
         <h3 className="mb-4 text-lg font-semibold">Resumen del reporte</h3>
 
@@ -93,7 +137,6 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
         </div>
       </Card>
 
-      {/* 🔹 Resumen por archivo */}
       <Card>
         <h3 className="mb-4 text-lg font-semibold">Archivos procesados</h3>
 
@@ -117,7 +160,6 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
         </Table>
       </Card>
 
-      {/* 🔹 Productos nuevos */}
       {data.newProducts.length > 0 && (
         <Card>
           <h3 className="mb-4 text-lg font-semibold text-yellow-600">
@@ -211,7 +253,6 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
         </Card>
       )}
 
-      {/* 🔹 Botones */}
       <div className="flex justify-between">
         <Button color="gray" onClick={onBack}>
           Volver
@@ -232,6 +273,26 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
           )}
         </Button>
       </div>
+
+      <Modal show={showMissingModal} onClose={() => setShowMissingModal(false)}>
+        <ModalHeader>Reporte sin categorías obligatorias</ModalHeader>
+        <ModalBody>
+          <p>
+            El reporte no contiene ventas de{" "}
+            <strong>{missingCategories.join(", ")}</strong>. Todo reporte debe
+            incluir al menos una venta de merma y de matados. ¿Deseas guardarlo
+            de todos modos?
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="gray" onClick={() => setShowMissingModal(false)}>
+            Cancelar
+          </Button>
+          <Button color="red" onClick={handleConfirmMissing}>
+            Guardar de todos modos
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 };
