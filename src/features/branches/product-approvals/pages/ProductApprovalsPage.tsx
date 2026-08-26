@@ -143,7 +143,7 @@ function PendingProductsTable() {
                     <TableCell>
                       <Button
                         size="xs"
-                        color="success"
+                        color="blue"
                         disabled={
                           approveMutation.isPending ||
                           !edit.name ||
