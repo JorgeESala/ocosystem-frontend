@@ -121,6 +121,15 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
         </Card>
       )}
 
+      {(data.alreadyCapturedCount ?? 0) > 0 && (
+        <Card className="border-amber-300 bg-amber-50">
+          <p className="text-sm text-amber-800">
+            {data.alreadyCapturedCount} ticket(s) de este reporte ya existen en
+            el sistema y se omitirán al importar.
+          </p>
+        </Card>
+      )}
+
       <Card>
         <h3 className="mb-4 text-lg font-semibold">Resumen del reporte</h3>
 

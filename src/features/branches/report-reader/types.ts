@@ -15,6 +15,8 @@ export interface SalesImportPreviewDTO {
   newProducts: NewProductPreviewDTO[];
 
   missingCategories: string[];
+
+  alreadyCapturedCount?: number;
 }
 export interface FileImportPreviewDTO {
   fileName: string;
