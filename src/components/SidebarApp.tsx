@@ -8,13 +8,16 @@ import {
 } from "flowbite-react";
 import { FaSignOutAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import { useAuthRole } from "../hooks/useAuthRole";
 import { useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BASE_MENU, BUSINESSES } from "@/business/business.config";
 import NotificationBell from "@/features/notification/components/NotificationBell";
+import type { BusinessMenuItem } from "@/business/business.config";
 
 export default function SidebarApp() {
   const { isAuthenticated, logout } = useAuth();
+  const { isAdmin } = useAuthRole();
   const navigate = useNavigate();
 
   // Desktop collapse
@@ -34,6 +37,9 @@ export default function SidebarApp() {
     setMobileOpen(false);
     navigate("/");
   };
+
+  const visibleMenu = (menu: BusinessMenuItem[]) =>
+    menu.filter((m) => !m.adminOnly || isAdmin);
 
   return (
     <>
@@ -108,7 +114,7 @@ export default function SidebarApp() {
                 {allowedBusinesses.length === 1
                   ? (() => {
                       const b = allowedBusinesses[0];
-                      const menu = b.menu ?? BASE_MENU;
+                      const menu = visibleMenu(b.menu ?? BASE_MENU);
 
                       if (effectiveCollapsed) {
                         return (
@@ -136,7 +142,7 @@ export default function SidebarApp() {
                       });
                     })()
                   : allowedBusinesses.map((b) => {
-                      const menu = b.menu ?? BASE_MENU;
+                      const menu = visibleMenu(b.menu ?? BASE_MENU);
                       const Icon = b.icon;
 
                       if (effectiveCollapsed) {

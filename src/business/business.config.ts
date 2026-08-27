@@ -8,6 +8,7 @@ export interface BusinessMenuItem {
   to: string;
   label: string;
   icon: IconType;
+  adminOnly?: boolean;
 }
 
 export interface BusinessConfig {
@@ -42,6 +43,7 @@ const BRANCHES_MENU = [
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
+  { to: "aprobaciones", label: "Aprobaciones", icon: HiClipboardCheck, adminOnly: true },
 ];
 
 const LIVE_CHICKEN_MENU = [

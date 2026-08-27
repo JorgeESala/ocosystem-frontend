@@ -4,7 +4,8 @@ export type AlertType =
   | "NEGATIVE_FLOW"
   | "HIGH_WASTE"
   | "OVERDUE_TASKS"
-  | "DELIVERY_NOT_RECEIVED";
+  | "DELIVERY_NOT_RECEIVED"
+  | "PRODUCT_APPROVAL_PENDING";
 
 export type AlertSeverity = "critical" | "warning";
 
@@ -97,6 +98,7 @@ export const ALERT_TYPE_LABELS: Record<AlertType, string> = {
   HIGH_WASTE: "Merma elevada",
   OVERDUE_TASKS: "Tareas pendientes",
   DELIVERY_NOT_RECEIVED: "Entrega no recibida",
+  PRODUCT_APPROVAL_PENDING: "Producto por aprobar",
 };
 
 export const ALERT_TYPE_ICONS: Record<AlertType, string> = {
@@ -106,6 +108,7 @@ export const ALERT_TYPE_ICONS: Record<AlertType, string> = {
   HIGH_WASTE: "🗑",
   OVERDUE_TASKS: "📋",
   DELIVERY_NOT_RECEIVED: "🚚",
+  PRODUCT_APPROVAL_PENDING: "📦",
 };
 
 export const DETAIL_ALERT_TYPES = new Set<AlertType>([
