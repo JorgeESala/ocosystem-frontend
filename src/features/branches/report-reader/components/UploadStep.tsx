@@ -79,13 +79,23 @@ export const UploadStep = ({ onPreviewSuccess }: Props) => {
             const dateDuplicates = duplicated.filter(
               (name) => reasons[name] === "date",
             );
+            const ticketDuplicates = duplicated.filter(
+              (name) => reasons[name] === "tickets",
+            );
+
+            let message: string;
+            if (ticketDuplicates.length > 0) {
+              message =
+                "Ya existen los tickets de este reporte en el sistema; no se importó";
+            } else if (dateDuplicates.length > 0) {
+              message = `El reporte del día ya fue subido (${dateDuplicates.length} archivo(s))`;
+            } else {
+              message = `Se detectaron ${duplicated.length} archivo(s) duplicado(s)`;
+            }
 
             setToastState({
               type: "error",
-              message:
-                dateDuplicates.length > 0
-                  ? `El reporte del día ya fue subido (${dateDuplicates.length} archivo(s))`
-                  : `Se detectaron ${duplicated.length} archivo(s) duplicado(s)`,
+              message,
             });
 
             return;
