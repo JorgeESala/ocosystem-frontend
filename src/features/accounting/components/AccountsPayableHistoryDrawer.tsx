@@ -5,7 +5,6 @@ interface Props {
   open: boolean;
   onClose: () => void;
   account?: AccountsPayableResponse | null;
-  onViewClientStatement?: (account: AccountsPayableResponse) => void;
 }
 
 export const AccountsPayableHistoryDrawer = ({

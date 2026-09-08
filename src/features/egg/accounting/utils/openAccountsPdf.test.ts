@@ -5,7 +5,27 @@ import {
   buildMonthlyHtml,
   buildOpenAccountsHtml,
   buildStatementHtml,
+  toFileName,
 } from "./openAccountsPdf";
+
+describe("toFileName", () => {
+  it("slugifies Spanish names", () => {
+    expect(toFileName("Felipe Carrillo puerto")).toBe("felipe-carrillo-puerto");
+    expect(toFileName("José María Morelos")).toBe("jose-maria-morelos");
+  });
+
+  it("collapses separators and drops symbols", () => {
+    expect(toFileName("  Reporte: Roneli / Junio!  ")).toBe(
+      "reporte-roneli-junio",
+    );
+  });
+
+  it("keeps digits and dashes", () => {
+    expect(toFileName("2026-06-01 al 2026-06-30")).toBe(
+      "2026-06-01-al-2026-06-30",
+    );
+  });
+});
 
 const account = {
   id: 1,

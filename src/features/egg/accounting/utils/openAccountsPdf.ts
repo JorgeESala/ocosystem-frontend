@@ -8,13 +8,23 @@ import type { ClientMonthlyReportPdfInput } from "@/features/accounting/api/clie
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 
-const downloadHtml = (html: string) => {
+const downloadHtml = (html: string, filename: string) => {
   const win = window.open("", "_blank", "width=1024,height=768");
   if (!win) return;
   win.document.open();
   win.document.write(html);
+  win.document.title = filename;
   win.document.close();
 };
+
+export const toFileName = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
 
 const printButton = `<p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
     <script>window.onload=()=>window.print()</script>`;
@@ -81,9 +91,11 @@ export const buildOpenAccountsHtml = (
 export const exportOpenAccountsPdf = (
   rows: AccountsPayableResponse[],
   title: string,
+  filename: string,
 ) => {
   downloadHtml(
     buildOpenAccountsHtml(rows, title, new Date().toLocaleString("es-MX")),
+    `${toFileName(filename)}.pdf`,
   );
 };
 
@@ -125,6 +137,7 @@ export const exportAccountStatementPdf = (
 ) => {
   downloadHtml(
     buildStatementHtml(account, movements, new Date().toLocaleString("es-MX")),
+    `${toFileName(`estado-de-cuenta-${account.debtorName}-a-${account.creditorName}`)}.pdf`,
   );
 };
 
@@ -175,5 +188,8 @@ export const buildMonthlyHtml = (
 };
 
 export const exportClientMonthlyPdf = (input: ClientMonthlyReportPdfInput) => {
-  downloadHtml(buildMonthlyHtml(input, new Date().toLocaleString("es-MX")));
+  downloadHtml(
+    buildMonthlyHtml(input, new Date().toLocaleString("es-MX")),
+    `${toFileName(`reporte-${input.debtorName}-${input.from}-al-${input.to}`)}.pdf`,
+  );
 };
