@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import {
   getFinancialSummary,
   downloadFinancialSummaryPdf,
@@ -12,10 +13,12 @@ export const useFinancialSummary = (
   from?: string,
   to?: string,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
   return useQuery({
-    queryKey: ["financialSummary", branchIds, from, to],
+    queryKey: ["financialSummary", slug, branchIds, from, to],
     queryFn: () => getFinancialSummary(branchIds, from, to),
     staleTime: 1000 * 60 * 5,
+    enabled: !!slug,
   });
 };
 
@@ -25,10 +28,12 @@ export const useCedisFinancialSummary = (
   from?: string,
   to?: string,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
   return useQuery({
-    queryKey: ["cedisFinancialSummary", cedisIds, entityType, from, to],
+    queryKey: ["cedisFinancialSummary", slug, cedisIds, entityType, from, to],
     queryFn: () => getCedisFinancialSummary(cedisIds, entityType, from, to),
     staleTime: 1000 * 60 * 5,
+    enabled: !!slug,
   });
 };
 

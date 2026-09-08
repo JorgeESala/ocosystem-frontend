@@ -10,31 +10,62 @@ import {
   Textarea,
   Datepicker,
 } from "flowbite-react";
-import { useState } from "react";
-import { useAccountingEntities } from "../api/accounting-entities.queries";
-import { useCreateAccountsPayable } from "../api/accounts-payable.queries";
-import { formatAccountingEntityLabel } from "../../live-chicken/accounting/accounts-payable/utils/entityLabel";
+import { useEffect, useState } from "react";
+import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
+import { useCreateAccountsPayable } from "@/features/accounting/api/accounts-payable.queries";
+import { formatAccountingEntityLabel } from "@/features/live-chicken/accounting/accounts-payable/utils/entityLabel";
 import { formatDateToISO } from "@/utils/date.utils";
-import { useSolicitors } from "../api/solicitor.queries";
+import { useSolicitors } from "@/features/accounting/api/solicitor.queries";
+import type { AccountingEntityType } from "@/features/accounting/types/accounting-entity.types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  creditorTypeFilter?: AccountingEntityType;
+  debtorTypeFilter?: AccountingEntityType;
+  initialCreditorId?: number;
+  initialDebtorId?: number;
 }
 
-export const CreateAccountsPayableModal = ({ open, onClose }: Props) => {
+export const CreateAccountsPayableModal = ({
+  open,
+  onClose,
+  creditorTypeFilter,
+  debtorTypeFilter,
+  initialCreditorId,
+  initialDebtorId,
+}: Props) => {
   const { data: entities, isLoading } = useAccountingEntities();
   const createMutation = useCreateAccountsPayable();
   const { data: solicitors } = useSolicitors();
-  const [creditorId, setCreditorId] = useState<number>();
-  const [debtorId, setDebtorId] = useState<number>();
+  const [creditorId, setCreditorId] = useState<number | undefined>(
+    initialCreditorId,
+  );
+  const [debtorId, setDebtorId] = useState<number | undefined>(initialDebtorId);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [solicitorId, setSolicitorId] = useState<number>();
   const [debtDate, setDate] = useState<Date | null>(new Date());
 
+  useEffect(() => {
+    if (open) {
+      setCreditorId(initialCreditorId);
+      setDebtorId(initialDebtorId);
+      setAmount("");
+      setNote("");
+      setSolicitorId(undefined);
+      setDate(new Date());
+    }
+  }, [open, initialCreditorId, initialDebtorId]);
+
   const selectedCreditor = entities?.find((e) => e.id === creditorId);
   const isSupplier = selectedCreditor?.entityType === "SUPPLIER";
+  const creditorOptions = creditorTypeFilter
+    ? entities?.filter((e) => e.entityType === creditorTypeFilter)
+    : entities;
+  const debtorOptions = debtorTypeFilter
+    ? entities?.filter((e) => e.entityType === debtorTypeFilter)
+    : entities;
 
   const handleSubmit = () => {
     if (!creditorId || !debtorId || !amount) return;
@@ -83,7 +114,7 @@ export const CreateAccountsPayableModal = ({ open, onClose }: Props) => {
               disabled={isLoading}
             >
               <option value="">Selecciona entidad</option>
-              {entities?.map((e) => (
+              {creditorOptions?.map((e) => (
                 <option key={e.id} value={e.id}>
                   {formatAccountingEntityLabel(e)}
                 </option>
@@ -100,7 +131,7 @@ export const CreateAccountsPayableModal = ({ open, onClose }: Props) => {
               disabled={isLoading}
             >
               <option value="">Selecciona entidad</option>
-              {entities?.map((e) => (
+              {debtorOptions?.map((e) => (
                 <option key={e.id} value={e.id}>
                   {formatAccountingEntityLabel(e)}
                 </option>

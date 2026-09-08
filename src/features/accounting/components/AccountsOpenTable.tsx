@@ -12,42 +12,108 @@ import {
 import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useSolicitors } from "../api/solicitor.queries";
 import { useUpdateAccountsPayableSolicitor } from "../api/accounts-payable.queries";
+import { InfoTip } from "./InfoTip";
 import { FiCheck } from "react-icons/fi";
 import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
 import { SourceBadge } from "./SourceBadge";
+import { AgingBadge } from "./AgingBadge";
+import {
+  applyAccountSort,
+  type AccountSortKey,
+  type SortDir,
+} from "../utils/openAccounts";
 import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
 interface Props {
   data: AccountsPayableResponse[];
   onPay: (account: AccountsPayableResponse) => void;
-  onViewHistory: (account: AccountsPayableResponse) => void;
+  onViewHistory?: (account: AccountsPayableResponse) => void;
+  onViewClient?: (account: AccountsPayableResponse) => void;
+  sortKey?: AccountSortKey;
+  sortDir?: SortDir;
+  onSortChange?: (key: AccountSortKey, dir: SortDir) => void;
+  selectable?: boolean;
+  selectedIds?: number[];
+  onSelectionChange?: (ids: number[]) => void;
+  headerTooltips?: {
+    total?: ReactNode;
+    balance?: ReactNode;
+  };
 }
 
-export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
+export const AccountsOpenTable = ({
+  data,
+  onPay,
+  onViewHistory,
+  onViewClient,
+  sortKey: controlledKey,
+  sortDir: controlledDir,
+  onSortChange,
+  selectable = false,
+  selectedIds = [],
+  onSelectionChange,
+  headerTooltips,
+}: Props) => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedSolicitorId, setSelectedSolicitorId] = useState<number | null>(
     null,
   );
-  const [dateSort, setDateSort] = useState<"desc" | "asc">("desc");
+  const [legacyDir, setLegacyDir] = useState<SortDir>("desc");
   const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
   const [previewSaleId, setPreviewSaleId] = useState<number | null>(null);
 
   const { data: solicitors = [] } = useSolicitors();
   const updateSolicitorMutation = useUpdateAccountsPayableSolicitor();
 
-  const sortedData = useMemo(() => {
-    const copy = [...data];
-    copy.sort((a, b) => {
-      const cmp = a.date.localeCompare(b.date);
-      return dateSort === "desc" ? -cmp : cmp;
-    });
-    return copy;
-  }, [data, dateSort]);
+  const controlled = onSortChange !== undefined;
+  const effKey: AccountSortKey = controlled
+    ? (controlledKey ?? "date")
+    : "date";
+  const effDir: SortDir = controlled ? (controlledDir ?? "desc") : legacyDir;
+
+  const handleSort = (key: AccountSortKey) => {
+    if (!controlled || !onSortChange) {
+      if (key === "date") {
+        setLegacyDir((prev) => (prev === "desc" ? "asc" : "desc"));
+      }
+      return;
+    }
+    if (key === effKey) {
+      onSortChange(key, effDir === "desc" ? "asc" : "desc");
+    } else {
+      onSortChange(key, "desc");
+    }
+  };
+
+  const sortedData = useMemo(
+    () => applyAccountSort(data, effKey, effDir),
+    [data, effKey, effDir],
+  );
+
+  const toggleRow = (id: number) => {
+    if (!onSelectionChange) return;
+    onSelectionChange(
+      selectedIds.includes(id)
+        ? selectedIds.filter((s) => s !== id)
+        : [...selectedIds, id],
+    );
+  };
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    const pageIds = sortedData.map((r) => r.id);
+    const allSelected = pageIds.every((id) => selectedIds.includes(id));
+    onSelectionChange(
+      allSelected
+        ? selectedIds.filter((id) => !pageIds.includes(id))
+        : [...new Set([...selectedIds, ...pageIds])],
+    );
+  };
 
   const handleSaveSolicitor = (id: number) => {
     updateSolicitorMutation.mutate({
@@ -63,29 +129,68 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
     return <div className="text-sm text-gray-500">No hay cuentas abiertas</div>;
   }
 
+  const sortHeaderClass =
+    "inline-flex items-center gap-1 text-xs font-medium text-gray-700 uppercase hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400";
+
+  const sortIcon = (key: AccountSortKey) =>
+    effKey !== key ? null : effDir === "desc" ? (
+      <HiSortDescending className="h-3.5 w-3.5" />
+    ) : (
+      <HiSortAscending className="h-3.5 w-3.5" />
+    );
+
   return (
     <>
       <Table>
         <TableHead>
+          {selectable && (
+            <TableHeadCell>
+              <input
+                type="checkbox"
+                aria-label="Seleccionar todas"
+                checked={
+                  sortedData.length > 0 &&
+                  sortedData.every((r) => selectedIds.includes(r.id))
+                }
+                onChange={toggleAll}
+              />
+            </TableHeadCell>
+          )}
           <TableHeadCell>Relación</TableHeadCell>
           <TableHeadCell>Origen</TableHeadCell>
           <TableHeadCell>Solicitante</TableHeadCell>
-          <TableHeadCell>Total</TableHeadCell>
-          <TableHeadCell>Saldo</TableHeadCell>
           <TableHeadCell>
             <button
               type="button"
-              onClick={() =>
-                setDateSort((prev) => (prev === "desc" ? "asc" : "desc"))
-              }
-              className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 uppercase hover:text-cyan-600 dark:text-gray-300 dark:hover:text-cyan-400"
+              onClick={() => handleSort("total")}
+              className={sortHeaderClass}
+            >
+              Total
+              {sortIcon("total")}
+            </button>
+          </TableHeadCell>
+          <TableHeadCell>
+            <button
+              type="button"
+              onClick={() => handleSort("balance")}
+              className={sortHeaderClass}
+            >
+              Saldo
+              {sortIcon("balance")}
+            </button>
+            {headerTooltips?.balance && (
+              <InfoTip title="Saldo">{headerTooltips.balance}</InfoTip>
+            )}
+          </TableHeadCell>
+          <TableHeadCell>Antigüedad</TableHeadCell>
+          <TableHeadCell>
+            <button
+              type="button"
+              onClick={() => handleSort("date")}
+              className={sortHeaderClass}
             >
               Creada
-              {dateSort === "desc" ? (
-                <HiSortDescending className="h-3.5 w-3.5" />
-              ) : (
-                <HiSortAscending className="h-3.5 w-3.5" />
-              )}
+              {sortIcon("date")}
             </button>
           </TableHeadCell>
           <TableHeadCell> Acciones</TableHeadCell>
@@ -94,8 +199,31 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
         <TableBody>
           {sortedData.map((row) => (
             <TableRow key={row.id}>
+              {selectable && (
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    aria-label={`Seleccionar cuenta ${row.id}`}
+                    checked={selectedIds.includes(row.id)}
+                    onChange={() => toggleRow(row.id)}
+                  />
+                </TableCell>
+              )}
               <TableCell>
-                {row.debtorName} → {row.creditorName}
+                {onViewClient ? (
+                  <button
+                    type="button"
+                    className="text-left text-blue-400 hover:underline"
+                    onClick={() => onViewClient(row)}
+                    title="Ver estado de cuenta del cliente"
+                  >
+                    {row.debtorName} → {row.creditorName}
+                  </button>
+                ) : (
+                  <span>
+                    {row.debtorName} → {row.creditorName}
+                  </span>
+                )}
               </TableCell>
 
               <TableCell>
@@ -171,6 +299,10 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                 {formatMXN(row.balance)}
               </TableCell>
 
+              <TableCell>
+                <AgingBadge isoDate={row.date} />
+              </TableCell>
+
               <TableCell>{formatHumanDate(row.date)}</TableCell>
 
               <TableCell className="flex gap-2">
@@ -185,18 +317,20 @@ export const AccountsOpenTable = ({ data, onPay, onViewHistory }: Props) => {
                     <FaMoneyBillWave size={20} />
                   </Button>
                 </Tooltip>
-                <Tooltip content="Mostrar información">
-                  <Button
-                    size="xs"
-                    color="gray"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewHistory(row);
-                    }}
-                  >
-                    <FaRegFileLines size={20} />
-                  </Button>
-                </Tooltip>
+                {!onViewClient && onViewHistory && (
+                  <Tooltip content="Mostrar información">
+                    <Button
+                      size="xs"
+                      color="gray"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewHistory(row);
+                      }}
+                    >
+                      <FaRegFileLines size={20} />
+                    </Button>
+                  </Tooltip>
+                )}
               </TableCell>
             </TableRow>
           ))}
