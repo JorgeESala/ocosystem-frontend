@@ -168,7 +168,7 @@ export const AccountDetailDrawer = ({
                       Registrar pago
                     </Button>
                   )}
-                  {onExportPdf && (
+                  {onExportPdf && statementRows.length > 0 && (
                     <Button
                       size="xs"
                       color="gray"
@@ -244,7 +244,7 @@ export const AccountDetailDrawer = ({
                     className="mb-2 text-sm font-semibold text-white hover:underline"
                     aria-expanded={reportOpen}
                   >
-                    Reporte mensual del cliente {reportOpen ? "▾" : "▸"}
+                    Reporte del cliente {reportOpen ? "▾" : "▸"}
                   </button>
                   {reportOpen && (
                     <ClientMonthlyReport

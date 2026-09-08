@@ -324,6 +324,9 @@ export const EggAccountsPage = () => {
     exportOpenAccountsPdf(
       filtered,
       receivable ? "Huevo · Cuentas por cobrar" : "Huevo · Cuentas por pagar",
+      receivable
+        ? `cuentas-huevo-por-cobrar-${formatDateToISO(new Date())}`
+        : `cuentas-huevo-por-pagar-${formatDateToISO(new Date())}`,
     );
   };
 

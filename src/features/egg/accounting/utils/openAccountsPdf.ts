@@ -6,14 +6,25 @@ import {
 } from "@/features/accounting/utils/openAccounts";
 import type { ClientMonthlyReportPdfInput } from "@/features/accounting/api/client-summary.api";
 import { formatHumanDate } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 
-const downloadHtml = (html: string) => {
+const downloadHtml = (html: string, filename: string) => {
   const win = window.open("", "_blank", "width=1024,height=768");
   if (!win) return;
   win.document.open();
   win.document.write(html);
+  win.document.title = filename;
   win.document.close();
 };
+
+export const toFileName = (value: string): string =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
 
 const printButton = `<p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
     <script>window.onload=()=>window.print()</script>`;
@@ -34,93 +45,108 @@ const escapeHtml = (value: string | number | undefined | null): string =>
     }
   });
 
-export const exportOpenAccountsPdf = (
+const tableStyle = `<style>
+      body{font-family:Arial,sans-serif;color:#111;padding:24px}
+      h1{font-size:20px;margin:0 0 4px} p.sub{color:#555;font-size:12px;margin:0 0 16px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th,td{border:1px solid #ccc;padding:6px 8px} th{background:#f3f4f6;text-align:left}
+      tfoot td{font-weight:bold}
+      @media print{button{display:none}}
+    </style>`;
+
+export const buildOpenAccountsHtml = (
   rows: AccountsPayableResponse[],
   title: string,
-) => {
+  generatedAt: string,
+): string => {
   const total = rows.reduce((sum, r) => sum + (r.balance ?? 0), 0);
   const body = rows
     .map(
       (r) => `<tr>
         <td>${escapeHtml(r.debtorName)} → ${escapeHtml(r.creditorName)}</td>
         <td>${escapeHtml(r.solicitorName ?? "N/A")}</td>
-        <td style="text-align:right">${r.totalAmount.toFixed(2)}</td>
-        <td style="text-align:right"><strong>${r.balance.toFixed(2)}</strong></td>
+        <td style="text-align:right">${escapeHtml(formatMXN(r.totalAmount))}</td>
+        <td style="text-align:right"><strong>${escapeHtml(formatMXN(r.balance))}</strong></td>
         <td style="text-align:right">${getAgingDays(r.date)}d</td>
         <td>${escapeHtml(formatHumanDate(r.date, "short"))}</td>
       </tr>`,
     )
     .join("");
 
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8" />
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8" />
     <title>${escapeHtml(title)}</title>
-    <style>
-      body{font-family:Arial,sans-serif;color:#111;padding:24px}
-      h1{font-size:20px;margin:0 0 4px} p.sub{color:#555;font-size:12px;margin:0 0 16px}
-      table{width:100%;border-collapse:collapse;font-size:12px}
-      th,td{border:1px solid #ccc;padding:6px 8px} th{background:#f3f4f6;text-align:left}
-      tfoot td{font-weight:bold}
-      @media print{button{display:none}}
-    </style></head><body>
+    ${tableStyle}</head><body>
     <h1>${escapeHtml(title)}</h1>
-    <p class="sub">${rows.length} cuentas · Saldo total ${total.toFixed(2)} · Generado ${new Date().toLocaleString("es-MX")}</p>
+    <p class="sub">${rows.length} cuentas · Saldo total ${escapeHtml(formatMXN(total))} · Generado ${escapeHtml(generatedAt)}</p>
     <table><thead><tr>
       <th>Relación</th><th>Solicitante</th>
       <th>Total</th><th>Saldo</th><th>Antigüedad</th><th>Fecha</th>
     </tr></thead><tbody>${body}</tbody>
-    <tfoot><tr><td colspan="3">Total saldo</td><td style="text-align:right">${total.toFixed(2)}</td><td colspan="2"></td></tr></tfoot></table>
+    <tfoot><tr><td colspan="3">Total saldo</td><td style="text-align:right">${escapeHtml(formatMXN(total))}</td><td colspan="2"></td></tr></tfoot></table>
     <p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
     <script>window.onload=()=>window.print()</script>
     </body></html>`;
-
-  const win = window.open("", "_blank", "width=1024,height=768");
-  if (!win) return;
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
 };
 
-export const exportAccountStatementPdf = (
+export const exportOpenAccountsPdf = (
+  rows: AccountsPayableResponse[],
+  title: string,
+  filename: string,
+) => {
+  downloadHtml(
+    buildOpenAccountsHtml(rows, title, new Date().toLocaleString("es-MX")),
+    `${toFileName(filename)}.pdf`,
+  );
+};
+
+export const buildStatementHtml = (
   account: AccountsPayableResponse,
   movements: StatementMovementRow[],
-) => {
+  generatedAt: string,
+): string => {
   const title = `Estado de cuenta · ${account.debtorName} → ${account.creditorName}`;
   const body = movements
     .map(
       (m) => `<tr>
         <td>${escapeHtml(formatHumanDate(m.movementDate, "short"))}</td>
         <td>${escapeHtml(statementRowLabel(m.movementType))}</td>
-        <td style="text-align:right">${m.amount.toFixed(2)}</td>
-        <td style="text-align:right"><strong>${m.balanceAfter.toFixed(2)}</strong></td>
+        <td style="text-align:right">${escapeHtml(formatMXN(m.amount))}</td>
+        <td style="text-align:right"><strong>${escapeHtml(formatMXN(m.balanceAfter))}</strong></td>
         <td>${escapeHtml(m.folio ?? "")}</td>
         <td>${escapeHtml(m.note ?? "")}</td>
       </tr>`,
     )
     .join("");
 
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8" />
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8" />
     <title>${escapeHtml(title)}</title>
-    <style>
-      body{font-family:Arial,sans-serif;color:#111;padding:24px}
-      h1{font-size:20px;margin:0 0 4px} p.sub{color:#555;font-size:12px;margin:0 0 16px}
-      table{width:100%;border-collapse:collapse;font-size:12px}
-      th,td{border:1px solid #ccc;padding:6px 8px} th{background:#f3f4f6;text-align:left}
-      tfoot td{font-weight:bold}
-      @media print{button{display:none}}
-    </style></head><body>
+    ${tableStyle}</head><body>
     <h1>${escapeHtml(title)}</h1>
-    <p class="sub">Total ${account.totalAmount.toFixed(2)} · Saldo actual ${account.balance.toFixed(2)} · Generado ${new Date().toLocaleString("es-MX")}</p>
+    <p class="sub">Total ${escapeHtml(formatMXN(account.totalAmount))} · Saldo actual ${escapeHtml(formatMXN(account.balance))} · Generado ${escapeHtml(generatedAt)}</p>
     <table><thead><tr>
       <th>Fecha</th><th>Movimiento</th><th>Monto</th><th>Saldo</th><th>Folio</th><th>Nota</th>
     </tr></thead><tbody>${body}</tbody></table>
     <p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
     <script>window.onload=()=>window.print()</script>
     </body></html>`;
-
-  downloadHtml(html);
 };
 
-export const exportClientMonthlyPdf = (input: ClientMonthlyReportPdfInput) => {
+export const exportAccountStatementPdf = (
+  account: AccountsPayableResponse,
+  movements: StatementMovementRow[],
+) => {
+  downloadHtml(
+    buildStatementHtml(account, movements, new Date().toLocaleString("es-MX")),
+    `${toFileName(`estado-de-cuenta-${account.debtorName}-a-${account.creditorName}`)}.pdf`,
+  );
+};
+
+export const buildMonthlyHtml = (
+  input: Omit<ClientMonthlyReportPdfInput, "monthKey"> & {
+    monthKey?: string;
+  },
+  generatedAt: string,
+): string => {
   const title = `Reporte · ${input.debtorName}`;
   const body = input.movements
     .map(
@@ -128,14 +154,14 @@ export const exportClientMonthlyPdf = (input: ClientMonthlyReportPdfInput) => {
         <td>${escapeHtml(formatHumanDate(m.movementDate, "short"))}</td>
         <td>${escapeHtml(m.creditorName)}</td>
         <td>${escapeHtml(statementRowLabel(m.movementType))}</td>
-        <td style="text-align:right">${m.amount.toFixed(2)}</td>
-        <td style="text-align:right"><strong>${m.balanceAfter != null ? m.balanceAfter.toFixed(2) : "—"}</strong></td>
+        <td style="text-align:right">${escapeHtml(formatMXN(m.amount))}</td>
+        <td style="text-align:right"><strong>${m.balanceAfter != null ? escapeHtml(formatMXN(m.balanceAfter)) : "—"}</strong></td>
         <td>${escapeHtml(m.folio ?? "")}</td>
       </tr>`,
     )
     .join("");
 
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8" />
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8" />
     <title>${escapeHtml(title)}</title>
     <style>
       body{font-family:Arial,sans-serif;color:#111;padding:24px}
@@ -147,18 +173,23 @@ export const exportClientMonthlyPdf = (input: ClientMonthlyReportPdfInput) => {
       @media print{button{display:none}}
     </style></head><body>
     <h1>${escapeHtml(title)}</h1>
-    <p class="sub">Del ${escapeHtml(formatHumanDate(input.from, "short"))} al ${escapeHtml(formatHumanDate(input.to, "short"))} · Generado ${new Date().toLocaleString("es-MX")}</p>
+    <p class="sub">Del ${escapeHtml(formatHumanDate(input.from, "short"))} al ${escapeHtml(formatHumanDate(input.to, "short"))} · Generado ${escapeHtml(generatedAt)}</p>
     <div class="cards">
-      <div class="card"><p>Saldo inicial</p><strong>${input.openingBalance.toFixed(2)}</strong></div>
-      <div class="card"><p>Cargos</p><strong>${input.totalCharges.toFixed(2)}</strong></div>
-      <div class="card"><p>Pagos</p><strong>${input.totalPayments.toFixed(2)}</strong></div>
-      <div class="card"><p>Saldo final</p><strong>${input.closingBalance.toFixed(2)}</strong></div>
+      <div class="card"><p>Saldo inicial</p><strong>${escapeHtml(formatMXN(input.openingBalance))}</strong></div>
+      <div class="card"><p>Cargos</p><strong>${escapeHtml(formatMXN(input.totalCharges))}</strong></div>
+      <div class="card"><p>Pagos</p><strong>${escapeHtml(formatMXN(input.totalPayments))}</strong></div>
+      <div class="card"><p>Saldo final</p><strong>${escapeHtml(formatMXN(input.closingBalance))}</strong></div>
     </div>
     <table><thead><tr>
       <th>Fecha</th><th>CEDIS</th><th>Movimiento</th><th>Monto</th><th>Saldo</th><th>Folio</th>
     </tr></thead><tbody>${body}</tbody></table>
     ${printButton}
     </body></html>`;
+};
 
-  downloadHtml(html);
+export const exportClientMonthlyPdf = (input: ClientMonthlyReportPdfInput) => {
+  downloadHtml(
+    buildMonthlyHtml(input, new Date().toLocaleString("es-MX")),
+    `${toFileName(`reporte-${input.debtorName}-${input.from}-al-${input.to}`)}.pdf`,
+  );
 };

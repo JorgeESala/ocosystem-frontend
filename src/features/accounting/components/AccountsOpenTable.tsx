@@ -147,7 +147,7 @@ export const AccountsOpenTable = ({
             <TableHeadCell>
               <input
                 type="checkbox"
-                aria-label="Seleccionar todas"
+                aria-label="Seleccionar página"
                 checked={
                   sortedData.length > 0 &&
                   sortedData.every((r) => selectedIds.includes(r.id))
