@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { getMovementsByAccountId } from "./movements.api";
 import { accountsPayableMovementKeys } from "./movements.keys";
 
 export const useAccountsPayableMovements = (accountId?: number) => {
+  const { slug } = useParams<{ slug: string }>();
   return useQuery({
     queryKey: accountId
-      ? accountsPayableMovementKeys.listByAccount(accountId)
-      : accountsPayableMovementKeys.all,
+      ? accountsPayableMovementKeys.listByAccount(slug, accountId)
+      : accountsPayableMovementKeys.lists(slug),
 
     queryFn: () => {
       if (!accountId) {
@@ -15,6 +17,6 @@ export const useAccountsPayableMovements = (accountId?: number) => {
       return getMovementsByAccountId(accountId);
     },
 
-    enabled: !!accountId, // importante para cuando el drawer esté cerrado
+    enabled: !!accountId && !!slug,
   });
 };

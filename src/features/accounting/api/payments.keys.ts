@@ -1,7 +1,9 @@
 export const paymentKeys = {
   all: ["payments"] as const,
 
-  lists: () => [...paymentKeys.all, "list"] as const,
+  lists: (business?: string) =>
+    [...paymentKeys.all, "list", business ?? "public"] as const,
 
-  recent: (limit: number) => [...paymentKeys.lists(), "recent", limit] as const,
+  recent: (business: string | undefined, limit: number) =>
+    [...paymentKeys.lists(business), "recent", limit] as const,
 };

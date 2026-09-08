@@ -9,6 +9,7 @@ import { Routes, Route, useParams } from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
+import { EggAccountingHelpPage } from "@/features/egg/accounting/pages/EggAccountingHelpPage";
 import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
@@ -111,6 +112,7 @@ export default function BusinessRoutes() {
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />
         <Route path="accounting" element={<EggAccountsPage />} />
+        <Route path="accounting/help" element={<EggAccountingHelpPage />} />
         <Route
           path="salesAndBatches"
           element={<BatchPage unitType={"EGG"} />}

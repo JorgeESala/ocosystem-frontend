@@ -1,8 +1,9 @@
 export const accountingEntityKeys = {
   all: ["accounting-entities"] as const,
 
-  lists: () => [...accountingEntityKeys.all, "list"] as const,
+  lists: (business?: string) =>
+    [...accountingEntityKeys.all, "list", business ?? "public"] as const,
 
-  byType: (entityType?: string) =>
-    [...accountingEntityKeys.lists(), entityType] as const,
+  byType: (business: string | undefined, entityType?: string) =>
+    [...accountingEntityKeys.lists(business), entityType] as const,
 };

@@ -1,10 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { InfoTip } from "./InfoTip";
 
 interface Props {
   data: AccountsPayableResponse[];
   filterLabel: string | null;
+  tooltips?: {
+    total?: ReactNode;
+    count?: ReactNode;
+    antiquity?: ReactNode;
+  };
 }
 
 const getAntiquityColor = (days: number) => {
@@ -36,7 +42,11 @@ const getAntiquityColor = (days: number) => {
   };
 };
 
-export const AccountingSummaryCards = ({ data, filterLabel }: Props) => {
+export const AccountingSummaryCards = ({
+  data,
+  filterLabel,
+  tooltips,
+}: Props) => {
   const totalDebt = useMemo(
     () => data.reduce((acc, curr) => acc + (curr.balance || 0), 0),
     [data],
@@ -58,8 +68,11 @@ export const AccountingSummaryCards = ({ data, filterLabel }: Props) => {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
-        <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
+        <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
           Total Pendiente {filterLabel && `(${filterLabel})`}
+          {tooltips?.total && (
+            <InfoTip title="Total pendiente">{tooltips.total}</InfoTip>
+          )}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-3xl font-bold text-white">
@@ -69,8 +82,11 @@ export const AccountingSummaryCards = ({ data, filterLabel }: Props) => {
       </div>
 
       <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
-        <p className="text-xs font-medium tracking-wider text-gray-500 uppercase">
+        <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
           Documentos Abiertos
+          {tooltips?.count && (
+            <InfoTip title="Documentos abiertos">{tooltips.count}</InfoTip>
+          )}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-3xl font-bold text-blue-400">
@@ -86,9 +102,12 @@ export const AccountingSummaryCards = ({ data, filterLabel }: Props) => {
         className={`rounded-lg border p-5 shadow-sm transition-colors duration-300 ${antiquityStyle.border} ${antiquityStyle.bg}`}
       >
         <p
-          className={`text-xs font-medium tracking-wider uppercase ${antiquityStyle.text}`}
+          className={`flex items-center gap-1 text-xs font-medium tracking-wider uppercase ${antiquityStyle.text}`}
         >
           Alerta de Antigüedad
+          {tooltips?.antiquity && (
+            <InfoTip title="Alerta de antigüedad">{tooltips.antiquity}</InfoTip>
+          )}
         </p>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-3xl font-bold text-white">{oldestDays}</span>

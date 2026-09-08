@@ -60,7 +60,7 @@ export const useRecentPayments = (limit = 20) => {
   const { slug } = useParams<{ slug: string }>();
 
   return useQuery({
-    queryKey: paymentKeys.recent(limit),
+    queryKey: paymentKeys.recent(slug, limit),
     queryFn: () => fetchRecentPayments(limit),
     enabled: !!slug,
     staleTime: 1000 * 30,
