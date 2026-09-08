@@ -1,8 +1,9 @@
 export const accountsPayableMovementKeys = {
   all: ["accounts-payable-movements"] as const,
 
-  lists: () => [...accountsPayableMovementKeys.all, "list"] as const,
+  lists: (business?: string) =>
+    [...accountsPayableMovementKeys.all, "list", business ?? "public"] as const,
 
-  listByAccount: (accountId: number) =>
-    [...accountsPayableMovementKeys.lists(), accountId] as const,
+  listByAccount: (business: string | undefined, accountId: number) =>
+    [...accountsPayableMovementKeys.lists(business), accountId] as const,
 };
