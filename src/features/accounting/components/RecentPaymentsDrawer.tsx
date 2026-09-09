@@ -16,6 +16,7 @@ import {
   useRecentPayments,
 } from "@/features/accounting/api/payments.queries";
 import type { PaymentResponse, PaymentMethod } from "../types/payment.types";
+import { hasUnappliedCredit } from "../utils/unappliedCredit";
 
 const methodLabels: Record<PaymentMethod, string> = {
   CASH: "Efectivo",
@@ -112,6 +113,11 @@ export const RecentPaymentsDrawer = ({
                           <Badge color="success">Activo</Badge>
                         ) : (
                           <Badge color="gray">Cancelado</Badge>
+                        )}
+                        {hasUnappliedCredit(p) && (
+                          <Badge color="warning">
+                            Saldo a favor {formatMXN(p.remainingAmount ?? 0)}
+                          </Badge>
                         )}
                       </div>
                     </div>

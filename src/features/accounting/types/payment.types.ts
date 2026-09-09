@@ -9,6 +9,18 @@ export type PaymentStatus = "ACTIVE" | "CANCELLED";
 
 // ---------- Requests ----------
 
+export interface CreateFifoPaymentRequest {
+  payerId: number;
+  receiverId: number;
+
+  amount: number;
+  paymentDate: string; // yyyy-MM-dd
+  paymentMethod: PaymentMethod;
+
+  folio?: string;
+  note?: string;
+}
+
 export interface CreatePaymentRequest {
   accountsPaymentId: number;
   payerId: number;
@@ -29,6 +41,7 @@ export interface CreatePaymentRequest {
 export interface PaymentResponse {
   id: number;
   amount: number;
+  remainingAmount?: number;
   paymentDate: string; // yyyy-MM-dd
   paymentMethod: PaymentMethod;
   folio?: string;

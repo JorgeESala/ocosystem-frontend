@@ -19,9 +19,12 @@ import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useRoutes } from "@/core/api/route/routes.queries";
 import {
   useCreateCompensationPaymentFromAP,
+  useCreateFifoPayment,
   useCreatePayment,
 } from "@/features/accounting/api/payments.queries";
+import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
+import { splitPaymentApplication } from "../utils/unappliedCredit";
 import { AccountPicker } from "@/components/AccountPicker";
 import { PartyChecklist } from "@/components/PartyChecklist";
 
@@ -39,7 +42,7 @@ interface Props {
   secondaryLoading: boolean;
 }
 
-type PaymentKind = "NORMAL" | "COMPENSATION";
+type PaymentKind = "NORMAL" | "COMPENSATION" | "ADVANCE";
 
 type NormalPayload = {
   kind: "NORMAL";
@@ -63,8 +66,21 @@ type CompensationPayload = {
   note: string;
 };
 
+type AdvancePayload = {
+  kind: "ADVANCE";
+  payerId: number;
+  payerName: string;
+  receiverId: number;
+  receiverName: string;
+  amount: number;
+  paymentDate: Date;
+  paymentMethod: PaymentMethod;
+  folio: string;
+  note: string;
+};
+
 type PendingConfirmation = {
-  payload: NormalPayload | CompensationPayload;
+  payload: NormalPayload | CompensationPayload | AdvancePayload;
 };
 
 export const RegisterPaymentFirstModal = ({
@@ -80,8 +96,10 @@ export const RegisterPaymentFirstModal = ({
 }: Props) => {
   const createPayment = useCreatePayment();
   const createCompensationPayment = useCreateCompensationPaymentFromAP();
+  const createFifoPayment = useCreateFifoPayment();
   const { data: drivers } = useDrivers();
   const { data: routes } = useRoutes();
+  const { data: entities = [] } = useAccountingEntities();
 
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
   const [selectedAp, setSelectedAp] = useState<AccountsPayableResponse | null>(
@@ -99,6 +117,9 @@ export const RegisterPaymentFirstModal = ({
   const [compensationError, setCompensationError] = useState<string | null>(
     null,
   );
+  const [advancePayerId, setAdvancePayerId] = useState("");
+  const [advanceReceiverId, setAdvanceReceiverId] = useState("");
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
   const [selectedPrimaryParties, setSelectedPrimaryParties] = useState<
@@ -180,6 +201,9 @@ export const RegisterPaymentFirstModal = ({
       setPendingConfirmation(null);
       setSelectedPrimaryParties([]);
       setSelectedSecondaryParties([]);
+      setAdvancePayerId("");
+      setAdvanceReceiverId("");
+      setAdvanceError(null);
     }
   }, [open]);
 
@@ -194,6 +218,9 @@ export const RegisterPaymentFirstModal = ({
     setRouteId("");
     setCompensationError(null);
     setPendingConfirmation(null);
+    setAdvancePayerId("");
+    setAdvanceReceiverId("");
+    setAdvanceError(null);
   };
 
   const fireNormalPayment = (p: NormalPayload) => {
@@ -242,9 +269,64 @@ export const RegisterPaymentFirstModal = ({
     );
   };
 
+  const fireAdvancePayment = (p: AdvancePayload) => {
+    createFifoPayment.mutate(
+      {
+        payerId: p.payerId,
+        receiverId: p.receiverId,
+        amount: p.amount,
+        paymentDate: formatDateToISO(p.paymentDate),
+        paymentMethod: p.paymentMethod,
+        folio: p.folio,
+        note: p.note,
+      },
+      {
+        onSuccess: () => {
+          const folioPart = p.folio ? ` · Folio ${p.folio}` : "";
+          onSuccessToast?.(
+            `Anticipo registrado${folioPart} · ${formatMXN(p.amount)} como saldo a favor`,
+          );
+          resetForm();
+        },
+      },
+    );
+  };
+
   const handleSubmit = () => {
     const value = Number(amount);
     if (!value || value <= 0 || !paymentDate) return;
+
+    if (paymentKind === "ADVANCE") {
+      const payer = entities.find((e) => String(e.id) === advancePayerId);
+      const receiver = entities.find((e) => String(e.id) === advanceReceiverId);
+      if (!payer || !receiver) {
+        setAdvanceError("Selecciona quién paga y quién recibe el anticipo.");
+        return;
+      }
+      if (payer.id === receiver.id) {
+        setAdvanceError("Quien paga y quien recibe deben ser diferentes.");
+        return;
+      }
+      setAdvanceError(null);
+      const payload: AdvancePayload = {
+        kind: "ADVANCE",
+        payerId: payer.id,
+        payerName: payer.name,
+        receiverId: receiver.id,
+        receiverName: receiver.name,
+        amount: value,
+        paymentDate,
+        paymentMethod,
+        folio,
+        note,
+      };
+      if (value > CONFIRMATION_THRESHOLD) {
+        setPendingConfirmation({ payload });
+        return;
+      }
+      fireAdvancePayment(payload);
+      return;
+    }
 
     if (paymentKind === "NORMAL") {
       if (!selectedAp) return;
@@ -302,15 +384,22 @@ export const RegisterPaymentFirstModal = ({
     if (!pendingConfirmation) return;
     if (pendingConfirmation.payload.kind === "NORMAL") {
       fireNormalPayment(pendingConfirmation.payload);
+    } else if (pendingConfirmation.payload.kind === "ADVANCE") {
+      fireAdvancePayment(pendingConfirmation.payload);
     } else {
       fireCompensationPayment(pendingConfirmation.payload);
     }
   };
 
   const submitDisabled =
-    createPayment.isPending || createCompensationPayment.isPending;
+    createPayment.isPending ||
+    createCompensationPayment.isPending ||
+    createFifoPayment.isPending;
   const mutationError =
-    createPayment.error ?? createCompensationPayment.error ?? null;
+    createPayment.error ??
+    createCompensationPayment.error ??
+    createFifoPayment.error ??
+    null;
 
   const value = Number(amount);
   const exceedsThreshold =
@@ -365,6 +454,19 @@ export const RegisterPaymentFirstModal = ({
                         }}
                       />
                       Depósito al proveedor
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="paymentKind"
+                        value="ADVANCE"
+                        checked={paymentKind === "ADVANCE"}
+                        onChange={() => {
+                          setPaymentKind("ADVANCE");
+                          setAdvanceError(null);
+                        }}
+                      />
+                      Anticipo (saldo a favor)
                     </label>
                   </div>
                 </div>
@@ -424,7 +526,7 @@ export const RegisterPaymentFirstModal = ({
 
               {paymentKind === "NORMAL" ? (
                 <div className="space-y-2">
-                  <Label>Cuenta</Label>
+                  <Label>Cuenta</Label>{" "}
                   <PartyChecklist<AccountsPayableResponse>
                     items={validPayables}
                     getPartyName={getPrimaryPartyName}
@@ -456,6 +558,52 @@ export const RegisterPaymentFirstModal = ({
                     }
                     loading={primaryLoading}
                   />
+                </div>
+              ) : paymentKind === "ADVANCE" ? (
+                <div className="space-y-3">
+                  <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                    <p className="text-xs">
+                      El anticipo queda como saldo a favor y se aplicará
+                      automáticamente a futuras deudas.
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Quién paga</Label>
+                    <Select
+                      value={advancePayerId}
+                      onChange={(e) => {
+                        setAdvancePayerId(e.target.value);
+                        setAdvanceError(null);
+                      }}
+                    >
+                      <option value="">Selecciona quien paga</option>
+                      {entities.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Quién recibe</Label>
+                    <Select
+                      value={advanceReceiverId}
+                      onChange={(e) => {
+                        setAdvanceReceiverId(e.target.value);
+                        setAdvanceError(null);
+                      }}
+                    >
+                      <option value="">Selecciona quien recibe</option>
+                      {entities.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  {advanceError && (
+                    <p className="mt-1 text-xs text-red-400">{advanceError}</p>
+                  )}
                 </div>
               ) : (
                 <>
@@ -554,40 +702,44 @@ export const RegisterPaymentFirstModal = ({
                 </summary>
                 <div className="mt-3 space-y-3">
                   <div>
-                    <Label>Folio / referencia (Sólo para depósito)</Label>
+                    <Label>Folio / referencia</Label>
                     <TextInput
                       value={folio}
                       onChange={(e) => setFolio(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <Label>Chofer (Opcional)</Label>
-                    <Select
-                      value={driverId}
-                      onChange={(e) => setDriverId(e.target.value)}
-                    >
-                      <option value="">Seleccione un chofer</option>
-                      {drivers?.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Ruta (Opcional)</Label>
-                    <Select
-                      value={routeId}
-                      onChange={(e) => setRouteId(e.target.value)}
-                    >
-                      <option value="">Seleccione una ruta</option>
-                      {routes?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
+                  {paymentKind !== "ADVANCE" && (
+                    <>
+                      <div>
+                        <Label>Chofer (Opcional)</Label>
+                        <Select
+                          value={driverId}
+                          onChange={(e) => setDriverId(e.target.value)}
+                        >
+                          <option value="">Seleccione un chofer</option>
+                          {drivers?.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Ruta (Opcional)</Label>
+                        <Select
+                          value={routeId}
+                          onChange={(e) => setRouteId(e.target.value)}
+                        >
+                          <option value="">Seleccione una ruta</option>
+                          {routes?.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <Label>Notas (Opcional)</Label>
                     <Textarea
@@ -643,17 +795,30 @@ const FirstConfirmationPanel = ({
 }: FirstConfirmationPanelProps) => {
   const { payload } = pending;
   const isNormal = payload.kind === "NORMAL";
-  const ap = isNormal ? payload.ap : payload.branchAp;
-  const secondaryAp = !isNormal ? payload.supplierAp : null;
+  const isAdvance = payload.kind === "ADVANCE";
+  const ap = isNormal ? payload.ap : isAdvance ? null : payload.branchAp;
+  const secondaryAp = !isNormal && !isAdvance ? payload.supplierAp : null;
+  const split =
+    isNormal && ap ? splitPaymentApplication(payload.amount, ap.balance) : null;
 
   return (
     <div className="space-y-4">
       <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
         <p className="font-medium">Confirma el pago antes de registrarlo</p>
         <p className="mt-1 text-xs">
-          Estás a punto de registrar un pago por{" "}
-          <strong>{formatMXN(payload.amount)}</strong>. Revisa los detalles
-          antes de continuar.
+          {isAdvance ? (
+            <>
+              Estás a punto de registrar un anticipo por{" "}
+              <strong>{formatMXN(payload.amount)}</strong> como saldo a favor.
+              Se aplicará automáticamente a futuras deudas.
+            </>
+          ) : (
+            <>
+              Estás a punto de registrar un pago por{" "}
+              <strong>{formatMXN(payload.amount)}</strong>. Revisa los detalles
+              antes de continuar.
+            </>
+          )}
         </p>
       </div>
 
@@ -661,7 +826,11 @@ const FirstConfirmationPanel = ({
         <div className="flex justify-between px-4 py-2">
           <dt className="text-gray-500 dark:text-gray-400">Tipo</dt>
           <dd className="font-medium text-gray-800 dark:text-gray-100">
-            {isNormal ? "Pago directo" : "Compensación con proveedor"}
+            {isNormal
+              ? "Pago directo"
+              : isAdvance
+                ? "Anticipo (saldo a favor)"
+                : "Compensación con proveedor"}
           </dd>
         </div>
         <div className="flex justify-between px-4 py-2">
@@ -676,14 +845,24 @@ const FirstConfirmationPanel = ({
             {formatHumanDate(payload.paymentDate)}
           </dd>
         </div>
-        <div className="flex justify-between px-4 py-2">
-          <dt className="text-gray-500 dark:text-gray-400">
-            {isNormal ? "Cuenta" : "Cuenta sucursal → CEDIS"}
-          </dt>
-          <dd className="text-right text-gray-800 dark:text-gray-100">
-            {ap.debtorName} → {ap.creditorName}
-          </dd>
-        </div>
+        {isAdvance && payload.kind === "ADVANCE" && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">De → Para</dt>
+            <dd className="text-right text-gray-800 dark:text-gray-100">
+              {payload.payerName} → {payload.receiverName}
+            </dd>
+          </div>
+        )}
+        {ap && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">
+              {isNormal ? "Cuenta" : "Cuenta sucursal → CEDIS"}
+            </dt>
+            <dd className="text-right text-gray-800 dark:text-gray-100">
+              {ap.debtorName} → {ap.creditorName}
+            </dd>
+          </div>
+        )}
         {secondaryAp && (
           <div className="flex justify-between px-4 py-2">
             <dt className="text-gray-500 dark:text-gray-400">
@@ -699,6 +878,15 @@ const FirstConfirmationPanel = ({
             <dt className="text-gray-500 dark:text-gray-400">Folio</dt>
             <dd className="font-medium text-gray-800 dark:text-gray-100">
               {payload.folio}
+            </dd>
+          </div>
+        )}
+        {split && split.parked > 0 && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">Saldo a favor</dt>
+            <dd className="text-right font-medium text-gray-800 dark:text-gray-100">
+              Se aplican {formatMXN(split.applied)} a la cuenta y{" "}
+              {formatMXN(split.parked)} quedan como saldo a favor
             </dd>
           </div>
         )}

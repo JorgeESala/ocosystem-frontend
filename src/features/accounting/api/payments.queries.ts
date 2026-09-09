@@ -3,8 +3,10 @@ import { useParams } from "react-router-dom";
 import {
   cancelPayment,
   createCompensationPaymentFromAP,
+  createFifoPayment,
   createPayment,
   fetchRecentPayments,
+  fetchUnappliedPayments,
 } from "./payments.api";
 import { paymentKeys } from "./payments.keys";
 import { accountsPayableKeys } from "./accounts-payable.keys";
@@ -43,7 +45,6 @@ export const useCreateCompensationPaymentFromAP = () => {
     },
   });
 };
-
 export const useCancelPayment = () => {
   const queryClient = useQueryClient();
 
@@ -56,6 +57,24 @@ export const useCancelPayment = () => {
   });
 };
 
+export const useCreateFifoPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createFifoPayment,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: paymentKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: accountsPayableKeys.all,
+      });
+    },
+  });
+};
+
 export const useRecentPayments = (limit = 20) => {
   const { slug } = useParams<{ slug: string }>();
 
@@ -63,6 +82,17 @@ export const useRecentPayments = (limit = 20) => {
     queryKey: paymentKeys.recent(slug, limit),
     queryFn: () => fetchRecentPayments(limit),
     enabled: !!slug,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useUnappliedPayments = (payerId?: number, receiverId?: number) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: paymentKeys.unapplied(slug, payerId ?? 0, receiverId ?? 0),
+    queryFn: () => fetchUnappliedPayments(payerId!, receiverId!),
+    enabled: !!slug && !!payerId && !!receiverId,
     staleTime: 1000 * 30,
   });
 };
