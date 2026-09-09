@@ -634,6 +634,7 @@ export const EggAccountsPage = () => {
               onExportMonthlyPdf={(input) => exportClientMonthlyPdf(input)}
               initialRange={reportRange}
               onRangeChange={(from, to) => setReportRange({ from, to })}
+              onSuccessToast={setToastMessage}
             />
           </div>
         </>

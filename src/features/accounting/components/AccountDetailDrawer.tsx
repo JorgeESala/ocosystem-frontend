@@ -11,9 +11,10 @@ import {
   TableHead,
   TableHeadCell,
   TableRow,
+  TextInput,
 } from "flowbite-react";
 import { useEffect, useMemo, useState } from "react";
-import { HiDocumentDownload } from "react-icons/hi";
+import { HiArrowLeft, HiDocumentDownload } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
@@ -21,10 +22,16 @@ import {
   statementRowLabel,
   type StatementMovementRow,
 } from "../utils/openAccounts";
+import { isReversibleMovement, totalUnapplied } from "../utils/unappliedCredit";
 import type { ClientMonthlyReportPdfInput } from "../api/client-summary.api";
 import { useAccountingEntities } from "../api/accounting-entities.queries";
 import { useAccountsPayableMovements } from "../api/movements.queries";
-import { useRecentPayments } from "../api/payments.queries";
+import {
+  useApplyRemainder,
+  useRecentPayments,
+  useReverseApplication,
+  useUnappliedPayments,
+} from "../api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
 import { ClientMonthlyReport } from "./ClientMonthlyReport";
 import { InfoTip } from "./InfoTip";
@@ -45,6 +52,7 @@ interface Props {
   onExportMonthlyPdf?: (input: ClientMonthlyReportPdfInput) => void;
   initialRange?: { from: string; to: string };
   onRangeChange?: (from: string, to: string) => void;
+  onSuccessToast?: (message: string) => void;
 }
 
 export const AccountDetailDrawer = ({
@@ -57,6 +65,7 @@ export const AccountDetailDrawer = ({
   onExportMonthlyPdf,
   initialRange,
   onRangeChange,
+  onSuccessToast,
 }: Props) => {
   const {
     data: movements = [],
@@ -67,6 +76,15 @@ export const AccountDetailDrawer = ({
   } = useAccountsPayableMovements(account?.id);
   const [previewBatchId, setPreviewBatchId] = useState<number | null>(null);
   const [previewSaleId, setPreviewSaleId] = useState<number | null>(null);
+  const [reversingId, setReversingId] = useState<number | null>(null);
+  const [reverseReason, setReverseReason] = useState("");
+  const reverseApplication = useReverseApplication();
+  const applyRemainder = useApplyRemainder();
+  const { data: credits = [] } = useUnappliedPayments(
+    account?.debtorId,
+    account?.creditorId,
+  );
+  const creditTotal = totalUnapplied(credits);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportRange, setReportRange] = useState(() => ({
     from: formatDateToISO(
@@ -80,6 +98,45 @@ export const AccountDetailDrawer = ({
       setReportRange(initialRange);
     }
   }, [open, initialRange]);
+
+  useEffect(() => {
+    setReversingId(null);
+    setReverseReason("");
+  }, [open, account?.id]);
+
+  const handleReverse = (movementId: number) => {
+    if (!reverseReason.trim()) return;
+    reverseApplication.mutate(
+      { movementId, reason: reverseReason.trim() },
+      {
+        onSuccess: () => {
+          onSuccessToast?.(
+            "Aplicación revertida · el monto queda como saldo a favor",
+          );
+          setReversingId(null);
+          setReverseReason("");
+        },
+      },
+    );
+  };
+
+  const handleApplyCredit = (paymentId: number, remaining: number) => {
+    if (!account) return;
+    applyRemainder.mutate(
+      {
+        paymentId,
+        payload: {
+          accountsPayableId: account.id,
+          note: "Aplicación de saldo a favor",
+        },
+      },
+      {
+        onSuccess: () => {
+          onSuccessToast?.(`Saldo a favor aplicado · ${formatMXN(remaining)}`);
+        },
+      },
+    );
+  };
 
   const handleRangeChange = (from: string, to: string) => {
     setReportRange({ from, to });
@@ -181,6 +238,48 @@ export const AccountDetailDrawer = ({
                 </div>
               </div>
 
+              {account.balance > 0 && creditTotal > 0 && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                  <p className="font-medium">
+                    Saldo a favor disponible: {formatMXN(creditTotal)}
+                  </p>
+                  <ul className="mt-2 space-y-2">
+                    {credits
+                      .filter((c) => (c.remainingAmount ?? 0) > 0)
+                      .map((c) => (
+                        <li
+                          key={c.id}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span className="text-xs">
+                            {c.folio ? `Folio ${c.folio} · ` : ""}
+                            {formatHumanDate(c.paymentDate)} ·{" "}
+                            {formatMXN(c.remainingAmount ?? 0)}
+                          </span>
+                          <Button
+                            size="xs"
+                            color="warning"
+                            onClick={() =>
+                              handleApplyCredit(c.id, c.remainingAmount ?? 0)
+                            }
+                            disabled={applyRemainder.isPending}
+                          >
+                            Aplicar a esta cuenta
+                          </Button>
+                        </li>
+                      ))}
+                  </ul>
+                  {applyRemainder.error && (
+                    <div className="mt-2">
+                      <AccountingErrorAlert
+                        error={applyRemainder.error}
+                        title="No se pudo aplicar el saldo"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <p className="mb-2 flex items-center gap-1 text-sm font-semibold text-white">
                   Movimientos de esta cuenta
@@ -208,31 +307,101 @@ export const AccountDetailDrawer = ({
                       <TableHeadCell>Movimiento</TableHeadCell>
                       <TableHeadCell>Monto</TableHeadCell>
                       <TableHeadCell>Saldo</TableHeadCell>
+                      <TableHeadCell>
+                        <span className="sr-only">Acciones</span>
+                      </TableHeadCell>
                     </TableHead>
                     <TableBody>
-                      {statementRows.map((row) => (
-                        <TableRow key={row.key}>
-                          <TableCell>
-                            {formatHumanDate(row.movementDate)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge color="gray">
-                              {statementRowLabel(row.movementType)}
-                            </Badge>
-                            {row.folio ? (
-                              <span className="ml-1 text-[11px] text-gray-400">
-                                {row.folio}
-                              </span>
-                            ) : null}
-                          </TableCell>
-                          <TableCell>{formatMXN(row.amount)}</TableCell>
-                          <TableCell className="font-semibold">
-                            {formatMXN(row.balanceAfter)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {statementRows.map((row, index) => {
+                        const movement = movements[index];
+                        const reversible =
+                          movement && isReversibleMovement(movement, account);
+                        const isReversing =
+                          movement && reversingId === movement.id;
+                        return (
+                          <TableRow key={row.key}>
+                            <TableCell>
+                              {formatHumanDate(row.movementDate)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge color="gray">
+                                {statementRowLabel(row.movementType)}
+                              </Badge>
+                              {row.folio ? (
+                                <span className="ml-1 text-[11px] text-gray-400">
+                                  {row.folio}
+                                </span>
+                              ) : null}
+                            </TableCell>
+                            <TableCell>{formatMXN(row.amount)}</TableCell>
+                            <TableCell className="font-semibold">
+                              {formatMXN(row.balanceAfter)}
+                            </TableCell>
+                            <TableCell>
+                              {reversible && movement && !isReversing && (
+                                <Button
+                                  size="xs"
+                                  color="gray"
+                                  onClick={() => {
+                                    setReversingId(movement.id);
+                                    setReverseReason("");
+                                  }}
+                                  disabled={reverseApplication.isPending}
+                                >
+                                  <HiArrowLeft className="mr-1 h-3 w-3" />
+                                  Revertir
+                                </Button>
+                              )}
+                              {reversible && movement && isReversing && (
+                                <div className="flex flex-col gap-1">
+                                  <TextInput
+                                    sizing="sm"
+                                    placeholder="Motivo"
+                                    value={reverseReason}
+                                    onChange={(e) =>
+                                      setReverseReason(e.target.value)
+                                    }
+                                  />
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="xs"
+                                      color="failure"
+                                      onClick={() => handleReverse(movement.id)}
+                                      disabled={
+                                        !reverseReason.trim() ||
+                                        reverseApplication.isPending
+                                      }
+                                    >
+                                      Confirmar
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      color="gray"
+                                      onClick={() => {
+                                        setReversingId(null);
+                                        setReverseReason("");
+                                      }}
+                                      disabled={reverseApplication.isPending}
+                                    >
+                                      Atrás
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
+                )}
+                {reverseApplication.error && (
+                  <div className="mt-2">
+                    <AccountingErrorAlert
+                      error={reverseApplication.error}
+                      title="No se pudo revertir la aplicación"
+                    />
+                  </div>
                 )}
               </div>
 

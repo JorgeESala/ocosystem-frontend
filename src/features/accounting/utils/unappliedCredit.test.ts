@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   hasUnappliedCredit,
+  isReversibleMovement,
+  isStandaloneAccount,
   splitPaymentApplication,
   totalUnapplied,
 } from "./unappliedCredit";
 import type { PaymentResponse } from "../types/payment.types";
+import type {
+  AccountsPayableMovementResponse,
+  AccountsPayableResponse,
+} from "@/features/live-chicken/accounting/accounts-payable/types";
 
 const payment = (
   overrides: Partial<PaymentResponse> = {},
@@ -72,5 +78,82 @@ describe("totalUnapplied", () => {
         }),
       ]),
     ).toBe(400);
+  });
+});
+
+const standaloneAccount = (
+  overrides: Partial<AccountsPayableResponse> = {},
+): AccountsPayableResponse =>
+  ({
+    id: 1,
+    sourceType: "OTHER",
+    sourceId: undefined,
+    sourceBatchId: undefined,
+    ...overrides,
+  }) as AccountsPayableResponse;
+
+const paymentMovement = (
+  overrides: Partial<AccountsPayableMovementResponse> = {},
+): AccountsPayableMovementResponse =>
+  ({
+    id: 10,
+    movementType: "PAYMENT",
+    paymentId: 5,
+    ...overrides,
+  }) as AccountsPayableMovementResponse;
+
+describe("isStandaloneAccount", () => {
+  it("acepta cuentas manuales sin documento origen", () => {
+    expect(isStandaloneAccount(standaloneAccount())).toBe(true);
+    expect(
+      isStandaloneAccount(standaloneAccount({ sourceType: "ADJUSTMENT" })),
+    ).toBe(true);
+  });
+
+  it("rechaza cuentas ligadas a remesa o venta", () => {
+    expect(
+      isStandaloneAccount(standaloneAccount({ sourceType: "BATCH" })),
+    ).toBe(false);
+    expect(
+      isStandaloneAccount(standaloneAccount({ sourceType: "DELIVERY" })),
+    ).toBe(false);
+    expect(isStandaloneAccount(standaloneAccount({ sourceId: 99 }))).toBe(
+      false,
+    );
+    expect(isStandaloneAccount(standaloneAccount({ sourceBatchId: 99 }))).toBe(
+      false,
+    );
+  });
+});
+
+describe("isReversibleMovement", () => {
+  it("acepta aplicaciones de pago en cuentas manuales", () => {
+    expect(isReversibleMovement(paymentMovement(), standaloneAccount())).toBe(
+      true,
+    );
+  });
+
+  it("rechaza movimientos que no son aplicación de pago", () => {
+    expect(
+      isReversibleMovement(
+        paymentMovement({ movementType: "REVERSAL", paymentId: undefined }),
+        standaloneAccount(),
+      ),
+    ).toBe(false);
+    expect(
+      isReversibleMovement(
+        paymentMovement({ movementType: "COMPENSATION" }),
+        standaloneAccount(),
+      ),
+    ).toBe(false);
+  });
+
+  it("rechaza aplicaciones en cuentas ligadas a remesa", () => {
+    expect(
+      isReversibleMovement(
+        paymentMovement(),
+        standaloneAccount({ sourceType: "BATCH", sourceId: 7 }),
+      ),
+    ).toBe(false);
   });
 });
