@@ -28,6 +28,29 @@ export const cancelPayment = (id: number) => {
   return http.post<void>(`/api/accounting/payments/${id}/cancel`);
 };
 
+export const reverseApplication = (movementId: number, reason: string) => {
+  return http.post(
+    `/api/accounting/accounts-payable-movements/${movementId}/reverse`,
+    { reason },
+  );
+};
+
+export interface ApplyRemainderPayload {
+  accountsPayableId: number;
+  amount?: number;
+  note?: string;
+}
+
+export const applyRemainder = (
+  paymentId: number,
+  payload: ApplyRemainderPayload,
+) => {
+  return http.post<PaymentResponse>(
+    `/api/accounting/payments/${paymentId}/apply`,
+    payload,
+  );
+};
+
 export const fetchRecentPayments = async (
   limit = 20,
 ): Promise<PaymentResponse[]> => {

@@ -1,15 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import {
+  applyRemainder,
   cancelPayment,
   createCompensationPaymentFromAP,
   createFifoPayment,
   createPayment,
   fetchRecentPayments,
   fetchUnappliedPayments,
+  reverseApplication,
+  type ApplyRemainderPayload,
 } from "./payments.api";
 import { paymentKeys } from "./payments.keys";
 import { accountsPayableKeys } from "./accounts-payable.keys";
+import { accountsPayableMovementKeys } from "./movements.keys";
+import { clientSummaryKeys } from "./client-summary.keys";
 
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
@@ -94,5 +99,46 @@ export const useUnappliedPayments = (payerId?: number, receiverId?: number) => {
     queryFn: () => fetchUnappliedPayments(payerId!, receiverId!),
     enabled: !!slug && !!payerId && !!receiverId,
     staleTime: 1000 * 30,
+  });
+};
+
+const invalidateAccountingCaches = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({ queryKey: paymentKeys.all });
+  queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
+  queryClient.invalidateQueries({
+    queryKey: accountsPayableMovementKeys.all,
+  });
+  queryClient.invalidateQueries({ queryKey: clientSummaryKeys.all });
+};
+
+export const useReverseApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      movementId,
+      reason,
+    }: {
+      movementId: number;
+      reason: string;
+    }) => reverseApplication(movementId, reason),
+    onSuccess: () => invalidateAccountingCaches(queryClient),
+  });
+};
+
+export const useApplyRemainder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      paymentId,
+      payload,
+    }: {
+      paymentId: number;
+      payload: ApplyRemainderPayload;
+    }) => applyRemainder(paymentId, payload),
+    onSuccess: () => invalidateAccountingCaches(queryClient),
   });
 };
