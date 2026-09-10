@@ -8,6 +8,7 @@ import {
   TableCell,
   Select,
   Tooltip,
+  Badge,
 } from "flowbite-react";
 import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -28,6 +29,7 @@ import {
   type AccountSortKey,
   type SortDir,
 } from "../utils/openAccounts";
+import { hasAvailableCredit } from "../utils/unappliedCredit";
 import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
 interface Props {
   data: AccountsPayableResponse[];
@@ -296,7 +298,14 @@ export const AccountsOpenTable = ({
               <TableCell>{formatMXN(row.totalAmount)}</TableCell>
 
               <TableCell className="font-semibold">
-                {formatMXN(row.balance)}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{formatMXN(row.balance)}</span>
+                  {hasAvailableCredit(row) && (
+                    <Badge color="warning">
+                      Saldo a favor {formatMXN(row.availableCredit ?? 0)}
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
 
               <TableCell>

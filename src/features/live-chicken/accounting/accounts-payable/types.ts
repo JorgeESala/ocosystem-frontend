@@ -47,6 +47,7 @@ export interface AccountsPayableResponse {
   debtorName: string;
   totalAmount: number;
   balance: number;
+  availableCredit?: number;
   sourceType?: AccountsPayableSourceType;
   sourceId?: number;
   sourceBatchId?: number;

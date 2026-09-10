@@ -12,15 +12,17 @@ import {
 } from "flowbite-react";
 import { useState, useEffect, useMemo } from "react";
 import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
-import type { PaymentMethod } from "../types/payment.types";
+import type { FifoPaymentPreview, PaymentMethod } from "../types/payment.types";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useRoutes } from "@/core/api/route/routes.queries";
 import {
+  useCreateAdvancePayment,
   useCreateCompensationPaymentFromAP,
   useCreateFifoPayment,
   useCreatePayment,
+  usePreviewFifoPayment,
 } from "@/features/accounting/api/payments.queries";
 import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
@@ -80,7 +82,12 @@ type AdvancePayload = {
 };
 
 type PendingConfirmation = {
-  payload: NormalPayload | CompensationPayload | AdvancePayload;
+  payload: NormalPayload | CompensationPayload;
+};
+
+type AdvancePreviewState = {
+  payload: AdvancePayload;
+  preview: FifoPaymentPreview;
 };
 
 export const RegisterPaymentFirstModal = ({
@@ -97,6 +104,8 @@ export const RegisterPaymentFirstModal = ({
   const createPayment = useCreatePayment();
   const createCompensationPayment = useCreateCompensationPaymentFromAP();
   const createFifoPayment = useCreateFifoPayment();
+  const createAdvancePayment = useCreateAdvancePayment();
+  const previewFifo = usePreviewFifoPayment();
   const { data: drivers } = useDrivers();
   const { data: routes } = useRoutes();
   const { data: entities = [] } = useAccountingEntities();
@@ -122,6 +131,8 @@ export const RegisterPaymentFirstModal = ({
   const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
+  const [advancePreview, setAdvancePreview] =
+    useState<AdvancePreviewState | null>(null);
   const [selectedPrimaryParties, setSelectedPrimaryParties] = useState<
     string[]
   >([]);
@@ -199,6 +210,7 @@ export const RegisterPaymentFirstModal = ({
       setRouteId("");
       setCompensationError(null);
       setPendingConfirmation(null);
+      setAdvancePreview(null);
       setSelectedPrimaryParties([]);
       setSelectedSecondaryParties([]);
       setAdvancePayerId("");
@@ -218,6 +230,7 @@ export const RegisterPaymentFirstModal = ({
     setRouteId("");
     setCompensationError(null);
     setPendingConfirmation(null);
+    setAdvancePreview(null);
     setAdvancePayerId("");
     setAdvanceReceiverId("");
     setAdvanceError(null);
@@ -269,8 +282,31 @@ export const RegisterPaymentFirstModal = ({
     );
   };
 
-  const fireAdvancePayment = (p: AdvancePayload) => {
+  const fireAdvanceFifo = (p: AdvancePayload) => {
     createFifoPayment.mutate(
+      {
+        payerId: p.payerId,
+        receiverId: p.receiverId,
+        amount: p.amount,
+        paymentDate: formatDateToISO(p.paymentDate),
+        paymentMethod: p.paymentMethod,
+        folio: p.folio,
+        note: p.note,
+      },
+      {
+        onSuccess: () => {
+          const folioPart = p.folio ? ` · Folio ${p.folio}` : "";
+          onSuccessToast?.(
+            `Anticipo aplicado a deudas${folioPart} · ${formatMXN(p.amount)}`,
+          );
+          resetForm();
+        },
+      },
+    );
+  };
+
+  const fireAdvanceParked = (p: AdvancePayload) => {
+    createAdvancePayment.mutate(
       {
         payerId: p.payerId,
         receiverId: p.receiverId,
@@ -320,11 +356,22 @@ export const RegisterPaymentFirstModal = ({
         folio,
         note,
       };
-      if (value > CONFIRMATION_THRESHOLD) {
-        setPendingConfirmation({ payload });
-        return;
-      }
-      fireAdvancePayment(payload);
+      previewFifo.mutate(
+        {
+          payerId: payload.payerId,
+          receiverId: payload.receiverId,
+          amount: payload.amount,
+          paymentDate: formatDateToISO(payload.paymentDate),
+          paymentMethod: payload.paymentMethod,
+          folio: payload.folio,
+          note: payload.note,
+        },
+        {
+          onSuccess: (response) => {
+            setAdvancePreview({ payload, preview: response.data });
+          },
+        },
+      );
       return;
     }
 
@@ -384,8 +431,6 @@ export const RegisterPaymentFirstModal = ({
     if (!pendingConfirmation) return;
     if (pendingConfirmation.payload.kind === "NORMAL") {
       fireNormalPayment(pendingConfirmation.payload);
-    } else if (pendingConfirmation.payload.kind === "ADVANCE") {
-      fireAdvancePayment(pendingConfirmation.payload);
     } else {
       fireCompensationPayment(pendingConfirmation.payload);
     }
@@ -394,11 +439,15 @@ export const RegisterPaymentFirstModal = ({
   const submitDisabled =
     createPayment.isPending ||
     createCompensationPayment.isPending ||
-    createFifoPayment.isPending;
+    createFifoPayment.isPending ||
+    createAdvancePayment.isPending ||
+    previewFifo.isPending;
   const mutationError =
     createPayment.error ??
     createCompensationPayment.error ??
     createFifoPayment.error ??
+    createAdvancePayment.error ??
+    previewFifo.error ??
     null;
 
   const value = Number(amount);
@@ -409,13 +458,21 @@ export const RegisterPaymentFirstModal = ({
     <Modal
       show={open}
       onClose={onClose}
-      size={pendingConfirmation ? "md" : "xl"}
+      size={pendingConfirmation || advancePreview ? "md" : "xl"}
     >
       <ModalHeader>Registrar pago</ModalHeader>
 
       <ModalBody>
         <div className="space-y-4">
-          {pendingConfirmation ? (
+          {advancePreview ? (
+            <AdvancePreviewPanel
+              state={advancePreview}
+              isSubmitting={submitDisabled}
+              onEdit={() => setAdvancePreview(null)}
+              onApply={() => fireAdvanceFifo(advancePreview.payload)}
+              onPark={() => fireAdvanceParked(advancePreview.payload)}
+            />
+          ) : pendingConfirmation ? (
             <FirstConfirmationPanel
               pending={pendingConfirmation}
               onEdit={() => setPendingConfirmation(null)}
@@ -563,8 +620,9 @@ export const RegisterPaymentFirstModal = ({
                 <div className="space-y-3">
                   <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
                     <p className="text-xs">
-                      El anticipo queda como saldo a favor y se aplicará
-                      automáticamente a futuras deudas.
+                      El anticipo queda como saldo a favor. Antes de guardarlo
+                      verás cómo se aplicaría a las deudas abiertas y podrás
+                      elegir.
                     </p>
                   </div>
                   <div>
@@ -756,7 +814,15 @@ export const RegisterPaymentFirstModal = ({
       </ModalBody>
 
       <ModalFooter>
-        {pendingConfirmation ? (
+        {advancePreview ? (
+          <Button
+            color="gray"
+            onClick={() => setAdvancePreview(null)}
+            disabled={submitDisabled}
+          >
+            Editar
+          </Button>
+        ) : pendingConfirmation ? (
           <>
             <Button color="gray" onClick={() => setPendingConfirmation(null)}>
               Editar
@@ -795,9 +861,8 @@ const FirstConfirmationPanel = ({
 }: FirstConfirmationPanelProps) => {
   const { payload } = pending;
   const isNormal = payload.kind === "NORMAL";
-  const isAdvance = payload.kind === "ADVANCE";
-  const ap = isNormal ? payload.ap : isAdvance ? null : payload.branchAp;
-  const secondaryAp = !isNormal && !isAdvance ? payload.supplierAp : null;
+  const ap = isNormal ? payload.ap : payload.branchAp;
+  const secondaryAp = isNormal ? null : payload.supplierAp;
   const split =
     isNormal && ap ? splitPaymentApplication(payload.amount, ap.balance) : null;
 
@@ -806,19 +871,9 @@ const FirstConfirmationPanel = ({
       <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
         <p className="font-medium">Confirma el pago antes de registrarlo</p>
         <p className="mt-1 text-xs">
-          {isAdvance ? (
-            <>
-              Estás a punto de registrar un anticipo por{" "}
-              <strong>{formatMXN(payload.amount)}</strong> como saldo a favor.
-              Se aplicará automáticamente a futuras deudas.
-            </>
-          ) : (
-            <>
-              Estás a punto de registrar un pago por{" "}
-              <strong>{formatMXN(payload.amount)}</strong>. Revisa los detalles
-              antes de continuar.
-            </>
-          )}
+          Estás a punto de registrar un pago por{" "}
+          <strong>{formatMXN(payload.amount)}</strong>. Revisa los detalles
+          antes de continuar.
         </p>
       </div>
 
@@ -826,11 +881,7 @@ const FirstConfirmationPanel = ({
         <div className="flex justify-between px-4 py-2">
           <dt className="text-gray-500 dark:text-gray-400">Tipo</dt>
           <dd className="font-medium text-gray-800 dark:text-gray-100">
-            {isNormal
-              ? "Pago directo"
-              : isAdvance
-                ? "Anticipo (saldo a favor)"
-                : "Compensación con proveedor"}
+            {isNormal ? "Pago directo" : "Compensación con proveedor"}
           </dd>
         </div>
         <div className="flex justify-between px-4 py-2">
@@ -845,14 +896,6 @@ const FirstConfirmationPanel = ({
             {formatHumanDate(payload.paymentDate)}
           </dd>
         </div>
-        {isAdvance && payload.kind === "ADVANCE" && (
-          <div className="flex justify-between px-4 py-2">
-            <dt className="text-gray-500 dark:text-gray-400">De → Para</dt>
-            <dd className="text-right text-gray-800 dark:text-gray-100">
-              {payload.payerName} → {payload.receiverName}
-            </dd>
-          </div>
-        )}
         {ap && (
           <div className="flex justify-between px-4 py-2">
             <dt className="text-gray-500 dark:text-gray-400">
@@ -899,6 +942,103 @@ const FirstConfirmationPanel = ({
         <Button onClick={onConfirm} disabled={isSubmitting}>
           Confirmar y registrar
         </Button>
+      </div>
+    </div>
+  );
+};
+
+interface AdvancePreviewPanelProps {
+  state: AdvancePreviewState;
+  onEdit: () => void;
+  onApply: () => void;
+  onPark: () => void;
+  isSubmitting: boolean;
+}
+
+const AdvancePreviewPanel = ({
+  state,
+  onEdit,
+  onApply,
+  onPark,
+  isSubmitting,
+}: AdvancePreviewPanelProps) => {
+  const { payload, preview } = state;
+  const hasItems = preview.items.length > 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        <p className="font-medium">Revisa cómo se aplicaría el anticipo</p>
+        {hasItems ? (
+          <p className="mt-1 text-xs">
+            Este pago de <strong>{formatMXN(payload.amount)}</strong> se
+            aplicaría así, de la deuda más antigua a la más reciente:
+          </p>
+        ) : (
+          <p className="mt-1 text-xs">
+            No hay deudas abiertas; el monto completo queda como saldo a favor.
+          </p>
+        )}
+      </div>
+
+      <dl className="rounded-md border border-gray-200 bg-white text-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex justify-between px-4 py-2">
+          <dt className="text-gray-500 dark:text-gray-400">De → Para</dt>
+          <dd className="text-right text-gray-800 dark:text-gray-100">
+            {payload.payerName} → {payload.receiverName}
+          </dd>
+        </div>
+        <div className="flex justify-between px-4 py-2">
+          <dt className="text-gray-500 dark:text-gray-400">Monto</dt>
+          <dd className="font-medium text-gray-800 dark:text-gray-100">
+            {formatMXN(payload.amount)}
+          </dd>
+        </div>
+      </dl>
+
+      {hasItems && (
+        <ul className="space-y-2">
+          {preview.items.map((item) => (
+            <li
+              key={item.accountsPayableId}
+              className="rounded-md border border-gray-200 bg-white p-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+            >
+              <p className="font-medium text-gray-800 dark:text-gray-100">
+                {item.debtorName} → {item.creditorName}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                {formatHumanDate(item.date)} · {formatMXN(item.applyAmount)} →{" "}
+                {formatMXN(item.balance - item.applyAmount)} restante
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="text-sm text-gray-700 dark:text-gray-200">
+        {hasItems
+          ? `Quedarían ${formatMXN(preview.parkedAmount)} como saldo a favor.`
+          : `El monto completo (${formatMXN(payload.amount)}) queda como saldo a favor.`}
+      </p>
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button color="gray" onClick={onEdit} disabled={isSubmitting}>
+          Editar
+        </Button>
+        {hasItems && (
+          <Button color="warning" onClick={onPark} disabled={isSubmitting}>
+            Solo registrar como saldo a favor
+          </Button>
+        )}
+        {hasItems ? (
+          <Button onClick={onApply} disabled={isSubmitting}>
+            Aplicar a estas deudas
+          </Button>
+        ) : (
+          <Button onClick={onPark} disabled={isSubmitting}>
+            Solo registrar como saldo a favor
+          </Button>
+        )}
       </div>
     </div>
   );

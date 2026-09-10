@@ -22,17 +22,23 @@ import {
   statementRowLabel,
   type StatementMovementRow,
 } from "../utils/openAccounts";
-import { isReversibleMovement, totalUnapplied } from "../utils/unappliedCredit";
+import {
+  isCreditApplicationNote,
+  isReversibleMovement,
+  planCreditApplication,
+  totalUnapplied,
+} from "../utils/unappliedCredit";
 import type { ClientMonthlyReportPdfInput } from "../api/client-summary.api";
 import { useAccountingEntities } from "../api/accounting-entities.queries";
 import { useAccountsPayableMovements } from "../api/movements.queries";
 import {
+  useApplyCreditsToAccount,
   useApplyRemainder,
-  useRecentPayments,
   useReverseApplication,
   useUnappliedPayments,
 } from "../api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
+import { AccountPaymentsList } from "./AccountPaymentsList";
 import { ClientMonthlyReport } from "./ClientMonthlyReport";
 import { InfoTip } from "./InfoTip";
 import { MovimientosCuentaHelpContent } from "./AccountingHelpContent";
@@ -80,11 +86,21 @@ export const AccountDetailDrawer = ({
   const [reverseReason, setReverseReason] = useState("");
   const reverseApplication = useReverseApplication();
   const applyRemainder = useApplyRemainder();
+  const applyCredits = useApplyCreditsToAccount();
+  const [bulkApplyOpen, setBulkApplyOpen] = useState(false);
   const { data: credits = [] } = useUnappliedPayments(
     account?.debtorId,
     account?.creditorId,
   );
   const creditTotal = totalUnapplied(credits);
+  const creditPlan = useMemo(
+    () =>
+      planCreditApplication(
+        credits.filter((c) => (c.remainingAmount ?? 0) > 0),
+        account?.balance ?? 0,
+      ),
+    [credits, account?.balance],
+  );
   const [reportOpen, setReportOpen] = useState(false);
   const [reportRange, setReportRange] = useState(() => ({
     from: formatDateToISO(
@@ -102,7 +118,20 @@ export const AccountDetailDrawer = ({
   useEffect(() => {
     setReversingId(null);
     setReverseReason("");
+    setBulkApplyOpen(false);
   }, [open, account?.id]);
+
+  const handleApplyAllCredits = () => {
+    if (!account) return;
+    applyCredits.mutate(account.id, {
+      onSuccess: (response) => {
+        onSuccessToast?.(
+          `Saldo a favor aplicado · ${formatMXN(response.data.totalApplied)}`,
+        );
+        setBulkApplyOpen(false);
+      },
+    });
+  };
 
   const handleReverse = (movementId: number) => {
     if (!reverseReason.trim()) return;
@@ -127,7 +156,6 @@ export const AccountDetailDrawer = ({
         paymentId,
         payload: {
           accountsPayableId: account.id,
-          note: "Aplicación de saldo a favor",
         },
       },
       {
@@ -150,15 +178,6 @@ export const AccountDetailDrawer = ({
   );
 
   const showMonthlyReport = mode === "RECEIVABLE";
-
-  const partyName =
-    mode === "PAYABLE" ? account?.creditorName : account?.debtorName;
-  const { data: recent = [], isLoading: loadingRecent } =
-    useRecentPayments(100);
-  const relatedPayments = (recent ?? []).filter((p) => {
-    if (!partyName) return false;
-    return p.payerName === partyName || p.receiverName === partyName;
-  });
 
   const statementRows: StatementMovementRow[] = useMemo(
     () =>
@@ -243,32 +262,100 @@ export const AccountDetailDrawer = ({
                   <p className="font-medium">
                     Saldo a favor disponible: {formatMXN(creditTotal)}
                   </p>
-                  <ul className="mt-2 space-y-2">
-                    {credits
-                      .filter((c) => (c.remainingAmount ?? 0) > 0)
-                      .map((c) => (
-                        <li
-                          key={c.id}
-                          className="flex items-center justify-between gap-2"
-                        >
-                          <span className="text-xs">
-                            {c.folio ? `Folio ${c.folio} · ` : ""}
-                            {formatHumanDate(c.paymentDate)} ·{" "}
-                            {formatMXN(c.remainingAmount ?? 0)}
-                          </span>
-                          <Button
-                            size="xs"
-                            color="warning"
-                            onClick={() =>
-                              handleApplyCredit(c.id, c.remainingAmount ?? 0)
-                            }
-                            disabled={applyRemainder.isPending}
+                  {bulkApplyOpen ? (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-xs">
+                        Se aplicará a esta cuenta del crédito más antiguo al más
+                        reciente:
+                      </p>
+                      <ul className="space-y-1">
+                        {creditPlan.items.map((item) => (
+                          <li
+                            key={item.paymentId}
+                            className="flex justify-between text-xs"
                           >
-                            Aplicar a esta cuenta
-                          </Button>
-                        </li>
-                      ))}
-                  </ul>
+                            <span>
+                              {item.folio ? `folio ${item.folio}` : "Sin folio"}
+                            </span>
+                            <span>{formatMXN(item.amount)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs">
+                        {creditPlan.resultingBalance > 0
+                          ? `La cuenta quedaría con un saldo de ${formatMXN(creditPlan.resultingBalance)}.`
+                          : "La cuenta quedaría liquidada."}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="xs"
+                          color="warning"
+                          onClick={handleApplyAllCredits}
+                          disabled={applyCredits.isPending}
+                        >
+                          Confirmar aplicación
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="gray"
+                          onClick={() => setBulkApplyOpen(false)}
+                          disabled={applyCredits.isPending}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        size="xs"
+                        color="warning"
+                        className="mt-2"
+                        onClick={() => setBulkApplyOpen(true)}
+                        disabled={applyCredits.isPending}
+                      >
+                        Aplicar {formatMXN(creditPlan.totalApplied)} de saldo a
+                        favor a esta cuenta
+                      </Button>
+                      <ul className="mt-2 space-y-2">
+                        {credits
+                          .filter((c) => (c.remainingAmount ?? 0) > 0)
+                          .map((c) => (
+                            <li
+                              key={c.id}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="text-xs">
+                                {c.folio ? `Folio ${c.folio} · ` : ""}
+                                {formatHumanDate(c.paymentDate)} ·{" "}
+                                {formatMXN(c.remainingAmount ?? 0)}
+                              </span>
+                              <Button
+                                size="xs"
+                                color="warning"
+                                onClick={() =>
+                                  handleApplyCredit(
+                                    c.id,
+                                    c.remainingAmount ?? 0,
+                                  )
+                                }
+                                disabled={applyRemainder.isPending}
+                              >
+                                Aplicar a esta cuenta
+                              </Button>
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
+                  {applyCredits.error && (
+                    <div className="mt-2">
+                      <AccountingErrorAlert
+                        error={applyCredits.error}
+                        title="No se pudo aplicar el saldo"
+                      />
+                    </div>
+                  )}
                   {applyRemainder.error && (
                     <div className="mt-2">
                       <AccountingErrorAlert
@@ -327,6 +414,11 @@ export const AccountDetailDrawer = ({
                               <Badge color="gray">
                                 {statementRowLabel(row.movementType)}
                               </Badge>
+                              {isCreditApplicationNote(row.note) && (
+                                <Badge color="warning" className="ml-1">
+                                  Saldo a favor
+                                </Badge>
+                              )}
                               {row.folio ? (
                                 <span className="ml-1 text-[11px] text-gray-400">
                                   {row.folio}
@@ -405,7 +497,7 @@ export const AccountDetailDrawer = ({
                 )}
               </div>
 
-              {showMonthlyReport ? (
+              {showMonthlyReport && (
                 <div>
                   <button
                     type="button"
@@ -427,39 +519,19 @@ export const AccountDetailDrawer = ({
                     />
                   )}
                 </div>
-              ) : (
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-white">
-                    Pagos relacionados
-                  </p>
-                  {loadingRecent ? (
-                    <div className="flex justify-center py-6">
-                      <Spinner />
-                    </div>
-                  ) : relatedPayments.length === 0 ? (
-                    <p className="text-sm text-gray-400">
-                      Sin pagos recientes para {partyName ?? "esta cuenta"}.
-                    </p>
-                  ) : (
-                    <ul className="divide-y divide-gray-700">
-                      {relatedPayments.slice(0, 20).map((p) => (
-                        <li
-                          key={p.id}
-                          className="flex justify-between py-2 text-sm"
-                        >
-                          <span className="text-gray-300">
-                            {formatHumanDate(p.paymentDate)} · {p.payerName} →{" "}
-                            {p.receiverName}
-                          </span>
-                          <span className="font-semibold text-white">
-                            {formatMXN(p.amount)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
               )}
+
+              <div>
+                <p className="mb-2 text-sm font-semibold text-white">
+                  Pagos relacionados
+                </p>
+                <AccountPaymentsList
+                  payerId={account.debtorId}
+                  receiverId={account.creditorId}
+                  partyLabel={account.debtorName}
+                  onSuccessToast={onSuccessToast}
+                />
+              </div>
             </div>
           )}
         </DrawerItems>
