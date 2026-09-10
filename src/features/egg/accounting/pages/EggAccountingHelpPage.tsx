@@ -101,6 +101,18 @@ const FAQ = [
     q: "¿Los pagos y los cargos son lo único que mueve el saldo?",
     a: "Sí. Todo cambio de saldo deja un movimiento: pagos y compensaciones lo bajan; cargos y ajustes lo suben; las reversas devuelven pagos cancelados.",
   },
+  {
+    q: "¿Cómo se reparte un anticipo?",
+    a: "Al registrar un anticipo, el sistema muestra primero cómo se aplicaría a las deudas abiertas, de la más antigua a la más reciente. Puedes elegir 'Aplicar a estas deudas' o 'Solo registrar como saldo a favor'. Nada se guarda hasta que eliges una opción.",
+  },
+  {
+    q: "¿Qué significa la etiqueta Saldo a favor?",
+    a: "Es dinero pagado que aún no se aplica a ninguna deuda. Nunca se aplica solo: lo ves como chip en las cuentas abiertas, como sección en el estado de cuenta del cliente y con una etiqueta en los movimientos que lo aplican.",
+  },
+  {
+    q: "¿Qué pasa si cancelo un pago?",
+    a: "Se reactivan las deudas donde estaba aplicado y el dinero vuelve a quedar disponible como saldo a favor. El folio se conserva en la nota del movimiento. Antes de cancelar, el sistema dice cuántas deudas se reactivarán y por cuánto dinero.",
+  },
 ];
 
 export const EggAccountingHelpPage = () => {

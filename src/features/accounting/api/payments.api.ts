@@ -1,7 +1,10 @@
 import { http } from "@/shared/api/http";
 import type {
+  CreateAdvancePaymentRequest,
   CreateFifoPaymentRequest,
   CreatePaymentRequest,
+  FifoPaymentPreview,
+  PaymentApplication,
   PaymentResponse,
 } from "../types/payment.types";
 import type {
@@ -15,6 +18,20 @@ export const createPayment = (payload: CreatePaymentRequest) => {
 
 export const createFifoPayment = (payload: CreateFifoPaymentRequest) => {
   return http.post<PaymentResponse>("/api/accounting/payments/fifo", payload);
+};
+
+export const previewFifoPayment = (payload: CreateFifoPaymentRequest) => {
+  return http.post<FifoPaymentPreview>(
+    "/api/accounting/payments/fifo/preview",
+    payload,
+  );
+};
+
+export const createAdvancePayment = (payload: CreateAdvancePaymentRequest) => {
+  return http.post<PaymentResponse>(
+    "/api/accounting/payments/advance",
+    payload,
+  );
 };
 export const createCompensationPaymentFromAP = (
   data: CompensationPaymentAPRequest,
@@ -69,3 +86,40 @@ export const fetchUnappliedPayments = async (
   );
   return data;
 };
+
+export const fetchPaymentsByPair = async (
+  payerId: number,
+  receiverId: number,
+): Promise<PaymentResponse[]> => {
+  const { data } = await http.get<PaymentResponse[]>(
+    `/api/accounting/payments/by-pair?payerId=${payerId}&receiverId=${receiverId}`,
+  );
+  return data;
+};
+
+export const fetchPaymentApplications = async (
+  paymentId: number,
+): Promise<PaymentApplication[]> => {
+  const { data } = await http.get<PaymentApplication[]>(
+    `/api/accounting/payments/${paymentId}/applications`,
+  );
+  return data;
+};
+
+export const applyCreditsToAccount = (accountsPayableId: number) => {
+  return http.post<ApplyCreditsResponse>(
+    `/api/accounting/accounts-payable/${accountsPayableId}/apply-credits`,
+  );
+};
+
+export interface AppliedCredit {
+  paymentId: number;
+  folio?: string;
+  amount: number;
+}
+
+export interface ApplyCreditsResponse {
+  payments: AppliedCredit[];
+  totalApplied: number;
+  remainingBalance: number;
+}

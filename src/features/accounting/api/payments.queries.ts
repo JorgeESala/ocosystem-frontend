@@ -1,13 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import {
+  applyCreditsToAccount,
   applyRemainder,
   cancelPayment,
+  createAdvancePayment,
   createCompensationPaymentFromAP,
   createFifoPayment,
   createPayment,
+  fetchPaymentApplications,
+  fetchPaymentsByPair,
   fetchRecentPayments,
   fetchUnappliedPayments,
+  previewFifoPayment,
   reverseApplication,
   type ApplyRemainderPayload,
 } from "./payments.api";
@@ -80,6 +85,21 @@ export const useCreateFifoPayment = () => {
   });
 };
 
+export const usePreviewFifoPayment = () => {
+  return useMutation({
+    mutationFn: previewFifoPayment,
+  });
+};
+
+export const useCreateAdvancePayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createAdvancePayment,
+    onSuccess: () => invalidateAccountingCaches(queryClient),
+  });
+};
+
 export const useRecentPayments = (limit = 20) => {
   const { slug } = useParams<{ slug: string }>();
 
@@ -139,6 +159,37 @@ export const useApplyRemainder = () => {
       paymentId: number;
       payload: ApplyRemainderPayload;
     }) => applyRemainder(paymentId, payload),
+    onSuccess: () => invalidateAccountingCaches(queryClient),
+  });
+};
+
+export const usePairPayments = (payerId?: number, receiverId?: number) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: paymentKeys.byPair(slug, payerId ?? 0, receiverId ?? 0),
+    queryFn: () => fetchPaymentsByPair(payerId!, receiverId!),
+    enabled: !!slug && !!payerId && !!receiverId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const usePaymentApplications = (paymentId?: number) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: paymentKeys.applications(slug, paymentId ?? 0),
+    queryFn: () => fetchPaymentApplications(paymentId!),
+    enabled: !!slug && !!paymentId,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useApplyCreditsToAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: applyCreditsToAccount,
     onSuccess: () => invalidateAccountingCaches(queryClient),
   });
 };
