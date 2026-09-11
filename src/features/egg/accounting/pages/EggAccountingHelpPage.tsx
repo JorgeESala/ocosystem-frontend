@@ -91,7 +91,7 @@ const FAQ = [
   },
   {
     q: "¿Por qué un cliente no aparece en Por cobrar?",
-    a: "La tabla solo muestra cuentas con saldo mayor a cero en los últimos 30 días por defecto. Si el cliente ya liquidó todo, desaparece de la tabla, pero su historial completo sigue disponible en su reporte mensual.",
+    a: "La tabla solo muestra cuentas con saldo mayor a cero en los últimos 30 días por defecto. Si el cliente ya liquidó todo, desaparece de la tabla, pero su historial completo sigue disponible con el botón 'Reporte del cliente'.",
   },
   {
     q: "¿Qué significa que una cuenta no tenga movimientos?",
@@ -100,6 +100,22 @@ const FAQ = [
   {
     q: "¿Los pagos y los cargos son lo único que mueve el saldo?",
     a: "Sí. Todo cambio de saldo deja un movimiento: pagos y compensaciones lo bajan; cargos y ajustes lo suben; las reversas devuelven pagos cancelados.",
+  },
+  {
+    q: "¿Cómo se reparte un anticipo?",
+    a: "Al registrar un anticipo, el sistema muestra primero cómo se aplicaría a las deudas abiertas, de la más antigua a la más reciente. Puedes elegir 'Aplicar a estas deudas' o 'Solo registrar como saldo a favor'. Nada se guarda hasta que eliges una opción.",
+  },
+  {
+    q: "¿Qué significa la etiqueta Saldo a favor?",
+    a: "Es dinero pagado que aún no se aplica a ninguna deuda. Nunca se aplica solo: lo ves como chip en las cuentas abiertas, como sección de saldo a favor en el detalle de la cuenta y con una etiqueta en los movimientos que lo aplican.",
+  },
+  {
+    q: "¿Dónde veo el reporte del cliente?",
+    a: "En Por cobrar se abre con el botón 'Reporte del cliente' (en el detalle de una cuenta o en cada fila de la tabla) y suma todas las deudas del cliente con todos los CEDIS. En Por pagar se abre igual como 'Reporte del CEDIS' y suma todas las deudas de ese CEDIS con sus proveedores. En ambos, cada pago muestra su botón 'Cancelar pago'.",
+  },
+  {
+    q: "¿Qué pasa si cancelo un pago?",
+    a: "Se reactivan las deudas donde estaba aplicado y el dinero vuelve a quedar disponible como saldo a favor. El folio se conserva en la nota del movimiento. Se cancela desde el botón 'Cancelar pago' de la fila del pago en el reporte, y antes de hacerlo el sistema dice cuántas deudas se reactivarán y por cuánto dinero.",
   },
 ];
 

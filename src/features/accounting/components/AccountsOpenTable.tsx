@@ -8,6 +8,7 @@ import {
   TableCell,
   Select,
   Tooltip,
+  Badge,
 } from "flowbite-react";
 import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -21,6 +22,7 @@ import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
+import { HiDocumentText } from "react-icons/hi2";
 import { SourceBadge } from "./SourceBadge";
 import { AgingBadge } from "./AgingBadge";
 import {
@@ -28,12 +30,14 @@ import {
   type AccountSortKey,
   type SortDir,
 } from "../utils/openAccounts";
+import { hasAvailableCredit } from "../utils/unappliedCredit";
 import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
 interface Props {
   data: AccountsPayableResponse[];
   onPay: (account: AccountsPayableResponse) => void;
   onViewHistory?: (account: AccountsPayableResponse) => void;
   onViewClient?: (account: AccountsPayableResponse) => void;
+  onViewClientReport?: (account: AccountsPayableResponse) => void;
   sortKey?: AccountSortKey;
   sortDir?: SortDir;
   onSortChange?: (key: AccountSortKey, dir: SortDir) => void;
@@ -51,6 +55,7 @@ export const AccountsOpenTable = ({
   onPay,
   onViewHistory,
   onViewClient,
+  onViewClientReport,
   sortKey: controlledKey,
   sortDir: controlledDir,
   onSortChange,
@@ -215,7 +220,7 @@ export const AccountsOpenTable = ({
                     type="button"
                     className="text-left text-blue-400 hover:underline"
                     onClick={() => onViewClient(row)}
-                    title="Ver estado de cuenta del cliente"
+                    title="Ver cuenta"
                   >
                     {row.debtorName} → {row.creditorName}
                   </button>
@@ -296,7 +301,14 @@ export const AccountsOpenTable = ({
               <TableCell>{formatMXN(row.totalAmount)}</TableCell>
 
               <TableCell className="font-semibold">
-                {formatMXN(row.balance)}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>{formatMXN(row.balance)}</span>
+                  {hasAvailableCredit(row) && (
+                    <Badge color="warning">
+                      Saldo a favor {formatMXN(row.availableCredit ?? 0)}
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
 
               <TableCell>
@@ -328,6 +340,20 @@ export const AccountsOpenTable = ({
                       }}
                     >
                       <FaRegFileLines size={20} />
+                    </Button>
+                  </Tooltip>
+                )}
+                {onViewClientReport && (
+                  <Tooltip content="Reporte del cliente">
+                    <Button
+                      size="xs"
+                      color="gray"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewClientReport(row);
+                      }}
+                    >
+                      <HiDocumentText size={20} />
                     </Button>
                   </Tooltip>
                 )}

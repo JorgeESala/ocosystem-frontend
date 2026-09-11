@@ -24,6 +24,7 @@ import {
   useCreatePayment,
 } from "@/features/accounting/api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
+import { splitPaymentApplication } from "../utils/unappliedCredit";
 
 const CONFIRMATION_THRESHOLD = 10_000;
 
@@ -514,6 +515,11 @@ const NormalFormFields = ({
   exceedsThreshold,
   threshold,
 }: NormalFieldsProps) => {
+  const entered = Number(amount);
+  const overpay =
+    Number.isFinite(entered) && entered > 0
+      ? splitPaymentApplication(entered, maxAmount)
+      : null;
   return (
     <>
       <div>
@@ -529,6 +535,12 @@ const NormalFormFields = ({
           <p className="mt-1 text-xs text-amber-400">
             Por seguridad, montos mayores a {formatMXN(threshold)} requieren
             confirmación.
+          </p>
+        )}
+        {overpay && overpay.parked > 0 && (
+          <p className="mt-1 text-xs text-amber-400">
+            El excedente de {formatMXN(overpay.parked)} quedará como saldo a
+            favor.
           </p>
         )}
       </div>
@@ -652,6 +664,9 @@ const ConfirmationPanel = ({
 }: ConfirmationPanelProps) => {
   const { payload, branchCedisAccount } = pending;
   const isNormal = payload.kind === "NORMAL";
+  const split = isNormal
+    ? splitPaymentApplication(payload.amount, branchCedisAccount.balance)
+    : null;
 
   return (
     <div className="space-y-4">
@@ -705,6 +720,15 @@ const ConfirmationPanel = ({
             <dt className="text-gray-500 dark:text-gray-400">Folio</dt>
             <dd className="font-medium text-gray-800 dark:text-gray-100">
               {payload.folio}
+            </dd>
+          </div>
+        )}
+        {split && split.parked > 0 && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">Saldo a favor</dt>
+            <dd className="text-right font-medium text-gray-800 dark:text-gray-100">
+              Se aplican {formatMXN(split.applied)} a la cuenta y{" "}
+              {formatMXN(split.parked)} quedan como saldo a favor
             </dd>
           </div>
         )}

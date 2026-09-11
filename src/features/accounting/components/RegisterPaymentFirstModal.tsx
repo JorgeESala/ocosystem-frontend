@@ -12,16 +12,21 @@ import {
 } from "flowbite-react";
 import { useState, useEffect, useMemo } from "react";
 import type { AccountsPayableResponse } from "../../live-chicken/accounting/accounts-payable/types";
-import type { PaymentMethod } from "../types/payment.types";
+import type { FifoPaymentPreview, PaymentMethod } from "../types/payment.types";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import { useRoutes } from "@/core/api/route/routes.queries";
 import {
+  useCreateAdvancePayment,
   useCreateCompensationPaymentFromAP,
+  useCreateFifoPayment,
   useCreatePayment,
+  usePreviewFifoPayment,
 } from "@/features/accounting/api/payments.queries";
+import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
+import { splitPaymentApplication } from "../utils/unappliedCredit";
 import { AccountPicker } from "@/components/AccountPicker";
 import { PartyChecklist } from "@/components/PartyChecklist";
 
@@ -39,7 +44,7 @@ interface Props {
   secondaryLoading: boolean;
 }
 
-type PaymentKind = "NORMAL" | "COMPENSATION";
+type PaymentKind = "NORMAL" | "COMPENSATION" | "ADVANCE";
 
 type NormalPayload = {
   kind: "NORMAL";
@@ -63,8 +68,26 @@ type CompensationPayload = {
   note: string;
 };
 
+type AdvancePayload = {
+  kind: "ADVANCE";
+  payerId: number;
+  payerName: string;
+  receiverId: number;
+  receiverName: string;
+  amount: number;
+  paymentDate: Date;
+  paymentMethod: PaymentMethod;
+  folio: string;
+  note: string;
+};
+
 type PendingConfirmation = {
   payload: NormalPayload | CompensationPayload;
+};
+
+type AdvancePreviewState = {
+  payload: AdvancePayload;
+  preview: FifoPaymentPreview;
 };
 
 export const RegisterPaymentFirstModal = ({
@@ -80,8 +103,12 @@ export const RegisterPaymentFirstModal = ({
 }: Props) => {
   const createPayment = useCreatePayment();
   const createCompensationPayment = useCreateCompensationPaymentFromAP();
+  const createFifoPayment = useCreateFifoPayment();
+  const createAdvancePayment = useCreateAdvancePayment();
+  const previewFifo = usePreviewFifoPayment();
   const { data: drivers } = useDrivers();
   const { data: routes } = useRoutes();
+  const { data: entities = [] } = useAccountingEntities();
 
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("NORMAL");
   const [selectedAp, setSelectedAp] = useState<AccountsPayableResponse | null>(
@@ -99,8 +126,13 @@ export const RegisterPaymentFirstModal = ({
   const [compensationError, setCompensationError] = useState<string | null>(
     null,
   );
+  const [advancePayerId, setAdvancePayerId] = useState("");
+  const [advanceReceiverId, setAdvanceReceiverId] = useState("");
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
+  const [advancePreview, setAdvancePreview] =
+    useState<AdvancePreviewState | null>(null);
   const [selectedPrimaryParties, setSelectedPrimaryParties] = useState<
     string[]
   >([]);
@@ -178,8 +210,12 @@ export const RegisterPaymentFirstModal = ({
       setRouteId("");
       setCompensationError(null);
       setPendingConfirmation(null);
+      setAdvancePreview(null);
       setSelectedPrimaryParties([]);
       setSelectedSecondaryParties([]);
+      setAdvancePayerId("");
+      setAdvanceReceiverId("");
+      setAdvanceError(null);
     }
   }, [open]);
 
@@ -194,6 +230,10 @@ export const RegisterPaymentFirstModal = ({
     setRouteId("");
     setCompensationError(null);
     setPendingConfirmation(null);
+    setAdvancePreview(null);
+    setAdvancePayerId("");
+    setAdvanceReceiverId("");
+    setAdvanceError(null);
   };
 
   const fireNormalPayment = (p: NormalPayload) => {
@@ -242,9 +282,98 @@ export const RegisterPaymentFirstModal = ({
     );
   };
 
+  const fireAdvanceFifo = (p: AdvancePayload) => {
+    createFifoPayment.mutate(
+      {
+        payerId: p.payerId,
+        receiverId: p.receiverId,
+        amount: p.amount,
+        paymentDate: formatDateToISO(p.paymentDate),
+        paymentMethod: p.paymentMethod,
+        folio: p.folio,
+        note: p.note,
+      },
+      {
+        onSuccess: () => {
+          const folioPart = p.folio ? ` · Folio ${p.folio}` : "";
+          onSuccessToast?.(
+            `Anticipo aplicado a deudas${folioPart} · ${formatMXN(p.amount)}`,
+          );
+          resetForm();
+        },
+      },
+    );
+  };
+
+  const fireAdvanceParked = (p: AdvancePayload) => {
+    createAdvancePayment.mutate(
+      {
+        payerId: p.payerId,
+        receiverId: p.receiverId,
+        amount: p.amount,
+        paymentDate: formatDateToISO(p.paymentDate),
+        paymentMethod: p.paymentMethod,
+        folio: p.folio,
+        note: p.note,
+      },
+      {
+        onSuccess: () => {
+          const folioPart = p.folio ? ` · Folio ${p.folio}` : "";
+          onSuccessToast?.(
+            `Anticipo registrado${folioPart} · ${formatMXN(p.amount)} como saldo a favor`,
+          );
+          resetForm();
+        },
+      },
+    );
+  };
+
   const handleSubmit = () => {
     const value = Number(amount);
     if (!value || value <= 0 || !paymentDate) return;
+
+    if (paymentKind === "ADVANCE") {
+      const payer = entities.find((e) => String(e.id) === advancePayerId);
+      const receiver = entities.find((e) => String(e.id) === advanceReceiverId);
+      if (!payer || !receiver) {
+        setAdvanceError("Selecciona quién paga y quién recibe el anticipo.");
+        return;
+      }
+      if (payer.id === receiver.id) {
+        setAdvanceError("Quien paga y quien recibe deben ser diferentes.");
+        return;
+      }
+      setAdvanceError(null);
+      const payload: AdvancePayload = {
+        kind: "ADVANCE",
+        payerId: payer.id,
+        payerName: payer.name,
+        receiverId: receiver.id,
+        receiverName: receiver.name,
+        amount: value,
+        paymentDate,
+        paymentMethod,
+        folio,
+        note,
+      };
+      previewFifo.mutate(
+        {
+          payerId: payload.payerId,
+          receiverId: payload.receiverId,
+          amount: payload.amount,
+          paymentDate: formatDateToISO(payload.paymentDate),
+          paymentMethod: payload.paymentMethod,
+          folio: payload.folio,
+          note: payload.note,
+        },
+        {
+          onSuccess: (response) => {
+            setAdvancePreview({ payload, preview: response.data });
+          },
+        },
+      );
+      return;
+    }
 
     if (paymentKind === "NORMAL") {
       if (!selectedAp) return;
@@ -308,9 +437,18 @@ export const RegisterPaymentFirstModal = ({
   };
 
   const submitDisabled =
-    createPayment.isPending || createCompensationPayment.isPending;
+    createPayment.isPending ||
+    createCompensationPayment.isPending ||
+    createFifoPayment.isPending ||
+    createAdvancePayment.isPending ||
+    previewFifo.isPending;
   const mutationError =
-    createPayment.error ?? createCompensationPayment.error ?? null;
+    createPayment.error ??
+    createCompensationPayment.error ??
+    createFifoPayment.error ??
+    createAdvancePayment.error ??
+    previewFifo.error ??
+    null;
 
   const value = Number(amount);
   const exceedsThreshold =
@@ -320,13 +458,21 @@ export const RegisterPaymentFirstModal = ({
     <Modal
       show={open}
       onClose={onClose}
-      size={pendingConfirmation ? "md" : "xl"}
+      size={pendingConfirmation || advancePreview ? "md" : "xl"}
     >
       <ModalHeader>Registrar pago</ModalHeader>
 
       <ModalBody>
         <div className="space-y-4">
-          {pendingConfirmation ? (
+          {advancePreview ? (
+            <AdvancePreviewPanel
+              state={advancePreview}
+              isSubmitting={submitDisabled}
+              onEdit={() => setAdvancePreview(null)}
+              onApply={() => fireAdvanceFifo(advancePreview.payload)}
+              onPark={() => fireAdvanceParked(advancePreview.payload)}
+            />
+          ) : pendingConfirmation ? (
             <FirstConfirmationPanel
               pending={pendingConfirmation}
               onEdit={() => setPendingConfirmation(null)}
@@ -365,6 +511,19 @@ export const RegisterPaymentFirstModal = ({
                         }}
                       />
                       Depósito al proveedor
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="paymentKind"
+                        value="ADVANCE"
+                        checked={paymentKind === "ADVANCE"}
+                        onChange={() => {
+                          setPaymentKind("ADVANCE");
+                          setAdvanceError(null);
+                        }}
+                      />
+                      Anticipo (saldo a favor)
                     </label>
                   </div>
                 </div>
@@ -424,7 +583,7 @@ export const RegisterPaymentFirstModal = ({
 
               {paymentKind === "NORMAL" ? (
                 <div className="space-y-2">
-                  <Label>Cuenta</Label>
+                  <Label>Cuenta</Label>{" "}
                   <PartyChecklist<AccountsPayableResponse>
                     items={validPayables}
                     getPartyName={getPrimaryPartyName}
@@ -456,6 +615,53 @@ export const RegisterPaymentFirstModal = ({
                     }
                     loading={primaryLoading}
                   />
+                </div>
+              ) : paymentKind === "ADVANCE" ? (
+                <div className="space-y-3">
+                  <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                    <p className="text-xs">
+                      El anticipo queda como saldo a favor. Antes de guardarlo
+                      verás cómo se aplicaría a las deudas abiertas y podrás
+                      elegir.
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Quién paga</Label>
+                    <Select
+                      value={advancePayerId}
+                      onChange={(e) => {
+                        setAdvancePayerId(e.target.value);
+                        setAdvanceError(null);
+                      }}
+                    >
+                      <option value="">Selecciona quien paga</option>
+                      {entities.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Quién recibe</Label>
+                    <Select
+                      value={advanceReceiverId}
+                      onChange={(e) => {
+                        setAdvanceReceiverId(e.target.value);
+                        setAdvanceError(null);
+                      }}
+                    >
+                      <option value="">Selecciona quien recibe</option>
+                      {entities.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  {advanceError && (
+                    <p className="mt-1 text-xs text-red-400">{advanceError}</p>
+                  )}
                 </div>
               ) : (
                 <>
@@ -554,40 +760,44 @@ export const RegisterPaymentFirstModal = ({
                 </summary>
                 <div className="mt-3 space-y-3">
                   <div>
-                    <Label>Folio / referencia (Sólo para depósito)</Label>
+                    <Label>Folio / referencia</Label>
                     <TextInput
                       value={folio}
                       onChange={(e) => setFolio(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <Label>Chofer (Opcional)</Label>
-                    <Select
-                      value={driverId}
-                      onChange={(e) => setDriverId(e.target.value)}
-                    >
-                      <option value="">Seleccione un chofer</option>
-                      {drivers?.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Ruta (Opcional)</Label>
-                    <Select
-                      value={routeId}
-                      onChange={(e) => setRouteId(e.target.value)}
-                    >
-                      <option value="">Seleccione una ruta</option>
-                      {routes?.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
+                  {paymentKind !== "ADVANCE" && (
+                    <>
+                      <div>
+                        <Label>Chofer (Opcional)</Label>
+                        <Select
+                          value={driverId}
+                          onChange={(e) => setDriverId(e.target.value)}
+                        >
+                          <option value="">Seleccione un chofer</option>
+                          {drivers?.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Ruta (Opcional)</Label>
+                        <Select
+                          value={routeId}
+                          onChange={(e) => setRouteId(e.target.value)}
+                        >
+                          <option value="">Seleccione una ruta</option>
+                          {routes?.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <Label>Notas (Opcional)</Label>
                     <Textarea
@@ -604,7 +814,15 @@ export const RegisterPaymentFirstModal = ({
       </ModalBody>
 
       <ModalFooter>
-        {pendingConfirmation ? (
+        {advancePreview ? (
+          <Button
+            color="gray"
+            onClick={() => setAdvancePreview(null)}
+            disabled={submitDisabled}
+          >
+            Editar
+          </Button>
+        ) : pendingConfirmation ? (
           <>
             <Button color="gray" onClick={() => setPendingConfirmation(null)}>
               Editar
@@ -644,7 +862,9 @@ const FirstConfirmationPanel = ({
   const { payload } = pending;
   const isNormal = payload.kind === "NORMAL";
   const ap = isNormal ? payload.ap : payload.branchAp;
-  const secondaryAp = !isNormal ? payload.supplierAp : null;
+  const secondaryAp = isNormal ? null : payload.supplierAp;
+  const split =
+    isNormal && ap ? splitPaymentApplication(payload.amount, ap.balance) : null;
 
   return (
     <div className="space-y-4">
@@ -676,14 +896,16 @@ const FirstConfirmationPanel = ({
             {formatHumanDate(payload.paymentDate)}
           </dd>
         </div>
-        <div className="flex justify-between px-4 py-2">
-          <dt className="text-gray-500 dark:text-gray-400">
-            {isNormal ? "Cuenta" : "Cuenta sucursal → CEDIS"}
-          </dt>
-          <dd className="text-right text-gray-800 dark:text-gray-100">
-            {ap.debtorName} → {ap.creditorName}
-          </dd>
-        </div>
+        {ap && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">
+              {isNormal ? "Cuenta" : "Cuenta sucursal → CEDIS"}
+            </dt>
+            <dd className="text-right text-gray-800 dark:text-gray-100">
+              {ap.debtorName} → {ap.creditorName}
+            </dd>
+          </div>
+        )}
         {secondaryAp && (
           <div className="flex justify-between px-4 py-2">
             <dt className="text-gray-500 dark:text-gray-400">
@@ -702,6 +924,15 @@ const FirstConfirmationPanel = ({
             </dd>
           </div>
         )}
+        {split && split.parked > 0 && (
+          <div className="flex justify-between px-4 py-2">
+            <dt className="text-gray-500 dark:text-gray-400">Saldo a favor</dt>
+            <dd className="text-right font-medium text-gray-800 dark:text-gray-100">
+              Se aplican {formatMXN(split.applied)} a la cuenta y{" "}
+              {formatMXN(split.parked)} quedan como saldo a favor
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="flex justify-end gap-2">
@@ -711,6 +942,103 @@ const FirstConfirmationPanel = ({
         <Button onClick={onConfirm} disabled={isSubmitting}>
           Confirmar y registrar
         </Button>
+      </div>
+    </div>
+  );
+};
+
+interface AdvancePreviewPanelProps {
+  state: AdvancePreviewState;
+  onEdit: () => void;
+  onApply: () => void;
+  onPark: () => void;
+  isSubmitting: boolean;
+}
+
+const AdvancePreviewPanel = ({
+  state,
+  onEdit,
+  onApply,
+  onPark,
+  isSubmitting,
+}: AdvancePreviewPanelProps) => {
+  const { payload, preview } = state;
+  const hasItems = preview.items.length > 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        <p className="font-medium">Revisa cómo se aplicaría el anticipo</p>
+        {hasItems ? (
+          <p className="mt-1 text-xs">
+            Este pago de <strong>{formatMXN(payload.amount)}</strong> se
+            aplicaría así, de la deuda más antigua a la más reciente:
+          </p>
+        ) : (
+          <p className="mt-1 text-xs">
+            No hay deudas abiertas; el monto completo queda como saldo a favor.
+          </p>
+        )}
+      </div>
+
+      <dl className="rounded-md border border-gray-200 bg-white text-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex justify-between px-4 py-2">
+          <dt className="text-gray-500 dark:text-gray-400">De → Para</dt>
+          <dd className="text-right text-gray-800 dark:text-gray-100">
+            {payload.payerName} → {payload.receiverName}
+          </dd>
+        </div>
+        <div className="flex justify-between px-4 py-2">
+          <dt className="text-gray-500 dark:text-gray-400">Monto</dt>
+          <dd className="font-medium text-gray-800 dark:text-gray-100">
+            {formatMXN(payload.amount)}
+          </dd>
+        </div>
+      </dl>
+
+      {hasItems && (
+        <ul className="space-y-2">
+          {preview.items.map((item) => (
+            <li
+              key={item.accountsPayableId}
+              className="rounded-md border border-gray-200 bg-white p-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+            >
+              <p className="font-medium text-gray-800 dark:text-gray-100">
+                {item.debtorName} → {item.creditorName}
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                {formatHumanDate(item.date)} · {formatMXN(item.applyAmount)} →{" "}
+                {formatMXN(item.balance - item.applyAmount)} restante
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="text-sm text-gray-700 dark:text-gray-200">
+        {hasItems
+          ? `Quedarían ${formatMXN(preview.parkedAmount)} como saldo a favor.`
+          : `El monto completo (${formatMXN(payload.amount)}) queda como saldo a favor.`}
+      </p>
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button color="gray" onClick={onEdit} disabled={isSubmitting}>
+          Editar
+        </Button>
+        {hasItems && (
+          <Button color="warning" onClick={onPark} disabled={isSubmitting}>
+            Solo registrar como saldo a favor
+          </Button>
+        )}
+        {hasItems ? (
+          <Button onClick={onApply} disabled={isSubmitting}>
+            Aplicar a estas deudas
+          </Button>
+        ) : (
+          <Button onClick={onPark} disabled={isSubmitting}>
+            Solo registrar como saldo a favor
+          </Button>
+        )}
       </div>
     </div>
   );

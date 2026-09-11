@@ -6,4 +6,14 @@ export const paymentKeys = {
 
   recent: (business: string | undefined, limit: number) =>
     [...paymentKeys.lists(business), "recent", limit] as const,
+
+  unapplied: (
+    business: string | undefined,
+    payerId: number,
+    receiverId: number,
+  ) =>
+    [...paymentKeys.lists(business), "unapplied", payerId, receiverId] as const,
+
+  applications: (business: string | undefined, paymentId: number) =>
+    [...paymentKeys.lists(business), "applications", paymentId] as const,
 };
