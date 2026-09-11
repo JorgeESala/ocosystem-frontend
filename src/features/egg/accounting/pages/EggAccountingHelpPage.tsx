@@ -91,7 +91,7 @@ const FAQ = [
   },
   {
     q: "¿Por qué un cliente no aparece en Por cobrar?",
-    a: "La tabla solo muestra cuentas con saldo mayor a cero en los últimos 30 días por defecto. Si el cliente ya liquidó todo, desaparece de la tabla, pero su historial completo sigue disponible en su reporte mensual.",
+    a: "La tabla solo muestra cuentas con saldo mayor a cero en los últimos 30 días por defecto. Si el cliente ya liquidó todo, desaparece de la tabla, pero su historial completo sigue disponible con el botón 'Reporte del cliente'.",
   },
   {
     q: "¿Qué significa que una cuenta no tenga movimientos?",
@@ -107,7 +107,11 @@ const FAQ = [
   },
   {
     q: "¿Qué significa la etiqueta Saldo a favor?",
-    a: "Es dinero pagado que aún no se aplica a ninguna deuda. Nunca se aplica solo: lo ves como chip en las cuentas abiertas, como sección en el estado de cuenta del cliente y con una etiqueta en los movimientos que lo aplican.",
+    a: "Es dinero pagado que aún no se aplica a ninguna deuda. Nunca se aplica solo: lo ves como chip en las cuentas abiertas, como sección de saldo a favor en el detalle de la cuenta y con una etiqueta en los movimientos que lo aplican.",
+  },
+  {
+    q: "¿Dónde veo el reporte del cliente?",
+    a: "En el detalle de una cuenta, con el botón 'Reporte del cliente'; también hay un acceso directo en cada fila de la tabla. El reporte suma todas las deudas del cliente con todos los CEDIS en el rango de fechas que elijas. Los pagos de la sección 'Pagos de esta cuenta' son solo los de esa cuenta (ese deudor con ese acreedor).",
   },
   {
     q: "¿Qué pasa si cancelo un pago?",

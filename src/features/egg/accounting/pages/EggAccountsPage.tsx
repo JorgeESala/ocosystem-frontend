@@ -14,6 +14,7 @@ import { RecentPaymentsDrawer } from "@/features/accounting/components/RecentPay
 import { useOpenAccounts } from "@/features/accounting/api/accounts-payable.queries";
 import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
 import { AccountDetailDrawer } from "@/features/accounting/components/AccountDetailDrawer";
+import { ClientReportDrawer } from "@/features/accounting/components/ClientReportDrawer";
 import { CreateAccountsPayableModal } from "@/features/accounting/components/CreateAccountsPayableModal";
 import {
   applyAccountSort,
@@ -69,6 +70,8 @@ export const EggAccountsPage = () => {
 
   const [selectedAccountForHistory, setSelectedAccountForHistory] =
     useState<AccountsPayableResponse | null>(null);
+  const [selectedAccountForReport, setSelectedAccountForReport] =
+    useState<AccountsPayableResponse | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const initialMode = (searchParams.get("mode") as ViewMode) || "RECEIVABLE";
@@ -116,6 +119,16 @@ export const EggAccountsPage = () => {
   const [isRecentOpen, setIsRecentOpen] = useState(false);
 
   const defaultRange = useMemo(() => getLastDays(30), []);
+  const defaultReportRange = useMemo(
+    () => ({
+      from: formatDateToISO(
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      ),
+      to: formatDateToISO(new Date()),
+    }),
+    [],
+  );
+  const effectiveReportRange = reportRange ?? defaultReportRange;
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
@@ -582,6 +595,9 @@ export const EggAccountsPage = () => {
                     data={paged}
                     onPay={handlePay}
                     onViewClient={handleViewClient}
+                    onViewClientReport={(acc) =>
+                      setSelectedAccountForReport(acc)
+                    }
                     sortKey={sortKey}
                     sortDir={sortDir}
                     onSortChange={(key, dir) => {
@@ -631,9 +647,7 @@ export const EggAccountsPage = () => {
               mode={receivable ? "RECEIVABLE" : "PAYABLE"}
               onPay={handlePay}
               onExportPdf={(acc, movs) => exportAccountStatementPdf(acc, movs)}
-              onExportMonthlyPdf={(input) => exportClientMonthlyPdf(input)}
-              initialRange={reportRange}
-              onRangeChange={(from, to) => setReportRange({ from, to })}
+              onOpenClientReport={(acc) => setSelectedAccountForReport(acc)}
               onSuccessToast={setToastMessage}
             />
           </div>
@@ -673,6 +687,17 @@ export const EggAccountsPage = () => {
         open={isRecentOpen}
         onClose={() => setIsRecentOpen(false)}
         onSuccessToast={setToastMessage}
+      />
+
+      <ClientReportDrawer
+        open={!!selectedAccountForReport}
+        onClose={() => setSelectedAccountForReport(null)}
+        debtorEntityId={selectedAccountForReport?.debtorId}
+        debtorName={selectedAccountForReport?.debtorName}
+        from={effectiveReportRange.from}
+        to={effectiveReportRange.to}
+        onRangeChange={(from, to) => setReportRange({ from, to })}
+        onExportPdf={(input) => exportClientMonthlyPdf(input)}
       />
     </div>
   );

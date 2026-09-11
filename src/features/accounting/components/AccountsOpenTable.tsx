@@ -22,6 +22,7 @@ import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";
 import { FaRegFileLines } from "react-icons/fa6";
 import { HiSortAscending, HiSortDescending } from "react-icons/hi";
+import { HiDocumentText } from "react-icons/hi2";
 import { SourceBadge } from "./SourceBadge";
 import { AgingBadge } from "./AgingBadge";
 import {
@@ -36,6 +37,7 @@ interface Props {
   onPay: (account: AccountsPayableResponse) => void;
   onViewHistory?: (account: AccountsPayableResponse) => void;
   onViewClient?: (account: AccountsPayableResponse) => void;
+  onViewClientReport?: (account: AccountsPayableResponse) => void;
   sortKey?: AccountSortKey;
   sortDir?: SortDir;
   onSortChange?: (key: AccountSortKey, dir: SortDir) => void;
@@ -53,6 +55,7 @@ export const AccountsOpenTable = ({
   onPay,
   onViewHistory,
   onViewClient,
+  onViewClientReport,
   sortKey: controlledKey,
   sortDir: controlledDir,
   onSortChange,
@@ -217,7 +220,7 @@ export const AccountsOpenTable = ({
                     type="button"
                     className="text-left text-blue-400 hover:underline"
                     onClick={() => onViewClient(row)}
-                    title="Ver estado de cuenta del cliente"
+                    title="Ver cuenta"
                   >
                     {row.debtorName} → {row.creditorName}
                   </button>
@@ -337,6 +340,20 @@ export const AccountsOpenTable = ({
                       }}
                     >
                       <FaRegFileLines size={20} />
+                    </Button>
+                  </Tooltip>
+                )}
+                {onViewClientReport && (
+                  <Tooltip content="Reporte del cliente">
+                    <Button
+                      size="xs"
+                      color="gray"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewClientReport(row);
+                      }}
+                    >
+                      <HiDocumentText size={20} />
                     </Button>
                   </Tooltip>
                 )}
