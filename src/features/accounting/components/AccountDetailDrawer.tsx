@@ -16,7 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { HiArrowLeft, HiDocumentDownload } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
+import { formatHumanDate } from "@/utils/date.utils";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import {
   statementRowLabel,
@@ -28,8 +28,6 @@ import {
   planCreditApplication,
   totalUnapplied,
 } from "../utils/unappliedCredit";
-import type { ClientMonthlyReportPdfInput } from "../api/client-summary.api";
-import { useAccountingEntities } from "../api/accounting-entities.queries";
 import { useAccountsPayableMovements } from "../api/movements.queries";
 import {
   useApplyCreditsToAccount,
@@ -39,7 +37,6 @@ import {
 } from "../api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
 import { AccountPaymentsList } from "./AccountPaymentsList";
-import { ClientMonthlyReport } from "./ClientMonthlyReport";
 import { InfoTip } from "./InfoTip";
 import { MovimientosCuentaHelpContent } from "./AccountingHelpContent";
 import { SourceBadge } from "./SourceBadge";
@@ -55,9 +52,7 @@ interface Props {
     account: AccountsPayableResponse,
     movements: StatementMovementRow[],
   ) => void;
-  onExportMonthlyPdf?: (input: ClientMonthlyReportPdfInput) => void;
-  initialRange?: { from: string; to: string };
-  onRangeChange?: (from: string, to: string) => void;
+  onOpenClientReport?: (account: AccountsPayableResponse) => void;
   onSuccessToast?: (message: string) => void;
 }
 
@@ -68,9 +63,7 @@ export const AccountDetailDrawer = ({
   mode,
   onPay,
   onExportPdf,
-  onExportMonthlyPdf,
-  initialRange,
-  onRangeChange,
+  onOpenClientReport,
   onSuccessToast,
 }: Props) => {
   const {
@@ -101,19 +94,6 @@ export const AccountDetailDrawer = ({
       ),
     [credits, account?.balance],
   );
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reportRange, setReportRange] = useState(() => ({
-    from: formatDateToISO(
-      new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    ),
-    to: formatDateToISO(new Date()),
-  }));
-
-  useEffect(() => {
-    if (open && initialRange) {
-      setReportRange(initialRange);
-    }
-  }, [open, initialRange]);
 
   useEffect(() => {
     setReversingId(null);
@@ -166,18 +146,7 @@ export const AccountDetailDrawer = ({
     );
   };
 
-  const handleRangeChange = (from: string, to: string) => {
-    setReportRange({ from, to });
-    onRangeChange?.(from, to);
-  };
-
-  const { data: entities = [] } = useAccountingEntities();
-  const creditorNames = useMemo(
-    () => new Map(entities.map((e) => [e.id, e.name] as const)),
-    [entities],
-  );
-
-  const showMonthlyReport = mode === "RECEIVABLE";
+  const showClientReport = mode === "RECEIVABLE";
 
   const statementRows: StatementMovementRow[] = useMemo(
     () =>
@@ -238,7 +207,7 @@ export const AccountDetailDrawer = ({
                     <strong className="text-blue-600">{account.note}</strong>
                   </p>
                 )}
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {onPay && (
                     <Button size="xs" onClick={() => onPay(account)}>
                       Registrar pago
@@ -252,6 +221,15 @@ export const AccountDetailDrawer = ({
                     >
                       <HiDocumentDownload className="mr-1 h-4 w-4" />
                       Exportar PDF
+                    </Button>
+                  )}
+                  {showClientReport && onOpenClientReport && (
+                    <Button
+                      size="xs"
+                      color="gray"
+                      onClick={() => onOpenClientReport(account)}
+                    >
+                      Reporte del cliente
                     </Button>
                   )}
                 </div>
@@ -368,11 +346,14 @@ export const AccountDetailDrawer = ({
               )}
 
               <div>
-                <p className="mb-2 flex items-center gap-1 text-sm font-semibold text-white">
+                <p className="mb-1 flex items-center gap-1 text-sm font-semibold text-white">
                   Movimientos de esta cuenta
                   <InfoTip title="Movimientos de esta cuenta" align="left">
                     <MovimientosCuentaHelpContent />
                   </InfoTip>
+                </p>
+                <p className="mb-2 text-xs text-gray-400">
+                  Cargos, pagos y ajustes que cambiaron el saldo de esta deuda.
                 </p>
                 {isLoading ? (
                   <div className="flex justify-center py-6">
@@ -497,33 +478,13 @@ export const AccountDetailDrawer = ({
                 )}
               </div>
 
-              {showMonthlyReport && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setReportOpen((v) => !v)}
-                    className="mb-2 text-sm font-semibold text-white hover:underline"
-                    aria-expanded={reportOpen}
-                  >
-                    Reporte del cliente {reportOpen ? "▾" : "▸"}
-                  </button>
-                  {reportOpen && (
-                    <ClientMonthlyReport
-                      debtorEntityId={account.debtorId}
-                      debtorName={account.debtorName}
-                      from={reportRange.from}
-                      to={reportRange.to}
-                      onRangeChange={handleRangeChange}
-                      creditorNames={creditorNames}
-                      onExportPdf={onExportMonthlyPdf}
-                    />
-                  )}
-                </div>
-              )}
-
               <div>
-                <p className="mb-2 text-sm font-semibold text-white">
-                  Pagos relacionados
+                <p className="mb-1 text-sm font-semibold text-white">
+                  Pagos de esta cuenta
+                </p>
+                <p className="mb-2 text-xs text-gray-400">
+                  Pagos entre estas dos partes. Desde aquí puedes cancelar un
+                  pago equivocado.
                 </p>
                 <AccountPaymentsList
                   payerId={account.debtorId}
