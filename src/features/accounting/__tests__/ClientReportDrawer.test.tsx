@@ -18,6 +18,11 @@ vi.mock("@/features/accounting/api/accounting-entities.queries", () => ({
   })),
 }));
 
+vi.mock("@/features/accounting/api/payments.queries", () => ({
+  useCancelPayment: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  usePaymentApplications: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+
 const summary = {
   debtorEntityId: 3,
   from: "2026-09-01",
@@ -46,6 +51,7 @@ const renderDrawer = (onRangeChange = vi.fn(), onExportPdf = vi.fn()) => {
     <ClientReportDrawer
       open
       onClose={vi.fn()}
+      title="Reporte del cliente"
       debtorEntityId={3}
       debtorName="Deudor Uno"
       from="2026-09-01"

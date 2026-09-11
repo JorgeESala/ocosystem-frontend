@@ -36,7 +36,6 @@ import {
   useUnappliedPayments,
 } from "../api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
-import { AccountPaymentsList } from "./AccountPaymentsList";
 import { InfoTip } from "./InfoTip";
 import { MovimientosCuentaHelpContent } from "./AccountingHelpContent";
 import { SourceBadge } from "./SourceBadge";
@@ -46,7 +45,6 @@ interface Props {
   open: boolean;
   onClose: () => void;
   account?: AccountsPayableResponse | null;
-  mode?: "RECEIVABLE" | "PAYABLE";
   onPay?: (account: AccountsPayableResponse) => void;
   onExportPdf?: (
     account: AccountsPayableResponse,
@@ -60,7 +58,6 @@ export const AccountDetailDrawer = ({
   open,
   onClose,
   account,
-  mode,
   onPay,
   onExportPdf,
   onOpenClientReport,
@@ -146,8 +143,6 @@ export const AccountDetailDrawer = ({
     );
   };
 
-  const showClientReport = mode === "RECEIVABLE";
-
   const statementRows: StatementMovementRow[] = useMemo(
     () =>
       movements.map((m) => ({
@@ -223,7 +218,7 @@ export const AccountDetailDrawer = ({
                       Exportar PDF
                     </Button>
                   )}
-                  {showClientReport && onOpenClientReport && (
+                  {onOpenClientReport && (
                     <Button
                       size="xs"
                       color="gray"
@@ -476,22 +471,6 @@ export const AccountDetailDrawer = ({
                     />
                   </div>
                 )}
-              </div>
-
-              <div>
-                <p className="mb-1 text-sm font-semibold text-white">
-                  Pagos de esta cuenta
-                </p>
-                <p className="mb-2 text-xs text-gray-400">
-                  Pagos entre estas dos partes. Desde aquí puedes cancelar un
-                  pago equivocado.
-                </p>
-                <AccountPaymentsList
-                  payerId={account.debtorId}
-                  receiverId={account.creditorId}
-                  partyLabel={account.debtorName}
-                  onSuccessToast={onSuccessToast}
-                />
               </div>
             </div>
           )}

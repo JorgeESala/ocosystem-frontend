@@ -7,23 +7,27 @@ import { ClientMonthlyReport } from "./ClientMonthlyReport";
 interface Props {
   open: boolean;
   onClose: () => void;
+  title: string;
   debtorEntityId?: number;
   debtorName?: string;
   from: string;
   to: string;
   onRangeChange: (from: string, to: string) => void;
   onExportPdf?: (input: ClientMonthlyReportPdfInput) => void;
+  onSuccessToast?: (message: string) => void;
 }
 
 export const ClientReportDrawer = ({
   open,
   onClose,
+  title,
   debtorEntityId,
   debtorName,
   from,
   to,
   onRangeChange,
   onExportPdf,
+  onSuccessToast,
 }: Props) => {
   const { data: entities = [] } = useAccountingEntities();
   const creditorNames = useMemo(
@@ -39,7 +43,7 @@ export const ClientReportDrawer = ({
       className="w-[560px]"
     >
       <DrawerHeader
-        title={`Reporte del cliente · ${debtorName ?? "—"}`}
+        title={`${title} · ${debtorName ?? "—"}`}
         titleIcon={() => <></>}
       />
       <DrawerItems>
@@ -56,6 +60,7 @@ export const ClientReportDrawer = ({
             onRangeChange={onRangeChange}
             creditorNames={creditorNames}
             onExportPdf={onExportPdf}
+            onSuccessToast={onSuccessToast}
           />
         )}
       </DrawerItems>

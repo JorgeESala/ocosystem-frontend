@@ -111,11 +111,11 @@ const FAQ = [
   },
   {
     q: "¿Dónde veo el reporte del cliente?",
-    a: "En el detalle de una cuenta, con el botón 'Reporte del cliente'; también hay un acceso directo en cada fila de la tabla. El reporte suma todas las deudas del cliente con todos los CEDIS en el rango de fechas que elijas. Los pagos de la sección 'Pagos de esta cuenta' son solo los de esa cuenta (ese deudor con ese acreedor).",
+    a: "En Por cobrar se abre con el botón 'Reporte del cliente' (en el detalle de una cuenta o en cada fila de la tabla) y suma todas las deudas del cliente con todos los CEDIS. En Por pagar se abre igual como 'Reporte del CEDIS' y suma todas las deudas de ese CEDIS con sus proveedores. En ambos, cada pago muestra su botón 'Cancelar pago'.",
   },
   {
     q: "¿Qué pasa si cancelo un pago?",
-    a: "Se reactivan las deudas donde estaba aplicado y el dinero vuelve a quedar disponible como saldo a favor. El folio se conserva en la nota del movimiento. Antes de cancelar, el sistema dice cuántas deudas se reactivarán y por cuánto dinero.",
+    a: "Se reactivan las deudas donde estaba aplicado y el dinero vuelve a quedar disponible como saldo a favor. El folio se conserva en la nota del movimiento. Se cancela desde el botón 'Cancelar pago' de la fila del pago en el reporte, y antes de hacerlo el sistema dice cuántas deudas se reactivarán y por cuánto dinero.",
   },
 ];
 

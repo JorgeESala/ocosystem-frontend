@@ -9,7 +9,6 @@ import {
   createFifoPayment,
   createPayment,
   fetchPaymentApplications,
-  fetchPaymentsByPair,
   fetchRecentPayments,
   fetchUnappliedPayments,
   previewFifoPayment,
@@ -60,10 +59,7 @@ export const useCancelPayment = () => {
 
   return useMutation({
     mutationFn: cancelPayment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all });
-      queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
-    },
+    onSuccess: () => invalidateAccountingCaches(queryClient),
   });
 };
 
@@ -160,17 +156,6 @@ export const useApplyRemainder = () => {
       payload: ApplyRemainderPayload;
     }) => applyRemainder(paymentId, payload),
     onSuccess: () => invalidateAccountingCaches(queryClient),
-  });
-};
-
-export const usePairPayments = (payerId?: number, receiverId?: number) => {
-  const { slug } = useParams<{ slug: string }>();
-
-  return useQuery({
-    queryKey: paymentKeys.byPair(slug, payerId ?? 0, receiverId ?? 0),
-    queryFn: () => fetchPaymentsByPair(payerId!, receiverId!),
-    enabled: !!slug && !!payerId && !!receiverId,
-    staleTime: 1000 * 30,
   });
 };
 

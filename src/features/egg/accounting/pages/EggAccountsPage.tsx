@@ -644,7 +644,6 @@ export const EggAccountsPage = () => {
               open={historyOpen}
               onClose={() => setHistoryOpen(false)}
               account={selectedAccountForHistory}
-              mode={receivable ? "RECEIVABLE" : "PAYABLE"}
               onPay={handlePay}
               onExportPdf={(acc, movs) => exportAccountStatementPdf(acc, movs)}
               onOpenClientReport={(acc) => setSelectedAccountForReport(acc)}
@@ -692,12 +691,14 @@ export const EggAccountsPage = () => {
       <ClientReportDrawer
         open={!!selectedAccountForReport}
         onClose={() => setSelectedAccountForReport(null)}
+        title={receivable ? "Reporte del cliente" : "Reporte del CEDIS"}
         debtorEntityId={selectedAccountForReport?.debtorId}
         debtorName={selectedAccountForReport?.debtorName}
         from={effectiveReportRange.from}
         to={effectiveReportRange.to}
         onRangeChange={(from, to) => setReportRange({ from, to })}
         onExportPdf={(input) => exportClientMonthlyPdf(input)}
+        onSuccessToast={setToastMessage}
       />
     </div>
   );

@@ -1,10 +1,15 @@
 import { Badge, Button, Spinner } from "flowbite-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatDateToISO, formatHumanDate } from "@/utils/date.utils";
 import DateRangePicker from "@/components/DateRangePicker";
 import { useClientStatementSummary } from "../api/client-summary.queries";
+import {
+  useCancelPayment,
+  usePaymentApplications,
+} from "../api/payments.queries";
 import type { ClientMonthlyReportPdfInput } from "../api/client-summary.api";
+import { summarizeCancelImpact } from "../utils/unappliedCredit";
 import { InfoTip } from "./InfoTip";
 import {
   CargosHelpContent,
@@ -23,6 +28,7 @@ interface Props {
   onRangeChange: (from: string, to: string) => void;
   creditorNames: Map<number, string>;
   onExportPdf?: (input: ClientMonthlyReportPdfInput) => void;
+  onSuccessToast?: (message: string) => void;
 }
 
 const toDate = (iso: string): Date | null => {
@@ -45,10 +51,15 @@ export const ClientMonthlyReport = ({
   onRangeChange,
   creditorNames,
   onExportPdf,
+  onSuccessToast,
 }: Props) => {
   const start = useMemo(() => toDate(from), [from]);
   const end = useMemo(() => toDate(to), [to]);
   const validRange = start != null && end != null && start <= end;
+  const cancelPayment = useCancelPayment();
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<number | null>(
+    null,
+  );
 
   const { data, isLoading, isError, error, refetch } =
     useClientStatementSummary({
@@ -67,6 +78,15 @@ export const ClientMonthlyReport = ({
   const applyPreset = (offset: number) => {
     const bounds = monthBounds(offset);
     onRangeChange(bounds.from, bounds.to);
+  };
+
+  const handleCancel = (paymentId: number, folio?: string | null) => {
+    cancelPayment.mutate(paymentId, {
+      onSuccess: () => {
+        onSuccessToast?.(`Pago cancelado · folio ${folio ?? "sin folio"}`);
+        setConfirmingPaymentId(null);
+      },
+    });
   };
 
   return (
@@ -191,38 +211,128 @@ export const ClientMonthlyReport = ({
             </p>
           ) : (
             <ul className="divide-y divide-gray-700">
-              {[...data.movements].reverse().map((m, idx) => (
-                <li
-                  key={`${m.movementDate}-${m.amount}-${idx}`}
-                  className="flex items-start justify-between gap-2 py-2 text-sm"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Badge color="gray">
-                        {statementRowLabel(m.movementType)}
-                      </Badge>
-                      <span className="text-[11px] text-gray-400">
-                        {creditorNames.get(m.creditorEntityId) ??
-                          `Entidad ${m.creditorEntityId}`}
-                      </span>
+              {[...data.movements].reverse().map((m, idx) => {
+                const isPayment =
+                  m.movementType === "PAYMENT" && m.paymentId != null;
+                const isActivePayment =
+                  isPayment && m.paymentStatus === "ACTIVE";
+                const confirming =
+                  isPayment && confirmingPaymentId === m.paymentId;
+
+                return (
+                  <li
+                    key={`${m.movementDate}-${m.amount}-${idx}`}
+                    className="py-2 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge color="gray">
+                            {statementRowLabel(m.movementType)}
+                          </Badge>
+                          <span className="text-[11px] text-gray-400">
+                            {creditorNames.get(m.creditorEntityId) ??
+                              `Entidad ${m.creditorEntityId}`}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          {formatHumanDate(m.movementDate)}
+                          {m.folio ? ` · ${m.folio}` : ""}
+                          {m.balanceAfter != null
+                            ? ` · saldo ${formatMXN(m.balanceAfter)}`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="font-semibold text-white">
+                          {formatMXN(m.amount)}
+                        </span>
+                        {isActivePayment && !confirming && (
+                          <Button
+                            size="xs"
+                            color="failure"
+                            onClick={() =>
+                              setConfirmingPaymentId(m.paymentId ?? null)
+                            }
+                            disabled={cancelPayment.isPending}
+                          >
+                            Cancelar pago
+                          </Button>
+                        )}
+                        {isPayment && m.paymentStatus === "CANCELLED" && (
+                          <Badge color="gray">Cancelado</Badge>
+                        )}
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-400">
-                      {formatHumanDate(m.movementDate)}
-                      {m.folio ? ` · ${m.folio}` : ""}
-                      {m.balanceAfter != null
-                        ? ` · saldo ${formatMXN(m.balanceAfter)}`
-                        : ""}
-                    </p>
-                  </div>
-                  <span className="shrink-0 font-semibold text-white">
-                    {formatMXN(m.amount)}
-                  </span>
-                </li>
-              ))}
+                    {confirming && m.paymentId != null && (
+                      <ReportPaymentCancel
+                        paymentId={m.paymentId}
+                        folio={m.folio}
+                        isSubmitting={cancelPayment.isPending}
+                        onConfirm={() => handleCancel(m.paymentId!, m.folio)}
+                        onBack={() => setConfirmingPaymentId(null)}
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>
       )}
+    </div>
+  );
+};
+
+interface ReportPaymentCancelProps {
+  paymentId: number;
+  folio?: string | null;
+  isSubmitting: boolean;
+  onConfirm: () => void;
+  onBack: () => void;
+}
+
+const ReportPaymentCancel = ({
+  paymentId,
+  folio,
+  isSubmitting,
+  onConfirm,
+  onBack,
+}: ReportPaymentCancelProps) => {
+  const { data: applications = [], isLoading } =
+    usePaymentApplications(paymentId);
+  const impact = summarizeCancelImpact(applications);
+
+  return (
+    <div className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200">
+      <p className="font-medium">
+        ¿Cancelar este pago? Esta acción revierte sus aplicaciones.
+      </p>
+      {isLoading ? (
+        <Spinner size="sm" />
+      ) : impact.debts > 0 ? (
+        <p className="mt-1">
+          Se reactivarán {impact.debts} deudas por {formatMXN(impact.total)}{" "}
+          total · folio {folio ?? "sin folio"}
+        </p>
+      ) : (
+        <p className="mt-1">
+          No hay deudas aplicadas · folio {folio ?? "sin folio"}
+        </p>
+      )}
+      <div className="mt-2 flex gap-2">
+        <Button
+          size="xs"
+          color="failure"
+          onClick={onConfirm}
+          disabled={isSubmitting}
+        >
+          Sí, cancelar
+        </Button>
+        <Button size="xs" color="gray" onClick={onBack} disabled={isSubmitting}>
+          Atrás
+        </Button>
+      </div>
     </div>
   );
 };
