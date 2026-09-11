@@ -87,16 +87,6 @@ export const fetchUnappliedPayments = async (
   return data;
 };
 
-export const fetchPaymentsByPair = async (
-  payerId: number,
-  receiverId: number,
-): Promise<PaymentResponse[]> => {
-  const { data } = await http.get<PaymentResponse[]>(
-    `/api/accounting/payments/by-pair?payerId=${payerId}&receiverId=${receiverId}`,
-  );
-  return data;
-};
-
 export const fetchPaymentApplications = async (
   paymentId: number,
 ): Promise<PaymentApplication[]> => {

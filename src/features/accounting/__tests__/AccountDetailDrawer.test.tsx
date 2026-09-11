@@ -13,10 +13,6 @@ vi.mock("@/features/accounting/api/movements.queries", () => ({
   })),
 }));
 
-vi.mock("@/features/accounting/api/accounting-entities.queries", () => ({
-  useAccountingEntities: vi.fn(() => ({ data: [] })),
-}));
-
 vi.mock("@/features/accounting/api/payments.queries", () => ({
   useUnappliedPayments: vi.fn(() => ({ data: [] })),
   useApplyCreditsToAccount: vi.fn(() => ({
@@ -34,10 +30,6 @@ vi.mock("@/features/accounting/api/payments.queries", () => ({
     isPending: false,
     error: null,
   })),
-}));
-
-vi.mock("@/features/accounting/components/AccountPaymentsList", () => ({
-  AccountPaymentsList: () => <div>Pagos mock</div>,
 }));
 
 vi.mock("@/features/batch/components/BatchPreviewDrawer", () => ({
@@ -62,14 +54,13 @@ describe("AccountDetailDrawer", () => {
     vi.clearAllMocks();
   });
 
-  it("offers the client report as its own action in receivable mode", () => {
+  it("offers the client report as its own action", () => {
     const onOpenClientReport = vi.fn();
     render(
       <AccountDetailDrawer
         open
         onClose={vi.fn()}
         account={account}
-        mode="RECEIVABLE"
         onOpenClientReport={onOpenClientReport}
       />,
     );
@@ -83,43 +74,21 @@ describe("AccountDetailDrawer", () => {
     expect(onOpenClientReport).toHaveBeenCalledWith(account);
   });
 
-  it("hides the client report action in payable mode", () => {
-    render(
-      <AccountDetailDrawer
-        open
-        onClose={vi.fn()}
-        account={account}
-        mode="PAYABLE"
-      />,
-    );
+  it("hides the client report action without a handler", () => {
+    render(<AccountDetailDrawer open onClose={vi.fn()} account={account} />);
 
     expect(
       screen.queryByRole("button", { name: "Reporte del cliente" }),
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the pair payments section in both modes", () => {
-    const { unmount } = render(
-      <AccountDetailDrawer
-        open
-        onClose={vi.fn()}
-        account={account}
-        mode="RECEIVABLE"
-      />,
-    );
-    expect(screen.getByText("Pagos de esta cuenta")).toBeInTheDocument();
-    expect(screen.getByText("Pagos mock")).toBeInTheDocument();
-    unmount();
+  it("shows only the account movements list", () => {
+    render(<AccountDetailDrawer open onClose={vi.fn()} account={account} />);
 
-    render(
-      <AccountDetailDrawer
-        open
-        onClose={vi.fn()}
-        account={account}
-        mode="PAYABLE"
-      />,
-    );
-    expect(screen.getByText("Pagos de esta cuenta")).toBeInTheDocument();
-    expect(screen.getByText("Pagos mock")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Movimientos de esta cuenta").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("Pagos de esta cuenta")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pagos relacionados")).not.toBeInTheDocument();
   });
 });

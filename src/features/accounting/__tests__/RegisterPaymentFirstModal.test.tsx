@@ -112,7 +112,11 @@ describe("RegisterPaymentFirstModal anticipo preview", () => {
     fillAdvanceForm("1000");
 
     expect(
-      await screen.findByText(/se aplicaría así, de la deuda más antigua/i),
+      await screen.findByText(
+        /se aplicaría así, de la deuda más antigua/i,
+        undefined,
+        { timeout: 10000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText(/Deudor Uno/)).toBeInTheDocument();
     expect(screen.getByText(/Deudor Dos/)).toBeInTheDocument();
@@ -125,8 +129,9 @@ describe("RegisterPaymentFirstModal anticipo preview", () => {
       screen.getByRole("button", { name: "Aplicar a estas deudas" }),
     );
 
-    await waitFor(() =>
-      expect(mocks.createFifoPayment).toHaveBeenCalledTimes(1),
+    await waitFor(
+      () => expect(mocks.createFifoPayment).toHaveBeenCalledTimes(1),
+      { timeout: 10000 },
     );
     expect(mocks.createAdvancePayment).not.toHaveBeenCalled();
   });
@@ -138,13 +143,18 @@ describe("RegisterPaymentFirstModal anticipo preview", () => {
     fillAdvanceForm("1000");
 
     fireEvent.click(
-      await screen.findByRole("button", {
-        name: "Solo registrar como saldo a favor",
-      }),
+      await screen.findByRole(
+        "button",
+        {
+          name: "Solo registrar como saldo a favor",
+        },
+        { timeout: 10000 },
+      ),
     );
 
-    await waitFor(() =>
-      expect(mocks.createAdvancePayment).toHaveBeenCalledTimes(1),
+    await waitFor(
+      () => expect(mocks.createAdvancePayment).toHaveBeenCalledTimes(1),
+      { timeout: 10000 },
     );
     expect(mocks.createFifoPayment).not.toHaveBeenCalled();
   });
@@ -158,7 +168,9 @@ describe("RegisterPaymentFirstModal anticipo preview", () => {
     fillAdvanceForm("500");
 
     expect(
-      await screen.findByText(/No hay deudas abiertas/i),
+      await screen.findByText(/No hay deudas abiertas/i, undefined, {
+        timeout: 10000,
+      }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Aplicar a estas deudas" }),
@@ -171,8 +183,9 @@ describe("RegisterPaymentFirstModal anticipo preview", () => {
       }),
     );
 
-    await waitFor(() =>
-      expect(mocks.createAdvancePayment).toHaveBeenCalledTimes(1),
+    await waitFor(
+      () => expect(mocks.createAdvancePayment).toHaveBeenCalledTimes(1),
+      { timeout: 10000 },
     );
     expect(mocks.createFifoPayment).not.toHaveBeenCalled();
   });

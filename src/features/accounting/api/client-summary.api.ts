@@ -10,6 +10,8 @@ export interface ClientStatementMovement {
   balanceAfter: number | null;
   folio?: string | null;
   note?: string | null;
+  paymentId?: number | null;
+  paymentStatus?: "ACTIVE" | "CANCELLED" | null;
 }
 
 export interface ClientStatementSummary {
