@@ -158,6 +158,10 @@ export const BatchMovementModal: React.FC<{
     };
 
     if (data.movementType === "SALE") {
+      if (!data.routeId) {
+        setSubmitError("Ruta: Selecciona una ruta");
+        return;
+      }
       if (isEditing) {
         // Mandamos el ID y el payload al PUT
         updateSale(

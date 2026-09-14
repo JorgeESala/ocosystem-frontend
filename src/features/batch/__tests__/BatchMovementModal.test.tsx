@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BatchMovementModal } from "../components/BatchMovementModal";
 import type { Batch } from "../types.batch";
 
 const { employeesData } = vi.hoisted(() => ({
   employeesData: [{ id: 1, name: "Juan Perez" }],
+}));
+
+const routeMocks = vi.hoisted(() => ({
+  useRoutes: vi.fn(),
+  useCreateRoute: vi.fn(),
+}));
+
+const batchMocks = vi.hoisted(() => ({
+  createSaleMutate: vi.fn(),
+  updateSaleMutate: vi.fn(),
 }));
 
 vi.mock("@/features/employee/api/employees.queries", () => ({
@@ -25,19 +35,32 @@ vi.mock("@/core/locality/api/locality.queries", () => ({
 }));
 
 vi.mock("@/core/api/route/routes.queries", () => ({
-  useRoutes: vi.fn(() => ({ data: [], isLoading: false })),
-  useCreateRoute: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRoutes: routeMocks.useRoutes,
+  useCreateRoute: routeMocks.useCreateRoute,
 }));
 
 vi.mock("../api/batch.queries", () => ({
-  useCreateBatchSale: vi.fn(() => ({ mutate: vi.fn() })),
-  useUpdateBatchSale: vi.fn(() => ({ mutate: vi.fn() })),
+  useCreateBatchSale: vi.fn(() => ({ mutate: batchMocks.createSaleMutate })),
+  useUpdateBatchSale: vi.fn(() => ({ mutate: batchMocks.updateSaleMutate })),
 }));
 
 vi.mock("../api/batch.adjustments.queries", () => ({
   useCreateAdjustment: vi.fn(() => ({ mutate: vi.fn() })),
   useUpdateBatchAdjustment: vi.fn(() => ({ mutate: vi.fn() })),
 }));
+
+beforeEach(() => {
+  routeMocks.useRoutes.mockReturnValue({
+    data: [],
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  routeMocks.useCreateRoute.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  });
+});
 
 const eggBatch: Batch = {
   id: 1,
@@ -197,5 +220,108 @@ describe("BatchMovementModal - Pre-populated brokenEggs when editing", () => {
 
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).not.toBeChecked();
+  });
+});
+
+function renderEditModal(initialData: Record<string, unknown>) {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={qc}>
+      <BatchMovementModal
+        batch={eggBatch}
+        onClose={vi.fn()}
+        initialData={initialData}
+      />
+    </QueryClientProvider>,
+  );
+}
+
+describe("BatchMovementModal - Ruta", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("muestra la ruta guardada aunque no esté en la lista y la conserva al guardar", async () => {
+    routeMocks.useRoutes.mockReturnValue({
+      data: [{ id: 1, name: "Ruta Nueva" }],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    renderEditModal({
+      id: 10,
+      type: "SALE",
+      date: "2026-01-15",
+      routeId: 7,
+      routeName: "Ruta Vieja",
+      employeeId: 1,
+      quantity: "100",
+      saleTotal: "500",
+      metadata: { boxes: "2", cartons: "0" },
+    });
+
+    expect(screen.getByDisplayValue("Ruta Vieja")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar Cambios" }));
+
+    await waitFor(() =>
+      expect(batchMocks.updateSaleMutate).toHaveBeenCalledTimes(1),
+    );
+    const payload = batchMocks.updateSaleMutate.mock.calls[0][0].data;
+    expect(payload.routeId).toBe(7);
+  });
+
+  it("pide seleccionar ruta antes de guardar una venta sin ruta", async () => {
+    routeMocks.useRoutes.mockReturnValue({
+      data: [{ id: 1, name: "Ruta Nueva" }],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    renderEditModal({
+      id: 11,
+      type: "SALE",
+      date: "2026-01-15",
+      employeeId: 1,
+      quantity: "100",
+      saleTotal: "500",
+      metadata: { boxes: "2", cartons: "0" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar Cambios" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Ruta: Selecciona una ruta")).toBeInTheDocument(),
+    );
+    expect(batchMocks.updateSaleMutate).not.toHaveBeenCalled();
+  });
+
+  it("muestra error y permite reintentar cuando fallan las rutas", () => {
+    const refetch = vi.fn();
+    routeMocks.useRoutes.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: true,
+      refetch,
+    });
+
+    renderModal(eggBatch);
+
+    const routeInput = screen.getByPlaceholderText(
+      "No se pudieron cargar las rutas",
+    );
+    fireEvent.focus(routeInput);
+
+    expect(
+      screen.getByText(/No se pudieron cargar las rutas/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });
