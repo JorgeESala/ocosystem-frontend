@@ -1,26 +1,31 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { salesApi } from "./sales.api";
+import { salesKeys } from "./sales.keys";
 import type { BranchesBatchSale } from "@/services/api";
 
 export const useSalesByBatch = (batchId: number, enabled = true) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: ["batchSales", batchId],
+    queryKey: salesKeys.list(slug, batchId),
     queryFn: () => salesApi.getByBatchId(batchId),
-    enabled: !!batchId && enabled,
+    enabled: !!slug && !!batchId && enabled,
     staleTime: 1000 * 60 * 5,
   });
 };
 
 export const useSalesByBatches = (batchIds: number[]) => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
   const sortedIds = useMemo(
     () => [...new Set(batchIds)].sort((a, b) => a - b),
     [batchIds],
   );
 
   return useQuery({
-    queryKey: ["batchSales", "by-batches", sortedIds],
+    queryKey: salesKeys.byBatches(slug, sortedIds),
     queryFn: async () => {
       const sales = await salesApi.searchByBatchIds(batchIds);
       const byBatch = new Map<number, BranchesBatchSale[]>();
@@ -31,17 +36,18 @@ export const useSalesByBatches = (batchIds: number[]) => {
         byBatch.set(sale.batchId, list);
       }
       for (const [id, list] of byBatch) {
-        queryClient.setQueryData(["batchSales", id], list);
+        queryClient.setQueryData(salesKeys.list(slug, id), list);
       }
       return sales;
     },
-    enabled: sortedIds.length > 0,
+    enabled: !!slug && sortedIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 };
 
 export const useMarkCuentasReceived = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: async (entries: Array<{ saleId: number; batchId: number }>) => {
@@ -52,9 +58,11 @@ export const useMarkCuentasReceived = () => {
     onSuccess: (_, entries) => {
       const batchIds = new Set(entries.map((e) => e.batchId));
       for (const batchId of batchIds) {
-        queryClient.invalidateQueries({ queryKey: ["batchSales", batchId] });
+        queryClient.invalidateQueries({
+          queryKey: salesKeys.list(slug, batchId),
+        });
       }
-      queryClient.invalidateQueries({ queryKey: ["batchSales", "by-batches"] });
+      queryClient.invalidateQueries({ queryKey: salesKeys.lists(slug) });
     },
     onError: (error) => {
       console.error("Error al marcar la cuenta como recibida:", error);
@@ -65,6 +73,7 @@ export const useMarkCuentasReceived = () => {
 
 export const useUpdateSaleOfficeStatus = (batchId: number) => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: ({
@@ -76,7 +85,7 @@ export const useUpdateSaleOfficeStatus = (batchId: number) => {
     }) => salesApi.updateOfficeStatus(saleId, officeReceived),
 
     onSuccess: (updatedSale) => {
-      const targetQueryKey = ["batchSales", Number(batchId)];
+      const targetQueryKey = salesKeys.list(slug, Number(batchId));
 
       queryClient.setQueryData<BranchesBatchSale[]>(
         targetQueryKey,
@@ -91,7 +100,7 @@ export const useUpdateSaleOfficeStatus = (batchId: number) => {
       );
 
       queryClient.invalidateQueries({ queryKey: targetQueryKey });
-      queryClient.invalidateQueries({ queryKey: ["batchSales", "by-batches"] });
+      queryClient.invalidateQueries({ queryKey: salesKeys.lists(slug) });
     },
     onError: (error) => {
       console.error("Error al actualizar el estado financiero:", error);
