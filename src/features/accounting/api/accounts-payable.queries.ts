@@ -3,6 +3,7 @@ import {
   createAccountsPayable,
   fetchOpenAccounts,
   updateAccountsPayableSolicitor,
+  type AccountStatus,
 } from "./accounts-payable.api";
 import { accountsPayableKeys } from "./accounts-payable.keys";
 import { useParams } from "react-router-dom";
@@ -31,6 +32,7 @@ export const useOpenAccounts = (params: {
   creditorEntityType?: string;
   from?: string;
   to?: string;
+  status?: AccountStatus;
 }) => {
   const { slug } = useParams<{ slug: string }>();
 

@@ -100,8 +100,15 @@ export const AccountsOpenTable = ({
     [data, effKey, effDir],
   );
 
+  const openRows = useMemo(
+    () => sortedData.filter((row) => row.balance > 0),
+    [sortedData],
+  );
+
   const toggleRow = (id: number) => {
     if (!onSelectionChange) return;
+    const row = sortedData.find((r) => r.id === id);
+    if (row && row.balance <= 0) return;
     onSelectionChange(
       selectedIds.includes(id)
         ? selectedIds.filter((s) => s !== id)
@@ -111,7 +118,8 @@ export const AccountsOpenTable = ({
 
   const toggleAll = () => {
     if (!onSelectionChange) return;
-    const pageIds = sortedData.map((r) => r.id);
+    const pageIds = openRows.map((r) => r.id);
+    if (pageIds.length === 0) return;
     const allSelected = pageIds.every((id) => selectedIds.includes(id));
     onSelectionChange(
       allSelected
@@ -154,9 +162,10 @@ export const AccountsOpenTable = ({
                 type="checkbox"
                 aria-label="Seleccionar página"
                 checked={
-                  sortedData.length > 0 &&
-                  sortedData.every((r) => selectedIds.includes(r.id))
+                  openRows.length > 0 &&
+                  openRows.every((r) => selectedIds.includes(r.id))
                 }
+                disabled={openRows.length === 0}
                 onChange={toggleAll}
               />
             </TableHeadCell>
@@ -210,6 +219,7 @@ export const AccountsOpenTable = ({
                     type="checkbox"
                     aria-label={`Seleccionar cuenta ${row.id}`}
                     checked={selectedIds.includes(row.id)}
+                    disabled={row.balance <= 0}
                     onChange={() => toggleRow(row.id)}
                   />
                 </TableCell>
@@ -303,6 +313,7 @@ export const AccountsOpenTable = ({
               <TableCell className="font-semibold">
                 <div className="flex flex-wrap items-center gap-2">
                   <span>{formatMXN(row.balance)}</span>
+                  {row.balance <= 0 && <Badge color="success">Liquidada</Badge>}
                   {hasAvailableCredit(row) && (
                     <Badge color="warning">
                       Saldo a favor {formatMXN(row.availableCredit ?? 0)}
@@ -318,17 +329,20 @@ export const AccountsOpenTable = ({
               <TableCell>{formatHumanDate(row.date)}</TableCell>
 
               <TableCell className="flex gap-2">
-                <Tooltip content="Registrar pago">
-                  <Button
-                    size="xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPay(row);
-                    }}
-                  >
-                    <FaMoneyBillWave size={20} />
-                  </Button>
-                </Tooltip>
+                {row.balance > 0 && (
+                  <Tooltip content="Registrar pago">
+                    <Button
+                      size="xs"
+                      aria-label="Registrar pago"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPay(row);
+                      }}
+                    >
+                      <FaMoneyBillWave size={20} />
+                    </Button>
+                  </Tooltip>
+                )}
                 {!onViewClient && onViewHistory && (
                   <Tooltip content="Mostrar información">
                     <Button
