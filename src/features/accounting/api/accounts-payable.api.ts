@@ -13,6 +13,8 @@ export const createAccountsPayable = (
   );
 };
 
+export type AccountStatus = "OPEN" | "SETTLED" | "ALL";
+
 export const fetchOpenAccounts = (params: {
   debtorId?: number;
   debtorIds?: number[];
@@ -26,6 +28,7 @@ export const fetchOpenAccounts = (params: {
   entityType?: string;
   from?: string;
   to?: string;
+  status?: AccountStatus;
 }) => {
   return http.get<AccountsPayableResponse[]>(
     "/api/read/accounts-payable/open",
