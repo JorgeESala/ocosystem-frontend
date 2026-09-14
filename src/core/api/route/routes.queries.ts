@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import {
   createRoute,
   deleteRoute,
@@ -23,18 +24,23 @@ const translateRouteError = (error: unknown): Error => {
 };
 
 export const useRoutes = () => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: routeKeys.list(),
+    queryKey: routeKeys.list(slug),
     queryFn: getRoutes,
+    enabled: !!slug,
     staleTime: 1000 * 60 * 10,
   });
 };
 
 export const useRoute = (id: number | null) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: routeKeys.detail(id ?? 0),
+    queryKey: routeKeys.detail(slug, id ?? 0),
     queryFn: () => getRoute(id as number),
-    enabled: id !== null,
+    enabled: !!slug && id !== null,
   });
 };
 
