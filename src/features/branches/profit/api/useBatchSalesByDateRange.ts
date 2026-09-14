@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { salesApi } from "@/features/batch/branch/api/sales.api";
 
 export const useBatchSalesByDateRange = (
@@ -7,13 +8,15 @@ export const useBatchSalesByDateRange = (
   startDate: Date | null,
   endDate: Date | null,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
   const enabled =
-    branchIds.length > 0 && startDate !== null && endDate !== null;
+    !!slug && branchIds.length > 0 && startDate !== null && endDate !== null;
 
   const query = useQuery({
     queryKey: [
       "branch-profit",
       "batch-sales-daily",
+      slug ?? "public",
       [...branchIds].sort((a, b) => a - b),
       startDate?.toISOString() ?? null,
       endDate?.toISOString() ?? null,

@@ -201,10 +201,7 @@ export const FlockBatchOverview: React.FC<{ batch: InboundBatch }> = ({
           saleToEdit={saleToEdit}
           lossToEdit={lossToEdit}
           onClose={closeEntryModal}
-          onSuccess={async () => {
-            await queryClient.invalidateQueries({
-              queryKey: ["batchSales", entryBatch.id],
-            });
+          onSuccess={() => {
             closeEntryModal();
           }}
         />
