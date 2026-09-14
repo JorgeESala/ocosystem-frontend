@@ -1,9 +1,11 @@
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import * as api from "./batch.adjustments.api";
 import { batchKeys } from "./batch.keys";
 export const useCreateAdjustment = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: api.createAdjustment,
@@ -11,11 +13,13 @@ export const useCreateAdjustment = () => {
       const batchId = variables.batchId;
 
       queryClient.invalidateQueries({
-        queryKey: batchKeys.fullDetail(batchId),
+        queryKey: batchKeys.fullDetail(slug, batchId),
       });
-      queryClient.invalidateQueries({ queryKey: batchKeys.sales(batchId) });
       queryClient.invalidateQueries({
-        queryKey: batchKeys.adjustments(batchId),
+        queryKey: batchKeys.sales(slug, batchId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: batchKeys.adjustments(slug, batchId),
       });
     },
   });
@@ -23,6 +27,7 @@ export const useCreateAdjustment = () => {
 
 export const useUpdateBatchAdjustment = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     // Desestructuramos el objeto que recibe la mutación
@@ -39,7 +44,7 @@ export const useUpdateBatchAdjustment = () => {
     onSuccess: (_, variables) => {
       const { batchId } = variables;
       queryClient.invalidateQueries({
-        queryKey: batchKeys.details(batchId),
+        queryKey: batchKeys.details(slug, batchId),
       });
       queryClient.invalidateQueries({
         queryKey: batchKeys.lists(),

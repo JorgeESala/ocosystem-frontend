@@ -5,6 +5,7 @@ import {
   useQueryClient,
   UseQueryOptions,
 } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import * as api from "./batch.api";
 import { batchKeys } from "./batch.keys";
 import { accountsPayableKeys } from "@/features/accounting/api/accounts-payable.keys";
@@ -22,10 +23,12 @@ export const useBatches = (
 };
 
 export const useBatchById = (id: number | null) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: batchKeys.details(id ?? 0),
+    queryKey: batchKeys.details(slug, id ?? 0),
     queryFn: () => api.getBatchById(id!),
-    enabled: id != null && id > 0,
+    enabled: !!slug && id != null && id > 0,
   });
 };
 
@@ -34,12 +37,16 @@ export const useBatchSales = (
   batchId: number,
   options?: Partial<UseQueryOptions<any, Error>>,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: batchKeys.sales(batchId),
+    ...options,
+    queryKey: batchKeys.sales(slug, batchId),
     queryFn: () => api.getBatchSales(batchId),
-    ...options, // Esparcimos las opciones (aquí entrará el enabled: isOpen)
     enabled:
-      (options?.enabled !== undefined ? options.enabled : true) && !!batchId,
+      (options?.enabled !== undefined ? options.enabled : true) &&
+      !!batchId &&
+      !!slug,
   });
 };
 
@@ -48,16 +55,21 @@ export const useBatchAdjustments = (
   batchId: number,
   options?: Partial<UseQueryOptions<any, Error>>,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: batchKeys.adjustments(batchId),
-    queryFn: () => api.getBatchAdjustments(batchId),
     ...options,
+    queryKey: batchKeys.adjustments(slug, batchId),
+    queryFn: () => api.getBatchAdjustments(batchId),
     enabled:
-      (options?.enabled !== undefined ? options.enabled : true) && !!batchId,
+      (options?.enabled !== undefined ? options.enabled : true) &&
+      !!batchId &&
+      !!slug,
   });
 };
 export const useCreateBatchSale = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: api.createBatchSale,
@@ -65,7 +77,7 @@ export const useCreateBatchSale = () => {
       const bId = Number(variables.batchId);
 
       queryClient.invalidateQueries({
-        queryKey: batchKeys.fullDetail(bId),
+        queryKey: batchKeys.fullDetail(slug, bId),
         exact: true,
       });
 
@@ -93,6 +105,7 @@ export const useCreateBatch = () => {
 
 export const useUpdateBatch = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
@@ -100,7 +113,7 @@ export const useUpdateBatch = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: batchKeys.lists() });
       queryClient.invalidateQueries({
-        queryKey: batchKeys.details(variables.id),
+        queryKey: batchKeys.details(slug, variables.id),
       });
       queryClient.invalidateQueries({ queryKey: accountsPayableKeys.all });
     },
@@ -111,15 +124,18 @@ export const useBatchFullDetail = (
   batchId: number,
   options?: { enabled?: boolean },
 ) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    // USAR LA KEY OFICIAL:
-    queryKey: batchKeys.fullDetail(batchId),
-    queryFn: () => api.getBatchFullDetail(batchId),
     ...options,
+    queryKey: batchKeys.fullDetail(slug, batchId),
+    queryFn: () => api.getBatchFullDetail(batchId),
+    enabled: (options?.enabled ?? true) && !!slug,
   });
 };
 export const useUpdateBatchSale = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
@@ -129,7 +145,7 @@ export const useUpdateBatchSale = () => {
       const bId = Number(variables.data.batchId);
 
       queryClient.invalidateQueries({
-        queryKey: batchKeys.fullDetail(bId),
+        queryKey: batchKeys.fullDetail(slug, bId),
       });
 
       queryClient.invalidateQueries({
@@ -175,13 +191,16 @@ export const useWeeklySalesReport = (
   startDate: string | null,
   endDate: string | null,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
     queryKey: batchKeys.weeklySales(
+      slug,
       startDate ?? undefined,
       endDate ?? undefined,
     ),
     queryFn: () => api.getWeeklySalesReport(startDate!, endDate!),
-    enabled: !!startDate && !!endDate,
+    enabled: !!slug && !!startDate && !!endDate,
   });
 };
 
@@ -189,12 +208,15 @@ export const useSalesByClient = (
   startDate: string | null,
   endDate: string | null,
 ) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
     queryKey: batchKeys.salesByClient(
+      slug,
       startDate ?? undefined,
       endDate ?? undefined,
     ),
     queryFn: () => api.getSalesByClient(startDate!, endDate!),
-    enabled: !!startDate && !!endDate,
+    enabled: !!slug && !!startDate && !!endDate,
   });
 };
