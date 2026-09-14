@@ -12,6 +12,7 @@ import { AccountingErrorAlert } from "@/features/accounting/components/Accountin
 import { AccountingToast } from "@/features/accounting/components/AccountingToast";
 import { RecentPaymentsDrawer } from "@/features/accounting/components/RecentPaymentsDrawer";
 import { useOpenAccounts } from "@/features/accounting/api/accounts-payable.queries";
+import type { AccountStatus } from "@/features/accounting/api/accounts-payable.api";
 import { useAccountingEntities } from "@/features/accounting/api/accounting-entities.queries";
 import { AccountDetailDrawer } from "@/features/accounting/components/AccountDetailDrawer";
 import { ClientReportDrawer } from "@/features/accounting/components/ClientReportDrawer";
@@ -49,6 +50,12 @@ type ViewMode = "RECEIVABLE" | "PAYABLE" | "FINANCIAL";
 
 const PAGE_SIZE = 20;
 
+const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
+  OPEN: "Con saldo",
+  SETTLED: "Liquidadas",
+  ALL: "Todas",
+};
+
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -79,6 +86,12 @@ export const EggAccountsPage = () => {
     initialMode === "PAYABLE" || initialMode === "FINANCIAL"
       ? initialMode
       : "RECEIVABLE",
+  );
+  const initialStatus = searchParams.get("status");
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>(
+    initialStatus === "SETTLED" || initialStatus === "ALL"
+      ? initialStatus
+      : "OPEN",
   );
   const [selectedClients, setSelectedClients] = useState<number[]>(() =>
     parseIds(searchParams.get("client")),
@@ -175,6 +188,7 @@ export const EggAccountsPage = () => {
       next.set("supplier", selectedSuppliers.join(","));
     next.set("from", formatDateToISO(dateRange.start));
     next.set("to", formatDateToISO(dateRange.end));
+    if (accountStatus !== "OPEN") next.set("status", accountStatus);
     if (search.trim()) next.set("q", search.trim());
     if (reportRange) {
       next.set("reportFrom", reportRange.from);
@@ -187,6 +201,7 @@ export const EggAccountsPage = () => {
     selectedClients,
     selectedSuppliers,
     dateRange,
+    accountStatus,
     search,
     reportRange,
     setSearchParams,
@@ -233,6 +248,7 @@ export const EggAccountsPage = () => {
         debtorIds: selectedClients.length > 0 ? selectedClients : undefined,
         from: formatDateToISO(dateRange.start),
         to: formatDateToISO(dateRange.end),
+        status: accountStatus,
       }
     : {
         debtorOriginalIds: cedisFilter,
@@ -242,6 +258,7 @@ export const EggAccountsPage = () => {
         creditorEntityType: "SUPPLIER" as const,
         from: formatDateToISO(dateRange.start),
         to: formatDateToISO(dateRange.end),
+        status: accountStatus,
       };
 
   const {
@@ -316,6 +333,7 @@ export const EggAccountsPage = () => {
     roleFilterActive ||
     dateRangeModified ||
     cedisModified ||
+    accountStatus !== "OPEN" ||
     search.trim() !== "";
 
   const clearFilters = () => {
@@ -323,6 +341,7 @@ export const EggAccountsPage = () => {
     setSelectedSuppliers([]);
     setSelectedCedis(allCedisIds);
     setDateRange(defaultRange);
+    setAccountStatus("OPEN");
     setSearch("");
     setPage(0);
     setSelectedIds([]);
@@ -331,6 +350,16 @@ export const EggAccountsPage = () => {
   const widenDateRange = () => {
     setDateRange(getLastDays(90));
     setPage(0);
+  };
+
+  const handleAccountStatusChange = (next: AccountStatus) => {
+    if (next === accountStatus) return;
+    setAccountStatus(next);
+    setPage(0);
+    setSelectedIds([]);
+    if (next !== "OPEN" && !dateRangeModified) {
+      setDateRange(getLastDays(90));
+    }
   };
 
   const handleExportPdf = () => {
@@ -439,9 +468,13 @@ export const EggAccountsPage = () => {
           <AccountingSummaryCards
             data={filtered}
             filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
+            countLabel={accountStatus === "OPEN" ? undefined : "Documentos"}
             tooltips={{
               total: <TotalPendienteHelpContent />,
-              count: <DocumentosHelpContent />,
+              count:
+                accountStatus === "OPEN" ? (
+                  <DocumentosHelpContent />
+                ) : undefined,
               antiquity: <AntiguedadHelpContent />,
             }}
           />
@@ -502,6 +535,26 @@ export const EggAccountsPage = () => {
               }}
             />
 
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+                Estado
+              </span>
+              <div className="flex gap-1">
+                {(["OPEN", "SETTLED", "ALL"] as AccountStatus[]).map(
+                  (value) => (
+                    <Button
+                      key={value}
+                      size="xs"
+                      color={accountStatus === value ? "blue" : "gray"}
+                      onClick={() => handleAccountStatusChange(value)}
+                    >
+                      {ACCOUNT_STATUS_LABELS[value]}
+                    </Button>
+                  ),
+                )}
+              </div>
+            </div>
+
             <div className="flex w-64 flex-col gap-1">
               <span className="text-xs font-medium tracking-wider text-gray-400 uppercase">
                 Buscar
@@ -549,7 +602,11 @@ export const EggAccountsPage = () => {
               <div className="space-y-3 p-6 text-center">
                 <p className="text-sm text-gray-400">
                   {hasFilter
-                    ? `No hay cuentas creadas entre ${formatUiDate(dateRange.start, "short")} y ${formatUiDate(dateRange.end, "short")} para los filtros seleccionados.`
+                    ? accountStatus === "SETTLED"
+                      ? `No hay cuentas liquidadas entre ${formatUiDate(dateRange.start, "short")} y ${formatUiDate(dateRange.end, "short")} para los filtros seleccionados.`
+                      : accountStatus === "ALL"
+                        ? `No hay cuentas entre ${formatUiDate(dateRange.start, "short")} y ${formatUiDate(dateRange.end, "short")} para los filtros seleccionados.`
+                        : `No hay cuentas creadas entre ${formatUiDate(dateRange.start, "short")} y ${formatUiDate(dateRange.end, "short")} para los filtros seleccionados.`
                     : "No hay cuentas abiertas."}
                 </p>
                 {hasFilter && (
@@ -604,7 +661,7 @@ export const EggAccountsPage = () => {
                       setSortKey(key);
                       setSortDir(dir);
                     }}
-                    selectable
+                    selectable={accountStatus !== "SETTLED"}
                     selectedIds={selectedIds}
                     onSelectionChange={setSelectedIds}
                     headerTooltips={{

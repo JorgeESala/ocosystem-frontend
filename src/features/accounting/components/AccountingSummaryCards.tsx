@@ -6,6 +6,7 @@ import { InfoTip } from "./InfoTip";
 interface Props {
   data: AccountsPayableResponse[];
   filterLabel: string | null;
+  countLabel?: string;
   tooltips?: {
     total?: ReactNode;
     count?: ReactNode;
@@ -45,6 +46,7 @@ const getAntiquityColor = (days: number) => {
 export const AccountingSummaryCards = ({
   data,
   filterLabel,
+  countLabel,
   tooltips,
 }: Props) => {
   const totalDebt = useMemo(
@@ -83,7 +85,7 @@ export const AccountingSummaryCards = ({
 
       <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
         <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
-          Documentos Abiertos
+          {countLabel ?? "Documentos Abiertos"}
           {tooltips?.count && (
             <InfoTip title="Documentos abiertos">{tooltips.count}</InfoTip>
           )}
