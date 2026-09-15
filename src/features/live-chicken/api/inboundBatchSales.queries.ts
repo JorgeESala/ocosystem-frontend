@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 import {
   getInboundBatchSales,
@@ -20,10 +21,12 @@ import type {
    ========================= */
 
 export const useInboundBatchSales = (batchId: number) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery<InboundBatchSale[]>({
-    queryKey: inboundBatchSalesKeys.list(batchId),
+    queryKey: inboundBatchSalesKeys.list(slug, batchId),
     queryFn: () => getInboundBatchSales(batchId),
-    enabled: !!batchId,
+    enabled: !!slug && !!batchId,
   });
 };
 
@@ -33,6 +36,7 @@ export const useInboundBatchSales = (batchId: number) => {
 
 export const useCreateInboundBatchSale = (batchId: number) => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: ({ payload }: { payload: CreateInboundBatchSalePayload }) =>
@@ -40,17 +44,18 @@ export const useCreateInboundBatchSale = (batchId: number) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: inboundBatchSalesKeys.list(batchId),
+        queryKey: inboundBatchSalesKeys.list(slug, batchId),
       });
 
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.detail(batchId),
+        queryKey: inboundBatchKeys.detail(slug, batchId),
       });
     },
   });
 };
 export const useUpdateInboundBatchSale = (batchId: number, saleId: number) => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: (payload: UpdateInboundBatchSalePayload) =>
@@ -58,11 +63,11 @@ export const useUpdateInboundBatchSale = (batchId: number, saleId: number) => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: inboundBatchSalesKeys.list(batchId),
+        queryKey: inboundBatchSalesKeys.list(slug, batchId),
       });
 
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.detail(batchId),
+        queryKey: inboundBatchKeys.detail(slug, batchId),
       });
     },
   });
