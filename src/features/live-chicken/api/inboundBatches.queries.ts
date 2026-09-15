@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import {
   getInboundBatches,
   getLatestInboundBatches,
@@ -11,16 +12,22 @@ import { inboundBatchKeys } from "./inboundBatch.keys";
 import type { UpdateInboundBatchPayload } from "../types";
 
 export const useInboundBatches = () => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: inboundBatchKeys.list(),
+    queryKey: inboundBatchKeys.list(slug),
     queryFn: getInboundBatches,
+    enabled: !!slug,
   });
 };
 
 export const useLatestInboundBatches = (limit = 15) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: inboundBatchKeys.latest(limit),
+    queryKey: inboundBatchKeys.latest(slug, limit),
     queryFn: () => getLatestInboundBatches(limit),
+    enabled: !!slug,
   });
 };
 
@@ -42,10 +49,11 @@ export const useInboundBatchesByDateRange = (
   endDate: Date | null,
   enabled = true,
 ) => {
-  const isReady = enabled && !!startDate && !!endDate;
+  const { slug } = useParams<{ slug: string }>();
+  const isReady = !!slug && enabled && !!startDate && !!endDate;
 
   return useQuery({
-    queryKey: inboundBatchKeys.range(startDate!, endDate!),
+    queryKey: inboundBatchKeys.range(slug, startDate!, endDate!),
     queryFn: () => getInboundBatchesByDateRange(startDate!, endDate!),
     enabled: isReady,
   });
@@ -53,6 +61,7 @@ export const useInboundBatchesByDateRange = (
 
 export const useUpdateInboundBatch = () => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   return useMutation({
     mutationFn: ({
@@ -65,11 +74,11 @@ export const useUpdateInboundBatch = () => {
 
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.lists(),
+        queryKey: inboundBatchKeys.lists(slug),
       });
 
       queryClient.invalidateQueries({
-        queryKey: inboundBatchKeys.detail(id),
+        queryKey: inboundBatchKeys.detail(slug, id),
       });
     },
   });

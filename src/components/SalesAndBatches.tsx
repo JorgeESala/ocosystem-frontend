@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BatchTable } from "../features/batch/branch/BatchTable";
 import BatchEntryForm from "../features/batch/branch/BatchEntryForm";
@@ -22,10 +22,13 @@ import {
   type Batch,
 } from "@/services/api";
 import { useSalesByBatches } from "@/features/batch/branch/api/sales.queries";
+import { branchBatchesKeys } from "@/features/batch/branch/api/branchBatches.keys";
+import { batchKeys } from "@/features/batch/api/batch.keys";
 import { getCuentaKey } from "@/features/batch/branch/utils/cuenta";
 
 export default function SalesAndBatches() {
   const [searchParams] = useSearchParams();
+  const { slug } = useParams<{ slug: string }>();
   const [openModal, setOpenModal] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(
     new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -55,13 +58,18 @@ export default function SalesAndBatches() {
     selectedBranches.length > 0;
 
   const latestQuery = useQuery<Batch[]>({
-    queryKey: ["batches", "latest"],
+    queryKey: branchBatchesKeys.latest(slug),
     queryFn: fetchLatestBatches,
     enabled: !hasSearched,
   });
 
   const searchQuery = useQuery<Batch[]>({
-    queryKey: ["batches", "search", selectedBranches, startDate, endDate],
+    queryKey: branchBatchesKeys.search(
+      slug,
+      selectedBranches,
+      startDate,
+      endDate,
+    ),
     queryFn: () =>
       fetchBatchesByBranchesAndDateRange(
         selectedBranches,
@@ -132,7 +140,7 @@ export default function SalesAndBatches() {
   ]);
 
   const handleBatchCreated = () => {
-    queryClient.invalidateQueries({ queryKey: ["batches"] });
+    queryClient.invalidateQueries({ queryKey: batchKeys.all });
     setOpenModal(false);
   };
   const handleSearch = () => {
