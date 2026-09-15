@@ -43,6 +43,7 @@ const formatKg = (kg: number | null | undefined) =>
 
 const isAdjustmentsGroup = (g: TripGroup) => g.key === "__adjustments__";
 const isOrphanGroup = (g: TripGroup) => g.key === "__orphan_sales__";
+const isPickupGroup = (g: TripGroup) => g.key === "__pickup__";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -248,6 +249,20 @@ export default function TripInlineRow({
         setExpanded={setExpanded}
         onEditMovement={onEditMovement}
         renderSaleColumns={renderSaleColumns}
+      />
+    );
+  }
+
+  if (isPickupGroup(group)) {
+    return (
+      <PickupSalesSection
+        group={group}
+        expanded={expanded}
+        setExpanded={setExpanded}
+        onEditMovement={onEditMovement}
+        renderSaleColumns={renderSaleColumns}
+        renderHeaderColumns={renderHeaderColumns}
+        isEgg={isEgg}
       />
     );
   }
@@ -766,6 +781,87 @@ function OrphanSalesSection({
         )}
       </div>
     </Tooltip>
+  );
+}
+
+function PickupSalesSection({
+  group,
+  expanded,
+  setExpanded,
+  onEditMovement,
+  renderSaleColumns,
+  renderHeaderColumns,
+  isEgg,
+}: {
+  group: TripGroup;
+  expanded: boolean;
+  setExpanded: (v: boolean) => void;
+  onEditMovement?: (mov: any) => void;
+  renderSaleColumns: (sale: any, isOtherBatch: boolean) => React.ReactNode;
+  renderHeaderColumns: () => React.ReactNode;
+  isEgg: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-emerald-700/50 bg-emerald-950/20">
+      <div
+        className="flex cursor-pointer items-center justify-between gap-3 p-3 transition hover:bg-emerald-900/20"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-3">
+          <HiTruck className="h-5 w-5 text-emerald-400" />
+          <span className="text-sm font-semibold text-emerald-200">
+            Recoge en CEDIS ({group.movements.length})
+          </span>
+        </div>
+        <div className="flex items-center gap-4 text-right text-sm">
+          <div>
+            <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+              Total
+            </p>
+            <p className="font-mono font-semibold text-white">
+              {formatMXN(group.totals.saleTotal)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+              {isEgg ? "Piezas" : "Vendido"}
+            </p>
+            {isEgg ? (
+              <EggQuantityDisplay totalPieces={group.totals.totalPieces} />
+            ) : (
+              <p className="font-mono font-semibold text-white">
+                {formatKg(group.totals.kgSold)}
+              </p>
+            )}
+          </div>
+          <div className="text-slate-500">
+            {expanded ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}
+          </div>
+        </div>
+      </div>
+      {expanded && (
+        <div className="border-t border-emerald-900/40">
+          <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-3 py-1.5">
+            {renderHeaderColumns()}
+          </div>
+          <div className="divide-y divide-slate-800/60">
+            {group.movements.map((mov) => (
+              <div
+                key={`${mov.type}-${mov.id}`}
+                className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+              >
+                {renderSaleColumns(mov, false)}
+              </div>
+            ))}
+          </div>
+          {onEditMovement && (
+            <p className="px-3 pb-2 text-[11px] text-slate-500">
+              Ventas sin chofer ni ruta: el cliente recogió en CEDIS.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -28,6 +28,7 @@ interface TooltipPayloadItem {
   payload: {
     clientName: string;
     isInternalBranch: boolean;
+    isInternalClient?: boolean;
     totalSales: number;
   };
 }
@@ -51,10 +52,16 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   return (
     <div className="rounded-lg border border-gray-600 bg-gray-900 p-3 shadow-xl">
       <div className="mb-2 flex items-center gap-2">
-        {data.isInternalBranch && (
+        {data.isInternalBranch ? (
           <span className="rounded bg-blue-800 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
             Sucursal
           </span>
+        ) : (
+          data.isInternalClient && (
+            <span className="rounded bg-emerald-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+              Cliente interno
+            </span>
+          )
         )}
         <p className="text-xs font-semibold text-white">{data.clientName}</p>
       </div>
@@ -100,10 +107,15 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
     endDateStr,
   );
 
+  const isInternal = (c: {
+    isInternalBranch: boolean;
+    isInternalClient?: boolean;
+  }) => c.isInternalBranch || c.isInternalClient === true;
+
   const branchClients = useMemo(
     () =>
       rawData
-        .filter((c) => c.isInternalBranch)
+        .filter(isInternal)
         .sort((a, b) => b.totalQuantity - a.totalQuantity),
     [rawData],
   );
@@ -111,7 +123,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
   const regularClients = useMemo(
     () =>
       rawData
-        .filter((c) => !c.isInternalBranch)
+        .filter((c) => !isInternal(c))
         .sort((a, b) => b.totalQuantity - a.totalQuantity),
     [rawData],
   );
@@ -125,8 +137,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
     () =>
       sortedData.filter(
         (c) =>
-          (c.isInternalBranch && showBranches) ||
-          (!c.isInternalBranch && showRegular),
+          (isInternal(c) && showBranches) || (!isInternal(c) && showRegular),
       ),
     [sortedData, showBranches, showRegular],
   );
@@ -321,7 +332,7 @@ export const SalesByClientChart: React.FC<SalesByClientChartProps> = ({
                 {visibleData.map((entry) => (
                   <Cell
                     key={entry.clientId}
-                    fill={entry.isInternalBranch ? BRANCH_COLOR : REGULAR_COLOR}
+                    fill={isInternal(entry) ? BRANCH_COLOR : REGULAR_COLOR}
                   />
                 ))}
               </Bar>

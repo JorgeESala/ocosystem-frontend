@@ -16,6 +16,12 @@ describe("formatAccountingEntityLabel", () => {
     );
   });
 
+  it("etiqueta a los clientes internos de pollo vivo", () => {
+    expect(formatAccountingEntityLabel(entity("CHICKENCLIENT"))).toBe(
+      "Cliente interno - Prueba",
+    );
+  });
+
   it("mantiene las etiquetas existentes", () => {
     expect(formatAccountingEntityLabel(entity("BRANCH"))).toBe(
       "Sucursal - Prueba",

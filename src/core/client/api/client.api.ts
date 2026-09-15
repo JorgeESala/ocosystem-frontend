@@ -6,7 +6,14 @@ export interface ClientCreateRequestDTO {
   accountingEntityId?: number | null;
   localityId?: number | null;
   isInternalBranch?: boolean;
+  isInternalClient?: boolean;
   businessName?: string | null;
+}
+
+export interface InternalClientCreateRequestDTO {
+  name?: string | null;
+  businessName?: string | null;
+  localityId?: number | null;
 }
 
 const BASE_URL = "/api/v1/clients";
@@ -25,6 +32,13 @@ export const createClient = async (
   client: ClientCreateRequestDTO,
 ): Promise<Client> => {
   const { data } = await http.post<Client>(BASE_URL, client);
+  return data;
+};
+
+export const createInternalClient = async (
+  client: InternalClientCreateRequestDTO,
+): Promise<Client> => {
+  const { data } = await http.post<Client>(`${BASE_URL}/internal`, client);
   return data;
 };
 
