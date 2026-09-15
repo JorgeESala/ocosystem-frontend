@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Badge, Button, Spinner, Alert } from "flowbite-react";
 import { HiChevronDown, HiChevronUp, HiExclamation } from "react-icons/hi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,9 @@ import {
   useSalesByBatch,
   useUpdateSaleOfficeStatus,
 } from "./api/sales.queries";
+import { salesKeys } from "./api/sales.keys";
 import { useBatchAdjustments } from "../api/batch.queries";
+import { batchKeys } from "../api/batch.keys";
 
 interface BatchRowProps {
   batch: Batch;
@@ -30,6 +33,7 @@ export const BatchRow: React.FC<BatchRowProps> = ({
   chickensRemaining: chickensRemainingProp,
 }) => {
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
   const [isOpen, setIsOpen] = useState(false);
 
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
@@ -88,18 +92,19 @@ export const BatchRow: React.FC<BatchRowProps> = ({
   };
   const handleSaleCreated = async () => {
     await queryClient.invalidateQueries({
-      queryKey: ["batchSales", batch.id],
+      queryKey: salesKeys.list(slug, batch.id),
     });
     await queryClient.invalidateQueries({
-      queryKey: ["batches", "detail", batch.id],
+      queryKey: batchKeys.details(slug, batch.id),
     });
     await queryClient.invalidateQueries({
-      queryKey: ["batches", "detail", batch.id, "adjustments"],
+      queryKey: batchKeys.adjustments(slug, batch.id),
     });
+    await queryClient.invalidateQueries({ queryKey: batchKeys.all });
   };
 
   const handleBatchUpdated = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["batches"] });
+    await queryClient.invalidateQueries({ queryKey: batchKeys.all });
     setEditingBatch(null);
   };
 

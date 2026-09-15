@@ -36,6 +36,8 @@ export interface TripGroup {
   isSingleSale?: boolean;
 }
 
+export const PICKUP_GROUP_KEY = "__pickup__";
+
 const safeNumber = (v: unknown) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -56,6 +58,8 @@ export function buildTripGroups(
 ): TripGroup[] {
   const sales = movements.filter((m) => m.type === "SALE");
   const adjustments = movements.filter((m) => m.type !== "SALE");
+  const pickupSales = sales.filter((m) => m.employeeId == null);
+  const routedSales = sales.filter((m) => m.employeeId != null);
 
   const tripIndexByKey = new Map<string, TripSummaryDTO>();
   for (const t of trips) {
@@ -63,7 +67,7 @@ export function buildTripGroups(
   }
 
   const groupMap = new Map<string, TripGroup>();
-  for (const m of sales) {
+  for (const m of routedSales) {
     const d = dateOnly(m.date);
     const key = groupKey(m.employeeId ?? null, d);
     let group = groupMap.get(key);
@@ -97,7 +101,7 @@ export function buildTripGroups(
   }
 
   const orphanSales: InlineMovement[] = [];
-  for (const m of sales) {
+  for (const m of routedSales) {
     const d = dateOnly(m.date);
     const key = groupKey(m.employeeId ?? null, d);
     if (!groupMap.has(key)) {
@@ -160,6 +164,39 @@ export function buildTripGroups(
   };
 
   const finalList: TripGroup[] = [...groups];
+
+  if (pickupSales.length > 0) {
+    const sortedPickup = [...pickupSales].sort((a, b) =>
+      a.date < b.date ? 1 : a.date > b.date ? -1 : 0,
+    );
+    finalList.push({
+      key: PICKUP_GROUP_KEY,
+      driverId: null,
+      driverName: null,
+      routeId: null,
+      routeName: null,
+      date: "",
+      trip: null,
+      movements: sortedPickup,
+      totals: sortedPickup.reduce(
+        (acc, m) => {
+          acc.kgSold += safeNumber(m.weight);
+          acc.kgSent += safeNumber(m.kgSent);
+          acc.totalPieces += safeNumber(m.quantity);
+          acc.saleTotal += safeNumber(m.saleTotal);
+          acc.salesCount += 1;
+          return acc;
+        },
+        {
+          kgSold: 0,
+          kgSent: 0,
+          totalPieces: 0,
+          saleTotal: 0,
+          salesCount: 0,
+        },
+      ),
+    });
+  }
 
   for (const group of finalList) {
     if (

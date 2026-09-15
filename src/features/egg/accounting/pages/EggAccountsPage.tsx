@@ -159,7 +159,9 @@ export const EggAccountsPage = () => {
   const { data: suppliers = [] } = useSuppliers();
   const { data: eggCedisEntities = [] } = useAccountingEntities("EGGCEDIS");
 
-  const internalClients = clients.filter((c) => c.isInternalBranch);
+  const internalClients = clients.filter(
+    (c) => c.isInternalBranch || c.isInternalClient,
+  );
   const eggCedisOptions = useMemo(
     () => toEggCedisOptions(eggCedisEntities),
     [eggCedisEntities],

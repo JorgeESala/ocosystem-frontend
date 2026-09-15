@@ -1,6 +1,9 @@
 import axios from "axios";
 import * as api from "@/core/client/api/client.api";
-import type { ClientCreateRequestDTO } from "./client.api";
+import type {
+  ClientCreateRequestDTO,
+  InternalClientCreateRequestDTO,
+} from "./client.api";
 import type { Client } from "@/core/api/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientKeys } from "./client.keys";
@@ -41,6 +44,32 @@ export const useCreateClient = () => {
       try {
         return await api.createClient(payload);
       } catch (error) {
+        throw translateClientError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clientKeys.all });
+    },
+  });
+};
+
+export const useCreateInternalClient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      payload: InternalClientCreateRequestDTO,
+    ): Promise<Client> => {
+      try {
+        return await api.createInternalClient(payload);
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          return Promise.reject(
+            new Error(
+              "Los clientes internos no están habilitados en este negocio",
+            ),
+          );
+        }
         throw translateClientError(error);
       }
     },

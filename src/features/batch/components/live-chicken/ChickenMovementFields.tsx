@@ -23,10 +23,17 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
   const [isRouteDropdownOpen, setIsRouteDropdownOpen] = useState(false);
 
   // Carga de datos y mutación de rutas
-  const { data: routes = [], isLoading: isLoadingRoutes } = useRoutes();
+  const {
+    data: routes = [],
+    isLoading: isLoadingRoutes,
+    isError: isRoutesError,
+    refetch: refetchRoutes,
+  } = useRoutes();
   const { mutate: createRoute, isPending: isCreatingRoute } = useCreateRoute();
 
   const selectedRouteId = watch("routeId");
+  const storedRouteName = watch("routeName");
+  const isPickup = watch("isPickup") === true;
 
   // Filtrado de rutas en tiempo real
   const filteredRoutes = routes.filter((r: any) =>
@@ -37,6 +44,10 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
   const selectedRoute = routes.find(
     (r: any) => r.id === Number(selectedRouteId),
   );
+
+  const selectedRouteLabel =
+    selectedRoute?.name ||
+    (selectedRouteId ? storedRouteName || `Ruta #${selectedRouteId}` : "");
 
   // Manejo de guardado rápido de nueva ruta
   const handleQuickRouteSubmit = (e: React.FormEvent) => {
@@ -78,19 +89,32 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
 
       {/* 3. KG Enviados (Báscula de salida de sucursal) */}
       <div className="col-span-2 sm:col-span-1">
-        <Label className="mb-2 block">KG Enviados (Salida)</Label>
+        <Label className="mb-2 block">
+          KG Enviados (Salida){" "}
+          {isPickup && (
+            <span className="text-xs font-normal text-gray-500">
+              (opcional, se usa el peso venta)
+            </span>
+          )}
+        </Label>
         <TextInput
           type="number"
           step="0.01"
-          {...register("kgSent", { required: true })}
+          {...register("kgSent", { required: !isPickup })}
         />
       </div>
 
-      {/* 4. Selector de Ruta Buscable / Creador Inline */}
       <div className="relative col-span-2 sm:col-span-1">
         <div className="mb-2 flex items-center justify-between">
-          <Label>Ruta</Label>
-          {!isAddingRoute && (
+          <Label>
+            Ruta{" "}
+            {isPickup && (
+              <span className="text-xs font-normal text-gray-500">
+                (opcional en recogida)
+              </span>
+            )}
+          </Label>
+          {!isAddingRoute && !isPickup && (
             <button
               type="button"
               onClick={() => {
@@ -112,16 +136,23 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
                 type="text"
                 className="w-full rounded-lg border border-gray-600 bg-gray-700 py-2 pr-10 pl-10 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
                 placeholder={
-                  isLoadingRoutes
-                    ? "Cargando rutas..."
-                    : "Buscar o seleccionar ruta..."
+                  isPickup
+                    ? "No aplica en recogida en CEDIS"
+                    : isRoutesError
+                      ? "No se pudieron cargar las rutas"
+                      : isLoadingRoutes
+                        ? "Cargando rutas..."
+                        : "Buscar o seleccionar ruta..."
                 }
                 value={
-                  isRouteDropdownOpen
-                    ? routeSearchTerm
-                    : selectedRoute?.name || ""
+                  isPickup
+                    ? ""
+                    : isRouteDropdownOpen
+                      ? routeSearchTerm
+                      : selectedRouteLabel
                 }
                 onFocus={() => {
+                  if (isPickup) return;
                   setIsRouteDropdownOpen(true);
                   setRouteSearchTerm("");
                 }}
@@ -129,7 +160,7 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
                   setRouteSearchTerm(e.target.value);
                   setIsRouteDropdownOpen(true);
                 }}
-                disabled={isLoadingRoutes}
+                disabled={isLoadingRoutes || isPickup}
               />
               <div
                 className="absolute right-3 flex cursor-pointer items-center text-gray-400"
@@ -159,7 +190,18 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
                   onClick={() => setIsRouteDropdownOpen(false)}
                 />
                 <ul className="absolute top-full left-0 z-30 mt-1 max-h-48 w-full divide-y divide-gray-800 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-1 shadow-xl">
-                  {filteredRoutes.length > 0 ? (
+                  {isRoutesError ? (
+                    <li className="px-3 py-2 text-center text-xs text-red-300">
+                      No se pudieron cargar las rutas.{" "}
+                      <button
+                        type="button"
+                        onClick={() => refetchRoutes()}
+                        className="font-semibold underline"
+                      >
+                        Reintentar
+                      </button>
+                    </li>
+                  ) : filteredRoutes.length > 0 ? (
                     filteredRoutes.map((r: any) => (
                       <li
                         key={r.id}
@@ -190,7 +232,6 @@ export const ChickenMovementFields: React.FC<ChickenFieldsProps> = ({
               value={newRouteName}
               onChange={(e) => setNewRouteName(e.target.value)}
               disabled={isCreatingRoute}
-              required
               autoFocus
             />
             <Button

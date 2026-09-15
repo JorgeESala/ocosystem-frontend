@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 import {
   Button,
@@ -24,6 +25,7 @@ import {
 import { fetchEmployees } from "../services/api";
 import { useClients } from "@/features/processed/client/api/client.queries";
 import { useCreateAdjustment } from "@/features/batch/api/batch.adjustments.queries";
+import { salesKeys } from "@/features/batch/branch/api/sales.keys";
 import CreateClientInlineForm from "./CreateClientInlineForm";
 import { ExcelDropzone } from "@/features/branches/report-reader/components/ExcelDropzone";
 import { http } from "@/shared/api/http";
@@ -79,6 +81,7 @@ export default function SaleEntryForm({
     isError: isErrorClients,
   } = useClients();
   const queryClient = useQueryClient();
+  const { slug } = useParams<{ slug: string }>();
 
   // Disables the scroll when modal is open
   useEffect(() => {
@@ -179,7 +182,9 @@ export default function SaleEntryForm({
           clientId: formData.clientId || undefined,
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["batchSales", batch.id] });
+      queryClient.invalidateQueries({
+        queryKey: salesKeys.list(slug, batch.id),
+      });
       await queryClient.invalidateQueries({ queryKey: ["clients"] });
       setToastType("success");
       setToastMessage("Venta registrada correctamente");

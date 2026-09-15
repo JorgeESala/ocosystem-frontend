@@ -26,7 +26,11 @@ import {
   useUpdateBatchAdjustment,
 } from "../api/batch.adjustments.queries";
 import { useEmployees } from "@/features/employee/api/employees.queries";
-import { useClients, useCreateClient } from "@/core/client/api/client.queries";
+import {
+  useClients,
+  useCreateClient,
+  useCreateInternalClient,
+} from "@/core/client/api/client.queries";
 import { useLocalities } from "@/core/locality/api/locality.queries";
 import type { ClientCreateRequestDTO } from "@/core/client/api/client.api";
 import CreateLocalityInlineForm from "./CreateLocalityInlineForm";
@@ -42,7 +46,9 @@ export const BatchMovementModal: React.FC<{
   const isEditing = !!initialData;
   const config = UNIT_CONFIG[batch.type];
   const MovementFields = config.movementFormFields;
-  const BRANCH_BADGE = "Interno";
+  const BRANCH_BADGE = "Sucursal";
+  const INTERNAL_BADGE = "Cliente interno";
+  const supportsPickup = batch.type === "LIVE_CHICKEN" || batch.type === "EGG";
 
   // --- ESTADOS PARA CREACIÓN RÁPIDA DE CLIENTE ---
   const [isAddingClient, setIsAddingClient] = useState(false);
@@ -53,8 +59,11 @@ export const BatchMovementModal: React.FC<{
   const [isAddingLocality, setIsAddingLocality] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isNewClientInternal, setIsNewClientInternal] = useState(false);
   const { mutate: createClient, isPending: isCreatingClient } =
     useCreateClient();
+  const { mutate: createInternalClient, isPending: isCreatingInternalClient } =
+    useCreateInternalClient();
   const { data: localities = [] } = useLocalities();
 
   const filteredLocalities = localities.filter((l) =>
@@ -69,6 +78,7 @@ export const BatchMovementModal: React.FC<{
         movementType: "SALE",
         saleDate: toLocalDateString(new Date()),
         pricePerKg: batch.metadata?.pricePerKg || 0,
+        isPickup: false,
       };
     }
 
@@ -76,6 +86,11 @@ export const BatchMovementModal: React.FC<{
       ...initialData,
       movementType: initialData.type,
       saleDate: initialData.date,
+      isPickup:
+        supportsPickup &&
+        initialData.type === "SALE" &&
+        initialData.employeeId == null &&
+        initialData.routeId == null,
     };
 
     // SI ES HUEVO: Desglosamos la cantidad total en las unidades visibles
@@ -103,6 +118,7 @@ export const BatchMovementModal: React.FC<{
   const watchMovementType = watch("movementType");
   const watchWeight = watch("weight");
   const watchPrice = watch("pricePerKg");
+  const watchIsPickup = watch("isPickup") === true;
 
   // Lógica de cálculo automático (Opcional, pero muy Senior)
   useEffect(() => {
@@ -130,8 +146,11 @@ export const BatchMovementModal: React.FC<{
     return name.includes(term) || business.includes(term);
   });
   const branchClients = matchingClients.filter((c: any) => c.isInternalBranch);
+  const internalClients = matchingClients.filter(
+    (c: any) => !c.isInternalBranch && c.isInternalClient,
+  );
   const regularClients = matchingClients.filter(
-    (c: any) => !c.isInternalBranch,
+    (c: any) => !c.isInternalBranch && !c.isInternalClient,
   );
 
   // Obtener el nombre del cliente seleccionado actualmente para mostrarlo en el input
@@ -139,6 +158,15 @@ export const BatchMovementModal: React.FC<{
   const selectedClient = clients.find(
     (c: any) => c.id === Number(selectedClientId),
   );
+  const selectedIsInternalClient =
+    selectedClient?.isInternalClient === true &&
+    !selectedClient?.isInternalBranch;
+  const showPickupOption = supportsPickup && selectedIsInternalClient;
+  useEffect(() => {
+    if (!selectedIsInternalClient && watchIsPickup) {
+      setValue("isPickup", false);
+    }
+  }, [selectedIsInternalClient, watchIsPickup, setValue]);
   useEffect(() => {
     if (isEditing && !isLoadingEmployees && employees.length > 0) {
       // Volvemos a setear los valores iniciales.
@@ -148,16 +176,34 @@ export const BatchMovementModal: React.FC<{
   }, [employees, isLoadingEmployees, isEditing, reset]);
   const onValid = (data: any) => {
     setSubmitError(null);
+    const isPickupSale = data.movementType === "SALE" && data.isPickup === true;
     const payload = {
       ...data,
       batchId: batch.id,
-      // Aseguramos que los números viajen como tales
       saleTotal: Number(data.saleTotal || 0),
       weight: Number(data.weight || 0),
       quantity: Number(data.quantity || 0),
+      kgSent: isPickupSale
+        ? Number(data.kgSent || data.weight || 0)
+        : Number(data.kgSent || 0),
+      employeeId: isPickupSale ? null : Number(data.employeeId || 0) || null,
+      routeId: isPickupSale ? null : Number(data.routeId || 0) || null,
+      tripId: isPickupSale ? null : (data.tripId ?? null),
+      clientId:
+        data.clientId === "" || data.clientId == null
+          ? null
+          : Number(data.clientId),
     };
 
     if (data.movementType === "SALE") {
+      if (!isPickupSale && !data.routeId) {
+        setSubmitError("Ruta: Selecciona una ruta");
+        return;
+      }
+      if (!isPickupSale && !data.employeeId) {
+        setSubmitError("Vendedor / Empleado: Selecciona un empleado");
+        return;
+      }
       if (isEditing) {
         // Mandamos el ID y el payload al PUT
         updateSale(
@@ -228,27 +274,52 @@ export const BatchMovementModal: React.FC<{
   };
 
   const onSubmit = handleSubmit(onValid, onInvalid);
+  const resetQuickClientForm = () => {
+    setIsAddingClient(false);
+    setNewClientName("");
+    setNewClientLocalityId("");
+    setLocalitySearchTerm("");
+    setIsLocalityDropdownOpen(false);
+    setIsAddingLocality(false);
+    setIsNewClientInternal(false);
+    setClientError(null);
+  };
   const handleQuickClientSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientName.trim()) return;
 
     setClientError(null);
 
+    if (isNewClientInternal) {
+      createInternalClient(
+        {
+          name: newClientName.trim(),
+          localityId: newClientLocalityId ? Number(newClientLocalityId) : null,
+        },
+        {
+          onSuccess: (savedClient) => {
+            resetQuickClientForm();
+            setValue("clientId", savedClient.id);
+          },
+          onError: (error: Error) => {
+            setClientError(error.message || "No se pudo crear el cliente");
+          },
+        },
+      );
+      return;
+    }
+
     const payload: ClientCreateRequestDTO = {
       name: newClientName.trim(),
       isInternalBranch: false,
+      isInternalClient: false,
       accountingEntityId: null,
       localityId: newClientLocalityId ? Number(newClientLocalityId) : null,
     };
 
     createClient(payload, {
       onSuccess: (savedClient) => {
-        setIsAddingClient(false);
-        setNewClientName("");
-        setNewClientLocalityId("");
-        setLocalitySearchTerm("");
-        setIsLocalityDropdownOpen(false);
-        setIsAddingLocality(false);
+        resetQuickClientForm();
         setValue("clientId", savedClient.id);
       },
       onError: (error: Error) => {
@@ -256,6 +327,7 @@ export const BatchMovementModal: React.FC<{
       },
     });
   };
+  const isSavingClient = isCreatingClient || isCreatingInternalClient;
 
   return (
     <Modal show={true} onClose={onClose} size="lg">
@@ -332,9 +404,16 @@ export const BatchMovementModal: React.FC<{
           {watchMovementType === "SALE" && (
             <>
               <div className="col-span-2 lg:col-span-1">
-                <Label className="mb-2 block">Vendedor / Empleado</Label>
+                <Label className="mb-2 block">
+                  Vendedor / Empleado{" "}
+                  {watchIsPickup && (
+                    <span className="text-xs font-normal text-gray-500">
+                      (opcional en recogida)
+                    </span>
+                  )}
+                </Label>
                 <Select
-                  {...register("employeeId", { required: true })}
+                  {...register("employeeId", { required: !watchIsPickup })}
                   icon={HiUser}
                 >
                   <option value="">Seleccionar empleado...</option>
@@ -371,6 +450,12 @@ export const BatchMovementModal: React.FC<{
                           {BRANCH_BADGE}
                         </span>
                       )}
+                      {selectedClient?.isInternalClient &&
+                        !selectedClient?.isInternalBranch && (
+                          <span className="rounded bg-emerald-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                            {INTERNAL_BADGE}
+                          </span>
+                        )}
                       <div className="relative flex-1">
                         {/* Input de búsqueda simulando el Select */}
                         <div className="relative flex items-center">
@@ -439,12 +524,15 @@ export const BatchMovementModal: React.FC<{
                           </li>
 
                           {/* Opciones filtradas, agrupadas por tipo */}
-                          {branchClients.length + regularClients.length > 0 ? (
+                          {branchClients.length +
+                            internalClients.length +
+                            regularClients.length >
+                          0 ? (
                             <>
                               {branchClients.length > 0 && (
                                 <>
                                   <li className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.18em] text-gray-500 uppercase">
-                                    Clientes internos
+                                    Sucursales
                                   </li>
                                   {branchClients.map((c: any) => (
                                     <li
@@ -458,6 +546,41 @@ export const BatchMovementModal: React.FC<{
                                       <div className="flex items-center gap-1.5">
                                         <span className="rounded bg-blue-800 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
                                           {BRANCH_BADGE}
+                                        </span>
+                                        <div className="leading-tight">
+                                          {c.name}
+                                        </div>
+                                      </div>
+                                      {(c.businessName || c.localityName) && (
+                                        <div className="ml-[42px] text-[10px] text-gray-500">
+                                          {c.businessName}
+                                          {c.businessName &&
+                                            c.localityName &&
+                                            " · "}
+                                          {c.localityName}
+                                        </div>
+                                      )}
+                                    </li>
+                                  ))}
+                                </>
+                              )}
+                              {internalClients.length > 0 && (
+                                <>
+                                  <li className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.18em] text-gray-500 uppercase">
+                                    Clientes internos
+                                  </li>
+                                  {internalClients.map((c: any) => (
+                                    <li
+                                      key={c.id}
+                                      className={`cursor-pointer rounded px-3 py-2 text-xs text-gray-300 hover:bg-blue-600 hover:text-white ${Number(selectedClientId) === c.id ? "bg-blue-600/20 font-semibold text-blue-400" : ""}`}
+                                      onClick={() => {
+                                        setValue("clientId", c.id);
+                                        setIsDropdownOpen(false);
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="rounded bg-emerald-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                                          {INTERNAL_BADGE}
                                         </span>
                                         <div className="leading-tight">
                                           {c.name}
@@ -525,11 +648,26 @@ export const BatchMovementModal: React.FC<{
                         placeholder="Nombre del nuevo cliente..."
                         value={newClientName}
                         onChange={(e) => setNewClientName(e.target.value)}
-                        disabled={isCreatingClient}
+                        disabled={isSavingClient}
                         required
                         autoFocus
                       />
                     </div>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-300">
+                      <Checkbox
+                        checked={isNewClientInternal}
+                        onChange={(e) =>
+                          setIsNewClientInternal(e.target.checked)
+                        }
+                        disabled={isSavingClient}
+                      />
+                      <span>
+                        Cliente interno{" "}
+                        <span className="text-gray-500">
+                          (genera cuenta por cobrar)
+                        </span>
+                      </span>
+                    </label>
                     <div>
                       <div className="mb-1 flex items-center justify-between">
                         <span className="text-[10px] tracking-wider text-gray-400 uppercase">
@@ -565,12 +703,12 @@ export const BatchMovementModal: React.FC<{
                               setLocalitySearchTerm(e.target.value);
                               setIsLocalityDropdownOpen(true);
                             }}
-                            disabled={isCreatingClient || isAddingLocality}
+                            disabled={isSavingClient || isAddingLocality}
                           />
                           <div
                             className="absolute right-2 flex cursor-pointer items-center text-gray-400"
                             onClick={() =>
-                              !isCreatingClient &&
+                              !isSavingClient &&
                               !isAddingLocality &&
                               setIsLocalityDropdownOpen(!isLocalityDropdownOpen)
                             }
@@ -648,15 +786,7 @@ export const BatchMovementModal: React.FC<{
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          setIsAddingClient(false);
-                          setNewClientName("");
-                          setNewClientLocalityId("");
-                          setLocalitySearchTerm("");
-                          setIsLocalityDropdownOpen(false);
-                          setIsAddingLocality(false);
-                          setClientError(null);
-                        }}
+                        onClick={resetQuickClientForm}
                         className="p-1 text-gray-500 hover:text-gray-400"
                       >
                         <svg
@@ -678,9 +808,9 @@ export const BatchMovementModal: React.FC<{
                         color="blue"
                         type="button"
                         onClick={handleQuickClientSubmit}
-                        disabled={isCreatingClient || !newClientName.trim()}
+                        disabled={isSavingClient || !newClientName.trim()}
                       >
-                        {isCreatingClient ? "..." : "Guardar"}
+                        {isSavingClient ? "..." : "Guardar"}
                       </Button>
                     </div>
                   </div>
@@ -689,6 +819,26 @@ export const BatchMovementModal: React.FC<{
                 {/* Input oculto para que React Hook Form mantenga el valor registrado nativamente si es necesario */}
                 <input type="hidden" {...register("clientId")} />
               </div>
+              {showPickupOption && (
+                <div className="col-span-2 flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-900/20 p-4">
+                  <Checkbox
+                    id="isPickup"
+                    {...register("isPickup")}
+                    className="mt-0.5 cursor-pointer"
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <Label
+                      htmlFor="isPickup"
+                      className="cursor-pointer text-sm font-medium text-emerald-300"
+                    >
+                      Recoge en CEDIS
+                    </Label>
+                    <span className="text-xs text-gray-400">
+                      El cliente pasa por su mercancía, sin chofer ni ruta
+                    </span>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

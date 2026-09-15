@@ -13,6 +13,7 @@ import { HiCheck, HiChevronDown, HiX } from "react-icons/hi";
 import {
   useClient,
   useCreateClient,
+  useCreateInternalClient,
   useUpdateClient,
 } from "@/core/client/api/client.queries";
 import { useLocalities } from "@/core/locality/api/locality.queries";
@@ -41,8 +42,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const localityRef = useRef<HTMLDivElement | null>(null);
 
   const createMutation = useCreateClient();
+  const createInternalMutation = useCreateInternalClient();
   const updateMutation = useUpdateClient();
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSaving =
+    createMutation.isPending ||
+    createInternalMutation.isPending ||
+    updateMutation.isPending;
+  const [isInternal, setIsInternal] = useState(false);
 
   useEffect(() => {
     if (!show) {
@@ -50,6 +56,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       setError(null);
       setLocalitySearch("");
       setLocalityOpen(false);
+      setIsInternal(false);
       return;
     }
     if (isEdit && editingClient) {
@@ -117,14 +124,22 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     const payload = {
       name: form.name.trim() || null,
       localityId: form.localityId,
-      isInternalBranch: false,
       businessName: form.businessName.trim() || null,
     };
     try {
       if (isEdit && clientIdToEdit !== null) {
-        await updateMutation.mutateAsync({ id: clientIdToEdit, payload });
+        await updateMutation.mutateAsync({
+          id: clientIdToEdit,
+          payload: { ...payload, isInternalBranch: false },
+        });
+      } else if (isInternal) {
+        await createInternalMutation.mutateAsync(payload);
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync({
+          ...payload,
+          isInternalBranch: false,
+          isInternalClient: false,
+        });
       }
       onClose();
     } catch (e) {
@@ -151,6 +166,23 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               Ingresa al menos uno: el nombre del cliente o el nombre del
               negocio.
             </p>
+            {!isEdit && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={isInternal}
+                  onChange={(e) => setIsInternal(e.target.checked)}
+                  disabled={isSaving}
+                  className="h-4 w-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+                />
+                <span>
+                  Cliente interno{" "}
+                  <span className="text-xs text-gray-500">
+                    (genera cuenta por cobrar)
+                  </span>
+                </span>
+              </label>
+            )}
             <div>
               <Label htmlFor="client-name">Nombre del cliente</Label>
               <TextInput
