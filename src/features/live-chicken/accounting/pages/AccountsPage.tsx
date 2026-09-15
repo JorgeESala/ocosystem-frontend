@@ -86,7 +86,9 @@ export const AccountsPage = () => {
   const { data: clients = [] } = useClients();
   const { data: suppliers = [] } = useSuppliers();
 
-  const internalClients = clients.filter((c) => c.isInternalBranch);
+  const internalClients = clients.filter(
+    (c) => c.isInternalBranch || c.isInternalClient,
+  );
 
   const receivable = viewMode === "RECEIVABLE";
   const isWeightDiff = viewMode === "WEIGHT_DIFF";

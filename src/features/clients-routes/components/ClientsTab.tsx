@@ -72,6 +72,7 @@ export const ClientsTab: React.FC = () => {
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Negocio</th>
                 <th className="px-4 py-3">Localidad</th>
+                <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
@@ -100,6 +101,19 @@ export const ClientsTab: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-gray-400">
                     {c.localityName ?? <span className="text-gray-600">—</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.isInternalBranch ? (
+                      <span className="rounded bg-blue-800 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
+                        Sucursal
+                      </span>
+                    ) : c.isInternalClient ? (
+                      <span className="rounded bg-emerald-800 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                        Cliente interno
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-500">Externo</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button

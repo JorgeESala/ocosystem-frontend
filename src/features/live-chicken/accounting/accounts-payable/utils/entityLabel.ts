@@ -9,4 +9,5 @@ export const ACCOUNTING_ENTITY_TYPE_LABEL: Record<string, string> = {
   SUPPLIER: "Proveedor",
   EGGCEDIS: "Huevo",
   EGGCLIENT: "Cliente interno",
+  CHICKENCLIENT: "Cliente interno",
 };

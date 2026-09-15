@@ -199,6 +199,7 @@ export interface SalesByClientData {
   clientId: number;
   clientName: string;
   isInternalBranch: boolean;
+  isInternalClient?: boolean;
   totalQuantity: number;
   totalSales: number;
 }

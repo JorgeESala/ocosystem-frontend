@@ -18,6 +18,12 @@ const batchMocks = vi.hoisted(() => ({
   updateSaleMutate: vi.fn(),
 }));
 
+const clientMocks = vi.hoisted(() => ({
+  useClients: vi.fn(),
+  useCreateClient: vi.fn(),
+  useCreateInternalClient: vi.fn(),
+}));
+
 vi.mock("@/features/employee/api/employees.queries", () => ({
   useEmployees: vi.fn(() => ({
     data: employeesData,
@@ -26,8 +32,9 @@ vi.mock("@/features/employee/api/employees.queries", () => ({
 }));
 
 vi.mock("@/core/client/api/client.queries", () => ({
-  useClients: vi.fn(() => ({ data: [] })),
-  useCreateClient: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useClients: clientMocks.useClients,
+  useCreateClient: clientMocks.useCreateClient,
+  useCreateInternalClient: clientMocks.useCreateInternalClient,
 }));
 
 vi.mock("@/core/locality/api/locality.queries", () => ({
@@ -57,6 +64,15 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   routeMocks.useCreateRoute.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  });
+  clientMocks.useClients.mockReturnValue({ data: [] });
+  clientMocks.useCreateClient.mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  });
+  clientMocks.useCreateInternalClient.mockReturnValue({
     mutate: vi.fn(),
     isPending: false,
   });
@@ -122,7 +138,7 @@ describe("BatchMovementModal - Broken Eggs Checkbox", () => {
 
   it("hides broken eggs checkbox for non-EGG batches", () => {
     renderModal(chickenBatch);
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Huevos rotos/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Venta de huevos rotos/)).not.toBeInTheDocument();
   });
 
@@ -323,5 +339,113 @@ describe("BatchMovementModal - Ruta", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("BatchMovementModal - Recogida en CEDIS", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const internalClient = {
+    id: 7,
+    name: "Cliente Recoge",
+    businessName: null,
+    localityName: null,
+    isInternalBranch: false,
+    isInternalClient: true,
+  };
+  const externalClient = {
+    id: 8,
+    name: "Cliente Externo",
+    businessName: null,
+    localityName: null,
+    isInternalBranch: false,
+    isInternalClient: false,
+  };
+  const branchClient = {
+    id: 9,
+    name: "Sucursal Norte",
+    businessName: null,
+    localityName: null,
+    isInternalBranch: true,
+    isInternalClient: false,
+  };
+
+  function selectClient(name: string) {
+    fireEvent.focus(
+      screen.getByPlaceholderText("Escribe para buscar cliente..."),
+    );
+    fireEvent.click(screen.getByText(name));
+  }
+
+  it("muestra la opción de recogida al seleccionar un cliente interno", () => {
+    clientMocks.useClients.mockReturnValue({ data: [internalClient] });
+    renderModal(chickenBatch);
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+    selectClient("Cliente Recoge");
+    expect(screen.getByText("Recoge en CEDIS")).toBeInTheDocument();
+  });
+
+  it("no muestra la opción para mostrador, externos ni sucursales", () => {
+    clientMocks.useClients.mockReturnValue({
+      data: [internalClient, externalClient, branchClient],
+    });
+    renderModal(chickenBatch);
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+
+    selectClient("Cliente Externo");
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+
+    selectClient("Sucursal Norte");
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+  });
+
+  it("muestra la opción de recogida en huevo al seleccionar un cliente interno", () => {
+    clientMocks.useClients.mockReturnValue({ data: [internalClient] });
+    renderModal(eggBatch);
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+    selectClient("Cliente Recoge");
+    expect(screen.getByText("Recoge en CEDIS")).toBeInTheDocument();
+  });
+
+  it("deshabilita la ruta de huevo al marcar recogida", () => {
+    clientMocks.useClients.mockReturnValue({ data: [internalClient] });
+    renderModal(eggBatch);
+    selectClient("Cliente Recoge");
+    fireEvent.click(screen.getByLabelText("Recoge en CEDIS"));
+    expect(
+      screen.getByPlaceholderText("No aplica en recogida en CEDIS"),
+    ).toBeInTheDocument();
+  });
+
+  it("deshabilita la ruta al marcar recogida", () => {
+    clientMocks.useClients.mockReturnValue({ data: [internalClient] });
+    renderModal(chickenBatch);
+    selectClient("Cliente Recoge");
+    fireEvent.click(screen.getByLabelText("Recoge en CEDIS"));
+    expect(
+      screen.getByPlaceholderText("No aplica en recogida en CEDIS"),
+    ).toBeInTheDocument();
+  });
+
+  it("desmarca la recogida al cambiar a un cliente no interno", () => {
+    clientMocks.useClients.mockReturnValue({
+      data: [internalClient, externalClient],
+    });
+    renderModal(chickenBatch);
+    selectClient("Cliente Recoge");
+    fireEvent.click(screen.getByLabelText("Recoge en CEDIS"));
+    selectClient("Cliente Externo");
+    expect(screen.queryByText("Recoge en CEDIS")).not.toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Buscar o seleccionar ruta..."),
+    ).toBeInTheDocument();
+  });
+
+  it("ofrece marcar al cliente nuevo como interno", () => {
+    renderModal(chickenBatch);
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo Cliente" }));
+    expect(screen.getByText("Cliente interno")).toBeInTheDocument();
   });
 });

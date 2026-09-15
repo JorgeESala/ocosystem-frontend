@@ -3,7 +3,8 @@ export type AccountingEntityType =
   | "CEDIS"
   | "SUPPLIER"
   | "EGGCEDIS"
-  | "EGGCLIENT";
+  | "EGGCLIENT"
+  | "CHICKENCLIENT";
 
 export interface AccountingEntity {
   id: number;

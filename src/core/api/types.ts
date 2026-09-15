@@ -84,6 +84,11 @@ export interface Client {
   localityId?: number;
   localityName?: string;
   isInternalBranch: boolean;
+  isInternalClient?: boolean;
   businessName?: string;
   active?: boolean;
 }
+
+export const isInternalClientAccount = (
+  c: Pick<Client, "isInternalBranch" | "isInternalClient">,
+): boolean => c.isInternalBranch || c.isInternalClient === true;
