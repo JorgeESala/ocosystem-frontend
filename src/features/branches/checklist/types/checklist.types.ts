@@ -3,6 +3,7 @@ export type ChecklistTaskId =
   | "REGISTER_EXPENSES"
   | "REGISTER_SALES"
   | "REGISTER_ENTRIES"
+  | "UPDATE_REMESA_PRICE"
   | "REVIEW_ACCOUNTS_PAYABLE";
 
 export type ChecklistStatus = "DONE" | "EMPTY" | "NOT_APPLICABLE";

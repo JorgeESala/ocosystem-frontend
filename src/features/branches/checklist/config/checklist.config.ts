@@ -1,5 +1,5 @@
 import type { IconType } from "react-icons";
-import { FaBoxes, FaFileUpload } from "react-icons/fa";
+import { FaBoxes, FaFileUpload, FaMoneyBillWave } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import type { ChecklistTaskId } from "../types/checklist.types";
 
@@ -35,6 +35,12 @@ export const TASK_META: Record<ChecklistTaskId, TaskMeta> = {
     shortLabel: "Entradas",
     actionPath: "salesAndBatches",
   },
+  UPDATE_REMESA_PRICE: {
+    icon: FaMoneyBillWave,
+    accent: "blue",
+    shortLabel: "Precio remesa",
+    actionPath: "salesAndBatches",
+  },
   REVIEW_ACCOUNTS_PAYABLE: {
     icon: GiReceiveMoney,
     accent: "purple",
@@ -48,5 +54,6 @@ export const TASK_ORDER: ChecklistTaskId[] = [
   "REGISTER_EXPENSES",
   "REGISTER_SALES",
   "REGISTER_ENTRIES",
+  "UPDATE_REMESA_PRICE",
   "REVIEW_ACCOUNTS_PAYABLE",
 ];
