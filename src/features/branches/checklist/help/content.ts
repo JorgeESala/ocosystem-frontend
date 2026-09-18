@@ -33,6 +33,7 @@ export const METRIC_HELP: Record<string, MetricHelp> = {
       "Registrar gastos (solo días programados)",
       "Registrar ventas (todos los días)",
       "Registrar entradas (solo días de remesa)",
+      "Actualizar precio de remesa (cuando haya remesas sin precio)",
       "Revisar cuentas por pagar (solo días programados)",
     ],
     tips: [
@@ -110,6 +111,14 @@ export const TASK_HELP: Record<string, TaskHelp> = {
     description: "Registrar la mercancía (remesa) que llegó a la sucursal.",
     when: "Solo en días de remesa (rutina)",
     how: 'Ve a "Entradas y Ventas" y registra la entrada de la remesa.',
+  },
+  UPDATE_REMESA_PRICE: {
+    id: "UPDATE_REMESA_PRICE",
+    title: "Actualizar precio de remesa",
+    icon: "🏷️",
+    description: "Asignar el precio por kilo a las remesas registradas.",
+    when: "Cuando haya remesas registradas sin precio",
+    how: 'Ve a "Entradas y Ventas", edita la remesa y captura el precio por kilo.',
   },
   REVIEW_ACCOUNTS_PAYABLE: {
     id: "REVIEW_ACCOUNTS_PAYABLE",
