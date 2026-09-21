@@ -32,6 +32,15 @@ export interface SummarySales {
   variation: SalesVariation;
 }
 
+export interface ClientTypeCounts {
+  branchesActive: number;
+  branchesInactive: number;
+  internalActive: number;
+  internalInactive: number;
+  externalActive: number;
+  externalInactive: number;
+}
+
 export interface SummaryClients {
   active: number;
   inactive: number;
@@ -39,6 +48,7 @@ export interface SummaryClients {
   withoutRoute: number;
   neverPurchased: number;
   dormant: number;
+  byType: ClientTypeCounts;
 }
 
 export interface SummaryRoutes {

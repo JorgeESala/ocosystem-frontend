@@ -4,7 +4,7 @@ import { useClientPurchases } from "@/core/client/api/client.queries";
 import type { Client } from "@/core/api/types";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { toLocalDateString } from "@/utils/date.utils";
+import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { DateRangeFields } from "./DateRangeFields";
 import {
   ClientHistoryHelpContent,
@@ -108,7 +108,9 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
                     />
                   </p>
                   <p className="text-lg font-semibold text-white">
-                    {data?.lastPurchase ?? "—"}
+                    {data?.lastPurchase
+                      ? formatHumanDate(data.lastPurchase, "short")
+                      : "—"}
                   </p>
                 </div>
               </div>
@@ -131,7 +133,9 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
                     <tbody>
                       {sales.map((sale) => (
                         <tr key={sale.id} className="border-t border-gray-800">
-                          <td className="px-4 py-3">{sale.saleDate}</td>
+                          <td className="px-4 py-3">
+                            {formatHumanDate(sale.saleDate, "short")}
+                          </td>
                           <td className="px-4 py-3">
                             {sale.routeName ?? "Sin ruta"}
                           </td>

@@ -1,6 +1,6 @@
 import React from "react";
-import { Tooltip as FlowbiteTooltip } from "flowbite-react";
 import { HiInformationCircle } from "react-icons/hi";
+import Tooltip from "@/components/Tooltip";
 
 export const ClientRouteHelpContent = () => (
   <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
@@ -106,6 +106,25 @@ export const SummaryKpiHelpContent = () => (
   </div>
 );
 
+export const ClientTypesHelpContent = () => (
+  <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
+    <p className="font-semibold text-white">¿Qué tipos de cliente hay?</p>
+    <p>
+      <span className="font-semibold text-white">Sucursales</span>: clientes
+      internos que representan una sucursal de la empresa.
+    </p>
+    <p>
+      <span className="font-semibold text-white">Internos</span>: clientes con
+      cuenta propia que generan cuentas por cobrar al venderles.
+    </p>
+    <p>
+      <span className="font-semibold text-white">Externos</span>: el resto de
+      los clientes.
+    </p>
+    <p>Los conteos incluyen clientes activos e inactivos.</p>
+  </div>
+);
+
 export const SummaryAttentionHelpContent = () => (
   <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
     <p className="font-semibold text-white">Necesitan atención</p>
@@ -121,6 +140,11 @@ export const SummaryAttentionHelpContent = () => (
       Rutas sin actividad: no vendieron en el periodo. Sin localidades: no
       cubren ninguna localidad todavía.
     </p>
+    <p>
+      Si todas las alertas están en cero verás{" "}
+      <span className="font-semibold text-white">Todo al día</span>: no hay
+      pendientes por atender.
+    </p>
   </div>
 );
 
@@ -130,12 +154,12 @@ interface InfoTooltipProps {
 }
 
 export const InfoTooltip: React.FC<InfoTooltipProps> = ({ label, content }) => (
-  <FlowbiteTooltip content={content} placement="top" style="dark" arrow>
+  <Tooltip content={content} placement="top" style="dark" arrow>
     <HiInformationCircle
       className="inline cursor-help text-gray-400 hover:text-gray-200"
       size={14}
       aria-label={label}
       role="img"
     />
-  </FlowbiteTooltip>
+  </Tooltip>
 );

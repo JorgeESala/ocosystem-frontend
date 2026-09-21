@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import {
   ClientHistoryHelpContent,
   ClientRouteHelpContent,
+  ClientTypesHelpContent,
   RouteDeliveryDaysHelpContent,
   RouteLocalitiesHelpContent,
   RouteProfitabilityHelpContent,
@@ -63,5 +64,15 @@ describe("ClientsRoutesHelpContent", () => {
 
     expect(screen.getByText(/Dormidos/)).toBeInTheDocument();
     expect(screen.getByText(/Sin ruta/)).toBeInTheDocument();
+    expect(screen.getByText(/Todo al día/)).toBeInTheDocument();
+  });
+
+  it("explica los tipos de cliente", () => {
+    render(<ClientTypesHelpContent />);
+
+    expect(screen.getByText(/Sucursales/)).toBeInTheDocument();
+    expect(screen.getByText(/Internos/)).toBeInTheDocument();
+    expect(screen.getByText(/Externos/)).toBeInTheDocument();
+    expect(screen.getByText(/inactivos/)).toBeInTheDocument();
   });
 });

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { Alert, Button, Label, Select, Spinner } from "flowbite-react";
+import { HiCheckCircle } from "react-icons/hi";
 import {
   useRouteCalendar,
   useClientRoutesSummary,
 } from "../api/summary.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { toLocalDateString } from "@/utils/date.utils";
+import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { DateRangeFields } from "./DateRangeFields";
 import { RouteWeekCalendar } from "./RouteWeekCalendar";
 import {
+  ClientTypesHelpContent,
   InfoTooltip,
   RouteProfitabilityHelpContent,
   SummaryAttentionHelpContent,
@@ -68,16 +70,52 @@ const AttentionCard: React.FC<{
   value: number;
   onClick: () => void;
   hint?: string;
-}> = ({ label, value, onClick, hint }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="rounded-xl border border-amber-700/40 bg-amber-950/20 p-3 text-left transition-colors hover:border-amber-500/70 hover:bg-amber-950/40"
-  >
-    <p className="text-xs text-amber-300/80">{label}</p>
-    <p className="text-xl font-semibold text-amber-200">{value}</p>
-    {hint && <p className="text-[11px] text-amber-400/70">{hint}</p>}
-  </button>
+}> = ({ label, value, onClick, hint }) => {
+  const isEmpty = value === 0;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isEmpty}
+      title={isEmpty ? "Sin pendientes" : undefined}
+      className={`rounded-xl border p-3 text-left transition-colors ${
+        isEmpty
+          ? "cursor-not-allowed border-gray-700/60 bg-slate-900/40 opacity-60"
+          : "border-amber-700/40 bg-amber-950/20 hover:border-amber-500/70 hover:bg-amber-950/40"
+      }`}
+    >
+      <p
+        className={`text-xs ${isEmpty ? "text-gray-500" : "text-amber-300/80"}`}
+      >
+        {label}
+      </p>
+      <p
+        className={`text-xl font-semibold ${isEmpty ? "text-gray-500" : "text-amber-200"}`}
+      >
+        {value}
+      </p>
+      {hint && !isEmpty && (
+        <p className="text-[11px] text-amber-400/70">{hint}</p>
+      )}
+    </button>
+  );
+};
+
+const plural = (count: number, singular: string, pluralForm: string): string =>
+  `${count} ${count === 1 ? singular : pluralForm}`;
+
+const ClientTypeCard: React.FC<{
+  label: string;
+  active: number;
+  inactive: number;
+}> = ({ label, active, inactive }) => (
+  <div className="rounded-xl border border-gray-700 bg-slate-900/60 p-3">
+    <p className="text-xs text-gray-400">{label}</p>
+    <p className="text-sm font-semibold text-white">
+      {plural(active, "activo", "activos")} ·{" "}
+      {plural(inactive, "inactivo", "inactivos")}
+    </p>
+  </div>
 );
 
 export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
@@ -99,6 +137,17 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
     dormantDays,
   );
   const { data: calendar } = useRouteCalendar();
+
+  const allAttentionClear = data
+    ? [
+        data.clients.withoutRoute,
+        data.clients.withoutLocality,
+        data.clients.dormant,
+        data.clients.neverPurchased,
+        data.routes.withoutActivity,
+        data.routes.withoutLocalities,
+      ].every((value) => value === 0)
+    : false;
 
   const applyPreset = (days: number | null) => {
     if (days == null) {
@@ -162,6 +211,13 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
         </Alert>
       ) : (
         <>
+          <p className="text-xs text-gray-500" data-testid="summary-period">
+            {formatHumanDate(data.period.from, "short")} –{" "}
+            {formatHumanDate(data.period.to, "short")} · vs{" "}
+            {formatHumanDate(data.period.previousFrom, "short")} –{" "}
+            {formatHumanDate(data.period.previousTo, "short")}
+          </p>
+
           <div
             className="grid grid-cols-2 gap-3 lg:grid-cols-6"
             data-testid="summary-kpis"
@@ -246,44 +302,86 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                 content={<SummaryAttentionHelpContent />}
               />
             </h3>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-              <AttentionCard
-                label="Clientes sin ruta"
-                value={data.clients.withoutRoute}
-                onClick={onShowClientsWithoutRoute}
+            {allAttentionClear ? (
+              <div
+                className="flex items-center gap-2 rounded-xl border border-emerald-700/50 bg-emerald-950/30 p-4 text-sm text-emerald-200"
+                data-testid="attention-all-clear"
+              >
+                <HiCheckCircle className="h-5 w-5" />
+                <span>
+                  Todo al día · sin clientes ni rutas pendientes por atender
+                </span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+                <AttentionCard
+                  label="Clientes sin ruta"
+                  value={data.clients.withoutRoute}
+                  onClick={onShowClientsWithoutRoute}
+                />
+                <AttentionCard
+                  label="Clientes sin localidad"
+                  value={data.clients.withoutLocality}
+                  onClick={onShowClientsWithoutRoute}
+                />
+                <AttentionCard
+                  label="Clientes dormidos"
+                  value={data.clients.dormant}
+                  hint={`+${dormantDays} días sin compra`}
+                  onClick={() => onShowDormantClients(dormantDays)}
+                />
+                <AttentionCard
+                  label="Nunca han comprado"
+                  value={data.clients.neverPurchased}
+                  onClick={onShowClientsWithoutRoute}
+                />
+                <AttentionCard
+                  label="Rutas sin actividad"
+                  value={data.routes.withoutActivity}
+                  onClick={() => {
+                    if (range.from && range.to) {
+                      onShowRoutesWithoutActivity({
+                        from: range.from,
+                        to: range.to,
+                      });
+                    }
+                  }}
+                />
+                <AttentionCard
+                  label="Rutas sin localidades"
+                  value={data.routes.withoutLocalities}
+                  onClick={onShowRoutesWithoutLocalities}
+                />
+              </div>
+            )}
+          </section>
+
+          <section
+            className="rounded-2xl border border-gray-700 p-3"
+            data-testid="client-types"
+          >
+            <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold text-white">
+              Clientes por tipo
+              <InfoTooltip
+                label="¿Qué tipos de cliente hay?"
+                content={<ClientTypesHelpContent />}
               />
-              <AttentionCard
-                label="Clientes sin localidad"
-                value={data.clients.withoutLocality}
-                onClick={onShowClientsWithoutRoute}
+            </h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <ClientTypeCard
+                label="Sucursales"
+                active={data.clients.byType.branchesActive}
+                inactive={data.clients.byType.branchesInactive}
               />
-              <AttentionCard
-                label="Clientes dormidos"
-                value={data.clients.dormant}
-                hint={`+${dormantDays} días sin compra`}
-                onClick={() => onShowDormantClients(dormantDays)}
+              <ClientTypeCard
+                label="Internos"
+                active={data.clients.byType.internalActive}
+                inactive={data.clients.byType.internalInactive}
               />
-              <AttentionCard
-                label="Nunca han comprado"
-                value={data.clients.neverPurchased}
-                onClick={onShowClientsWithoutRoute}
-              />
-              <AttentionCard
-                label="Rutas sin actividad"
-                value={data.routes.withoutActivity}
-                onClick={() => {
-                  if (range.from && range.to) {
-                    onShowRoutesWithoutActivity({
-                      from: range.from,
-                      to: range.to,
-                    });
-                  }
-                }}
-              />
-              <AttentionCard
-                label="Rutas sin localidades"
-                value={data.routes.withoutLocalities}
-                onClick={onShowRoutesWithoutLocalities}
+              <ClientTypeCard
+                label="Externos"
+                active={data.clients.byType.externalActive}
+                inactive={data.clients.byType.externalInactive}
               />
             </div>
           </section>

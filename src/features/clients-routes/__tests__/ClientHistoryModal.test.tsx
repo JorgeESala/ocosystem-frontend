@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ClientHistoryModal } from "../components/ClientHistoryModal";
 import type { Client } from "@/core/api/types";
+import { formatHumanDate } from "@/utils/date.utils";
 
 vi.mock("../components/DateRangeFields", () => ({
   DateRangeFields: () => (
@@ -97,7 +98,12 @@ describe("ClientHistoryModal", () => {
     expect(screen.getByText("$1,500.00")).toBeInTheDocument();
     expect(screen.getByText("Centro")).toBeInTheDocument();
     expect(screen.getByText("Sin ruta")).toBeInTheDocument();
-    expect(screen.getAllByText("2032-01-20").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(formatHumanDate("2032-01-20", "short")).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(formatHumanDate("2032-01-05", "short")).length,
+    ).toBeGreaterThan(0);
   });
 
   it("muestra el estado vacío sin compras", () => {

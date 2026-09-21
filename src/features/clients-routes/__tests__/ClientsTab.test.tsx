@@ -7,7 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import { ClientsTab } from "../components/ClientsTab";
-import { toLocalDateString } from "@/utils/date.utils";
+import { toLocalDateString, formatHumanDate } from "@/utils/date.utils";
 
 const daysAgo = (days: number): string => {
   const date = new Date();
@@ -213,11 +213,13 @@ describe("ClientsTab", () => {
     await waitFor(() => expect(reactivate).toHaveBeenCalledWith(2));
   });
 
-  it("muestra la última compra del cliente", () => {
+  it("muestra la última compra del cliente en formato corto", () => {
     render(<ClientsTab unitType="EGG" />);
 
     expect(
-      within(screen.getByRole("table")).getByText(daysAgo(3)),
+      within(screen.getByRole("table")).getByText(
+        formatHumanDate(daysAgo(3), "short"),
+      ),
     ).toBeInTheDocument();
   });
 

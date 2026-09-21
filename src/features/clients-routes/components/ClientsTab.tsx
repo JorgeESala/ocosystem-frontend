@@ -16,6 +16,7 @@ import {
 } from "@/core/client/api/client.queries";
 import { useRoutes } from "@/core/api/route/routes.queries";
 import type { Client, Route } from "@/core/api/types";
+import { formatHumanDate } from "@/utils/date.utils";
 import { ClientFormModal } from "./ClientFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { ClientHistoryModal } from "./ClientHistoryModal";
@@ -293,7 +294,9 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-400">
-                      {client.lastPurchaseDate ?? (
+                      {client.lastPurchaseDate ? (
+                        formatHumanDate(client.lastPurchaseDate, "short")
+                      ) : (
                         <span className="text-gray-600">—</span>
                       )}
                     </td>

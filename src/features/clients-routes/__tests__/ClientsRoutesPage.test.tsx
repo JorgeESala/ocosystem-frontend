@@ -156,6 +156,14 @@ const summary = {
     withoutRoute: 1,
     neverPurchased: 1,
     dormant: 0,
+    byType: {
+      branchesActive: 0,
+      branchesInactive: 0,
+      internalActive: 0,
+      internalInactive: 0,
+      externalActive: 2,
+      externalInactive: 0,
+    },
   },
   routes: {
     active: 2,
