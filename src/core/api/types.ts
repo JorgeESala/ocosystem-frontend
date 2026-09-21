@@ -76,6 +76,8 @@ export interface Route {
   name: string;
   description?: string;
   active?: boolean;
+  localityIds?: number[];
+  deliveryDays?: number[];
 }
 export interface Client {
   id: number;
@@ -87,6 +89,7 @@ export interface Client {
   isInternalClient?: boolean;
   businessName?: string;
   active?: boolean;
+  lastPurchaseDate?: string | null;
 }
 
 export const isInternalClientAccount = (

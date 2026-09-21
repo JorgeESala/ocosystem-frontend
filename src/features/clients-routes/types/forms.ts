@@ -12,8 +12,12 @@ export const emptyClientForm: ClientFormState = {
 
 export interface RouteFormState {
   name: string;
+  localityIds: number[];
+  deliveryDays: number[];
 }
 
 export const emptyRouteForm: RouteFormState = {
   name: "",
+  localityIds: [],
+  deliveryDays: [],
 };

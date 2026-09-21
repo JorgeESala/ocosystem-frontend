@@ -16,10 +16,34 @@ export interface InternalClientCreateRequestDTO {
   localityId?: number | null;
 }
 
-const BASE_URL = "/api/v1/clients";
+export interface ClientPurchaseItem {
+  id: number;
+  saleDate: string;
+  routeId?: number | null;
+  routeName?: string | null;
+  quantity: number;
+  saleTotal: number;
+}
 
-export const getClients = async (): Promise<Client[]> => {
-  const { data } = await http.get<Client[]>(BASE_URL);
+export interface ClientPurchases {
+  clientId: number;
+  totalSales: number;
+  totalQuantity: number;
+  saleCount: number;
+  firstPurchase?: string | null;
+  lastPurchase?: string | null;
+  sales: ClientPurchaseItem[];
+}
+
+const BASE_URL = "/api/v1/clients";
+const PURCHASES_URL = "/api/v1/batch-sales/by-client";
+
+export const getClients = async (
+  includeInactive = false,
+): Promise<Client[]> => {
+  const { data } = await http.get<Client[]>(BASE_URL, {
+    params: includeInactive ? { includeInactive: true } : undefined,
+  });
   return data;
 };
 
@@ -52,4 +76,20 @@ export const updateClient = async (
 
 export const deleteClient = async (id: number): Promise<void> => {
   await http.delete(`${BASE_URL}/${id}`);
+};
+
+export const reactivateClient = async (id: number): Promise<Client> => {
+  const { data } = await http.patch<Client>(`${BASE_URL}/${id}/reactivate`);
+  return data;
+};
+
+export const getClientPurchases = async (
+  id: number,
+  startDate: string,
+  endDate: string,
+): Promise<ClientPurchases> => {
+  const { data } = await http.get<ClientPurchases>(`${PURCHASES_URL}/${id}`, {
+    params: { startDate, endDate },
+  });
+  return data;
 };
