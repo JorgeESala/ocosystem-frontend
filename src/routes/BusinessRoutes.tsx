@@ -16,6 +16,8 @@ import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpense
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 import GeneralCashPage from "@/features/general-cash/pages/GeneralCashPage";
 import GeneralCashHelpPage from "@/features/general-cash/pages/GeneralCashHelpPage";
+import UnitGeneralCashPage from "@/features/general-cash/pages/UnitGeneralCashPage";
+import UnitGeneralCashHelpPage from "@/features/general-cash/pages/UnitGeneralCashHelpPage";
 import DeliverySchedulePage from "@/features/order-prediction/pages/DeliverySchedulePage";
 import ChecklistPage from "@/features/branches/checklist/pages/ChecklistPage";
 import ExpectedEventCalendarPage from "@/features/branches/checklist/pages/ExpectedEventCalendarPage";
@@ -53,6 +55,14 @@ export default function BusinessRoutes() {
         />
         <Route path="clients-routes/help" element={<ClientsRoutesHelpPage />} />
         <Route path="accounting" element={<AccountsPage />} />
+        <Route
+          path="general-cash"
+          element={<UnitGeneralCashPage unitType="LIVE_CHICKEN" />}
+        />
+        <Route
+          path="general-cash/help"
+          element={<UnitGeneralCashHelpPage unitType="LIVE_CHICKEN" />}
+        />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
         <Route
@@ -125,6 +135,14 @@ export default function BusinessRoutes() {
           element={<ClientsRoutesPage unitType="EGG" />}
         />
         <Route path="clients-routes/help" element={<ClientsRoutesHelpPage />} />
+        <Route
+          path="general-cash"
+          element={<UnitGeneralCashPage unitType="EGG" />}
+        />
+        <Route
+          path="general-cash/help"
+          element={<UnitGeneralCashHelpPage unitType="EGG" />}
+        />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
