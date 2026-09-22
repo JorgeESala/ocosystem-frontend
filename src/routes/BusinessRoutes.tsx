@@ -24,6 +24,7 @@ import HelpPage from "@/features/branches/checklist/pages/HelpPage";
 import MyTasksPage from "@/features/branches/checklist/pages/MyTasksPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
+import { ClientsRoutesHelpPage } from "@/features/clients-routes/pages/ClientsRoutesHelpPage";
 import RouteGuard from "./RouteGuard";
 import ProductApprovalsPage from "@/features/branches/product-approvals/pages/ProductApprovalsPage";
 export default function BusinessRoutes() {
@@ -50,6 +51,7 @@ export default function BusinessRoutes() {
           path="clients-routes"
           element={<ClientsRoutesPage unitType="LIVE_CHICKEN" />}
         />
+        <Route path="clients-routes/help" element={<ClientsRoutesHelpPage />} />
         <Route path="accounting" element={<AccountsPage />} />
         {/* Rutas compartidas que también quieres en Pollo Vivo */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
@@ -122,6 +124,7 @@ export default function BusinessRoutes() {
           path="clients-routes"
           element={<ClientsRoutesPage unitType="EGG" />}
         />
+        <Route path="clients-routes/help" element={<ClientsRoutesHelpPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

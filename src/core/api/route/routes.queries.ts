@@ -5,8 +5,12 @@ import {
   createRoute,
   deleteRoute,
   getRoute,
+  getRouteDetail,
+  getRoutePerformance,
   getRoutes,
+  reactivateRoute,
   updateRoute,
+  type RoutePayload,
 } from "@/core/api/route/route.api";
 import type { Route } from "@/core/api/types";
 import { routeKeys } from "@/core/api/route/route.keys";
@@ -23,12 +27,14 @@ const translateRouteError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-export const useRoutes = () => {
+export const useRoutes = (includeInactive = false) => {
   const { slug } = useParams<{ slug: string }>();
 
   return useQuery({
-    queryKey: routeKeys.list(slug),
-    queryFn: getRoutes,
+    queryKey: includeInactive
+      ? routeKeys.listWithInactive(slug)
+      : routeKeys.list(slug),
+    queryFn: () => getRoutes(includeInactive),
     enabled: !!slug,
     staleTime: 1000 * 60 * 10,
   });
@@ -44,11 +50,35 @@ export const useRoute = (id: number | null) => {
   });
 };
 
+export const useRouteDetail = (id: number | null) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: routeKeys.detailFull(slug, id ?? 0),
+    queryFn: () => getRouteDetail(id as number),
+    enabled: !!slug && id !== null,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useRoutePerformance = (
+  startDate: string | null,
+  endDate: string | null,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: routeKeys.performance(slug, startDate ?? "", endDate ?? ""),
+    queryFn: () => getRoutePerformance(startDate as string, endDate as string),
+    enabled: !!slug && !!startDate && !!endDate,
+  });
+};
+
 export const useCreateRoute = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { name: string }): Promise<Route> => {
+    mutationFn: async (payload: RoutePayload): Promise<Route> => {
       try {
         return await createRoute(payload);
       } catch (error) {
@@ -70,7 +100,7 @@ export const useUpdateRoute = () => {
       payload,
     }: {
       id: number;
-      payload: { name: string };
+      payload: RoutePayload;
     }): Promise<Route> => {
       try {
         return await updateRoute(id, payload);
@@ -91,6 +121,23 @@ export const useDeleteRoute = () => {
     mutationFn: async (id: number): Promise<void> => {
       try {
         await deleteRoute(id);
+      } catch (error) {
+        throw translateRouteError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: routeKeys.all });
+    },
+  });
+};
+
+export const useReactivateRoute = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number): Promise<Route> => {
+      try {
+        return await reactivateRoute(id);
       } catch (error) {
         throw translateRouteError(error);
       }

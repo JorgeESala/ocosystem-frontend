@@ -23,12 +23,14 @@ interface ClientFormModalProps {
   show: boolean;
   clientIdToEdit: number | null;
   onClose: () => void;
+  initialLocalityId?: number | null;
 }
 
 export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   show,
   clientIdToEdit,
   onClose,
+  initialLocalityId,
 }) => {
   const isEdit = clientIdToEdit !== null;
   const { data: editingClient, isLoading: loadingClient } =
@@ -64,16 +66,24 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
         name: editingClient.name,
         businessName: editingClient.businessName ?? "",
         localityId: editingClient.localityId ?? null,
+        phone: editingClient.phone ?? "",
+        address: editingClient.address ?? "",
       });
       const matchedLocality = localities?.find(
         (l) => l.id === editingClient.localityId,
       );
       setLocalitySearch(matchedLocality?.name ?? "");
     } else if (!isEdit) {
-      setForm(emptyClientForm);
-      setLocalitySearch("");
+      setForm({
+        ...emptyClientForm,
+        localityId: initialLocalityId ?? null,
+      });
+      const matchedLocality = localities?.find(
+        (l) => l.id === initialLocalityId,
+      );
+      setLocalitySearch(matchedLocality?.name ?? "");
     }
-  }, [show, isEdit, editingClient, localities]);
+  }, [show, isEdit, editingClient, localities, initialLocalityId]);
 
   useEffect(() => {
     if (!localityOpen) return;
@@ -125,6 +135,8 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       name: form.name.trim() || null,
       localityId: form.localityId,
       businessName: form.businessName.trim() || null,
+      phone: form.phone.trim() || null,
+      address: form.address.trim() || null,
     };
     try {
       if (isEdit && clientIdToEdit !== null) {
@@ -212,6 +224,40 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   }))
                 }
                 placeholder="Ej. Abarrotes Don Pepe"
+                disabled={isSaving}
+              />
+            </div>
+            <div>
+              <Label htmlFor="client-phone">
+                Teléfono
+                <span className="ml-1 text-xs font-normal text-gray-500">
+                  (opcional)
+                </span>
+              </Label>
+              <TextInput
+                id="client-phone"
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                placeholder="Ej. 811-123-4567"
+                disabled={isSaving}
+              />
+            </div>
+            <div>
+              <Label htmlFor="client-address">
+                Dirección
+                <span className="ml-1 text-xs font-normal text-gray-500">
+                  (opcional)
+                </span>
+              </Label>
+              <TextInput
+                id="client-address"
+                value={form.address}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, address: e.target.value }))
+                }
+                placeholder="Ej. Av. Reforma 100, Centro"
                 disabled={isSaving}
               />
             </div>

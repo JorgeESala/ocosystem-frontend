@@ -6,6 +6,7 @@ import type {
 } from "./client.api";
 import type { Client } from "@/core/api/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { clientKeys } from "./client.keys";
 
 const DUPLICATE_MESSAGE =
@@ -21,18 +22,47 @@ const translateClientError = (error: unknown): Error => {
   return error instanceof Error ? error : new Error(String(error));
 };
 
-export const useClients = () => {
+export const useClients = (includeInactive = false) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: clientKeys.lists(),
-    queryFn: api.getClients,
+    queryKey: clientKeys.list(slug, includeInactive),
+    queryFn: () => api.getClients(includeInactive),
+    enabled: !!slug,
   });
 };
 
 export const useClient = (id: number | null) => {
+  const { slug } = useParams<{ slug: string }>();
+
   return useQuery({
-    queryKey: clientKeys.details(id ?? 0),
+    queryKey: clientKeys.details(slug, id ?? 0),
     queryFn: () => api.getClient(id as number),
-    enabled: id !== null,
+    enabled: !!slug && id !== null,
+  });
+};
+
+export const useClientPurchases = (
+  id: number | null,
+  startDate: string | null,
+  endDate: string | null,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: clientKeys.purchases(
+      slug,
+      id ?? 0,
+      startDate ?? "",
+      endDate ?? "",
+    ),
+    queryFn: () =>
+      api.getClientPurchases(
+        id as number,
+        startDate as string,
+        endDate as string,
+      ),
+    enabled: !!slug && id !== null && !!startDate && !!endDate,
   });
 };
 
@@ -109,6 +139,23 @@ export const useDeleteClient = () => {
     mutationFn: async (id: number): Promise<void> => {
       try {
         await api.deleteClient(id);
+      } catch (error) {
+        throw translateClientError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clientKeys.all });
+    },
+  });
+};
+
+export const useReactivateClient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number): Promise<Client> => {
+      try {
+        return await api.reactivateClient(id);
       } catch (error) {
         throw translateClientError(error);
       }
