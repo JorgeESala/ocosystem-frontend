@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -8,7 +9,15 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiClock, HiRefresh, HiTrash } from "react-icons/hi";
+import {
+  HiChevronDown,
+  HiChevronUp,
+  HiClock,
+  HiDocumentDownload,
+  HiPencil,
+  HiRefresh,
+  HiTrash,
+} from "react-icons/hi";
 import {
   useClients,
   useDeleteClient,
@@ -20,19 +29,27 @@ import { formatHumanDate } from "@/utils/date.utils";
 import { ClientFormModal } from "./ClientFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { ClientHistoryModal } from "./ClientHistoryModal";
+import { ClientDetailDrawer } from "./ClientDetailDrawer";
 import {
   ClientRouteHelpContent,
   InfoTooltip,
 } from "./ClientsRoutesHelpContent";
 import { type ClientsRoutesUnitType } from "../config/unitConfig";
+import { includesNormalized } from "../utils/text";
+import { exportClientsToExcel } from "../utils/exportClients";
 
 interface ClientsTabProps {
   unitType: ClientsRoutesUnitType;
   initialRouteFilter?: RouteFilter;
   initialDormantDays?: number | null;
+  initialClientType?: ClientTypeFilter;
 }
 
 type RouteFilter = "all" | "none" | number;
+
+type ClientTypeFilter = "all" | "branch" | "internal" | "external";
+
+type SortField = "name" | "lastPurchase";
 
 const DORMANT_OPTIONS = [15, 30, 60, 90];
 
@@ -40,15 +57,22 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
   unitType,
   initialRouteFilter,
   initialDormantDays,
+  initialClientType,
 }) => {
+  const { slug } = useParams();
   const [search, setSearch] = useState("");
   const [routeFilter, setRouteFilter] = useState<RouteFilter>("all");
   const [dormantFilter, setDormantFilter] = useState("all");
+  const [clientTypeFilter, setClientTypeFilter] =
+    useState<ClientTypeFilter>("all");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Client | null>(null);
   const [historyClient, setHistoryClient] = useState<Client | null>(null);
+  const [detailClient, setDetailClient] = useState<Client | null>(null);
 
   const {
     data: clients,
@@ -72,6 +96,12 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
     );
   }, [initialDormantDays]);
 
+  useEffect(() => {
+    if (initialClientType !== undefined) {
+      setClientTypeFilter(initialClientType);
+    }
+  }, [initialClientType]);
+
   const routesByLocality = useMemo(() => {
     const map = new Map<number, Route[]>();
     (routes ?? []).forEach((route) => {
@@ -92,15 +122,29 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
     [routesByLocality],
   );
 
+  const matchesClientType = useCallback(
+    (client: Client): boolean => {
+      if (clientTypeFilter === "all") return true;
+      if (clientTypeFilter === "branch") return client.isInternalBranch;
+      if (clientTypeFilter === "internal") {
+        return !client.isInternalBranch && client.isInternalClient === true;
+      }
+      return !client.isInternalBranch && !client.isInternalClient;
+    },
+    [clientTypeFilter],
+  );
+
   const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return (clients ?? []).filter((client) => {
+    const term = search.trim();
+    const filtered = (clients ?? []).filter((client) => {
       const matchesSearch =
         !term ||
-        client.name.toLowerCase().includes(term) ||
-        (client.businessName ?? "").toLowerCase().includes(term) ||
-        (client.localityName ?? "").toLowerCase().includes(term);
+        includesNormalized(client.name, term) ||
+        includesNormalized(client.businessName ?? "", term) ||
+        includesNormalized(client.localityName ?? "", term);
       if (!matchesSearch) return false;
+
+      if (!matchesClientType(client)) return false;
 
       if (dormantFilter !== "all") {
         if (!client.lastPurchaseDate) return false;
@@ -116,7 +160,48 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
       if (routeFilter === "none") return clientRouteList.length === 0;
       return clientRouteList.some((route) => route.id === routeFilter);
     });
-  }, [clients, search, routeFilter, dormantFilter, clientRoutes]);
+
+    return [...filtered].sort((left, right) => {
+      if (sortField === "lastPurchase") {
+        const leftDate = left.lastPurchaseDate ?? "";
+        const rightDate = right.lastPurchaseDate ?? "";
+        return sortDir === "asc"
+          ? leftDate.localeCompare(rightDate)
+          : rightDate.localeCompare(leftDate);
+      }
+      const comparison = left.name.localeCompare(right.name, "es", {
+        sensitivity: "base",
+      });
+      return sortDir === "asc" ? comparison : -comparison;
+    });
+  }, [
+    clients,
+    search,
+    routeFilter,
+    dormantFilter,
+    clientRoutes,
+    matchesClientType,
+    sortField,
+    sortDir,
+  ]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((previous) => (previous === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortField(field);
+    setSortDir("asc");
+  };
+
+  const sortIcon = (field: SortField) =>
+    sortField === field ? (
+      sortDir === "asc" ? (
+        <HiChevronUp className="inline h-3 w-3" />
+      ) : (
+        <HiChevronDown className="inline h-3 w-3" />
+      )
+    ) : null;
 
   const openCreate = () => {
     setEditingId(null);
@@ -205,6 +290,23 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
             ))}
           </Select>
         </div>
+        <div>
+          <Label htmlFor="clients-type-filter" className="sr-only">
+            Tipo de cliente
+          </Label>
+          <Select
+            id="clients-type-filter"
+            value={clientTypeFilter}
+            onChange={(e) =>
+              setClientTypeFilter(e.target.value as ClientTypeFilter)
+            }
+          >
+            <option value="all">Todos los tipos</option>
+            <option value="branch">Sucursales</option>
+            <option value="internal">Clientes internos</option>
+            <option value="external">Externos</option>
+          </Select>
+        </div>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-300">
           <Checkbox
             id="clients-inactive"
@@ -213,7 +315,17 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
           />
           <Label htmlFor="clients-inactive">Mostrar inactivos</Label>
         </label>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button
+            color="light"
+            onClick={() =>
+              exportClientsToExcel(rows, clientRoutes, "clientes.xlsx")
+            }
+            disabled={rows.length === 0}
+          >
+            <HiDocumentDownload className="mr-2 h-4 w-4" />
+            Exportar
+          </Button>
           <Button color="blue" onClick={openCreate}>
             Nuevo cliente
           </Button>
@@ -222,14 +334,47 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
 
       <div className="overflow-hidden rounded-3xl border border-gray-700 bg-slate-950/70">
         {rows.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-gray-700 p-10 text-center text-sm text-gray-400">
-            No hay clientes registrados.
-          </div>
+          (clients ?? []).length === 0 ? (
+            <div
+              className="space-y-3 p-8 text-center"
+              data-testid="clients-onboarding"
+            >
+              <h3 className="text-sm font-semibold text-white">
+                Primeros pasos
+              </h3>
+              <ol className="mx-auto max-w-md list-decimal space-y-1 text-left text-sm text-gray-400">
+                <li>Crea tus rutas y asígnales localidades en el tab Rutas.</li>
+                <li>Registra clientes con su localidad.</li>
+                <li>
+                  Los clientes aparecerán solos en su ruta según la localidad.
+                </li>
+              </ol>
+              <Link
+                to={`/business/${slug}/clients-routes/help`}
+                className="inline-block text-sm text-blue-400 hover:text-blue-300"
+              >
+                Ver la guía completa
+              </Link>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-gray-700 p-10 text-center text-sm text-gray-400">
+              No hay clientes que coincidan con los filtros.
+            </div>
+          )
         ) : (
           <table className="w-full text-left text-sm text-gray-300">
             <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-gray-400 uppercase">
               <tr>
-                <th className="px-4 py-3">Nombre</th>
+                <th className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("name")}
+                    className="inline-flex items-center gap-1 uppercase"
+                  >
+                    Nombre
+                    {sortIcon("name")}
+                  </button>
+                </th>
                 <th className="px-4 py-3">Negocio</th>
                 <th className="px-4 py-3">Localidad</th>
                 <th className="px-4 py-3">
@@ -241,7 +386,16 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                     />
                   </span>
                 </th>
-                <th className="px-4 py-3">Última compra</th>
+                <th className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("lastPurchase")}
+                    className="inline-flex items-center gap-1 uppercase"
+                  >
+                    Última compra
+                    {sortIcon("lastPurchase")}
+                  </button>
+                </th>
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
@@ -252,8 +406,8 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                 return (
                   <tr
                     key={client.id}
-                    className="cursor-pointer border-t border-gray-800 transition-colors hover:bg-slate-900/50"
-                    onClick={() => openEdit(client.id)}
+                    className="group cursor-pointer border-t border-gray-800 transition-colors hover:bg-slate-900/50"
+                    onClick={() => setDetailClient(client)}
                   >
                     <td className="px-4 py-3 font-medium text-white">
                       <span className="inline-flex items-center gap-2">
@@ -318,6 +472,16 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            openEdit(client.id);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-gray-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-700 hover:text-white focus:opacity-100"
+                          title="Editar"
+                        >
+                          <HiPencil size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setHistoryClient(client);
                           }}
                           className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-gray-300 transition-colors hover:bg-slate-700 hover:text-white"
@@ -363,6 +527,21 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
         show={showForm}
         clientIdToEdit={editingId}
         onClose={() => setShowForm(false)}
+      />
+
+      <ClientDetailDrawer
+        client={detailClient}
+        routes={detailClient ? clientRoutes(detailClient) : []}
+        unitType={unitType}
+        onClose={() => setDetailClient(null)}
+        onEdit={(clientId) => {
+          setDetailClient(null);
+          openEdit(clientId);
+        }}
+        onHistory={(client) => {
+          setDetailClient(null);
+          setHistoryClient(client);
+        }}
       />
 
       <ClientHistoryModal

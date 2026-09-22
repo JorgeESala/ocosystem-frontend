@@ -42,6 +42,10 @@ const EMPTY_ROW = (route: Route): RoutePerformance => ({
   fuelExpense: 0,
   profit: 0,
   marginPct: null,
+  previousTotalSales: 0,
+  previousProfit: 0,
+  salesPct: null,
+  profitPct: null,
   saleCount: 0,
 });
 
@@ -89,7 +93,7 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
   }, [data, routes]);
 
   const chartData = rows.map((row) => ({
-    name: row.routeName ?? "Sin ruta",
+    name: row.routeName ?? "Ventas sin ruta",
     ventas: Number(row.totalSales),
     costo: Number(row.cogs),
     combustible: Number(row.fuelExpense),
@@ -230,6 +234,7 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
                       <th className="px-4 py-3 text-right">Combustible</th>
                       <th className="px-4 py-3 text-right">Utilidad</th>
                       <th className="px-4 py-3 text-right">Margen</th>
+                      <th className="px-4 py-3 text-right">Var. ventas</th>
                       <th className="px-4 py-3 text-right">Ventas #</th>
                     </tr>
                   </thead>
@@ -240,7 +245,7 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
                         className="border-t border-gray-800"
                       >
                         <td className="px-4 py-3 font-medium text-white">
-                          {row.routeName ?? "Sin ruta"}
+                          {row.routeName ?? "Ventas sin ruta"}
                         </td>
                         <td className="px-4 py-3">
                           {quantityLabel(Number(row.totalQuantity))}
@@ -262,6 +267,17 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
                         <td className="px-4 py-3 text-right">
                           {row.marginPct != null
                             ? `${Number(row.marginPct).toFixed(2)}%`
+                            : "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right ${
+                            (row.salesPct ?? 0) >= 0
+                              ? "text-emerald-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {row.salesPct != null
+                            ? `${row.salesPct >= 0 ? "↑" : "↓"} ${Math.abs(Number(row.salesPct)).toFixed(2)}%`
                             : "—"}
                         </td>
                         <td className="px-4 py-3 text-right">

@@ -104,6 +104,10 @@ describe("RoutePerformanceModal", () => {
           fuelExpense: 250,
           profit: 1100,
           marginPct: 73.33,
+          previousTotalSales: 1200,
+          previousProfit: 1000,
+          salesPct: 25,
+          profitPct: 10,
           saleCount: 3,
         },
         {
@@ -115,6 +119,10 @@ describe("RoutePerformanceModal", () => {
           fuelExpense: 0,
           profit: 90,
           marginPct: 90,
+          previousTotalSales: 50,
+          previousProfit: 40,
+          salesPct: 100,
+          profitPct: 125,
           saleCount: 1,
         },
       ],
@@ -140,13 +148,14 @@ describe("RoutePerformanceModal", () => {
 
     const table = screen.getByRole("table");
     expect(within(table).getByText("Ruta Centro")).toBeInTheDocument();
-    expect(within(table).getByText("Sin ruta")).toBeInTheDocument();
+    expect(within(table).getByText("Ventas sin ruta")).toBeInTheDocument();
     expect(within(table).getByText("Ruta Sur")).toBeInTheDocument();
     expect(within(table).getByText("$1,500.00")).toBeInTheDocument();
     expect(within(table).getByText("$150.00")).toBeInTheDocument();
     expect(within(table).getByText("$250.00")).toBeInTheDocument();
     expect(within(table).getByText("$1,100.00")).toBeInTheDocument();
     expect(within(table).getByText("73.33%")).toBeInTheDocument();
+    expect(within(table).getByText("↑ 25.00%")).toBeInTheDocument();
 
     expect(screen.getByText("Utilidad total")).toBeInTheDocument();
     expect(screen.getByText("$1,190.00")).toBeInTheDocument();

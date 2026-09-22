@@ -57,6 +57,8 @@ describe("ClientHistoryModal", () => {
         saleCount: 2,
         firstPurchase: "2032-01-05",
         lastPurchase: "2032-01-20",
+        previousTotalSales: 1000,
+        salesVariationPct: 50,
         sales: [
           {
             id: 11,
@@ -104,6 +106,7 @@ describe("ClientHistoryModal", () => {
     expect(
       screen.getAllByText(formatHumanDate("2032-01-05", "short")).length,
     ).toBeGreaterThan(0);
+    expect(screen.getByText("↑ 50.00%")).toBeInTheDocument();
   });
 
   it("muestra el estado vacío sin compras", () => {
@@ -115,6 +118,8 @@ describe("ClientHistoryModal", () => {
         saleCount: 0,
         firstPurchase: null,
         lastPurchase: null,
+        previousTotalSales: 0,
+        salesVariationPct: null,
         sales: [],
       },
       isLoading: false,

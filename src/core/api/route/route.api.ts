@@ -19,7 +19,35 @@ export interface RoutePerformance {
   fuelExpense: number;
   profit: number;
   marginPct?: number | null;
+  previousTotalSales: number;
+  previousProfit: number;
+  salesPct?: number | null;
+  profitPct?: number | null;
   saleCount: number;
+}
+
+export interface RouteDetailLocality {
+  id: number;
+  name: string;
+}
+
+export interface RouteDetailClient {
+  id: number;
+  name: string;
+  businessName?: string | null;
+  localityId?: number | null;
+  localityName?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  isInternalBranch?: boolean;
+  isInternalClient?: boolean;
+  lastPurchaseDate?: string | null;
+}
+
+export interface RouteDetail {
+  route: Route;
+  localities: RouteDetailLocality[];
+  clients: RouteDetailClient[];
 }
 
 export const getRoutes = async (includeInactive = false): Promise<Route[]> => {
@@ -31,6 +59,11 @@ export const getRoutes = async (includeInactive = false): Promise<Route[]> => {
 
 export const getRoute = async (id: number): Promise<Route> => {
   const { data } = await http.get<Route>(`${BASE_URL}/${id}`);
+  return data;
+};
+
+export const getRouteDetail = async (id: number): Promise<RouteDetail> => {
+  const { data } = await http.get<RouteDetail>(`${BASE_URL}/${id}/detail`);
   return data;
 };
 

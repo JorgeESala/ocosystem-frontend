@@ -5,6 +5,7 @@ import {
   createRoute,
   deleteRoute,
   getRoute,
+  getRouteDetail,
   getRoutePerformance,
   getRoutes,
   reactivateRoute,
@@ -46,6 +47,17 @@ export const useRoute = (id: number | null) => {
     queryKey: routeKeys.detail(slug, id ?? 0),
     queryFn: () => getRoute(id as number),
     enabled: !!slug && id !== null,
+  });
+};
+
+export const useRouteDetail = (id: number | null) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: routeKeys.detailFull(slug, id ?? 0),
+    queryFn: () => getRouteDetail(id as number),
+    enabled: !!slug && id !== null,
+    staleTime: 1000 * 60 * 2,
   });
 };
 

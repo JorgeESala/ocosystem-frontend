@@ -88,6 +88,8 @@ export interface Client {
   isInternalBranch: boolean;
   isInternalClient?: boolean;
   businessName?: string;
+  phone?: string | null;
+  address?: string | null;
   active?: boolean;
   lastPurchaseDate?: string | null;
 }

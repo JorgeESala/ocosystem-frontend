@@ -69,6 +69,7 @@ vi.mock("@/core/client/api/client.queries", () => ({
 vi.mock("@/core/api/route/routes.queries", () => ({
   useRoutes: mocks.useRoutes,
   useRoute: vi.fn(() => ({ data: undefined, isLoading: false })),
+  useRouteDetail: vi.fn(() => ({ data: undefined, isLoading: false })),
   useCreateRoute: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useUpdateRoute: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useDeleteRoute: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),

@@ -25,6 +25,11 @@ export const WEEKDAYS: Weekday[] = [
 export const weekdayShort = (day: number): string =>
   WEEKDAYS.find((weekday) => weekday.id === day)?.short ?? String(day);
 
+export const todayWeekday = (date: Date = new Date()): number => {
+  const day = date.getDay();
+  return day === 0 ? 7 : day;
+};
+
 export const currentMonthRange = (): { from: Date; to: Date } => {
   const now = new Date();
   return {

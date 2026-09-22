@@ -14,6 +14,8 @@ type TabKey = "summary" | "clients" | "routes";
 
 type ClientsRouteFilter = "all" | "none" | number;
 
+type ClientsTypeFilter = "all" | "branch" | "internal" | "external";
+
 interface ClientsRoutesPageProps {
   unitType: ClientsRoutesUnitType;
 }
@@ -29,10 +31,15 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
   const [clientsInitialDormantDays, setClientsInitialDormantDays] = useState<
     number | null
   >(null);
+  const [clientsInitialType, setClientsInitialType] =
+    useState<ClientsTypeFilter>("all");
   const [routesInitialPeriod, setRoutesInitialPeriod] = useState<{
     from: Date;
     to: Date;
   } | null>(null);
+  const [routesInitialDetailId, setRoutesInitialDetailId] = useState<
+    number | null
+  >(null);
   const unitLabel = CLIENTS_ROUTES_UNIT_LABELS[unitType];
 
   const handleTabChange = (tab: TabKey) => {
@@ -40,31 +47,52 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
     if (tab !== "clients") {
       setClientsInitialRouteFilter(undefined);
       setClientsInitialDormantDays(null);
+      setClientsInitialType("all");
     }
     if (tab !== "routes") {
       setRoutesInitialPeriod(null);
+      setRoutesInitialDetailId(null);
     }
   };
 
   const showClientsWithoutRoute = () => {
     setClientsInitialRouteFilter("none");
     setClientsInitialDormantDays(null);
+    setClientsInitialType("all");
     setActiveTab("clients");
   };
 
   const showDormantClients = (dormantDays: number) => {
     setClientsInitialRouteFilter("all");
     setClientsInitialDormantDays(dormantDays);
+    setClientsInitialType("all");
+    setActiveTab("clients");
+  };
+
+  const showClientsByType = (
+    clientType: "branch" | "internal" | "external",
+  ) => {
+    setClientsInitialRouteFilter("all");
+    setClientsInitialDormantDays(null);
+    setClientsInitialType(clientType);
     setActiveTab("clients");
   };
 
   const showRoutesWithoutActivity = (period: { from: Date; to: Date }) => {
     setRoutesInitialPeriod(period);
+    setRoutesInitialDetailId(null);
     setActiveTab("routes");
   };
 
   const showRoutesWithoutLocalities = () => {
     setRoutesInitialPeriod(null);
+    setRoutesInitialDetailId(null);
+    setActiveTab("routes");
+  };
+
+  const showRouteDetail = (routeId: number) => {
+    setRoutesInitialPeriod(null);
+    setRoutesInitialDetailId(routeId);
     setActiveTab("routes");
   };
 
@@ -114,6 +142,8 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
           onShowDormantClients={showDormantClients}
           onShowRoutesWithoutActivity={showRoutesWithoutActivity}
           onShowRoutesWithoutLocalities={showRoutesWithoutLocalities}
+          onShowClientsByType={showClientsByType}
+          onShowRouteDetail={showRouteDetail}
         />
       )}
 
@@ -122,6 +152,7 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
           unitType={unitType}
           initialRouteFilter={clientsInitialRouteFilter}
           initialDormantDays={clientsInitialDormantDays}
+          initialClientType={clientsInitialType}
         />
       )}
 
@@ -129,6 +160,7 @@ export const ClientsRoutesPage: React.FC<ClientsRoutesPageProps> = ({
         <RoutesTab
           unitType={unitType}
           initialPerformancePeriod={routesInitialPeriod}
+          initialDetailRouteId={routesInitialDetailId}
         />
       )}
     </div>

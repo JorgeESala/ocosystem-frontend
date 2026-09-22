@@ -16,13 +16,16 @@ import {
   SummaryAttentionHelpContent,
   SummaryKpiHelpContent,
 } from "./ClientsRoutesHelpContent";
-import { currentMonthRange } from "../config/unitConfig";
+import { currentMonthRange, todayWeekday } from "../config/unitConfig";
+import { routesForToday } from "../utils/todayRoutes";
 
 interface ClientRoutesSummaryTabProps {
   onShowClientsWithoutRoute: () => void;
   onShowDormantClients: (dormantDays: number) => void;
   onShowRoutesWithoutActivity: (period: { from: Date; to: Date }) => void;
   onShowRoutesWithoutLocalities: () => void;
+  onShowClientsByType: (clientType: "branch" | "internal" | "external") => void;
+  onShowRouteDetail: (routeId: number) => void;
 }
 
 const PERIOD_PRESETS = [
@@ -123,6 +126,8 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
   onShowDormantClients,
   onShowRoutesWithoutActivity,
   onShowRoutesWithoutLocalities,
+  onShowClientsByType,
+  onShowRouteDetail,
 }) => {
   const [range, setRange] = useState<{ from: Date | null; to: Date | null }>(
     currentMonthRange,
@@ -137,6 +142,8 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
     dormantDays,
   );
   const { data: calendar } = useRouteCalendar();
+
+  const today = routesForToday(calendar ?? [], todayWeekday());
 
   const allAttentionClear = data
     ? [
@@ -292,6 +299,12 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
               hint="de las ventas"
               hintColor="text-gray-400"
             />
+            <KpiCard
+              label="Rutas de hoy"
+              value={String(today.routes.length)}
+              hint={`${today.clientCount} clientes`}
+              hintColor="text-blue-400"
+            />
           </div>
 
           <section className="space-y-2">
@@ -368,22 +381,67 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
               />
             </h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <ClientTypeCard
-                label="Sucursales"
-                active={data.clients.byType.branchesActive}
-                inactive={data.clients.byType.branchesInactive}
-              />
-              <ClientTypeCard
-                label="Internos"
-                active={data.clients.byType.internalActive}
-                inactive={data.clients.byType.internalInactive}
-              />
-              <ClientTypeCard
-                label="Externos"
-                active={data.clients.byType.externalActive}
-                inactive={data.clients.byType.externalInactive}
-              />
+              <button
+                type="button"
+                onClick={() => onShowClientsByType("branch")}
+                className="text-left"
+              >
+                <ClientTypeCard
+                  label="Sucursales"
+                  active={data.clients.byType.branchesActive}
+                  inactive={data.clients.byType.branchesInactive}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => onShowClientsByType("internal")}
+                className="text-left"
+              >
+                <ClientTypeCard
+                  label="Internos"
+                  active={data.clients.byType.internalActive}
+                  inactive={data.clients.byType.internalInactive}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => onShowClientsByType("external")}
+                className="text-left"
+              >
+                <ClientTypeCard
+                  label="Externos"
+                  active={data.clients.byType.externalActive}
+                  inactive={data.clients.byType.externalInactive}
+                />
+              </button>
             </div>
+          </section>
+
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold text-white">Rutas de hoy</h3>
+            {today.routes.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-gray-700 p-4 text-sm text-gray-400">
+                Hoy no salen rutas.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {today.routes.map((route) => (
+                  <button
+                    key={route.routeId}
+                    type="button"
+                    onClick={() => onShowRouteDetail(route.routeId)}
+                    className="rounded-xl border border-gray-700 bg-slate-900/60 px-3 py-2 text-left transition-colors hover:border-blue-500/60 hover:bg-slate-800"
+                  >
+                    <span className="block text-sm font-medium text-white">
+                      {route.name}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {route.activeClients} clientes
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -453,6 +511,7 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                       <th className="py-2 text-right">Ventas</th>
                       <th className="py-2 text-right">Utilidad</th>
                       <th className="py-2 text-right">Margen</th>
+                      <th className="py-2 text-right">Var. ventas</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -478,6 +537,15 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                           {route.marginPct != null
                             ? `${Number(route.marginPct).toFixed(2)}%`
                             : "—"}
+                        </td>
+                        <td
+                          className={`py-2 text-right ${
+                            (route.salesPct ?? 0) >= 0
+                              ? "text-emerald-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {variationLabel(route.salesPct)}
                         </td>
                       </tr>
                     ))}

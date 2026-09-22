@@ -22,6 +22,11 @@ vi.mock("../components/DateRangeFields", () => ({
   ),
 }));
 
+vi.mock("../components/RouteDetailDrawer", () => ({
+  RouteDetailDrawer: ({ routeId }: { routeId: number | null }) =>
+    routeId ? <div data-testid="route-detail">detalle {routeId}</div> : null,
+}));
+
 const mocks = vi.hoisted(() => ({
   useRoutes: vi.fn(),
   useDeleteRoute: vi.fn(),
@@ -42,6 +47,27 @@ vi.mock("@/core/api/route/routes.queries", () => ({
 
 vi.mock("@/core/locality/api/locality.queries", () => ({
   useLocalities: mocks.useLocalities,
+}));
+
+vi.mock("@/core/client/api/client.queries", () => ({
+  useClient: vi.fn(() => ({ data: undefined, isLoading: false })),
+  useCreateClient: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useCreateInternalClient: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+  useUpdateClient: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useDeleteClient: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useReactivateClient: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+  useClientPurchases: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    error: null,
+  })),
 }));
 
 const activeRoute = {
@@ -152,6 +178,43 @@ describe("RoutesTab", () => {
 
     expect(screen.queryByText("Ruta Centro")).not.toBeInTheDocument();
     expect(screen.getByText("Ruta Sur")).toBeInTheDocument();
+  });
+
+  it("abre el detalle de ruta al hacer clic y edita con el lápiz", () => {
+    render(<RoutesTab unitType="EGG" />);
+
+    fireEvent.click(screen.getByText("Ruta Centro"));
+    expect(screen.getByTestId("route-detail")).toHaveTextContent("detalle 1");
+
+    fireEvent.click(screen.getByTitle("Editar"));
+    expect(screen.getByText("Editar ruta")).toBeInTheDocument();
+  });
+
+  it("filtra rutas por nombre sin acentos", () => {
+    mocks.useRoutes.mockReturnValue({
+      data: [
+        activeRoute,
+        {
+          id: 5,
+          name: "Ruta Peña",
+          active: true,
+          localityIds: [],
+          deliveryDays: [],
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<RoutesTab unitType="EGG" />);
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar ruta"), {
+      target: { value: "pena" },
+    });
+
+    expect(screen.getByText("Ruta Peña")).toBeInTheDocument();
+    expect(screen.queryByText("Ruta Centro")).not.toBeInTheDocument();
   });
 
   it("elimina una ruta con confirmación", async () => {

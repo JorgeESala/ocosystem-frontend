@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ClientRoutesSummaryTab } from "../components/ClientRoutesSummaryTab";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
+import { todayWeekday } from "../config/unitConfig";
 
 vi.mock("recharts", async () => {
   const actual = await vi.importActual<typeof import("recharts")>("recharts");
@@ -93,6 +94,8 @@ const summary = {
       totalSales: 5000,
       profit: 4000,
       marginPct: 80,
+      previousTotalSales: 4000,
+      salesPct: 25,
       activeClients: 12,
     },
   ],
@@ -114,6 +117,8 @@ const renderTab = (overrides = {}) => {
     onShowDormantClients: vi.fn(),
     onShowRoutesWithoutActivity: vi.fn(),
     onShowRoutesWithoutLocalities: vi.fn(),
+    onShowClientsByType: vi.fn(),
+    onShowRouteDetail: vi.fn(),
     ...overrides,
   };
   render(<ClientRoutesSummaryTab {...handlers} />);
@@ -243,6 +248,47 @@ describe("ClientRoutesSummaryTab", () => {
     expect(
       types.getByLabelText("¿Qué tipos de cliente hay?"),
     ).toBeInTheDocument();
+  });
+
+  it("hace drill-down por tipo de cliente", () => {
+    const handlers = renderTab();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /2 activos · 0 inactivos/ }),
+    );
+
+    expect(handlers.onShowClientsByType).toHaveBeenCalledWith("branch");
+  });
+
+  it("muestra las rutas de hoy y permite abrir su detalle", () => {
+    const weekday = todayWeekday();
+    mocks.useRouteCalendar.mockReturnValue({
+      data: [
+        {
+          routeId: 1,
+          name: "Ruta Centro",
+          deliveryDays: [weekday],
+          activeClients: 12,
+        },
+        {
+          routeId: 2,
+          name: "Ruta Sur",
+          deliveryDays: [],
+          activeClients: 3,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const handlers = renderTab();
+
+    const kpis = within(screen.getByTestId("summary-kpis"));
+    expect(kpis.getByText("Rutas de hoy")).toBeInTheDocument();
+    expect(kpis.getByText("12 clientes")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Ruta Centro/ }));
+    expect(handlers.onShowRouteDetail).toHaveBeenCalledWith(1);
   });
 
   it("muestra Todo al día cuando no hay pendientes por atender", () => {

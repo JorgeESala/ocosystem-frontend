@@ -115,6 +115,24 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
                 </div>
               </div>
 
+              <div className="rounded-xl border border-gray-700 bg-slate-900/40 p-3 text-sm text-gray-300">
+                Vs periodo anterior:{" "}
+                <span
+                  className={
+                    (data?.salesVariationPct ?? 0) >= 0
+                      ? "font-semibold text-emerald-400"
+                      : "font-semibold text-red-400"
+                  }
+                >
+                  {data?.salesVariationPct != null
+                    ? `${data.salesVariationPct >= 0 ? "↑" : "↓"} ${Math.abs(Number(data.salesVariationPct)).toFixed(2)}%`
+                    : "—"}
+                </span>
+                <span className="ml-2 text-xs text-gray-500">
+                  ({formatMXN(Number(data?.previousTotalSales ?? 0))} antes)
+                </span>
+              </div>
+
               {sales.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-700 p-10 text-center text-sm text-gray-400">
                   Sin compras en el rango.

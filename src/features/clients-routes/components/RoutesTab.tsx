@@ -18,21 +18,26 @@ import { useLocalities } from "@/core/locality/api/locality.queries";
 import { RouteFormModal } from "./RouteFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { RoutePerformanceModal } from "./RoutePerformanceModal";
+import { RouteDetailDrawer } from "./RouteDetailDrawer";
+import { ClientFormModal } from "./ClientFormModal";
 import {
   InfoTooltip,
   RouteDeliveryDaysHelpContent,
   RouteLocalitiesHelpContent,
 } from "./ClientsRoutesHelpContent";
 import { weekdayShort, type ClientsRoutesUnitType } from "../config/unitConfig";
+import { includesNormalized } from "../utils/text";
 
 interface RoutesTabProps {
   unitType: ClientsRoutesUnitType;
   initialPerformancePeriod?: { from: Date; to: Date } | null;
+  initialDetailRouteId?: number | null;
 }
 
 export const RoutesTab: React.FC<RoutesTabProps> = ({
   unitType,
   initialPerformancePeriod,
+  initialDetailRouteId,
 }) => {
   const [search, setSearch] = useState("");
   const [includeInactive, setIncludeInactive] = useState(false);
@@ -40,6 +45,11 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
   const [showForm, setShowForm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Route | null>(null);
   const [showPerformance, setShowPerformance] = useState(false);
+  const [detailRouteId, setDetailRouteId] = useState<number | null>(null);
+  const [showClientForm, setShowClientForm] = useState(false);
+  const [clientFormLocalityId, setClientFormLocalityId] = useState<
+    number | null
+  >(null);
   const [performanceRange, setPerformanceRange] = useState<{
     from: Date;
     to: Date;
@@ -52,6 +62,12 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
     }
   }, [initialPerformancePeriod]);
 
+  useEffect(() => {
+    if (initialDetailRouteId != null) {
+      setDetailRouteId(initialDetailRouteId);
+    }
+  }, [initialDetailRouteId]);
+
   const {
     data: routes,
     isLoading,
@@ -63,10 +79,10 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
   const reactivateMutation = useReactivateRoute();
 
   const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = search.trim();
     const all = routes ?? [];
     if (!term) return all;
-    return all.filter((route) => route.name.toLowerCase().includes(term));
+    return all.filter((route) => includesNormalized(route.name, term));
   }, [routes, search]);
 
   const localityName = (id: number) =>
@@ -171,8 +187,8 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
               {rows.map((route) => (
                 <tr
                   key={route.id}
-                  className="cursor-pointer border-t border-gray-800 transition-colors hover:bg-slate-900/50"
-                  onClick={() => openEdit(route.id)}
+                  className="group cursor-pointer border-t border-gray-800 transition-colors hover:bg-slate-900/50"
+                  onClick={() => setDetailRouteId(route.id)}
                 >
                   <td className="px-4 py-3 font-medium text-white">
                     <span className="inline-flex items-center gap-2">
@@ -182,10 +198,6 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
                           Inactiva
                         </span>
                       )}
-                      <HiPencil
-                        size={14}
-                        className="text-gray-500 opacity-0 transition-opacity group-hover:opacity-100"
-                      />
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -221,30 +233,42 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {route.active === false ? (
+                    <div className="inline-flex items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleReactivate(route.id);
+                          openEdit(route.id);
                         }}
-                        className="inline-flex items-center gap-1 rounded-md bg-emerald-900/30 px-2 py-1 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-800 hover:text-white"
-                        title="Reactivar"
+                        className="inline-flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-gray-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-700 hover:text-white focus:opacity-100"
+                        title="Editar"
                       >
-                        <HiRefresh size={14} />
-                        Reactivar
+                        <HiPencil size={14} />
                       </button>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPendingDelete(route);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-md bg-red-900/30 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-800 hover:text-white"
-                        title="Eliminar"
-                      >
-                        <HiTrash size={14} />
-                      </button>
-                    )}
+                      {route.active === false ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReactivate(route.id);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md bg-emerald-900/30 px-2 py-1 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-800 hover:text-white"
+                          title="Reactivar"
+                        >
+                          <HiRefresh size={14} />
+                          Reactivar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPendingDelete(route);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md bg-red-900/30 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-800 hover:text-white"
+                          title="Eliminar"
+                        >
+                          <HiTrash size={14} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -265,6 +289,28 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
         unitType={unitType}
         routes={routes ?? []}
         initialRange={performanceRange}
+      />
+
+      <RouteDetailDrawer
+        routeId={detailRouteId}
+        unitType={unitType}
+        onClose={() => setDetailRouteId(null)}
+        onEdit={(routeId) => {
+          setDetailRouteId(null);
+          openEdit(routeId);
+        }}
+        onAddClient={(localityId) => {
+          setDetailRouteId(null);
+          setClientFormLocalityId(localityId);
+          setShowClientForm(true);
+        }}
+      />
+
+      <ClientFormModal
+        show={showClientForm}
+        clientIdToEdit={null}
+        initialLocalityId={clientFormLocalityId}
+        onClose={() => setShowClientForm(false)}
       />
 
       <ConfirmDeleteModal

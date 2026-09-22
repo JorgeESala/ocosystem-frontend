@@ -73,6 +73,8 @@ export interface TopRouteSummary {
   totalSales: number;
   profit: number;
   marginPct: number | null;
+  previousTotalSales: number;
+  salesPct: number | null;
   activeClients: number;
 }
 

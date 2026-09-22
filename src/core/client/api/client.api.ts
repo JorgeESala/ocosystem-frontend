@@ -8,12 +8,16 @@ export interface ClientCreateRequestDTO {
   isInternalBranch?: boolean;
   isInternalClient?: boolean;
   businessName?: string | null;
+  phone?: string | null;
+  address?: string | null;
 }
 
 export interface InternalClientCreateRequestDTO {
   name?: string | null;
   businessName?: string | null;
   localityId?: number | null;
+  phone?: string | null;
+  address?: string | null;
 }
 
 export interface ClientPurchaseItem {
@@ -32,6 +36,8 @@ export interface ClientPurchases {
   saleCount: number;
   firstPurchase?: string | null;
   lastPurchase?: string | null;
+  previousTotalSales: number;
+  salesVariationPct?: number | null;
   sales: ClientPurchaseItem[];
 }
 

@@ -6,6 +6,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { ClientsTab } from "../components/ClientsTab";
 import { toLocalDateString, formatHumanDate } from "@/utils/date.utils";
 
@@ -53,6 +54,13 @@ vi.mock("@/core/api/route/routes.queries", () => ({
 
 vi.mock("@/core/locality/api/locality.queries", () => ({
   useLocalities: mocks.useLocalities,
+}));
+
+vi.mock("../components/ClientDetailDrawer", () => ({
+  ClientDetailDrawer: ({ client }: { client: { name: string } | null }) =>
+    client ? (
+      <div data-testid="client-detail">detalle {client.name}</div>
+    ) : null,
 }));
 
 const activeClient = {
@@ -266,6 +274,84 @@ describe("ClientsTab", () => {
 
     expect(screen.getByText("Cliente Sin Ruta")).toBeInTheDocument();
     expect(screen.queryByText("Abarrotes Don Pepe")).not.toBeInTheDocument();
+  });
+
+  it("filtra por tipo de cliente", () => {
+    mocks.useClients.mockReturnValue({
+      data: [
+        activeClient,
+        {
+          id: 7,
+          name: "Cliente Interno",
+          businessName: null,
+          localityId: 1,
+          localityName: "Centro",
+          isInternalBranch: false,
+          isInternalClient: true,
+          active: true,
+          lastPurchaseDate: null,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<ClientsTab unitType="EGG" />);
+
+    fireEvent.change(screen.getByLabelText("Tipo de cliente"), {
+      target: { value: "internal" },
+    });
+
+    expect(screen.getByText("Cliente Interno")).toBeInTheDocument();
+    expect(screen.queryByText("Abarrotes Don Pepe")).not.toBeInTheDocument();
+  });
+
+  it("ordena por última compra", () => {
+    mocks.useClients.mockReturnValue({
+      data: [activeClient, olderClient],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<ClientsTab unitType="EGG" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Última compra/ }));
+
+    const rows = within(screen.getByRole("table")).getAllByRole("row");
+    expect(within(rows[1]).getByText("Cliente Viejo")).toBeInTheDocument();
+  });
+
+  it("muestra primeros pasos cuando no hay clientes ni rutas", () => {
+    mocks.useClients.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    mocks.useRoutes.mockReturnValue({ data: [], isLoading: false });
+
+    render(
+      <MemoryRouter initialEntries={["/business/huevo/clients-routes"]}>
+        <ClientsTab unitType="EGG" />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("clients-onboarding")).toBeInTheDocument();
+    expect(screen.getByText("Primeros pasos")).toBeInTheDocument();
+  });
+
+  it("abre el detalle al hacer clic y edita con el lápiz", () => {
+    render(<ClientsTab unitType="EGG" />);
+
+    fireEvent.click(screen.getByText("Abarrotes Don Pepe"));
+    expect(screen.getByTestId("client-detail")).toHaveTextContent(
+      "Abarrotes Don Pepe",
+    );
+
+    fireEvent.click(screen.getByTitle("Editar"));
+    expect(screen.getByText("Editar cliente")).toBeInTheDocument();
   });
 
   it("abre el historial de compras del cliente", async () => {
