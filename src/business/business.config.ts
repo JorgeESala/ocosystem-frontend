@@ -54,6 +54,7 @@ const LIVE_CHICKEN_MENU = [
   { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+  { to: "general-cash", label: "Caja general", icon: HiBanknotes },
 ];
 const EGG_MENU = [
   { to: "reports", label: "Reportes", icon: FaFileAlt },
@@ -63,6 +64,7 @@ const EGG_MENU = [
   { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
+  { to: "general-cash", label: "Caja general", icon: HiBanknotes },
 ];
 
 export const BUSINESSES: BusinessConfig[] = [
