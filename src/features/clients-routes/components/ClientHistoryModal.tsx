@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Alert, Modal, ModalBody, ModalHeader, Spinner } from "flowbite-react";
 import { useClientPurchases } from "@/core/client/api/client.queries";
-import type { Client } from "@/core/api/types";
+import type { Client, ComparisonMode } from "@/core/api/types";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
@@ -11,9 +11,10 @@ import {
   InfoTooltip,
 } from "./ClientsRoutesHelpContent";
 import {
-  currentMonthRange,
+  monthToDateRange,
   type ClientsRoutesUnitType,
 } from "../config/unitConfig";
+import { previousRangeFor } from "../utils/comparison";
 
 interface ClientHistoryModalProps {
   show: boolean;
@@ -29,15 +30,20 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
   client,
 }) => {
   const [range, setRange] = useState<{ from: Date | null; to: Date | null }>(
-    currentMonthRange,
+    monthToDateRange,
   );
+  const [comparison, setComparison] =
+    useState<ComparisonMode>("PREVIOUS_MONTH");
   const from = range.from ? toLocalDateString(range.from) : null;
   const to = range.to ? toLocalDateString(range.to) : null;
   const { data, isLoading, isError, error } = useClientPurchases(
     client?.id ?? null,
     from,
     to,
+    comparison,
   );
+  const comparedRange =
+    from && to ? previousRangeFor(from, to, comparison) : null;
 
   const sales = data?.sales ?? [];
   const quantityLabel = (quantity: number) =>
@@ -64,9 +70,10 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
           <DateRangeFields
             from={range.from}
             to={range.to}
-            onChange={(newFrom, newTo) =>
-              setRange({ from: newFrom, to: newTo })
-            }
+            onChange={(newFrom, newTo) => {
+              setRange({ from: newFrom, to: newTo });
+              setComparison("WINDOW");
+            }}
           />
 
           {isLoading ? (
@@ -116,7 +123,9 @@ export const ClientHistoryModal: React.FC<ClientHistoryModalProps> = ({
               </div>
 
               <div className="rounded-xl border border-gray-700 bg-slate-900/40 p-3 text-sm text-gray-300">
-                Vs periodo anterior:{" "}
+                {comparedRange
+                  ? `Vs ${formatHumanDate(comparedRange.from, "short")} – ${formatHumanDate(comparedRange.to, "short")}:`
+                  : "Vs periodo anterior:"}{" "}
                 <span
                   className={
                     (data?.salesVariationPct ?? 0) >= 0

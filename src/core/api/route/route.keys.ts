@@ -1,3 +1,5 @@
+import type { ComparisonMode } from "../types";
+
 export const routeKeys = {
   all: ["routes"] as const,
 
@@ -17,6 +19,7 @@ export const routeKeys = {
     business: string | undefined,
     startDate: string,
     endDate: string,
+    comparison: ComparisonMode,
   ) =>
     [
       ...routeKeys.all,
@@ -24,5 +27,6 @@ export const routeKeys = {
       business ?? "public",
       startDate,
       endDate,
+      comparison,
     ] as const,
 };

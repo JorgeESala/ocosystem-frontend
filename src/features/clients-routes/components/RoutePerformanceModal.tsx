@@ -11,19 +11,21 @@ import {
 } from "recharts";
 import { useRoutePerformance } from "@/core/api/route/routes.queries";
 import type { RoutePerformance } from "@/core/api/route/route.api";
-import type { Route } from "@/core/api/types";
+import type { ComparisonMode, Route } from "@/core/api/types";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { toLocalDateString } from "@/utils/date.utils";
+import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { DateRangeFields } from "./DateRangeFields";
 import {
+  ComparisonHelpContent,
   InfoTooltip,
   RouteProfitabilityHelpContent,
 } from "./ClientsRoutesHelpContent";
 import {
-  currentMonthRange,
+  monthToDateRange,
   type ClientsRoutesUnitType,
 } from "../config/unitConfig";
+import { previousRangeFor } from "../utils/comparison";
 
 interface RoutePerformanceModalProps {
   show: boolean;
@@ -60,17 +62,26 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
   initialRange,
 }) => {
   const [range, setRange] = useState<{ from: Date | null; to: Date | null }>(
-    () => initialRange ?? currentMonthRange(),
+    () => initialRange ?? monthToDateRange(),
   );
+  const [comparison, setComparison] =
+    useState<ComparisonMode>("PREVIOUS_MONTH");
 
   useEffect(() => {
     if (initialRange) {
       setRange(initialRange);
     }
   }, [initialRange]);
+
   const from = range.from ? toLocalDateString(range.from) : null;
   const to = range.to ? toLocalDateString(range.to) : null;
-  const { data, isLoading, isError, error } = useRoutePerformance(from, to);
+  const { data, isLoading, isError, error } = useRoutePerformance(
+    from,
+    to,
+    comparison,
+  );
+  const comparedRange =
+    from && to ? previousRangeFor(from, to, comparison) : null;
 
   const rows = useMemo(() => {
     const byRoute = new Map<number | null, RoutePerformance>();
@@ -159,9 +170,10 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
           <DateRangeFields
             from={range.from}
             to={range.to}
-            onChange={(newFrom, newTo) =>
-              setRange({ from: newFrom, to: newTo })
-            }
+            onChange={(newFrom, newTo) => {
+              setRange({ from: newFrom, to: newTo });
+              setComparison("WINDOW");
+            }}
           />
 
           {isLoading ? (
@@ -234,7 +246,31 @@ export const RoutePerformanceModal: React.FC<RoutePerformanceModalProps> = ({
                       <th className="px-4 py-3 text-right">Combustible</th>
                       <th className="px-4 py-3 text-right">Utilidad</th>
                       <th className="px-4 py-3 text-right">Margen</th>
-                      <th className="px-4 py-3 text-right">Var. ventas</th>
+                      <th className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center gap-1">
+                          Var. ventas
+                          <InfoTooltip
+                            label="¿Contra qué periodo compara?"
+                            content={
+                              <ComparisonHelpContent
+                                previousFromLabel={
+                                  comparedRange
+                                    ? formatHumanDate(
+                                        comparedRange.from,
+                                        "short",
+                                      )
+                                    : "—"
+                                }
+                                previousToLabel={
+                                  comparedRange
+                                    ? formatHumanDate(comparedRange.to, "short")
+                                    : "—"
+                                }
+                              />
+                            }
+                          />
+                        </span>
+                      </th>
                       <th className="px-4 py-3 text-right">Ventas #</th>
                     </tr>
                   </thead>

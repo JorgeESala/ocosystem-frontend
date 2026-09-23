@@ -92,7 +92,9 @@ export const SummaryKpiHelpContent = () => (
     <p className="font-semibold text-white">¿Qué significan estos números?</p>
     <p>
       Ventas, utilidad y margen del periodo comparados contra el periodo
-      anterior de la misma duración (↑ subió, ↓ bajó).
+      anterior (↑ subió, ↓ bajó). En "Mes en curso" compara contra el mismo
+      tramo del mes anterior; en 7/30/90 días y fechas manuales, contra la
+      ventana de igual duración inmediatamente anterior.
     </p>
     <p>
       Ticket promedio = ventas ÷ número de ventas. Top 10 clientes = porcentaje
@@ -144,6 +146,26 @@ export const SummaryAttentionHelpContent = () => (
       Si todas las alertas están en cero verás{" "}
       <span className="font-semibold text-white">Todo al día</span>: no hay
       pendientes por atender.
+    </p>
+  </div>
+);
+
+export const ComparisonHelpContent: React.FC<{
+  previousFromLabel: string;
+  previousToLabel: string;
+}> = ({ previousFromLabel, previousToLabel }) => (
+  <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
+    <p className="font-semibold text-white">¿Contra qué periodo compara?</p>
+    <p>
+      Contra:{" "}
+      <span className="font-semibold text-white">
+        {previousFromLabel} – {previousToLabel}
+      </span>
+    </p>
+    <p>
+      En "Mes en curso" compara el mismo tramo del mes anterior. En los presets
+      de 7/30/90 días y fechas manuales, contra la ventana de igual duración
+      inmediatamente anterior.
     </p>
   </div>
 );

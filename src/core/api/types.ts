@@ -79,6 +79,8 @@ export interface Route {
   localityIds?: number[];
   deliveryDays?: number[];
 }
+export type ComparisonMode = "WINDOW" | "PREVIOUS_MONTH";
+
 export interface Client {
   id: number;
   name: string;
