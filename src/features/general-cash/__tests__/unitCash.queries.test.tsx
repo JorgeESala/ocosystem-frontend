@@ -7,6 +7,7 @@ import {
   useUnitCashAdjustments,
   useUnitCashAlerts,
   useUnitCashFlow,
+  useUnitCashReconciliationPreview,
 } from "../api/unitCash.queries";
 import { unitCashApi } from "../api/unitCash.api";
 
@@ -27,6 +28,18 @@ vi.mock("../api/unitCash.api", () => ({
     })),
     getAlerts: vi.fn(async () => []),
     getAdjustments: vi.fn(async () => []),
+    getReconciliationPreview: vi.fn(async () => ({
+      from: "2026-09-01",
+      to: "2026-09-30",
+      changes: [],
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      previousBalance: null,
+      projectedBalance: null,
+      lastReconciledAt: null,
+    })),
+    applyReconciliation: vi.fn(async () => ({})),
   },
 }));
 
@@ -119,6 +132,24 @@ describe("unit cash query keys", () => {
         frequency: "weekly",
       },
     ]);
+  });
+
+  it("scopes the reconciliation preview by unit", async () => {
+    const qc = newQueryClient();
+
+    renderHook(() => useUnitCashReconciliationPreview("EGG"), {
+      wrapper: createWrapper(qc),
+    });
+
+    await waitFor(() =>
+      expect(unitCashApi.getReconciliationPreview).toHaveBeenCalledTimes(1),
+    );
+
+    const keys = qc
+      .getQueryCache()
+      .getAll()
+      .map((query) => query.queryKey);
+    expect(keys).toContainEqual(["unit-general-cash", "EGG", "reconciliation"]);
   });
 
   it("scopes alerts and adjustments by unit and range", async () => {

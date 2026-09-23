@@ -8,6 +8,10 @@ import {
 } from "@/features/general-cash/api/unitCash.queries";
 import UnitCashAdjustmentModal from "./UnitCashAdjustmentModal";
 import UnitCashAdjustmentList from "./UnitCashAdjustmentList";
+import {
+  resolveEmployeeName,
+  useEmployeeNames,
+} from "@/features/general-cash/utils/employeeNames";
 import type {
   CreateUnitCashAdjustmentDTO,
   UnitCashAccountDTO,
@@ -82,6 +86,7 @@ export default function UnitCashDrawer({
   const historyQuery = useUnitCashHistory(unit, appliedStart, appliedEnd);
   const createAdjustment = useCreateUnitCashAdjustment(unit);
   const updateAdjustment = useUpdateUnitCashAdjustment(unit);
+  const employeeNames = useEmployeeNames();
 
   const history = historyQuery.data ?? [];
 
@@ -249,7 +254,15 @@ export default function UnitCashDrawer({
                 </thead>
                 <tbody>
                   {history.map((entry) => (
-                    <HistoryRow key={entry.id} entry={entry} />
+                    <HistoryRow
+                      key={entry.id}
+                      entry={entry}
+                      createdByName={
+                        entry.sourceType === "ADJUSTMENT"
+                          ? resolveEmployeeName(employeeNames, entry.createdBy)
+                          : null
+                      }
+                    />
                   ))}
                 </tbody>
               </table>
@@ -270,7 +283,13 @@ export default function UnitCashDrawer({
   );
 }
 
-function HistoryRow({ entry }: { entry: UnitCashHistoryDTO }) {
+function HistoryRow({
+  entry,
+  createdByName,
+}: {
+  entry: UnitCashHistoryDTO;
+  createdByName: string | null;
+}) {
   const isPositive = entry.amount >= 0;
   const colorClass = ENTRY_TYPE_COLORS[entry.entryType] ?? "text-slate-400";
   const label = ENTRY_TYPE_LABELS[entry.entryType] ?? entry.entryType;
@@ -281,8 +300,11 @@ function HistoryRow({ entry }: { entry: UnitCashHistoryDTO }) {
       <td className="py-2">
         <span className={`font-medium ${colorClass}`}>{label}</span>
       </td>
-      <td className="max-w-[200px] truncate py-2 text-slate-400">
-        {entry.description ?? "\u2014"}
+      <td className="max-w-[200px] py-2 text-slate-400">
+        <div className="truncate">{entry.description ?? "\u2014"}</div>
+        {createdByName && (
+          <div className="text-xs text-slate-500">por {createdByName}</div>
+        )}
       </td>
       <td
         className={`py-2 text-right font-medium ${

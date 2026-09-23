@@ -8,6 +8,10 @@ import type {
   UnitCashAdjustmentDTO,
   UnitCashUnit,
 } from "@/features/general-cash/types.unit";
+import {
+  resolveEmployeeName,
+  useEmployeeNames,
+} from "@/features/general-cash/utils/employeeNames";
 
 interface Props {
   unit: UnitCashUnit;
@@ -24,6 +28,7 @@ export default function UnitCashAdjustmentList({
 }: Props) {
   const adjustmentsQuery = useUnitCashAdjustments(unit, startDate, endDate);
   const deleteMutation = useDeleteUnitCashAdjustment(unit);
+  const employeeNames = useEmployeeNames();
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const adjustments = adjustmentsQuery.data ?? [];
@@ -51,6 +56,15 @@ export default function UnitCashAdjustmentList({
                 <div className="text-sm text-slate-300">{adj.reason}</div>
                 <div className="text-xs text-slate-500">
                   {new Date(adj.date + "T00:00:00").toLocaleDateString("es-MX")}
+                  {" · "}
+                  Registrado por{" "}
+                  {resolveEmployeeName(employeeNames, adj.createdBy)}
+                  {adj.updatedBy != null && adj.updatedBy !== adj.createdBy && (
+                    <>
+                      {" · "}Editado por{" "}
+                      {resolveEmployeeName(employeeNames, adj.updatedBy)}
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">

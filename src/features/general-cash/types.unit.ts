@@ -6,6 +6,8 @@ export interface UnitCashAccountDTO {
   currentBalance: number;
   alertThreshold: number;
   lastCalculatedAt: string | null;
+  updatedBy: number | null;
+  lastReconciledAt: string | null;
 }
 
 export interface UnitCashFlowPointDTO {
@@ -48,6 +50,7 @@ export interface UnitCashHistoryDTO {
   description: string | null;
   runningBalance: number;
   createdAt: string;
+  createdBy: number | null;
 }
 
 export interface UnitCashAdjustmentDTO {
@@ -56,6 +59,8 @@ export interface UnitCashAdjustmentDTO {
   reason: string;
   date: string;
   createdAt: string;
+  createdBy: number | null;
+  updatedBy: number | null;
 }
 
 export interface CreateUnitCashAdjustmentDTO {
@@ -81,3 +86,42 @@ export interface UpdateUnitCashDTO {
 }
 
 export type UnitCashFrequency = "daily" | "weekly" | "monthly";
+
+export type ReconciliationChangeType = "CREATE" | "UPDATE" | "DELETE";
+
+export interface UnitCashReconciliationChangeDTO {
+  changeType: ReconciliationChangeType;
+  sourceType: string;
+  sourceId: number;
+  folio: string | null;
+  entryDate: string;
+  entryType: string;
+  amount: number;
+  previousAmount: number | null;
+  description: string | null;
+  reason: string;
+  balanceDelta: number;
+}
+
+export interface UnitCashReconciliationPlanDTO {
+  from: string;
+  to: string;
+  changes: UnitCashReconciliationChangeDTO[];
+  created: number;
+  updated: number;
+  deleted: number;
+  previousBalance: number | null;
+  projectedBalance: number | null;
+  lastReconciledAt: string | null;
+}
+
+export interface UnitCashReconciliationSummaryDTO {
+  from: string;
+  to: string;
+  created: number;
+  updated: number;
+  deleted: number;
+  previousBalance: number;
+  currentBalance: number;
+  lastReconciledAt: string | null;
+}
