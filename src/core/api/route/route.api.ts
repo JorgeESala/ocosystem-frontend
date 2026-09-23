@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import type { Route } from "../types";
+import type { ComparisonMode, Route } from "../types";
 
 const BASE_URL = "/api/v1/routes";
 const PERFORMANCE_URL = "/api/v1/batches/sales-by-route";
@@ -92,9 +92,10 @@ export const reactivateRoute = async (id: number): Promise<Route> => {
 export const getRoutePerformance = async (
   startDate: string,
   endDate: string,
+  comparison: ComparisonMode,
 ): Promise<RoutePerformance[]> => {
   const { data } = await http.get<RoutePerformance[]>(PERFORMANCE_URL, {
-    params: { startDate, endDate },
+    params: { startDate, endDate, comparison },
   });
   return data;
 };

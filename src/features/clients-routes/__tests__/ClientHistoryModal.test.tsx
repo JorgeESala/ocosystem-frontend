@@ -107,6 +107,15 @@ describe("ClientHistoryModal", () => {
       screen.getAllByText(formatHumanDate("2032-01-05", "short")).length,
     ).toBeGreaterThan(0);
     expect(screen.getByText("↑ 50.00%")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Vs \d{2} \w{3} \d{4} – \d{2} \w{3} \d{4}:/),
+    ).toBeInTheDocument();
+    expect(mocks.useClientPurchases).toHaveBeenLastCalledWith(
+      1,
+      expect.any(String),
+      expect.any(String),
+      "PREVIOUS_MONTH",
+    );
   });
 
   it("muestra el estado vacío sin compras", () => {

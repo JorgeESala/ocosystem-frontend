@@ -1,4 +1,4 @@
-import type { Client } from "@/core/api/types";
+import type { Client, ComparisonMode } from "@/core/api/types";
 import { http } from "@/shared/api/http";
 
 export interface ClientCreateRequestDTO {
@@ -93,9 +93,10 @@ export const getClientPurchases = async (
   id: number,
   startDate: string,
   endDate: string,
+  comparison: ComparisonMode,
 ): Promise<ClientPurchases> => {
   const { data } = await http.get<ClientPurchases>(`${PURCHASES_URL}/${id}`, {
-    params: { startDate, endDate },
+    params: { startDate, endDate, comparison },
   });
   return data;
 };

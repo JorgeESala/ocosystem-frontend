@@ -119,6 +119,11 @@ describe("RouteDetailDrawer", () => {
       "href",
       "https://wa.me/8111234567",
     );
+    expect(mocks.useRoutePerformance).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "PREVIOUS_MONTH",
+    );
   });
 
   it("dispara editar, agregar cliente y hoja de ruta", () => {

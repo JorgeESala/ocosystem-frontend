@@ -16,7 +16,7 @@ import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { openRouteSheet } from "../utils/routeSheet";
 import {
-  currentMonthRange,
+  monthToDateRange,
   weekdayShort,
   type ClientsRoutesUnitType,
 } from "../config/unitConfig";
@@ -45,10 +45,11 @@ export const RouteDetailDrawer: React.FC<RouteDetailDrawerProps> = ({
   onAddClient,
 }) => {
   const { data, isLoading, isError, error } = useRouteDetail(routeId);
-  const monthRange = currentMonthRange();
+  const monthRange = monthToDateRange();
   const { data: performance } = useRoutePerformance(
     toLocalDateString(monthRange.from),
     toLocalDateString(monthRange.to),
+    "PREVIOUS_MONTH",
   );
 
   const route = data?.route;

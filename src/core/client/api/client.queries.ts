@@ -4,7 +4,7 @@ import type {
   ClientCreateRequestDTO,
   InternalClientCreateRequestDTO,
 } from "./client.api";
-import type { Client } from "@/core/api/types";
+import type { Client, ComparisonMode } from "@/core/api/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { clientKeys } from "./client.keys";
@@ -46,6 +46,7 @@ export const useClientPurchases = (
   id: number | null,
   startDate: string | null,
   endDate: string | null,
+  comparison: ComparisonMode = "WINDOW",
 ) => {
   const { slug } = useParams<{ slug: string }>();
 
@@ -55,12 +56,14 @@ export const useClientPurchases = (
       id ?? 0,
       startDate ?? "",
       endDate ?? "",
+      comparison,
     ),
     queryFn: () =>
       api.getClientPurchases(
         id as number,
         startDate as string,
         endDate as string,
+        comparison,
       ),
     enabled: !!slug && id !== null && !!startDate && !!endDate,
   });
