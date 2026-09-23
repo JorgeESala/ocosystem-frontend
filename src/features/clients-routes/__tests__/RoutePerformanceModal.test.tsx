@@ -181,6 +181,7 @@ describe("RoutePerformanceModal", () => {
     expect(mocks.useRoutePerformance).toHaveBeenLastCalledWith(
       "2032-01-01",
       expect.any(String),
+      "WINDOW",
     );
   });
 
@@ -201,6 +202,7 @@ describe("RoutePerformanceModal", () => {
     expect(mocks.useRoutePerformance).toHaveBeenLastCalledWith(
       "2032-01-01",
       "2032-01-31",
+      "PREVIOUS_MONTH",
     );
   });
 });

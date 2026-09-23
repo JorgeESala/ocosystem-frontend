@@ -5,18 +5,20 @@ import {
   useRouteCalendar,
   useClientRoutesSummary,
 } from "../api/summary.queries";
+import type { ComparisonMode } from "@/core/api/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { DateRangeFields } from "./DateRangeFields";
 import { RouteWeekCalendar } from "./RouteWeekCalendar";
 import {
   ClientTypesHelpContent,
+  ComparisonHelpContent,
   InfoTooltip,
   RouteProfitabilityHelpContent,
   SummaryAttentionHelpContent,
   SummaryKpiHelpContent,
 } from "./ClientsRoutesHelpContent";
-import { currentMonthRange, todayWeekday } from "../config/unitConfig";
+import { monthToDateRange, todayWeekday } from "../config/unitConfig";
 import { routesForToday } from "../utils/todayRoutes";
 
 interface ClientRoutesSummaryTabProps {
@@ -28,11 +30,15 @@ interface ClientRoutesSummaryTabProps {
   onShowRouteDetail: (routeId: number) => void;
 }
 
-const PERIOD_PRESETS = [
-  { label: "Mes actual", days: null },
-  { label: "7 días", days: 7 },
-  { label: "30 días", days: 30 },
-  { label: "90 días", days: 90 },
+const PERIOD_PRESETS: {
+  label: string;
+  days: number | null;
+  comparison: ComparisonMode;
+}[] = [
+  { label: "Mes en curso", days: null, comparison: "PREVIOUS_MONTH" },
+  { label: "7 días", days: 7, comparison: "WINDOW" },
+  { label: "30 días", days: 30, comparison: "WINDOW" },
+  { label: "90 días", days: 90, comparison: "WINDOW" },
 ];
 
 const DORMANT_OPTIONS = [15, 30, 60, 90];
@@ -130,9 +136,11 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
   onShowRouteDetail,
 }) => {
   const [range, setRange] = useState<{ from: Date | null; to: Date | null }>(
-    currentMonthRange,
+    monthToDateRange,
   );
   const [dormantDays, setDormantDays] = useState(30);
+  const [comparison, setComparison] =
+    useState<ComparisonMode>("PREVIOUS_MONTH");
 
   const from = range.from ? toLocalDateString(range.from) : null;
   const to = range.to ? toLocalDateString(range.to) : null;
@@ -140,6 +148,7 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
     from,
     to,
     dormantDays,
+    comparison,
   );
   const { data: calendar } = useRouteCalendar();
 
@@ -156,9 +165,10 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
       ].every((value) => value === 0)
     : false;
 
-  const applyPreset = (days: number | null) => {
+  const applyPreset = (days: number | null, mode: ComparisonMode) => {
+    setComparison(mode);
     if (days == null) {
-      setRange(currentMonthRange());
+      setRange(monthToDateRange());
       return;
     }
     const end = new Date();
@@ -176,7 +186,7 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
               key={preset.label}
               size="xs"
               color="light"
-              onClick={() => applyPreset(preset.days)}
+              onClick={() => applyPreset(preset.days, preset.comparison)}
             >
               {preset.label}
             </Button>
@@ -186,9 +196,10 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
           <DateRangeFields
             from={range.from}
             to={range.to}
-            onChange={(newFrom, newTo) =>
-              setRange({ from: newFrom, to: newTo })
-            }
+            onChange={(newFrom, newTo) => {
+              setRange({ from: newFrom, to: newTo });
+              setComparison("WINDOW");
+            }}
           />
         </div>
         <div>
@@ -511,7 +522,26 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                       <th className="py-2 text-right">Ventas</th>
                       <th className="py-2 text-right">Utilidad</th>
                       <th className="py-2 text-right">Margen</th>
-                      <th className="py-2 text-right">Var. ventas</th>
+                      <th className="py-2 text-right">
+                        <span className="inline-flex items-center gap-1">
+                          Var. ventas
+                          <InfoTooltip
+                            label="¿Contra qué periodo compara?"
+                            content={
+                              <ComparisonHelpContent
+                                previousFromLabel={formatHumanDate(
+                                  data.period.previousFrom,
+                                  "short",
+                                )}
+                                previousToLabel={formatHumanDate(
+                                  data.period.previousTo,
+                                  "short",
+                                )}
+                              />
+                            }
+                          />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

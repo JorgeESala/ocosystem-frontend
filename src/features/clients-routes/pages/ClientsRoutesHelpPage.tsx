@@ -6,7 +6,8 @@ const SECTIONS = [
   {
     title: "Resumen",
     paragraphs: [
-      "El Resumen muestra los números grandes del periodo: ventas, utilidad, margen, ticket promedio y concentración de clientes, comparados contra el periodo anterior de la misma duración.",
+      "El Resumen muestra los números grandes del periodo: ventas, utilidad, margen, ticket promedio y concentración de clientes, comparados contra el periodo anterior.",
+      "La comparación depende del periodo elegido: con 'Mes en curso' se compara el mismo tramo del mes anterior (por ejemplo, 1–22 de septiembre contra 1–22 de agosto); con los presets de 7, 30 y 90 días o al elegir fechas manualmente, se compara contra la ventana de igual duración inmediatamente anterior. El tooltip de 'Var. ventas' indica las fechas exactas comparadas.",
       "Las tarjetas de 'Necesitan atención' te dicen dónde mirar primero: clientes sin ruta, sin localidad, dormidos, que nunca han comprado, y rutas sin actividad o sin localidades. Haz clic en cualquiera para ir al detalle.",
       "El calendario semanal muestra qué rutas operan cada día y cuántos clientes activos cubren.",
     ],

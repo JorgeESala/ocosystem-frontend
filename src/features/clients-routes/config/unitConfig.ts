@@ -30,10 +30,10 @@ export const todayWeekday = (date: Date = new Date()): number => {
   return day === 0 ? 7 : day;
 };
 
-export const currentMonthRange = (): { from: Date; to: Date } => {
+export const monthToDateRange = (): { from: Date; to: Date } => {
   const now = new Date();
   return {
     from: new Date(now.getFullYear(), now.getMonth(), 1),
-    to: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+    to: now,
   };
 };

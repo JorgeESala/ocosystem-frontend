@@ -1,3 +1,5 @@
+import type { ComparisonMode } from "@/core/api/types";
+
 export const clientKeys = {
   all: ["clients"] as const,
 
@@ -18,6 +20,7 @@ export const clientKeys = {
     id: number,
     startDate: string,
     endDate: string,
+    comparison: ComparisonMode,
   ) =>
     [
       ...clientKeys.all,
@@ -26,5 +29,6 @@ export const clientKeys = {
       id,
       startDate,
       endDate,
+      comparison,
     ] as const,
 };

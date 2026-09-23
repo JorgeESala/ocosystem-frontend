@@ -223,6 +223,7 @@ describe("ClientRoutesSummaryTab", () => {
       expectedFrom,
       toLocalDateString(new Date()),
       30,
+      "WINDOW",
     );
   });
 
@@ -235,6 +236,21 @@ describe("ClientRoutesSummaryTab", () => {
     expect(screen.getByTestId("summary-period")).toHaveTextContent(
       formatHumanDate("2029-12-01", "short"),
     );
+  });
+
+  it("compara por defecto contra el mismo tramo del mes anterior", () => {
+    renderTab();
+
+    expect(mocks.useClientRoutesSummary).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.any(String),
+      30,
+      "PREVIOUS_MONTH",
+    );
+    expect(
+      screen.getByLabelText("¿Contra qué periodo compara?"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/01 dic 2029/).length).toBeGreaterThan(0);
   });
 
   it("muestra clientes por tipo con activos e inactivos", () => {

@@ -39,15 +39,29 @@ describe("clients routes summary hooks", () => {
     vi.clearAllMocks();
   });
 
-  it("consulta el resumen con fechas y días de dormido scoped por negocio", async () => {
+  it("consulta el resumen con fechas, días de dormido y comparación scoped por negocio", async () => {
     const qc = newQueryClient();
 
-    renderHook(() => useClientRoutesSummary("2030-01-01", "2030-01-31", 60), {
-      wrapper: createWrapper(qc, "huevo"),
-    });
+    renderHook(
+      () =>
+        useClientRoutesSummary(
+          "2030-01-01",
+          "2030-01-31",
+          60,
+          "PREVIOUS_MONTH",
+        ),
+      {
+        wrapper: createWrapper(qc, "huevo"),
+      },
+    );
 
     await waitFor(() =>
-      expect(getSummary).toHaveBeenCalledWith("2030-01-01", "2030-01-31", 60),
+      expect(getSummary).toHaveBeenCalledWith(
+        "2030-01-01",
+        "2030-01-31",
+        60,
+        "PREVIOUS_MONTH",
+      ),
     );
 
     const keys = qc
@@ -61,13 +75,14 @@ describe("clients routes summary hooks", () => {
       "2030-01-01",
       "2030-01-31",
       60,
+      "PREVIOUS_MONTH",
     ]);
   });
 
   it("no consulta sin rango completo", () => {
     const qc = newQueryClient();
 
-    renderHook(() => useClientRoutesSummary(null, null, 30), {
+    renderHook(() => useClientRoutesSummary(null, null, 30, "WINDOW"), {
       wrapper: createWrapper(qc, "huevo"),
     });
 

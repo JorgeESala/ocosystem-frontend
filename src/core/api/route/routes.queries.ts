@@ -12,7 +12,7 @@ import {
   updateRoute,
   type RoutePayload,
 } from "@/core/api/route/route.api";
-import type { Route } from "@/core/api/types";
+import type { ComparisonMode, Route } from "@/core/api/types";
 import { routeKeys } from "@/core/api/route/route.keys";
 
 const DUPLICATE_MESSAGE = "Ya existe una ruta con ese nombre";
@@ -64,12 +64,19 @@ export const useRouteDetail = (id: number | null) => {
 export const useRoutePerformance = (
   startDate: string | null,
   endDate: string | null,
+  comparison: ComparisonMode = "WINDOW",
 ) => {
   const { slug } = useParams<{ slug: string }>();
 
   return useQuery({
-    queryKey: routeKeys.performance(slug, startDate ?? "", endDate ?? ""),
-    queryFn: () => getRoutePerformance(startDate as string, endDate as string),
+    queryKey: routeKeys.performance(
+      slug,
+      startDate ?? "",
+      endDate ?? "",
+      comparison,
+    ),
+    queryFn: () =>
+      getRoutePerformance(startDate as string, endDate as string, comparison),
     enabled: !!slug && !!startDate && !!endDate,
   });
 };

@@ -1,3 +1,5 @@
+import type { ComparisonMode } from "@/core/api/types";
+
 export const clientsRoutesSummaryKeys = {
   all: ["clientsRoutesSummary"] as const,
 
@@ -6,6 +8,7 @@ export const clientsRoutesSummaryKeys = {
     from: string,
     to: string,
     dormantDays: number,
+    comparison: ComparisonMode,
   ) =>
     [
       ...clientsRoutesSummaryKeys.all,
@@ -14,6 +17,7 @@ export const clientsRoutesSummaryKeys = {
       from,
       to,
       dormantDays,
+      comparison,
     ] as const,
 
   calendar: (business?: string) =>

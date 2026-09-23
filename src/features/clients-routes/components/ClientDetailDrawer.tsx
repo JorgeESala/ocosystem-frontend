@@ -13,7 +13,7 @@ import type { Client, Route } from "@/core/api/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import {
-  currentMonthRange,
+  monthToDateRange,
   type ClientsRoutesUnitType,
 } from "../config/unitConfig";
 
@@ -41,11 +41,12 @@ export const ClientDetailDrawer: React.FC<ClientDetailDrawerProps> = ({
   onEdit,
   onHistory,
 }) => {
-  const monthRange = currentMonthRange();
+  const monthRange = monthToDateRange();
   const { data, isLoading, isError, error } = useClientPurchases(
     client?.id ?? null,
     toLocalDateString(monthRange.from),
     toLocalDateString(monthRange.to),
+    "PREVIOUS_MONTH",
   );
 
   const quantityLabel = (quantity: number) =>
