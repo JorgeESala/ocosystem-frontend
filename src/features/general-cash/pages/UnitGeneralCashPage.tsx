@@ -14,6 +14,7 @@ import {
 import { UNIT_CASH_CONFIG } from "@/features/general-cash/config/unitCash.config";
 import UnitCashCard from "@/features/general-cash/components/UnitCashCard";
 import UnitCashAlertsPanel from "@/features/general-cash/components/UnitCashAlertsPanel";
+import UnitCashReconciliationPanel from "@/features/general-cash/components/UnitCashReconciliationPanel";
 import UnitCashCreateModal from "@/features/general-cash/components/UnitCashCreateModal";
 import UnitCashSettingsModal from "@/features/general-cash/components/UnitCashSettingsModal";
 import UnitCashDrawer from "@/features/general-cash/components/UnitCashDrawer";
@@ -138,6 +139,8 @@ export default function UnitGeneralCashPage({ unitType }: Props) {
           </div>
 
           <UnitCashAlertsPanel alerts={alerts} />
+
+          <UnitCashReconciliationPanel unit={unitType} />
 
           <div>
             <div className="mb-3 flex items-center justify-between">
