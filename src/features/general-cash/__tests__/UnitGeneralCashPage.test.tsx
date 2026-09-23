@@ -30,6 +30,11 @@ const mocks = vi.hoisted(() => ({
     isPending: false,
   })),
   useDeleteUnitCashAdjustment: vi.fn(() => ({ mutate: vi.fn() })),
+  useUnitCashReconciliationPreview: vi.fn(),
+  useApplyUnitCashReconciliation: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 vi.mock("../api/unitCash.queries", () => ({
@@ -44,6 +49,12 @@ vi.mock("../api/unitCash.queries", () => ({
   useCreateUnitCashAdjustment: mocks.useCreateUnitCashAdjustment,
   useUpdateUnitCashAdjustment: mocks.useUpdateUnitCashAdjustment,
   useDeleteUnitCashAdjustment: mocks.useDeleteUnitCashAdjustment,
+  useUnitCashReconciliationPreview: mocks.useUnitCashReconciliationPreview,
+  useApplyUnitCashReconciliation: mocks.useApplyUnitCashReconciliation,
+}));
+
+vi.mock("@/features/employee/api/employees.queries", () => ({
+  useEmployees: vi.fn(() => ({ data: [] })),
 }));
 
 const renderPage = (unitType: "EGG" | "LIVE_CHICKEN" = "EGG") =>
@@ -71,6 +82,20 @@ describe("UnitGeneralCashPage", () => {
     vi.clearAllMocks();
     mocks.useUnitCashAlerts.mockReturnValue({ data: [] });
     mocks.useUnitCashFlow.mockReturnValue({ data: undefined });
+    mocks.useUnitCashReconciliationPreview.mockReturnValue({
+      data: {
+        from: "2026-09-13",
+        to: "2026-09-20",
+        changes: [],
+        created: 0,
+        updated: 0,
+        deleted: 0,
+        previousBalance: 1500,
+        projectedBalance: 1500,
+        lastReconciledAt: "2026-09-20T10:00:00",
+      },
+      isLoading: false,
+    });
   });
 
   it("shows the empty state when the cash box does not exist yet", () => {
@@ -126,6 +151,52 @@ describe("UnitGeneralCashPage", () => {
 
     expect(
       screen.getByText("Saldo bajo el umbral: $50.00 < $100.00"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows pending reconciliation changes", () => {
+    mocks.useUnitCashAccount.mockReturnValue({
+      data: account,
+      isLoading: false,
+      isError: false,
+    });
+    mocks.useUnitCashReconciliationPreview.mockReturnValue({
+      data: {
+        from: "2026-09-13",
+        to: "2026-09-20",
+        changes: [
+          {
+            changeType: "CREATE",
+            sourceType: "SALE",
+            sourceId: 5,
+            folio: "Remesa #99",
+            entryDate: "2026-09-19",
+            entryType: "INCOME_SALES",
+            amount: 500,
+            previousAmount: null,
+            description: "Venta directa",
+            reason: "Movimiento faltante",
+            balanceDelta: 500,
+          },
+        ],
+        created: 1,
+        updated: 0,
+        deleted: 0,
+        previousBalance: 1500,
+        projectedBalance: 2000,
+        lastReconciledAt: "2026-09-20T10:00:00",
+      },
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByText(/Sincronización pendiente \(1\)/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Remesa #99")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Aplicar cambios/i }),
     ).toBeInTheDocument();
   });
 

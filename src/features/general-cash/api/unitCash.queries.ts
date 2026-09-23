@@ -55,6 +55,12 @@ export const useUnitCashAlerts = (unit: UnitCashUnit) =>
     queryFn: () => unitCashApi.getAlerts(),
   });
 
+export const useUnitCashReconciliationPreview = (unit: UnitCashUnit) =>
+  useQuery({
+    queryKey: unitCashKeys(unit).reconciliation(),
+    queryFn: () => unitCashApi.getReconciliationPreview(),
+  });
+
 export const useUnitCashAdjustments = (
   unit: UnitCashUnit,
   start: Date | null,
@@ -95,6 +101,14 @@ export const useRecalculateUnitCash = (unit: UnitCashUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: () => unitCashApi.recalculate(),
+    onSuccess: invalidate,
+  });
+};
+
+export const useApplyUnitCashReconciliation = (unit: UnitCashUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: () => unitCashApi.applyReconciliation(),
     onSuccess: invalidate,
   });
 };

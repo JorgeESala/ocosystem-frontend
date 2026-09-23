@@ -9,6 +9,8 @@ import type {
   UnitCashFlowResponseDTO,
   UnitCashFrequency,
   UnitCashHistoryDTO,
+  UnitCashReconciliationPlanDTO,
+  UnitCashReconciliationSummaryDTO,
   UpdateUnitCashAdjustmentDTO,
   UpdateUnitCashDTO,
 } from "../types.unit";
@@ -68,6 +70,21 @@ export const unitCashApi = {
 
   recalculate: async (): Promise<void> => {
     await http.post(`${BASE_URL}/recalculate`);
+  },
+
+  getReconciliationPreview:
+    async (): Promise<UnitCashReconciliationPlanDTO> => {
+      const { data } = await http.get<UnitCashReconciliationPlanDTO>(
+        `${BASE_URL}/reconcile/preview`,
+      );
+      return data;
+    },
+
+  applyReconciliation: async (): Promise<UnitCashReconciliationSummaryDTO> => {
+    const { data } = await http.post<UnitCashReconciliationSummaryDTO>(
+      `${BASE_URL}/reconcile`,
+    );
+    return data;
   },
 
   getAdjustments: async (

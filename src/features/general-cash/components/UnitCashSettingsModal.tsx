@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import type { UnitCashAccountDTO, UpdateUnitCashDTO } from "../types.unit";
+import {
+  resolveEmployeeName,
+  useEmployeeNames,
+} from "@/features/general-cash/utils/employeeNames";
 
 interface Props {
   open: boolean;
@@ -23,6 +27,7 @@ export default function UnitCashSettingsModal({
 }: Props) {
   const [startingBalance, setStartingBalance] = useState("0");
   const [alertThreshold, setAlertThreshold] = useState("0");
+  const employeeNames = useEmployeeNames();
 
   useEffect(() => {
     if (account) {
@@ -43,6 +48,12 @@ export default function UnitCashSettingsModal({
       <ModalHeader>Configurar Caja General</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
+          {account?.updatedBy != null && (
+            <p className="text-xs text-slate-500">
+              Ultima modificacion:{" "}
+              {resolveEmployeeName(employeeNames, account.updatedBy)}
+            </p>
+          )}
           <div>
             <label
               htmlFor="unitCashSettingsStartingBalance"
