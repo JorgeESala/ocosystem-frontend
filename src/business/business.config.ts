@@ -22,7 +22,7 @@ export interface BusinessConfig {
 
 import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { HiClipboardList, HiClipboardCheck, HiUserGroup } from "react-icons/hi";
+import { HiClipboardList, HiClipboardCheck, HiUserGroup, HiOutlineTerminal } from "react-icons/hi";
 import { HiBanknotes } from "react-icons/hi2";
 
 export const BASE_MENU = [
@@ -44,6 +44,7 @@ const BRANCHES_MENU = [
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   { to: "aprobaciones", label: "Aprobaciones", icon: HiClipboardCheck, adminOnly: true },
+  { to: "diagnostico", label: "Diagnóstico", icon: HiOutlineTerminal, adminOnly: true },
 ];
 
 const LIVE_CHICKEN_MENU = [
