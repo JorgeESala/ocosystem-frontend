@@ -163,7 +163,7 @@ export default function UnitCashDrawer({
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              color="warning"
+              color="yellow"
               onClick={() => setShowCutModal(true)}
             >
               <HiOutlineScissors className="mr-1 h-3 w-3" />

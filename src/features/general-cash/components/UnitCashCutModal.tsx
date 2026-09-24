@@ -179,7 +179,7 @@ export default function UnitCashCutModal({
             <Button color="gray" onClick={onClose}>
               Cancelar
             </Button>
-            <Button color="warning" onClick={handleSave} disabled={!canSave}>
+            <Button color="yellow" onClick={handleSave} disabled={!canSave}>
               {isSaving ? "Guardando..." : "Corte de caja"}
             </Button>
           </div>
