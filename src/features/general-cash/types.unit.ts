@@ -8,6 +8,7 @@ export interface UnitCashAccountDTO {
   lastCalculatedAt: string | null;
   updatedBy: number | null;
   lastReconciledAt: string | null;
+  trackingStartDate: string;
 }
 
 export interface UnitCashFlowPointDTO {
