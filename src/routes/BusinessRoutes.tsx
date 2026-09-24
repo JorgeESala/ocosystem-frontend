@@ -29,6 +29,7 @@ import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutes
 import { ClientsRoutesHelpPage } from "@/features/clients-routes/pages/ClientsRoutesHelpPage";
 import RouteGuard from "./RouteGuard";
 import ProductApprovalsPage from "@/features/branches/product-approvals/pages/ProductApprovalsPage";
+import DiagnosticsPage from "@/features/branches/diagnostics/pages/DiagnosticsPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -110,6 +111,14 @@ export default function BusinessRoutes() {
           element={
             <RouteGuard>
               <ProductApprovalsPage />
+            </RouteGuard>
+          }
+        />
+        <Route
+          path="diagnostico"
+          element={
+            <RouteGuard>
+              <DiagnosticsPage />
             </RouteGuard>
           }
         />
