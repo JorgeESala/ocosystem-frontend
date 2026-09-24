@@ -8,6 +8,31 @@ export interface UnitCashAccountDTO {
   lastCalculatedAt: string | null;
   updatedBy: number | null;
   lastReconciledAt: string | null;
+  trackingStartDate: string;
+  lastCutDate: string | null;
+  lastCutOpeningBalance: number | null;
+}
+
+export interface UnitCashCutDTO {
+  id: number;
+  cutDate: string;
+  closingBalance: number;
+  openingBalance: number;
+  alertThreshold: number;
+  note: string | null;
+  handedOverBy: number;
+  receivedBy: number;
+  createdBy: number | null;
+  createdAt: string;
+}
+
+export interface CreateUnitCashCutDTO {
+  cutDate: string;
+  openingBalance: number;
+  alertThreshold: number;
+  note: string | null;
+  handedOverBy: number;
+  receivedBy: number;
 }
 
 export interface UnitCashFlowPointDTO {

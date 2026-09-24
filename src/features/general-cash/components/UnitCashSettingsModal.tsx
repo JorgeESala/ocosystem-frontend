@@ -54,6 +54,14 @@ export default function UnitCashSettingsModal({
               {resolveEmployeeName(employeeNames, account.updatedBy)}
             </p>
           )}
+          {account?.trackingStartDate && (
+            <p className="text-xs text-slate-500">
+              Movimientos registrados desde:{" "}
+              {new Date(
+                account.trackingStartDate + "T00:00:00",
+              ).toLocaleDateString("es-MX")}
+            </p>
+          )}
           <div>
             <label
               htmlFor="unitCashSettingsStartingBalance"

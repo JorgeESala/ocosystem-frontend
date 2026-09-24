@@ -6,6 +6,7 @@ import {
   useUnitCashAccount,
   useUnitCashAdjustments,
   useUnitCashAlerts,
+  useUnitCashCuts,
   useUnitCashFlow,
   useUnitCashReconciliationPreview,
 } from "../api/unitCash.queries";
@@ -14,6 +15,7 @@ import { unitCashApi } from "../api/unitCash.api";
 vi.mock("../api/unitCash.api", () => ({
   unitCashApi: {
     getAccount: vi.fn(async () => null),
+    getCuts: vi.fn(async () => []),
     getFlow: vi.fn(async () => ({
       startDate: "2026-09-01",
       endDate: "2026-09-30",
@@ -180,6 +182,27 @@ describe("unit cash query keys", () => {
       "unit-general-cash",
       "LIVE_CHICKEN",
       "adjustments",
+      { start: start.toISOString(), end: end.toISOString() },
+    ]);
+  });
+
+  it("scopes cuts by unit and range", async () => {
+    const qc = newQueryClient();
+
+    renderHook(() => useUnitCashCuts("EGG", start, end), {
+      wrapper: createWrapper(qc),
+    });
+
+    await waitFor(() => expect(unitCashApi.getCuts).toHaveBeenCalledTimes(1));
+
+    const keys = qc
+      .getQueryCache()
+      .getAll()
+      .map((query) => query.queryKey);
+    expect(keys).toContainEqual([
+      "unit-general-cash",
+      "EGG",
+      "cuts",
       { start: start.toISOString(), end: end.toISOString() },
     ]);
   });

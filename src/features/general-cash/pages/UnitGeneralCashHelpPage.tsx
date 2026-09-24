@@ -19,7 +19,7 @@ const buildUsageSteps = (label: string) => [
   {
     icon: "🏦",
     title: "Crear caja",
-    description: `Define el saldo inicial de ${label}. Este es el dinero con el que empieza la operacion.`,
+    description: `La caja se crea solo al pulsar "Nueva caja". Define el saldo inicial de ${label}: es el efectivo con el que empieza la operacion y cubre todo lo anterior a la fecha de creacion.`,
   },
   {
     icon: "📊",
@@ -67,10 +67,24 @@ const buildMovementTypes = (label: string): MovementRow[] => [
     color: "text-red-400",
   },
   {
+    movement: "Compensación (cliente paga y CEDIS paga proveedor)",
+    effect: "Sin efecto neto",
+    example:
+      "El cliente paga $1,000 al CEDIS y el CEDIS paga $1,000 al proveedor → +$1,000 y -$1,000",
+    color: "text-slate-400",
+  },
+  {
     movement: "Ajuste manual",
     effect: "Suma o resta",
     example: "Diferencia de caja → -$15 o +$10",
     color: "text-blue-400",
+  },
+  {
+    movement: "Corte de caja (entrega a nuevo responsable)",
+    effect: "Reinicia el saldo",
+    example:
+      "El saldo de cierre pasa al responsable anterior y el nuevo periodo inicia con el saldo inicial definido",
+    color: "text-amber-400",
   },
   {
     movement: "Venta a cliente interno (cuenta por cobrar)",
@@ -82,6 +96,22 @@ const buildMovementTypes = (label: string): MovementRow[] => [
 ];
 
 const buildFaq = (label: string) => [
+  {
+    q: "¿Qué es un corte de caja?",
+    a: "Es la entrega de la caja a un nuevo responsable. Se registra el saldo de cierre, quién entrega y quién recibe, y el saldo inicial y umbral de alerta del nuevo periodo. El historial anterior se conserva y el saldo se reinicia al monto indicado.",
+  },
+  {
+    q: "¿Puedo editar o borrar un corte de caja?",
+    a: "No. Los cortes son registros de entrega y no se modifican. Si hubo un error, registra un ajuste manual o realiza un nuevo corte.",
+  },
+  {
+    q: "¿Qué pasa con los movimientos anteriores a la creación de la caja?",
+    a: "Se ignoran. La caja solo registra movimientos con fecha igual o posterior a su fecha de creacion; todo lo anterior queda representado por el saldo inicial.",
+  },
+  {
+    q: "¿Qué pasa si todavía no creo la caja?",
+    a: "Las ventas, gastos, pagos y compensaciones que ocurran antes de crearla no se registran. Al crearla, define el saldo inicial con el efectivo actual.",
+  },
   {
     q: "¿Qué pasa si no registro el saldo inicial?",
     a: "La caja comenzara en $0. Puedes editar el saldo inicial en cualquier momento desde el boton 'Configurar'.",
@@ -136,8 +166,9 @@ export default function UnitGeneralCashHelpPage({ unitType }: Props) {
         </h2>
         <p className="text-sm leading-relaxed text-blue-300">
           La Caja General muestra cuánto dinero tiene {config.label} en tiempo
-          real. Cada venta, cobro, gasto, pago o ajuste actualiza el saldo
-          automaticamente. Es la vision centralizada del efectivo del negocio.
+          real. Cada venta, cobro, gasto, pago, compensación o ajuste actualiza
+          el saldo automaticamente desde la fecha en que se crea la caja. Es la
+          vision centralizada del efectivo del negocio.
         </p>
       </div>
 

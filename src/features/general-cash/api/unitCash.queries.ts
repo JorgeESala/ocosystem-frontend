@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CreateUnitCashAdjustmentDTO,
+  CreateUnitCashCutDTO,
   CreateUnitCashDTO,
   UnitCashFrequency,
   UnitCashUnit,
@@ -61,6 +62,20 @@ export const useUnitCashReconciliationPreview = (unit: UnitCashUnit) =>
     queryFn: () => unitCashApi.getReconciliationPreview(),
   });
 
+export const useUnitCashCuts = (
+  unit: UnitCashUnit,
+  start: Date | null,
+  end: Date | null,
+) =>
+  useQuery({
+    queryKey:
+      start && end
+        ? unitCashKeys(unit).cuts(start.toISOString(), end.toISOString())
+        : ([...unitCashKeys(unit).all, "cuts", "disabled"] as const),
+    queryFn: () => unitCashApi.getCuts(start!, end!),
+    enabled: Boolean(start && end),
+  });
+
 export const useUnitCashAdjustments = (
   unit: UnitCashUnit,
   start: Date | null,
@@ -109,6 +124,15 @@ export const useApplyUnitCashReconciliation = (unit: UnitCashUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: () => unitCashApi.applyReconciliation(),
+    onSuccess: invalidate,
+  });
+};
+
+export const useCreateUnitCashCut = (unit: UnitCashUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: (payload: CreateUnitCashCutDTO) =>
+      unitCashApi.createCut(payload),
     onSuccess: invalidate,
   });
 };

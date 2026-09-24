@@ -81,6 +81,36 @@ describe("UnitCashReconciliationPanel", () => {
     expect(screen.queryByText(/Aplicar cambios/i)).not.toBeInTheDocument();
   });
 
+  it("labels compensation changes", () => {
+    mocks.useUnitCashReconciliationPreview.mockReturnValue({
+      data: {
+        ...emptyPlan,
+        changes: [
+          {
+            changeType: "CREATE",
+            sourceType: "COMPENSATION_IN",
+            sourceId: 30,
+            folio: "COMP-1",
+            entryDate: "2026-09-19",
+            entryType: "INCOME_SALES",
+            amount: 1000,
+            previousAmount: null,
+            description: "Compensación cobro: folio COMP-1",
+            reason: "Movimiento faltante",
+            balanceDelta: 1000,
+          },
+        ],
+        created: 1,
+      },
+      isLoading: false,
+    });
+
+    render(<UnitCashReconciliationPanel unit="EGG" />);
+
+    expect(screen.getByText("Compensación")).toBeInTheDocument();
+    expect(screen.getByText("COMP-1")).toBeInTheDocument();
+  });
+
   it("lists pending changes with folio and applies them", () => {
     const mutate = vi.fn();
     mocks.useUnitCashReconciliationPreview.mockReturnValue({

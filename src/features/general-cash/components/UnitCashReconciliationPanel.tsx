@@ -30,6 +30,8 @@ const SOURCE_LABELS: Record<string, string> = {
   SALE: "Venta",
   EXPENSE: "Gasto",
   PAYMENT: "Pago",
+  COMPENSATION_IN: "Compensación",
+  COMPENSATION_OUT: "Compensación",
 };
 
 const formatCurrency = (value: number) =>
