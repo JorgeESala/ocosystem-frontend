@@ -30,6 +30,8 @@ const mocks = vi.hoisted(() => ({
     isPending: false,
   })),
   useDeleteUnitCashAdjustment: vi.fn(() => ({ mutate: vi.fn() })),
+  useUnitCashCuts: vi.fn(() => ({ data: [] })),
+  useCreateUnitCashCut: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useUnitCashReconciliationPreview: vi.fn(),
   useApplyUnitCashReconciliation: vi.fn(() => ({
     mutate: vi.fn(),
@@ -49,6 +51,8 @@ vi.mock("../api/unitCash.queries", () => ({
   useCreateUnitCashAdjustment: mocks.useCreateUnitCashAdjustment,
   useUpdateUnitCashAdjustment: mocks.useUpdateUnitCashAdjustment,
   useDeleteUnitCashAdjustment: mocks.useDeleteUnitCashAdjustment,
+  useUnitCashCuts: mocks.useUnitCashCuts,
+  useCreateUnitCashCut: mocks.useCreateUnitCashCut,
   useUnitCashReconciliationPreview: mocks.useUnitCashReconciliationPreview,
   useApplyUnitCashReconciliation: mocks.useApplyUnitCashReconciliation,
 }));

@@ -21,6 +21,8 @@ describe("UnitCashSettingsModal", () => {
           updatedBy: null,
           lastReconciledAt: null,
           trackingStartDate: "2026-09-23",
+          lastCutDate: null,
+          lastCutOpeningBalance: null,
         }}
         onSave={vi.fn()}
         onRecalculate={vi.fn()}

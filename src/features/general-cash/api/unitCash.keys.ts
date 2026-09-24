@@ -12,6 +12,8 @@ export const unitCashKeys = (unit: UnitCashUnit) => {
     alerts: () => [...all, "alerts"] as const,
     adjustments: (start: string, end: string) =>
       [...all, "adjustments", { start, end }] as const,
+    cuts: (start: string, end: string) =>
+      [...all, "cuts", { start, end }] as const,
     reconciliation: () => [...all, "reconciliation"] as const,
   };
 };

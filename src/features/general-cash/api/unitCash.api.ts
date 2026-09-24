@@ -2,10 +2,12 @@ import { http } from "@/shared/api/http";
 import { toLocalDateString } from "@/utils/date.utils";
 import type {
   CreateUnitCashAdjustmentDTO,
+  CreateUnitCashCutDTO,
   CreateUnitCashDTO,
   UnitCashAccountDTO,
   UnitCashAdjustmentDTO,
   UnitCashAlertDTO,
+  UnitCashCutDTO,
   UnitCashFlowResponseDTO,
   UnitCashFrequency,
   UnitCashHistoryDTO,
@@ -83,6 +85,25 @@ export const unitCashApi = {
   applyReconciliation: async (): Promise<UnitCashReconciliationSummaryDTO> => {
     const { data } = await http.post<UnitCashReconciliationSummaryDTO>(
       `${BASE_URL}/reconcile`,
+    );
+    return data;
+  },
+
+  getCuts: async (start: Date, end: Date): Promise<UnitCashCutDTO[]> => {
+    const params = new URLSearchParams();
+    params.append("start", toLocalDateString(start));
+    params.append("end", toLocalDateString(end));
+
+    const { data } = await http.get<UnitCashCutDTO[]>(
+      `${BASE_URL}/cuts?${params.toString()}`,
+    );
+    return data;
+  },
+
+  createCut: async (payload: CreateUnitCashCutDTO): Promise<UnitCashCutDTO> => {
+    const { data } = await http.post<UnitCashCutDTO>(
+      `${BASE_URL}/cuts`,
+      payload,
     );
     return data;
   },

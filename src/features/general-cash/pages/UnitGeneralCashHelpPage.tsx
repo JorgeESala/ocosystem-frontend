@@ -80,6 +80,13 @@ const buildMovementTypes = (label: string): MovementRow[] => [
     color: "text-blue-400",
   },
   {
+    movement: "Corte de caja (entrega a nuevo responsable)",
+    effect: "Reinicia el saldo",
+    example:
+      "El saldo de cierre pasa al responsable anterior y el nuevo periodo inicia con el saldo inicial definido",
+    color: "text-amber-400",
+  },
+  {
     movement: "Venta a cliente interno (cuenta por cobrar)",
     effect: "Sin efecto directo",
     example:
@@ -89,6 +96,14 @@ const buildMovementTypes = (label: string): MovementRow[] => [
 ];
 
 const buildFaq = (label: string) => [
+  {
+    q: "¿Qué es un corte de caja?",
+    a: "Es la entrega de la caja a un nuevo responsable. Se registra el saldo de cierre, quién entrega y quién recibe, y el saldo inicial y umbral de alerta del nuevo periodo. El historial anterior se conserva y el saldo se reinicia al monto indicado.",
+  },
+  {
+    q: "¿Puedo editar o borrar un corte de caja?",
+    a: "No. Los cortes son registros de entrega y no se modifican. Si hubo un error, registra un ajuste manual o realiza un nuevo corte.",
+  },
   {
     q: "¿Qué pasa con los movimientos anteriores a la creación de la caja?",
     a: "Se ignoran. La caja solo registra movimientos con fecha igual o posterior a su fecha de creacion; todo lo anterior queda representado por el saldo inicial.",
