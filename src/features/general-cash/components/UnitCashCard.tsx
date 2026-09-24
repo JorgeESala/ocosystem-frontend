@@ -6,11 +6,12 @@ interface Props {
 }
 
 export default function UnitCashCard({ name, account }: Props) {
-  const change = account.currentBalance - account.startingBalance;
-  const changePercent =
-    account.startingBalance !== 0
-      ? (change / account.startingBalance) * 100
-      : 0;
+  const hasCut = account.lastCutDate != null;
+  const baseBalance = hasCut
+    ? (account.lastCutOpeningBalance ?? 0)
+    : account.startingBalance;
+  const change = account.currentBalance - baseBalance;
+  const changePercent = baseBalance !== 0 ? (change / baseBalance) * 100 : 0;
   const isPositive = change >= 0;
 
   return (
@@ -29,7 +30,8 @@ export default function UnitCashCard({ name, account }: Props) {
         </span>
         <span className="text-slate-500">
           ({isPositive ? "+" : ""}
-          {changePercent.toFixed(1)}%) vs saldo inicial
+          {changePercent.toFixed(1)}%){" "}
+          {hasCut ? "desde el corte" : "vs saldo inicial"}
         </span>
       </div>
       {account.lastCalculatedAt && (

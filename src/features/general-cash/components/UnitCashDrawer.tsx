@@ -1,19 +1,23 @@
 import { useState } from "react";
 import { Button, Spinner, Datepicker } from "flowbite-react";
-import { HiX, HiPlus } from "react-icons/hi";
+import { HiX, HiPlus, HiOutlineScissors } from "react-icons/hi";
 import {
   useCreateUnitCashAdjustment,
+  useCreateUnitCashCut,
   useUnitCashHistory,
   useUpdateUnitCashAdjustment,
 } from "@/features/general-cash/api/unitCash.queries";
 import UnitCashAdjustmentModal from "./UnitCashAdjustmentModal";
 import UnitCashAdjustmentList from "./UnitCashAdjustmentList";
+import UnitCashCutModal from "./UnitCashCutModal";
+import UnitCashCutList from "./UnitCashCutList";
 import {
   resolveEmployeeName,
   useEmployeeNames,
 } from "@/features/general-cash/utils/employeeNames";
 import type {
   CreateUnitCashAdjustmentDTO,
+  CreateUnitCashCutDTO,
   UnitCashAccountDTO,
   UnitCashAdjustmentDTO,
   UnitCashHistoryDTO,
@@ -36,6 +40,7 @@ const ENTRY_TYPE_LABELS: Record<string, string> = {
   EXPENSE_BATCH: "Compra remesa",
   PAYMENT_OUT: "Pago",
   OTHER: "Ajuste",
+  CASH_CUT: "Corte de caja",
 };
 
 const ENTRY_TYPE_COLORS: Record<string, string> = {
@@ -45,6 +50,7 @@ const ENTRY_TYPE_COLORS: Record<string, string> = {
   EXPENSE_BATCH: "text-red-400",
   PAYMENT_OUT: "text-red-400",
   OTHER: "text-blue-400",
+  CASH_CUT: "text-amber-400",
 };
 
 function getDefaultDates() {
@@ -80,12 +86,14 @@ export default function UnitCashDrawer({
   const [appliedStart, setAppliedStart] = useState<Date>(defaults.start);
   const [appliedEnd, setAppliedEnd] = useState<Date>(defaults.end);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
+  const [showCutModal, setShowCutModal] = useState(false);
   const [editingAdjustment, setEditingAdjustment] =
     useState<UnitCashAdjustmentDTO | null>(null);
 
   const historyQuery = useUnitCashHistory(unit, appliedStart, appliedEnd);
   const createAdjustment = useCreateUnitCashAdjustment(unit);
   const updateAdjustment = useUpdateUnitCashAdjustment(unit);
+  const createCut = useCreateUnitCashCut(unit);
   const employeeNames = useEmployeeNames();
 
   const history = historyQuery.data ?? [];
@@ -131,6 +139,10 @@ export default function UnitCashDrawer({
     }
   };
 
+  const handleSaveCut = (payload: CreateUnitCashCutDTO) => {
+    createCut.mutate(payload, { onSuccess: () => setShowCutModal(false) });
+  };
+
   if (!open || !account) return null;
 
   return (
@@ -149,6 +161,14 @@ export default function UnitCashDrawer({
             <p className="text-sm text-slate-400">Historial de movimientos</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              color="warning"
+              onClick={() => setShowCutModal(true)}
+            >
+              <HiOutlineScissors className="mr-1 h-3 w-3" />
+              Corte de caja
+            </Button>
             <Button size="sm" onClick={handleNewAdjustment}>
               <HiPlus className="mr-1 h-3 w-3" />
               Ajuste
@@ -170,6 +190,14 @@ export default function UnitCashDrawer({
               minimumFractionDigits: 2,
             })}
           </div>
+          {account.lastCutDate && (
+            <div className="mt-1 text-xs text-slate-500">
+              Periodo actual desde{" "}
+              {new Date(account.lastCutDate + "T00:00:00").toLocaleDateString(
+                "es-MX",
+              )}
+            </div>
+          )}
         </div>
 
         <div className="border-b border-slate-700 px-6 py-3">
@@ -221,6 +249,12 @@ export default function UnitCashDrawer({
           </div>
         </div>
 
+        <UnitCashCutList
+          unit={unit}
+          startDate={appliedStart}
+          endDate={appliedEnd}
+        />
+
         <UnitCashAdjustmentList
           unit={unit}
           startDate={appliedStart}
@@ -258,7 +292,8 @@ export default function UnitCashDrawer({
                       key={entry.id}
                       entry={entry}
                       createdByName={
-                        entry.sourceType === "ADJUSTMENT"
+                        entry.sourceType === "ADJUSTMENT" ||
+                        entry.sourceType === "CASH_CUT"
                           ? resolveEmployeeName(employeeNames, entry.createdBy)
                           : null
                       }
@@ -270,6 +305,14 @@ export default function UnitCashDrawer({
           )}
         </div>
       </div>
+
+      <UnitCashCutModal
+        open={showCutModal}
+        onClose={() => setShowCutModal(false)}
+        account={account}
+        onSave={handleSaveCut}
+        isSaving={createCut.isPending}
+      />
 
       <UnitCashAdjustmentModal
         open={showAdjustmentModal}
