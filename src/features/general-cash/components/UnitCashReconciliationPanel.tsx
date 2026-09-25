@@ -154,7 +154,7 @@ export default function UnitCashReconciliationPanel({ unit }: Props) {
             </span>
             <Button
               size="sm"
-              color="warning"
+              color="yellow"
               onClick={handleApply}
               disabled={applyMutation.isPending}
             >
