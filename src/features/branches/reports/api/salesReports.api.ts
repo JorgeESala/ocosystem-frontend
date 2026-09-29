@@ -31,6 +31,7 @@ export interface ProductSalesDTO {
   totalSales: number;
   unitName: string;
   attachmentFrequency: number;
+  categoryId: number;
 }
 
 export interface SalesSummaryDTO {

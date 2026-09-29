@@ -250,7 +250,10 @@ describe("ClientRoutesSummaryTab", () => {
     expect(
       screen.getByLabelText("¿Contra qué periodo compara?"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/01 dic 2029/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(new RegExp(formatHumanDate("2029-12-01", "short")))
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("muestra clientes por tipo con activos e inactivos", () => {

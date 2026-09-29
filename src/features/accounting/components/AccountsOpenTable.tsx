@@ -16,7 +16,7 @@ import { formatHumanDate } from "@/utils/date.utils";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSolicitors } from "../api/solicitor.queries";
 import { useUpdateAccountsPayableSolicitor } from "../api/accounts-payable.queries";
-import { InfoTip } from "./InfoTip";
+import { InfoTip } from "@/components/InfoTip";
 import { FiCheck } from "react-icons/fi";
 import { RxCross2 } from "react-icons/rx";
 import { FaMoneyBillWave, FaPlus, FaRegEdit } from "react-icons/fa";

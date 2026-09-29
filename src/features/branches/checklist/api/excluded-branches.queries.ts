@@ -17,6 +17,10 @@ export const useCreateExcludedBranch = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: excludedBranchesKeys.all });
       qc.invalidateQueries({ queryKey: ["branch-checklist"] });
+      qc.invalidateQueries({ queryKey: ["branches"] });
+      qc.invalidateQueries({ queryKey: ["salesReports"] });
+      qc.invalidateQueries({ queryKey: ["productAnalytics"] });
+      qc.invalidateQueries({ queryKey: ["branch-profit"] });
     },
   });
 };
@@ -28,6 +32,10 @@ export const useDeleteExcludedBranch = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: excludedBranchesKeys.all });
       qc.invalidateQueries({ queryKey: ["branch-checklist"] });
+      qc.invalidateQueries({ queryKey: ["branches"] });
+      qc.invalidateQueries({ queryKey: ["salesReports"] });
+      qc.invalidateQueries({ queryKey: ["productAnalytics"] });
+      qc.invalidateQueries({ queryKey: ["branch-profit"] });
     },
   });
 };

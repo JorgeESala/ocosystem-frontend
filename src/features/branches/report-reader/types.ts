@@ -17,6 +17,10 @@ export interface SalesImportPreviewDTO {
   missingCategories: string[];
 
   alreadyCapturedCount?: number;
+
+  voidedTickets?: number;
+
+  cancelledAmount?: number;
 }
 export interface FileImportPreviewDTO {
   fileName: string;
