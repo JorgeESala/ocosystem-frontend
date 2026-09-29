@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
-import { Alert, Spinner } from "flowbite-react";
-import { useBranches } from "@/features/branches/branch/branch.queries";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { Alert, Button, Spinner } from "flowbite-react";
+import { HiQuestionMarkCircle } from "react-icons/hi";
+import { useReportBranches } from "@/features/branches/branch/reportBranches.queries";
+import ExcludedBranchesNote from "@/components/ExcludedBranchesNote";
 import { useBranchExpensesSearch } from "@/features/branches/expenses/api/branch-expenses.queries";
-import { formatHumanDate, getLastDays } from "@/utils/date.utils";
+import { formatDateRange, getLastDays } from "@/utils/date.utils";
 import BranchProfitBatchTable from "../components/BranchProfitBatchTable";
 import BranchProfitExpenseAudit from "../components/BranchProfitExpenseAudit";
 import BranchProfitBranchBreakdown from "../components/BranchProfitBranchBreakdown";
@@ -18,14 +21,28 @@ import type { BranchProfitFilters as BranchProfitFiltersDTO } from "../types";
 import { buildBranchProfitSummary } from "../utils/profit-summary";
 
 export default function BranchProfitReportPage() {
+  const { slug } = useParams();
   const defaultRange = useMemo(() => getLastDays(7), []);
-  const { data: branches = [], isLoading: loadingBranches } = useBranches();
+  const {
+    branches,
+    excluded,
+    isLoading: loadingBranches,
+  } = useReportBranches();
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
   const [startDate, setStartDate] = useState<Date | null>(defaultRange.start);
   const [endDate, setEndDate] = useState<Date | null>(defaultRange.end);
   const [activeFilters, setActiveFilters] =
     useState<BranchProfitFiltersDTO | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (excluded.length === 0) return;
+    const excludedIds = new Set(excluded.map((item) => item.branchId));
+    setSelectedBranchIds((current) => {
+      const filtered = current.filter((id) => !excludedIds.has(id));
+      return filtered.length === current.length ? current : filtered;
+    });
+  }, [excluded]);
 
   const reportQuery = useBranchProfitReport(activeFilters);
   const report = reportQuery.data ?? null;
@@ -186,7 +203,7 @@ export default function BranchProfitReportPage() {
               : ""
           }`;
   const scopeLabel = activeFilters
-    ? `Rango ${formatHumanDate(activeFilters.startDate, "short")} - ${formatHumanDate(activeFilters.endDate, "short")}`
+    ? `Rango ${formatDateRange(activeFilters.startDate, activeFilters.endDate)}`
     : "Selecciona sucursales y periodo para generar el reporte";
 
   const handleSearch = () => {
@@ -232,7 +249,14 @@ export default function BranchProfitReportPage() {
             Revisión de ventas, gastos, costo de pollo, utilidad neta y efectivo
             esperado por periodo.
           </p>
+          <ExcludedBranchesNote excluded={excluded} className="mt-2" />
         </div>
+        <Link to={`/business/${slug}/profit/help`}>
+          <Button color="light" size="sm">
+            <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
+            Ayuda
+          </Button>
+        </Link>
       </header>
 
       <BranchProfitFilters

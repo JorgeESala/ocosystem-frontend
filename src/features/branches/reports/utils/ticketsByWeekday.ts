@@ -33,7 +33,7 @@ export interface WeekdayTicketsRow {
   avg: number;
 }
 
-const toWeekdayKey = (date: Date): WeekdayKey => {
+export const toWeekdayKey = (date: Date): WeekdayKey => {
   const day = date.getDay();
   const order = [6, 0, 1, 2, 3, 4, 5];
   return WEEKDAY_ORDER[order[day]];

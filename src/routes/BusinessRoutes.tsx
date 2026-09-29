@@ -4,16 +4,18 @@ import SalesAndBatches from "@/components/SalesAndBatches";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
-import ReportPage from "@/features/live-chicken/Reports/ReportPage";
 import { Routes, Route, useParams } from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
+import ComingSoonPage from "@/pages/ComingSoonPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
 import { EggAccountingHelpPage } from "@/features/egg/accounting/pages/EggAccountingHelpPage";
 import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
+import BranchProfitHelpPage from "@/features/branches/profit/pages/BranchProfitHelpPage";
+import BranchReportsHelpPage from "@/features/branches/reports/pages/BranchReportsHelpPage";
 import GeneralCashPage from "@/features/general-cash/pages/GeneralCashPage";
 import GeneralCashHelpPage from "@/features/general-cash/pages/GeneralCashHelpPage";
 import UnitGeneralCashPage from "@/features/general-cash/pages/UnitGeneralCashPage";
@@ -48,7 +50,15 @@ export default function BusinessRoutes() {
           path="expenses"
           element={<ExpensesPage unitType="LIVE_CHICKEN" />}
         />
-        <Route path="reports" element={<ReportPage />} />
+        <Route
+          path="reports"
+          element={
+            <ComingSoonPage
+              title="Reportes de pollo vivo"
+              description="Estamos trabajando en los reportes de esta unidad de negocio."
+            />
+          }
+        />
         <Route
           path="clients-routes"
           element={<ClientsRoutesPage unitType="LIVE_CHICKEN" />}
@@ -80,6 +90,7 @@ export default function BusinessRoutes() {
         <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />
+        <Route path="reports/help" element={<BranchReportsHelpPage />} />
         <Route path="accounting" element={<BranchAccountsPage />} />
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
@@ -105,6 +116,7 @@ export default function BusinessRoutes() {
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
         <Route path="profit" element={<BranchProfitReportPage />} />
+        <Route path="profit/help" element={<BranchProfitHelpPage />} />
         <Route
           path="aprobaciones"
           element={
@@ -122,7 +134,15 @@ export default function BusinessRoutes() {
         <Route index element={<BusinessDashboard />} />
         <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
-        <Route path="reports" element={<BranchReportsPage />} />
+        <Route
+          path="reports"
+          element={
+            <ComingSoonPage
+              title="Reportes de huevo"
+              description="Estamos trabajando en los reportes de esta unidad de negocio."
+            />
+          }
+        />
         <Route path="accounting" element={<EggAccountsPage />} />
         <Route path="accounting/help" element={<EggAccountingHelpPage />} />
         <Route
@@ -156,6 +176,15 @@ export default function BusinessRoutes() {
     <Routes>
       <Route index element={<BusinessDashboard />} />
       <Route path="mis-tareas" element={<MyTasksPage />} />
+      <Route
+        path="reports"
+        element={
+          <ComingSoonPage
+            title="Reportes"
+            description="Estamos trabajando en los reportes de esta unidad de negocio."
+          />
+        }
+      />
       <Route path="salesAndBatches" element={<SalesAndBatches />} />
       <Route path="expenses" element={<BranchExpensesPage />} />
       <Route path="*" element={<ForbiddenPage />} />

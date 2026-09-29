@@ -130,6 +130,19 @@ export const PreviewStep = ({ data, onBack, onConfirm }: PreviewStepProps) => {
         </Card>
       )}
 
+      {(data.voidedTickets ?? 0) > 0 && (
+        <Card className="border-gray-300 bg-gray-50">
+          <p className="text-sm text-gray-700">
+            {data.voidedTickets} ticket(s) cancelado(s) de este reporte no
+            contarán en ningún total
+            {(data.cancelledAmount ?? 0) > 0
+              ? ` (importe cancelado: ${formatMXN(data.cancelledAmount ?? 0)})`
+              : ""}
+            .
+          </p>
+        </Card>
+      )}
+
       <Card>
         <h3 className="mb-4 text-lg font-semibold">Resumen del reporte</h3>
 

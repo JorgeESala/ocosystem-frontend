@@ -32,7 +32,7 @@ export default function DateRangePicker({
   };
 
   return (
-    <div className="flex gap-4">
+    <div className="flex flex-wrap gap-4">
       <Datepicker
         language="es-MX"
         labelTodayButton="Hoy"
@@ -48,6 +48,13 @@ export default function DateRangePicker({
         value={endDate}
         onChange={handleEndChange}
         minDate={startDate ?? undefined}
+        theme={{
+          popup: {
+            root: {
+              base: "absolute top-10 right-0 z-50 block pt-2",
+            },
+          },
+        }}
       />
     </div>
   );

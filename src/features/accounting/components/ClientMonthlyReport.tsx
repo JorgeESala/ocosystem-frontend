@@ -10,7 +10,7 @@ import {
 } from "../api/payments.queries";
 import type { ClientMonthlyReportPdfInput } from "../api/client-summary.api";
 import { summarizeCancelImpact } from "../utils/unappliedCredit";
-import { InfoTip } from "./InfoTip";
+import { InfoTip } from "@/components/InfoTip";
 import {
   CargosHelpContent,
   PagosHelpContent,
