@@ -12,6 +12,8 @@ import {
   TableCell,
 } from "flowbite-react";
 import { HiSearch, HiChevronUp, HiChevronDown } from "react-icons/hi";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatUnits } from "../utils/productMetrics";
 import type {
   CategorySalesDTO,
   ProductSalesDTO,
@@ -40,7 +42,7 @@ export const ProductSalesTable = ({
 
       const matchesCategory =
         selectedCategories.length === 0 ||
-        selectedCategories.includes((prod as any).categoryName);
+        selectedCategories.includes(prod.categoryName);
 
       return matchesSearch && matchesCategory;
     });
@@ -209,7 +211,7 @@ export const ProductSalesTable = ({
                   )}
                 </TableCell>
                 <TableCell className="text-center font-mono">
-                  {prod.quantitySold.toLocaleString()}{" "}
+                  {formatUnits(prod.quantitySold)}{" "}
                   <span className="text-[10px] text-gray-500">
                     {prod.unitName}
                   </span>
@@ -218,10 +220,7 @@ export const ProductSalesTable = ({
                   <div className="flex flex-col items-end">
                     {/* Monto Total */}
                     <span className="text-green-400">
-                      $
-                      {prod.totalSales.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatMXN(prod.totalSales)}
                     </span>
 
                     {/* Badge de Rendimiento (Precio Promedio) */}
@@ -237,8 +236,8 @@ export const ProductSalesTable = ({
                             size="xs"
                             className="border border-indigo-500/30 bg-indigo-900/40 text-indigo-300"
                           >
-                            ${(prod.totalSales / prod.quantitySold).toFixed(2)}{" "}
-                            / {prod.unitName}
+                            {formatMXN(prod.totalSales / prod.quantitySold)} /{" "}
+                            {prod.unitName}
                           </Badge>
                         </div>
                       )}
@@ -253,13 +252,10 @@ export const ProductSalesTable = ({
               </TableCell>
               <TableCell className="text-center">—</TableCell>
               <TableCell className="text-center text-lg text-white">
-                {totals.qty.toLocaleString()}
+                {formatUnits(totals.qty)}
               </TableCell>
               <TableCell className="text-lg text-green-400">
-                $
-                {totals.sales.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+                {formatMXN(totals.sales)}
               </TableCell>
             </TableRow>
           </TableBody>

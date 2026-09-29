@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import {
   HiChartBar,
   HiClipboardList,
@@ -6,6 +6,7 @@ import {
   HiTrendingUp,
   HiOutlineOfficeBuilding,
 } from "react-icons/hi";
+import { InfoTip } from "@/components/InfoTip";
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { BranchProfitSummary as BranchProfitSummaryType } from "../utils/profit-summary";
 
@@ -21,18 +22,21 @@ const Stat = ({
   value,
   hint,
   accent,
+  info,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
   hint: string;
   accent: string;
+  info?: ReactNode;
 }) => (
   <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4 shadow-sm">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
+        <p className="flex items-center gap-1 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
           {label}
+          {info}
         </p>
         <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
         <p className="mt-1 text-sm text-slate-400">{hint}</p>
@@ -70,6 +74,12 @@ export default function BranchProfitSummary({
           value={formatMXN(summary.totalSales)}
           hint={`Remesas analizadas: ${summary.batchCount.toLocaleString("es-MX")}`}
           accent="bg-blue-500/10 text-blue-300"
+          info={
+            <InfoTip title="Ventas Totales">
+              Ventas de remesa de las sucursales del periodo. Si una venta no
+              trae monto, se estima con kilos y precio por kilo.
+            </InfoTip>
+          }
         />
         <Stat
           icon={HiClipboardList}
@@ -77,6 +87,12 @@ export default function BranchProfitSummary({
           value={formatMXN(summary.totalExpenses)}
           hint={`${summary.expenseRatio.toFixed(1)}% de las ventas`}
           accent="bg-rose-500/10 text-rose-300"
+          info={
+            <InfoTip title="Gastos Totales">
+              Gastos registrados por las sucursales en el periodo. La auditoría
+              de abajo permite verlos por categoría, sucursal o movimiento.
+            </InfoTip>
+          }
         />
         <Stat
           icon={HiChartBar}
@@ -84,6 +100,12 @@ export default function BranchProfitSummary({
           value={formatMXN(summary.totalChickenCosts)}
           hint={`${summary.chickenCostRatio.toFixed(1)}% de las ventas`}
           accent="bg-amber-500/10 text-amber-300"
+          info={
+            <InfoTip title="Costo Pollo">
+              Costo prorrateado: solo la parte de cada remesa que se vendió en
+              el periodo, a su precio por kilo.
+            </InfoTip>
+          }
         />
         <Stat
           icon={HiTrendingUp}
@@ -91,6 +113,12 @@ export default function BranchProfitSummary({
           value={formatMXN(summary.profit)}
           hint={`Margen neto: ${summary.profitMargin.toFixed(1)}%`}
           accent="bg-emerald-500/10 text-emerald-300"
+          info={
+            <InfoTip title="Utilidad Neta">
+              Ventas menos costo de pollo y menos gastos. No incluye
+              movimientos de caja.
+            </InfoTip>
+          }
         />
         <Stat
           icon={HiCurrencyDollar}
@@ -102,6 +130,12 @@ export default function BranchProfitSummary({
               : "Ventas menos gastos"
           }
           accent="bg-cyan-500/10 text-cyan-300"
+          info={
+            <InfoTip title="Efectivo Esperado">
+              Ventas menos gastos, sin descontar el costo de pollo. Es lo que
+              debería quedar en caja antes de otros movimientos.
+            </InfoTip>
+          }
         />
         <Stat
           icon={HiOutlineOfficeBuilding}
@@ -113,6 +147,11 @@ export default function BranchProfitSummary({
               : "Sin remesas para comparar"
           }
           accent="bg-violet-500/10 text-violet-300"
+          info={
+            <InfoTip title="Sucursal Líder">
+              Sucursal con más ventas del periodo dentro de las seleccionadas.
+            </InfoTip>
+          }
         />
       </div>
 

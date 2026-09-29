@@ -91,7 +91,7 @@ export const formatHumanDate = (
           year: "numeric",
         }
       : {
-          day: "2-digit",
+          day: "numeric",
           month: "short",
           year: "numeric",
         };
@@ -101,7 +101,7 @@ export const formatHumanDate = (
 
 /* =======================
    Helpers
-======================= */
+   ======================= */
 
 const startOfDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -119,6 +119,41 @@ export const getLastDays = (days: number) => {
 export const getDayName = (dateString: string): string => {
   const date = new Date(dateString + "T00:00:00"); // Añadimos la hora para evitar desfases de zona horaria
   return new Intl.DateTimeFormat("es-MX", { weekday: "long" }).format(date);
+};
+
+const toDate = (input: string | Date): Date =>
+  typeof input === "string" ? new Date(`${input}T00:00:00`) : input;
+
+export const formatDayMonth = (input: string | Date): string =>
+  new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "short",
+  }).format(toDate(input));
+
+export const formatWeekdayDayMonth = (input: string | Date): string => {
+  const date = toDate(input);
+  const weekday = new Intl.DateTimeFormat("es-MX", { weekday: "short" })
+    .format(date)
+    .replace(".", "");
+  return `${weekday} ${formatDayMonth(date)}`;
+};
+
+export const formatDateRange = (start: Date, end: Date): string => {
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+  if (sameMonth) {
+    const month = new Intl.DateTimeFormat("es-MX", { month: "short" }).format(
+      end,
+    );
+    return `${start.getDate()} – ${end.getDate()} ${month} ${end.getFullYear()}`;
+  }
+
+  if (sameYear) {
+    return `${formatDayMonth(start)} – ${formatDayMonth(end)} ${end.getFullYear()}`;
+  }
+
+  return `${formatDayMonth(start)} ${start.getFullYear()} – ${formatDayMonth(end)} ${end.getFullYear()}`;
 };
 
 export const formatFullDate = (dateString: string): string => {

@@ -12,8 +12,8 @@ import ComparisonGraphs from "../components/ComparisonGraphs";
 import SalesAndBatches from "../components/SalesAndBatches";
 import ProtectedBusinessRoute from "./ProtectedBusinessRoute";
 import ForbiddenPage from "@/pages/ForbiddenPage";
+import ComingSoonPage from "@/pages/ComingSoonPage";
 import BusinessRoutes from "./BusinessRoutes";
-import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
 import BranchProfitReportPage from "@/features/branches/profit/pages/BranchProfitReportPage";
 function BusinessRoutesWrapper() {
@@ -42,7 +42,15 @@ export default function AppRoutes() {
           <Route path="/forbidden" element={<ForbiddenPage />} />
 
           {/* ⚠️ PROVISIONAL (luego se elimina) */}
-          <Route path="/reports" element={<BranchReportsPage />} />
+          <Route
+            path="/reports"
+            element={
+              <ComingSoonPage
+                title="Reportes"
+                description="Selecciona una unidad de negocio para ver sus reportes."
+              />
+            }
+          />
           <Route path="/comparisonGraphs" element={<ComparisonGraphs />} />
           <Route path="/salesAndBatches" element={<SalesAndBatches />} />
           <Route path="/expenses" element={<BranchExpensesPage />} />

@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import type { AccountsPayableResponse } from "@/features/live-chicken/accounting/accounts-payable/types";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { InfoTip } from "./InfoTip";
+import { InfoTip } from "@/components/InfoTip";
 
 interface Props {
   data: AccountsPayableResponse[];

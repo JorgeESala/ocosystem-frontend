@@ -108,7 +108,7 @@ describe("ClientHistoryModal", () => {
     ).toBeGreaterThan(0);
     expect(screen.getByText("↑ 50.00%")).toBeInTheDocument();
     expect(
-      screen.getByText(/Vs \d{2} \w{3} \d{4} – \d{2} \w{3} \d{4}:/),
+      screen.getByText(/Vs \d{1,2} \w{3} \d{4} – \d{1,2} \w{3} \d{4}:/),
     ).toBeInTheDocument();
     expect(mocks.useClientPurchases).toHaveBeenLastCalledWith(
       1,

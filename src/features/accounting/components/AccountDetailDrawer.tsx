@@ -36,7 +36,7 @@ import {
   useUnappliedPayments,
 } from "../api/payments.queries";
 import { AccountingErrorAlert } from "./AccountingErrorAlert";
-import { InfoTip } from "./InfoTip";
+import { InfoTip } from "@/components/InfoTip";
 import { MovimientosCuentaHelpContent } from "./AccountingHelpContent";
 import { SourceBadge } from "./SourceBadge";
 import { BatchPreviewDrawer } from "../../batch/components/BatchPreviewDrawer";
