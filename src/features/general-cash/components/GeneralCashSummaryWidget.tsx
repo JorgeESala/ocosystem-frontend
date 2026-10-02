@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { Button } from "flowbite-react";
 import { HiArrowRight } from "react-icons/hi";
 import { useCashReserves } from "../api/generalCash.queries";
 import { HiBanknotes } from "react-icons/hi2";
@@ -52,6 +53,20 @@ export default function GeneralCashSummaryWidget() {
       {reservesQuery.isLoading ? (
         <div className="flex justify-center py-6">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
+        </div>
+      ) : reservesQuery.isError ? (
+        <div className="py-6 text-center">
+          <p className="text-sm text-rose-300">
+            No se pudieron cargar las cajas.
+          </p>
+          <Button
+            size="xs"
+            color="failure"
+            className="mt-2"
+            onClick={() => void reservesQuery.refetch()}
+          >
+            Reintentar
+          </Button>
         </div>
       ) : top5.length === 0 ? (
         <div className="py-6 text-center text-sm text-slate-500">

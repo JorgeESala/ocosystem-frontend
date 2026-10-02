@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { parseScopeParams } from "@/utils/scopeParams";
 import { useReportBranches } from "@/features/branches/branch/reportBranches.queries";
 import { ConsolidatedSalesDashboard } from "../components/ConsolidatedSalesDashboard";
 import { SalesDashboard } from "../components/SalesDashboard";
@@ -18,7 +20,29 @@ export default function BranchReportsPage() {
   });
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
   const [drilldown, setDrilldown] = useState<DrilldownBranch | null>(null);
-  const { excluded } = useReportBranches();
+  const [searchParams] = useSearchParams();
+  const {
+    excluded,
+    branches,
+    isLoading: branchesLoading,
+  } = useReportBranches();
+  const scopeInitialized = useRef(false);
+
+  useEffect(() => {
+    if (scopeInitialized.current || branchesLoading) return;
+    scopeInitialized.current = true;
+    if (searchParams.get("branch")) return;
+    const scope = parseScopeParams(
+      searchParams,
+      branches.map((branch) => branch.id),
+    );
+    if (scope.branchIds.length > 0) {
+      setSelectedBranchIds(scope.branchIds);
+    }
+    if (scope.start && scope.end) {
+      setDates({ start: scope.start, end: scope.end });
+    }
+  }, [branchesLoading, branches, searchParams]);
 
   useEffect(() => {
     if (!drilldown) return;
@@ -26,6 +50,16 @@ export default function BranchReportsPage() {
       setDrilldown(null);
     }
   }, [excluded, drilldown]);
+
+  useEffect(() => {
+    if (drilldown) return;
+    const branchParam = searchParams.get("branch");
+    if (!branchParam) return;
+    const branch = branches.find((item) => item.id === Number(branchParam));
+    if (branch) {
+      setDrilldown({ id: branch.id, name: branch.name });
+    }
+  }, [searchParams, branches, drilldown]);
 
   const handleDatesChange = (start: Date, end: Date) => {
     setDates({ start, end });

@@ -8,6 +8,11 @@ export interface CashReserveResponseDTO {
   lastCalculatedAt: string | null;
 }
 
+export interface PosReportedTotalDTO {
+  total: number;
+  count: number;
+}
+
 export interface CashFlowPointDTO {
   period: string;
   ingresos: number;

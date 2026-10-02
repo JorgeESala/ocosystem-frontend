@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Spinner, Datepicker } from "flowbite-react";
 import { HiX, HiPlus } from "react-icons/hi";
 import {
   useCashFlowHistory,
   useCreateCashAdjustment,
+  usePosReportedTotal,
   useUpdateCashAdjustment,
 } from "@/features/general-cash/api/generalCash.queries";
 import CashAdjustmentModal from "./CashAdjustmentModal";
 import CashAdjustmentList from "./CashAdjustmentList";
+import {
+  cashHistoryLabel,
+  filterPosReportedSales,
+  isPosReportedSale,
+} from "@/features/general-cash/utils/cashHistory";
 import type {
   CashReserveResponseDTO,
   CashFlowHistoryDTO,
@@ -21,15 +27,6 @@ interface Props {
   onClose: () => void;
   reserve: CashReserveResponseDTO | null;
 }
-
-const ENTRY_TYPE_LABELS: Record<string, string> = {
-  INCOME_SALES: "Venta",
-  INCOME_OTHER: "Ingreso",
-  EXPENSE_OPERATIONAL: "Gasto",
-  EXPENSE_BATCH: "Compra pollo",
-  PAYMENT_OUT: "Pago",
-  OTHER: "Ajuste",
-};
 
 const ENTRY_TYPE_COLORS: Record<string, string> = {
   INCOME_SALES: "text-emerald-400",
@@ -78,9 +75,18 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
 
   const createAdjustment = useCreateCashAdjustment();
   const updateAdjustment = useUpdateCashAdjustment();
+  const posTotalQuery = usePosReportedTotal(reserve?.id ?? null);
 
-  const history = historyQuery.data ?? [];
   const isLoading = historyQuery.isLoading;
+  const [showPosSales, setShowPosSales] = useState(true);
+  const visibleHistory = useMemo(
+    () => filterPosReportedSales(historyQuery.data ?? [], showPosSales),
+    [historyQuery.data, showPosSales],
+  );
+
+  const hasPosSales = (posTotalQuery.data?.count ?? 0) > 0;
+  const alternateBalance =
+    (reserve?.currentBalance ?? 0) - (posTotalQuery.data?.total ?? 0);
 
   const handleApplyFilter = () => {
     setAppliedStart(new Date(startDate + "T00:00:00"));
@@ -166,6 +172,16 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
               minimumFractionDigits: 2,
             })}
           </div>
+          {!showPosSales && hasPosSales && (
+            <div className="mt-1 text-sm text-slate-400">
+              <span className="font-semibold text-white">
+                {`Saldo sin POS (histórico): $${alternateBalance.toLocaleString(
+                  "es-MX",
+                  { minimumFractionDigits: 2 },
+                )}`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Date filter */}
@@ -232,15 +248,36 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
             <div className="flex justify-center py-10">
               <Spinner size="lg" />
             </div>
-          ) : history.length === 0 ? (
+          ) : visibleHistory.length === 0 ? (
             <div className="py-10 text-center text-slate-500">
               No hay movimientos en este periodo
             </div>
           ) : (
             <>
-              <h4 className="mb-2 text-sm font-semibold text-slate-400">
-                Historial
-              </h4>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-slate-400">
+                  Historial
+                </h4>
+                {!posTotalQuery.isLoading && hasPosSales && (
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={showPosSales}
+                      onChange={(event) =>
+                        setShowPosSales(event.target.checked)
+                      }
+                      className="h-3.5 w-3.5 rounded accent-blue-500"
+                    />
+                    Mostrar ventas POS de otros productos
+                  </label>
+                )}
+              </div>
+              {!posTotalQuery.isLoading && hasPosSales && (
+                <p className="mb-2 text-[11px] text-slate-500">
+                  Solo cambia las filas visibles. El saldo actual y los totales
+                  de flujo no se recalculan.
+                </p>
+              )}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-700 text-left text-slate-400">
@@ -252,7 +289,7 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((entry) => (
+                  {visibleHistory.map((entry) => (
                     <HistoryRow key={entry.id} entry={entry} />
                   ))}
                 </tbody>
@@ -279,9 +316,12 @@ export default function GeneralCashDrawer({ open, onClose, reserve }: Props) {
 }
 
 function HistoryRow({ entry }: { entry: CashFlowHistoryDTO }) {
+  const posReported = isPosReportedSale(entry);
   const isPositive = entry.amount >= 0;
-  const colorClass = ENTRY_TYPE_COLORS[entry.entryType] ?? "text-slate-400";
-  const label = ENTRY_TYPE_LABELS[entry.entryType] ?? entry.entryType;
+  const colorClass = posReported
+    ? "text-slate-400"
+    : (ENTRY_TYPE_COLORS[entry.entryType] ?? "text-slate-400");
+  const label = cashHistoryLabel(entry);
 
   return (
     <tr className="border-b border-slate-800">

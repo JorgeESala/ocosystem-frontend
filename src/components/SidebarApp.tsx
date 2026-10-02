@@ -12,6 +12,7 @@ import { useAuthRole } from "../hooks/useAuthRole";
 import { useState } from "react";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BASE_MENU, BUSINESSES } from "@/business/business.config";
+import { logoTargetFor } from "@/business/business.navigation";
 import NotificationBell from "@/features/notification/components/NotificationBell";
 import type { BusinessMenuItem } from "@/business/business.config";
 
@@ -70,7 +71,7 @@ export default function SidebarApp() {
           <div className="flex items-center px-4 py-4">
             {/* Logo / Home */}
             <Link
-              to="/"
+              to={logoTargetFor(user?.allowedBusinesses)}
               onClick={() => setMobileOpen(false)}
               className="flex flex-shrink-0 items-center gap-2 overflow-hidden"
             >

@@ -45,12 +45,19 @@ export const categorySalesSheet = (
     ["Categoría", "Venta real", "Cantidad"],
     ...categories.map((category) => [
       category.categoryName,
-      category.totalSales,
+      hasMonetaryValue(category.categoryName, category.totalSales)
+        ? category.totalSales
+        : "",
       category.quantitySold,
     ]),
   ],
   cols: [{ wch: 22 }, { wch: 14 }, { wch: 12 }],
 });
+
+const hasMonetaryValue = (
+  categoryName: string,
+  totalSales: number | null,
+): totalSales is number => categoryName !== "Merma" && totalSales != null;
 
 export const analyticsProductsSheet = (
   name: string,
@@ -118,10 +125,13 @@ export const salesProductsSheet = (products: ProductSalesDTO[]): SheetSpec => ({
       product.categoryName,
       product.quantitySold,
       product.unitName,
-      product.totalSales,
+      hasMonetaryValue(product.categoryName, product.totalSales)
+        ? product.totalSales
+        : "",
+      hasMonetaryValue(product.categoryName, product.totalSales) &&
       product.quantitySold > 0
         ? Number((product.totalSales / product.quantitySold).toFixed(2))
-        : 0,
+        : "",
     ]),
   ],
   cols: [

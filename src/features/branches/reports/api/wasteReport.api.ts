@@ -5,14 +5,12 @@ export interface WasteTotalsDTO {
   lossQuantity: number;
   operationalQuantity: number;
   totalQuantity: number;
-  totalValue: number;
 }
 
 export interface WasteProductBranchDTO {
   branchId: number;
   branchName: string;
   quantity: number;
-  value: number;
 }
 
 export interface WasteProductDTO {
@@ -20,7 +18,6 @@ export interface WasteProductDTO {
   productName: string;
   tripa: boolean;
   quantity: number;
-  value: number;
   branchBreakdown: WasteProductBranchDTO[];
 }
 
@@ -30,7 +27,6 @@ export interface WasteBranchDTO {
   lossQuantity: number;
   tripaQuantity: number;
   totalQuantity: number;
-  value: number;
 }
 
 export interface WasteReportDTO {

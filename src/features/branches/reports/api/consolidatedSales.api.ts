@@ -15,7 +15,6 @@ export interface ConsolidatedSummaryDTO {
   attachRate: number;
   avgTicket: number;
   mermaQuantity: number;
-  mermaValue: number;
   mermaLossQuantity: number;
 }
 
@@ -28,7 +27,6 @@ export interface BranchSalesSummaryDTO {
   avgTicket: number;
   totalSlaughtered: number;
   mermaQuantity: number;
-  mermaValue: number;
   totalChickenTickets: number;
   ticketsWithComplements: number;
   attachRate: number;

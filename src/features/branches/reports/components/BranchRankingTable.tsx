@@ -173,11 +173,6 @@ export const BranchRankingTable = ({
                 </TableCell>
                 <TableCell className="text-white">
                   {formatNumber(row.mermaQuantity)}
-                  {row.mermaValue > 0 && (
-                    <span className="ml-1 text-xs text-gray-500">
-                      ({formatMXN(row.mermaValue)})
-                    </span>
-                  )}
                 </TableCell>
                 <TableCell>
                   {row.missingDays > 0 ? (

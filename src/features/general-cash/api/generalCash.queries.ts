@@ -136,6 +136,15 @@ export const useRecalculateAllCashReserves = () => {
   });
 };
 
+export const usePosReportedTotal = (id: number | null) =>
+  useQuery({
+    queryKey: id
+      ? cashReserveKeys.posReportedTotal(id)
+      : [...cashReserveKeys.all, "pos-reported-total", "disabled"],
+    queryFn: () => cashReserveApi.getPosReportedTotal(id!),
+    enabled: Boolean(id),
+  });
+
 export const useCashAdjustments = (
   branchId: number | null,
   start: Date | null,

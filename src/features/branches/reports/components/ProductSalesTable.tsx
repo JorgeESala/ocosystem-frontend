@@ -53,10 +53,10 @@ export const ProductSalesTable = ({
     const sortableItems = [...filteredProducts];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key])
-          return sortConfig.direction === "asc" ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key])
-          return sortConfig.direction === "asc" ? 1 : -1;
+        const left = a[sortConfig.key] ?? Number.NEGATIVE_INFINITY;
+        const right = b[sortConfig.key] ?? Number.NEGATIVE_INFINITY;
+        if (left < right) return sortConfig.direction === "asc" ? -1 : 1;
+        if (left > right) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
     }
@@ -68,7 +68,7 @@ export const ProductSalesTable = ({
     return sortedProducts.reduce(
       (acc, curr) => ({
         qty: acc.qty + curr.quantitySold,
-        sales: acc.sales + curr.totalSales,
+        sales: acc.sales + (curr.totalSales ?? 0),
       }),
       { qty: 0, sales: 0 },
     );
@@ -219,9 +219,18 @@ export const ProductSalesTable = ({
                 <TableCell className="font-bold">
                   <div className="flex flex-col items-end">
                     {/* Monto Total */}
-                    <span className="text-green-400">
-                      {formatMXN(prod.totalSales)}
-                    </span>
+                    {prod.totalSales == null ? (
+                      <span
+                        className="text-xs font-medium text-gray-500"
+                        title="La merma no tiene un precio válido; solo se muestra su cantidad"
+                      >
+                        No aplica
+                      </span>
+                    ) : (
+                      <span className="text-green-400">
+                        {formatMXN(prod.totalSales)}
+                      </span>
+                    )}
 
                     {/* Badge de Rendimiento (Precio Promedio) */}
                     {prod.quantitySold > 0 &&
@@ -236,8 +245,10 @@ export const ProductSalesTable = ({
                             size="xs"
                             className="border border-indigo-500/30 bg-indigo-900/40 text-indigo-300"
                           >
-                            {formatMXN(prod.totalSales / prod.quantitySold)} /{" "}
-                            {prod.unitName}
+                            {formatMXN(
+                              (prod.totalSales ?? 0) / prod.quantitySold,
+                            )}{" "}
+                            / {prod.unitName}
                           </Badge>
                         </div>
                       )}
