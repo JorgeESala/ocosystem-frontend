@@ -110,6 +110,29 @@ describe("AttentionQueue", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("builds scoped group links from the link context", () => {
+    const many = ["Norte", "Sur"].map((branchName, index) =>
+      item({ id: `item-${index}`, branchId: index + 1, branchName }),
+    );
+    renderQueue(
+      <AttentionQueue
+        items={many}
+        linkContext={{
+          slug: "sucursales",
+          start: "2026-09-01",
+          end: "2026-09-07",
+          today: "2026-09-30",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /Atender/ }).getAttribute("href"),
+    ).toBe(
+      "/business/sucursales/reports?branches=1%2C2&start=2026-09-01&end=2026-09-07",
+    );
+  });
+
   it("shows how many critical items exist", () => {
     const many = ["Una", "Dos", "Tres"].map((branchName, index) =>
       item({

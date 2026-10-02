@@ -187,12 +187,14 @@ describe("buildAttentionItems", () => {
           branchName: "Norte",
           pending: 3,
           late: 1,
+          onlyUploadPending: false,
         },
         {
           branchId: 2,
           branchName: "Sur",
           pending: 0,
           late: 0,
+          onlyUploadPending: false,
         },
       ],
       slug: "sucursales",
@@ -213,13 +215,96 @@ describe("buildAttentionItems", () => {
     const items = buildAttentionItems({
       dashboard: null,
       expectedDays: 7,
-      tasks: [{ branchId: 1, branchName: "Norte", pending: 1, late: 0 }],
+      tasks: [
+        {
+          branchId: 1,
+          branchName: "Norte",
+          pending: 1,
+          late: 0,
+          onlyUploadPending: false,
+        },
+      ],
       slug: "sucursales",
       today: "2026-09-30",
     });
 
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe("PENDING_TASKS");
+  });
+
+  it("skips the task row when only the upload is pending and the report is missing", () => {
+    const items = buildAttentionItems({
+      dashboard: baseDashboard({
+        branches: [branch({ branchId: 1, branchName: "Norte", posDays: 0 })],
+      }),
+      expectedDays: 7,
+      tasks: [
+        {
+          branchId: 1,
+          branchName: "Norte",
+          pending: 1,
+          late: 1,
+          onlyUploadPending: true,
+        },
+      ],
+      slug: "sucursales",
+      today: "2026-09-30",
+    });
+
+    expect(
+      items.filter((entry) => entry.kind === "PENDING_TASKS"),
+    ).toHaveLength(0);
+    expect(
+      items.filter((entry) => entry.kind === "MISSING_REPORT"),
+    ).toHaveLength(1);
+  });
+
+  it("keeps the task row when other tasks are pending besides the upload", () => {
+    const items = buildAttentionItems({
+      dashboard: baseDashboard({
+        branches: [branch({ branchId: 1, branchName: "Norte", posDays: 0 })],
+      }),
+      expectedDays: 7,
+      tasks: [
+        {
+          branchId: 1,
+          branchName: "Norte",
+          pending: 3,
+          late: 0,
+          onlyUploadPending: false,
+        },
+      ],
+      slug: "sucursales",
+      today: "2026-09-30",
+    });
+
+    expect(
+      items.filter((entry) => entry.kind === "PENDING_TASKS"),
+    ).toHaveLength(1);
+  });
+
+  it("keeps the upload-only task row when the report is not missing", () => {
+    const items = buildAttentionItems({
+      dashboard: baseDashboard({
+        branches: [branch({ branchId: 1, branchName: "Norte", posDays: 7 })],
+      }),
+      expectedDays: 7,
+      tasks: [
+        {
+          branchId: 1,
+          branchName: "Norte",
+          pending: 1,
+          late: 1,
+          onlyUploadPending: true,
+        },
+      ],
+      slug: "sucursales",
+      today: "2026-09-30",
+    });
+
+    const taskItems = items.filter((entry) => entry.kind === "PENDING_TASKS");
+    expect(taskItems).toHaveLength(1);
+    expect(taskItems[0].severity).toBe("critical");
   });
 
   it("sorts items by severity with critical first", () => {
@@ -235,7 +320,15 @@ describe("buildAttentionItems", () => {
         ],
       }),
       expectedDays: 7,
-      tasks: [{ branchId: 2, branchName: "Sur", pending: 2, late: 1 }],
+      tasks: [
+        {
+          branchId: 2,
+          branchName: "Sur",
+          pending: 2,
+          late: 1,
+          onlyUploadPending: false,
+        },
+      ],
       slug: "sucursales",
       today: "2026-09-30",
     });

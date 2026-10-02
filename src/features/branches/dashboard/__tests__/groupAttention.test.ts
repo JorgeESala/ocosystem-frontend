@@ -138,4 +138,144 @@ describe("groupAttentionItems", () => {
   it("returns an empty list without items", () => {
     expect(groupAttentionItems([])).toEqual([]);
   });
+
+  it("merges chicken difference groups into a scoped profit link", () => {
+    const groups = groupAttentionItems(
+      [
+        item({
+          id: "d-1",
+          branchId: 2,
+          branchName: "Sur",
+          kind: "CHICKEN_DIFFERENCE",
+          title: "Diferencia de pollo entre fuentes",
+          detail: "2.5% entre Subir reporte y Entradas y ventas",
+          to: "/business/sucursales/profit?branches=2&start=2026-09-01&end=2026-09-07",
+        }),
+        item({
+          id: "d-2",
+          branchId: 5,
+          branchName: "Oriente",
+          kind: "CHICKEN_DIFFERENCE",
+          title: "Diferencia de pollo entre fuentes",
+          detail: "8.1% entre Subir reporte y Entradas y ventas",
+          to: "/business/sucursales/profit?branches=5&start=2026-09-01&end=2026-09-07",
+        }),
+      ],
+      {
+        slug: "sucursales",
+        start: "2026-09-01",
+        end: "2026-09-07",
+        today: "2026-09-30",
+      },
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].to).toBe(
+      "/business/sucursales/profit?branches=2%2C5&start=2026-09-01&end=2026-09-07",
+    );
+  });
+
+  it("retargets grouped missing reports to the scoped reports page", () => {
+    const groups = groupAttentionItems(
+      [
+        item({ id: "m-1", branchId: 1, branchName: "Norte" }),
+        item({ id: "m-2", branchId: 2, branchName: "Sur" }),
+      ],
+      {
+        slug: "sucursales",
+        start: "2026-09-01",
+        end: "2026-09-07",
+        today: "2026-09-30",
+      },
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].to).toBe(
+      "/business/sucursales/reports?branches=1%2C2&start=2026-09-01&end=2026-09-07",
+    );
+  });
+
+  it("merges task groups into a scoped tasks link", () => {
+    const groups = groupAttentionItems(
+      [
+        item({
+          id: "t-1",
+          branchId: 1,
+          branchName: "Norte",
+          kind: "PENDING_TASKS",
+          title: "Tareas pendientes",
+          detail: "2 pendientes",
+          to: "/business/sucursales/mis-tareas?branch=1&date=2026-09-30",
+        }),
+        item({
+          id: "t-2",
+          branchId: 2,
+          branchName: "Sur",
+          kind: "PENDING_TASKS",
+          title: "Tareas pendientes",
+          detail: "2 pendientes",
+          to: "/business/sucursales/mis-tareas?branch=2&date=2026-09-30",
+        }),
+      ],
+      {
+        slug: "sucursales",
+        start: "2026-09-01",
+        end: "2026-09-07",
+        today: "2026-09-30",
+      },
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].to).toBe(
+      "/business/sucursales/mis-tareas?branches=1%2C2&date=2026-09-30",
+    );
+  });
+
+  it("falls back to the item link for unknown kinds", () => {
+    const groups = groupAttentionItems(
+      [
+        item({
+          id: "x-1",
+          branchId: 1,
+          branchName: "Norte",
+          kind: "FUTURE_KIND" as AttentionItem["kind"],
+        }),
+        item({
+          id: "x-2",
+          branchId: 2,
+          branchName: "Sur",
+          kind: "FUTURE_KIND" as AttentionItem["kind"],
+        }),
+      ],
+      {
+        slug: "sucursales",
+        start: "2026-09-01",
+        end: "2026-09-07",
+        today: "2026-09-30",
+      },
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].to).toBe("/business/sucursales/upload-reports?branch=1");
+  });
+
+  it("keeps singleton links untouched when context is provided", () => {
+    const groups = groupAttentionItems(
+      [
+        item({
+          id: "m-1",
+          to: "/business/sucursales/upload-reports?branch=1",
+        }),
+      ],
+      {
+        slug: "sucursales",
+        start: "2026-09-01",
+        end: "2026-09-07",
+        today: "2026-09-30",
+      },
+    );
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].to).toBe("/business/sucursales/upload-reports?branch=1");
+  });
 });
