@@ -6,7 +6,7 @@ import type { Branch } from "@/features/branches/branch/types";
 const normalizeCategory = (name: string) => name.trim().toLowerCase();
 
 const buildByCategory = (
-  products: { categoryName: string; totalSales: number }[] | undefined,
+  products: { categoryName: string; totalSales: number | null }[] | undefined,
 ) => {
   const map: Record<string, number> = {};
   if (!products) return map;

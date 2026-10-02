@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Button, Drawer, DrawerHeader, DrawerItems } from "flowbite-react";
 import { HiCog } from "react-icons/hi";
 import { useOrderPredictions } from "../api/orderPrediction.queries";
+import { buildDeliverySummary } from "../utils/deliverySummary";
 import type { OrderPredictionDTO, PredictionPeriodDTO } from "../types";
 
 const DAY_NAMES: Record<number, string> = {
@@ -25,12 +27,18 @@ export default function OrderPredictionWidget() {
   const { slug } = useParams();
   const predictionsQuery = useOrderPredictions();
   const predictions = predictionsQuery.data ?? [];
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const summary = useMemo(
+    () => buildDeliverySummary(predictionsQuery.data ?? []),
+    [predictionsQuery.data],
+  );
 
   return (
     <div className="h-full rounded-xl border border-slate-700/60 bg-slate-800/40 p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-200">
-          Prediccion de Pedidos - Semana Actual
+          Predicción de pedidos — Semana actual
         </h2>
         <Link
           to={`/business/${slug}/delivery-schedule`}
@@ -44,16 +52,97 @@ export default function OrderPredictionWidget() {
         <div className="flex justify-center py-6">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
         </div>
+      ) : predictionsQuery.isError ? (
+        <div className="py-6 text-center">
+          <p className="text-sm text-rose-300">
+            No se pudieron cargar las predicciones.
+          </p>
+          <Button
+            size="xs"
+            color="failure"
+            className="mt-2"
+            onClick={() => void predictionsQuery.refetch()}
+          >
+            Reintentar
+          </Button>
+        </div>
       ) : predictions.length === 0 ? (
         <div className="py-6 text-center text-sm text-slate-500">
           No hay calendarios de entrega configurados
         </div>
       ) : (
-        <div className="space-y-4">
-          {predictions.map((pred) => (
-            <PredictionCard key={pred.branchId} prediction={pred} />
-          ))}
-        </div>
+        <>
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+            <span className="font-semibold text-slate-300">
+              Total semanal: 🐔 {summary.totalChicken} pollos
+            </span>
+            <span className="font-semibold text-amber-400">
+              🥚 {summary.totalEggs} casilleros
+            </span>
+            <span className="text-slate-500">
+              {summary.branchCount}{" "}
+              {summary.branchCount === 1 ? "sucursal" : "sucursales"}
+            </span>
+          </div>
+
+          {summary.upcoming.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-500">
+              Sin entregas próximas en esta semana
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {summary.upcoming.map((delivery) => (
+                <li
+                  key={`${delivery.branchId}-${delivery.deliveryDate}`}
+                  className="flex items-center justify-between rounded bg-slate-900/40 px-3 py-1.5"
+                >
+                  <div>
+                    <span className="text-xs font-semibold text-white">
+                      {delivery.branchName}
+                    </span>{" "}
+                    <span className="text-[11px] text-slate-400">
+                      {delivery.deliveryDay} {formatDate(delivery.deliveryDate)}
+                    </span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-semibold">
+                    {delivery.chicken > 0 && (
+                      <span className="text-slate-200">
+                        🐔 {delivery.chicken}
+                      </span>
+                    )}
+                    {delivery.eggs > 0 && (
+                      <span className="text-amber-400">🥚 {delivery.eggs}</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="mt-3 flex justify-end">
+            <Button size="xs" color="gray" onClick={() => setDetailsOpen(true)}>
+              Ver todas las predicciones
+            </Button>
+          </div>
+        </>
+      )}
+
+      {detailsOpen && (
+        <Drawer
+          open
+          onClose={() => setDetailsOpen(false)}
+          position="right"
+          className="w-full max-w-xl bg-slate-900"
+        >
+          <DrawerHeader title="Predicción de pedidos" />
+          <DrawerItems>
+            <div className="max-h-[70vh] space-y-4 overflow-y-auto">
+              {predictions.map((pred) => (
+                <PredictionCard key={pred.branchId} prediction={pred} />
+              ))}
+            </div>
+          </DrawerItems>
+        </Drawer>
       )}
     </div>
   );

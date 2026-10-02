@@ -145,7 +145,7 @@ export const SalesDashboard = ({
     );
 
     const totalVentaReal = ventasReales.reduce(
-      (acc, p) => acc + p.totalSales,
+      (acc, p) => acc + (p.totalSales ?? 0),
       0,
     );
 
@@ -243,12 +243,13 @@ export const SalesDashboard = ({
       hideEgg,
     );
     return [...filtered]
-      .sort((a, b) => b.totalSales - a.totalSales)
+      .sort((a, b) => (b.totalSales ?? 0) - (a.totalSales ?? 0))
       .slice(0, 5)
       .map((product) => ({
         ...product,
+        totalSales: product.totalSales ?? 0,
         participation:
-          (product.totalSales / processedData.totalVentaReal || 1) * 100,
+          ((product.totalSales ?? 0) / processedData.totalVentaReal || 1) * 100,
       }));
   }, [processedData, hideChicken, hideEgg]);
 

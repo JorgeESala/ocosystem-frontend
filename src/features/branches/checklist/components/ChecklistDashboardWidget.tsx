@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router-dom";
+import { Button } from "flowbite-react";
 import { HiClipboardList, HiArrowRight, HiCalendar } from "react-icons/hi";
+import { buildScopeSearch } from "@/utils/scopeParams";
 import { useCurrentWeekPerformance } from "../api/checklist.queries";
 import {
   scoreToTone,
@@ -11,12 +13,16 @@ import { getCurrentWeek, toIsoDateString } from "../utils/week";
 import { describeMetric } from "../utils/indicator-sentences";
 import { formatFullDate } from "@/utils/date.utils";
 
-export default function ChecklistDashboardWidget() {
+export default function ChecklistDashboardWidget({
+  scope,
+}: {
+  scope?: { branchIds: number[]; start: Date; end: Date };
+}) {
   const { slug } = useParams();
   const { from } = getCurrentWeek();
   const fromIso = toIsoDateString(from);
 
-  const { data, isLoading, isError } = useCurrentWeekPerformance();
+  const { data, isLoading, isError, refetch } = useCurrentWeekPerformance();
 
   const combined = data?.summary?.combinedScore ?? null;
   const tone = scoreToTone(combined);
@@ -43,9 +49,18 @@ export default function ChecklistDashboardWidget() {
               Resultado de esta semana · {formatFullDate(fromIso)}
             </p>
             {isError ? (
-              <p className="mt-1 text-sm text-rose-400">
-                No se pudo cargar el resultado.
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="text-sm text-rose-400">
+                  No se pudo cargar el resultado.
+                </p>
+                <Button
+                  size="xs"
+                  color="failure"
+                  onClick={() => void refetch()}
+                >
+                  Reintentar
+                </Button>
+              </div>
             ) : (
               <p className="mt-1 text-sm text-slate-300">
                 <span className="font-semibold text-white">
@@ -74,7 +89,11 @@ export default function ChecklistDashboardWidget() {
 
         <div className="flex flex-col items-stretch gap-2 sm:items-end">
           <Link
-            to={`/business/${slug}/checklist`}
+            to={
+              scope
+                ? `/business/${slug}/checklist?${buildScopeSearch(scope.branchIds, scope.start, scope.end)}`
+                : `/business/${slug}/checklist`
+            }
             className="inline-flex items-center gap-1 self-end text-sm font-semibold text-blue-400 transition hover:gap-2"
           >
             <HiClipboardList aria-hidden className="text-base" />

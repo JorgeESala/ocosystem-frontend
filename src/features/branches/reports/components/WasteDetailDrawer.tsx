@@ -14,7 +14,6 @@ import {
 } from "flowbite-react";
 import { useWasteReport } from "../api/wasteReport.queries";
 import { formatDateRange } from "@/utils/date.utils";
-import { formatMXN } from "@/utils/moneyNumbers";
 import { formatUnits } from "../utils/productMetrics";
 
 interface Props {
@@ -70,7 +69,7 @@ export const WasteDetailDrawer = ({
           </Alert>
         ) : (
           <div className="space-y-6 text-gray-100">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
               <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-3">
                 <p className="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                   Pérdida neta
@@ -102,15 +101,6 @@ export const WasteDetailDrawer = ({
                   Pérdida neta + tripa
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-3">
-                <p className="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
-                  Valor
-                </p>
-                <p className="text-xl font-bold text-blue-400">
-                  {formatMXN(totals.totalValue)}
-                </p>
-                <p className="text-[10px] text-gray-500">Valor de la merma</p>
-              </div>
             </div>
 
             <div>
@@ -127,9 +117,6 @@ export const WasteDetailDrawer = ({
                       </TableHeadCell>
                       <TableHeadCell className="text-right">
                         Cantidad
-                      </TableHeadCell>
-                      <TableHeadCell className="text-right">
-                        Valor
                       </TableHeadCell>
                     </TableRow>
                   </TableHead>
@@ -175,9 +162,6 @@ export const WasteDetailDrawer = ({
                         <TableCell className="text-right text-white">
                           {formatUnits(product.quantity)}
                         </TableCell>
-                        <TableCell className="text-right text-green-400">
-                          {formatMXN(product.value)}
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -203,9 +187,6 @@ export const WasteDetailDrawer = ({
                       <TableHeadCell className="text-right">
                         Total
                       </TableHeadCell>
-                      <TableHeadCell className="text-right">
-                        Valor
-                      </TableHeadCell>
                     </TableRow>
                   </TableHead>
                   <TableBody className="divide-y divide-gray-700">
@@ -225,9 +206,6 @@ export const WasteDetailDrawer = ({
                         </TableCell>
                         <TableCell className="text-right text-white">
                           {formatUnits(branch.totalQuantity)}
-                        </TableCell>
-                        <TableCell className="text-right text-green-400">
-                          {formatMXN(branch.value)}
                         </TableCell>
                       </TableRow>
                     ))}

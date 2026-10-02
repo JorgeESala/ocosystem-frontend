@@ -18,7 +18,6 @@ const branch = (
   avgTicket: 0,
   totalSlaughtered: 0,
   mermaQuantity: 0,
-  mermaValue: 0,
   totalChickenTickets: 0,
   ticketsWithComplements: 0,
   attachRate: 0,

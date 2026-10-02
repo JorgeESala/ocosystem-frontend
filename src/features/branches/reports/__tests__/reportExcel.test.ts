@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   analyticsProductsSheet,
+  categorySalesSheet,
   dailySalesSheet,
   salesProductsSheet,
 } from "../utils/reportExcel";
@@ -81,5 +82,47 @@ describe("salesProductsSheet", () => {
     const sheet = salesProductsSheet([product]);
 
     expect(sheet.rows[1][6]).toBe(50);
+  });
+
+  it("leaves merma without a monetary value", () => {
+    const merma: ProductSalesDTO = {
+      productBarcode: "IT-M",
+      productName: "Pierna",
+      categoryName: "Merma",
+      quantitySold: 9.1,
+      totalSales: null,
+      unitName: "kg",
+      attachmentFrequency: 0,
+      categoryId: 3,
+    };
+
+    const sheet = salesProductsSheet([merma]);
+
+    expect(sheet.rows[1][3]).toBe(9.1);
+    expect(sheet.rows[1][5]).toBe("");
+    expect(sheet.rows[1][6]).toBe("");
+  });
+});
+
+describe("categorySalesSheet", () => {
+  it("leaves merma without a monetary value", () => {
+    const sheet = categorySalesSheet([
+      {
+        categoryId: 1,
+        categoryName: "Abarrotes",
+        totalSales: 300,
+        quantitySold: 5,
+      },
+      {
+        categoryId: 3,
+        categoryName: "Merma",
+        totalSales: null,
+        quantitySold: 9.1,
+      },
+    ]);
+
+    expect(sheet.rows[1][1]).toBe(300);
+    expect(sheet.rows[2][1]).toBe("");
+    expect(sheet.rows[2][2]).toBe(9.1);
   });
 });

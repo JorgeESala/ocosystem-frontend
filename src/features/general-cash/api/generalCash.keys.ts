@@ -5,4 +5,6 @@ export const cashReserveKeys = {
   flow: (id: number, start: string, end: string, frequency: string) =>
     [...cashReserveKeys.all, "flow", { id, start, end, frequency }] as const,
   alerts: () => [...cashReserveKeys.all, "alerts"] as const,
+  posReportedTotal: (id: number) =>
+    [...cashReserveKeys.all, "pos-reported-total", id] as const,
 };
