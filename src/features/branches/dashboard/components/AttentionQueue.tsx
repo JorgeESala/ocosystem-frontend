@@ -11,6 +11,7 @@ import type {
   AttentionGroup,
   AttentionItem,
   AttentionSeverity,
+  GroupLinkContext,
 } from "../utils/attention";
 import {
   MAX_VISIBLE_ATTENTION_ITEMS,
@@ -23,6 +24,7 @@ interface Props {
   isError?: boolean;
   onRetry?: () => void;
   previewLimit?: number;
+  linkContext?: GroupLinkContext;
 }
 
 const SEVERITY_META: Record<
@@ -164,11 +166,15 @@ export default function AttentionQueue({
   isError = false,
   onRetry,
   previewLimit = MAX_VISIBLE_ATTENTION_ITEMS,
+  linkContext,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-  const groups = useMemo(() => groupAttentionItems(items), [items]);
+  const groups = useMemo(
+    () => groupAttentionItems(items, linkContext),
+    [items, linkContext],
+  );
 
   if (isError) {
     return (

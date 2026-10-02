@@ -23,15 +23,26 @@ function formatDate(d: Date): string {
   });
 }
 
+const parseBranchIds = (value: string | null): number[] =>
+  (value ?? "")
+    .split(",")
+    .map((part) => Number(part.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
 export default function MyTasksPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date>(
     () => parseDateParam(searchParams.get("date")) ?? new Date(),
   );
-  const [branchFilter, setBranchFilter] = useState<number | null>(() => {
-    const raw = searchParams.get("branch");
-    return raw !== null && /^\d+$/.test(raw) ? Number(raw) : null;
+  const [branchFilter, setBranchFilter] = useState<number[] | null>(() => {
+    const ids = [
+      ...new Set([
+        ...parseBranchIds(searchParams.get("branches")),
+        ...parseBranchIds(searchParams.get("branch")),
+      ]),
+    ];
+    return ids.length > 0 ? ids : null;
   });
 
   const dateStr = toLocalDateString(selectedDate);
@@ -45,12 +56,14 @@ export default function MyTasksPage() {
   const branches =
     branchFilter === null
       ? allBranches
-      : allBranches.filter((branch) => branch.branchId === branchFilter);
+      : allBranches.filter((branch) => branchFilter.includes(branch.branchId));
   const filteredBranchName =
     branchFilter === null
       ? null
-      : (allBranches.find((branch) => branch.branchId === branchFilter)
-          ?.branchName ?? `Sucursal ${branchFilter}`);
+      : branchFilter.length === 1
+        ? (allBranches.find((branch) => branch.branchId === branchFilter[0])
+            ?.branchName ?? `Sucursal ${branchFilter[0]}`)
+        : `${branchFilter.length} sucursales`;
   const totalTasks = branches.reduce((sum, b) => sum + b.tasks.length, 0);
   const doneTasks = branches.reduce(
     (sum, b) => sum + b.tasks.filter((t) => t.status === "DONE").length,
