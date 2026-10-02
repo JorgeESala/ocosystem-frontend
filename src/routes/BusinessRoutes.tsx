@@ -1,4 +1,5 @@
 import BusinessDashboard from "@/components/BussinesDashboard";
+import BranchesDashboardPage from "@/features/branches/dashboard/pages/BranchesDashboardPage";
 import ComparisonsGraphs from "@/components/ComparisonGraphs";
 import SalesAndBatches from "@/components/SalesAndBatches";
 import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
@@ -87,7 +88,7 @@ export default function BusinessRoutes() {
   if (slug === "sucursales") {
     return (
       <Routes>
-        <Route index element={<BusinessDashboard />} />
+        <Route index element={<BranchesDashboardPage />} />
         <Route path="mis-tareas" element={<MyTasksPage />} />
         <Route path="upload-reports" element={<UploadSalesReportPage />} />
         <Route path="reports" element={<BranchReportsPage />} />

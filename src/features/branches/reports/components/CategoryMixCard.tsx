@@ -134,7 +134,7 @@ export const CategoryMixCard = ({
           {commercialCategories.slice(0, 6).map((category, index) => {
             const percentage =
               totalSales > 0
-                ? ((category.totalSales / totalSales) * 100).toFixed(1)
+                ? (((category.totalSales ?? 0) / totalSales) * 100).toFixed(1)
                 : "0.0";
 
             return (
@@ -156,7 +156,7 @@ export const CategoryMixCard = ({
 
                 <div className="flex flex-col items-end">
                   <span className="font-bold text-white">
-                    {formatMXN(category.totalSales)}
+                    {formatMXN(category.totalSales ?? 0)}
                   </span>
                   <span className="text-[10px] text-gray-500">
                     {percentage}%

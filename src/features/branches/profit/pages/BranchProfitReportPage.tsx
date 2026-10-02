@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Alert, Button, Spinner } from "flowbite-react";
 import { HiQuestionMarkCircle } from "react-icons/hi";
 import { useReportBranches } from "@/features/branches/branch/reportBranches.queries";
@@ -14,6 +14,7 @@ import BranchProfitEmptyState from "../components/BranchProfitEmptyState";
 import BranchProfitFilters from "../components/BranchProfitFilters";
 import BranchProfitSalesSourceBanner from "../components/BranchProfitSalesSourceBanner";
 import BranchProfitSummary from "../components/BranchProfitSummary";
+import { parseScopeParams } from "@/utils/scopeParams";
 import { useBranchProfitReport } from "../api/branch-profit.queries";
 import { useImportedSalesByBranches } from "../api/useImportedSalesByBranches";
 import { useBatchSalesByDateRange } from "../api/useBatchSalesByDateRange";
@@ -34,6 +35,26 @@ export default function BranchProfitReportPage() {
   const [activeFilters, setActiveFilters] =
     useState<BranchProfitFiltersDTO | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const scopeInitialized = useRef(false);
+
+  useEffect(() => {
+    if (scopeInitialized.current || loadingBranches) return;
+    scopeInitialized.current = true;
+    const scope = parseScopeParams(
+      searchParams,
+      branches.map((branch) => branch.id),
+    );
+    if (scope.branchIds.length === 0 || !scope.start || !scope.end) return;
+    setSelectedBranchIds(scope.branchIds);
+    setStartDate(scope.start);
+    setEndDate(scope.end);
+    setActiveFilters({
+      branchIds: scope.branchIds,
+      startDate: scope.start,
+      endDate: scope.end,
+    });
+  }, [loadingBranches, branches, searchParams]);
 
   useEffect(() => {
     if (excluded.length === 0) return;

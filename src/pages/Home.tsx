@@ -2,6 +2,7 @@ import { Navigate, Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { BUSINESSES } from "@/business/business.config";
+import { businessRootPath } from "@/business/business.navigation";
 import { http } from "@/shared/api/http";
 import { toIsoDateString } from "@/features/branches/checklist/utils/week";
 
@@ -17,12 +18,8 @@ export default function Home() {
 
   if (allowed.length === 1) {
     const slug = allowedConfigs[0]?.slug;
-    const hasTasks = allowedConfigs[0]?.hasTasks;
     if (slug) {
-      const dest = hasTasks
-        ? `/business/${slug}/mis-tareas`
-        : `/business/${slug}`;
-      return <Navigate to={dest} replace />;
+      return <Navigate to={businessRootPath(slug)} replace />;
     }
   }
 
@@ -76,11 +73,7 @@ function MultiBuHome({
           return (
             <Link
               key={b.slug}
-              to={
-                b.hasTasks
-                  ? `/business/${b.slug}/mis-tareas`
-                  : `/business/${b.slug}`
-              }
+              to={businessRootPath(b.slug)}
               className="flex flex-col items-center justify-center rounded-xl bg-gray-800 p-6 shadow-lg transition hover:bg-gray-700"
             >
               <Icon className="mb-3 text-4xl text-blue-400" />

@@ -1,9 +1,6 @@
 import { useParams } from "react-router-dom";
-import ChecklistDashboardWidget from "@/features/branches/checklist/components/ChecklistDashboardWidget";
 import PendingTasksWidget from "@/features/branches/checklist/components/PendingTasksWidget";
 import GeneralCashSummaryWidget from "@/features/general-cash/components/GeneralCashSummaryWidget";
-import OrderPredictionWidget from "@/features/order-prediction/components/OrderPredictionWidget";
-import SalesAccuracyWidget from "@/features/sales-accuracy/components/SalesAccuracyWidget";
 import ProductDashboard from "@/features/batch/dashboard/ProductDashboard";
 
 const PRODUCT_SLUGS = ["huevo", "pollo-vivo"];
@@ -32,16 +29,6 @@ export default function BusinessDashboard() {
           <GeneralCashSummaryWidget />
         </div>
       </div>
-
-      {slug === "sucursales" && (
-        <>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <OrderPredictionWidget />
-            <SalesAccuracyWidget />
-          </div>
-          <ChecklistDashboardWidget />
-        </>
-      )}
     </div>
   );
 }

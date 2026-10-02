@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "flowbite-react";
 import { HiArrowRight, HiClipboardCheck } from "react-icons/hi";
 import { checklistApi } from "../api/checklist.api";
 import { checklistKeys } from "../api/checklist.keys";
@@ -12,11 +13,13 @@ function toLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const MAX_VISIBLE_BRANCHES = 5;
+
 export default function PendingTasksWidget() {
   const { slug } = useParams();
   const today = toLocalDateString(new Date());
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: checklistKeys.daily(today, []),
     queryFn: () => checklistApi.getDaily({ date: today }),
   });
@@ -34,6 +37,9 @@ export default function PendingTasksWidget() {
     (sum, b) => sum + b.tasks.filter((t) => t.status === "EMPTY").length,
     0,
   );
+
+  const visibleBranches = branchesWithPending.slice(0, MAX_VISIBLE_BRANCHES);
+  const hiddenCount = branchesWithPending.length - visibleBranches.length;
 
   const allDone = branches.length > 0 && totalPending === 0;
 
@@ -57,6 +63,20 @@ export default function PendingTasksWidget() {
         <div className="flex justify-center py-6">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" />
         </div>
+      ) : isError ? (
+        <div className="py-6 text-center">
+          <p className="text-sm text-rose-300">
+            No se pudieron cargar las tareas.
+          </p>
+          <Button
+            size="xs"
+            color="failure"
+            className="mt-2"
+            onClick={() => void refetch()}
+          >
+            Reintentar
+          </Button>
+        </div>
       ) : allDone ? (
         <div className="py-6 text-center">
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-900/40">
@@ -70,7 +90,7 @@ export default function PendingTasksWidget() {
         </div>
       ) : (
         <div className="space-y-3">
-          {branchesWithPending.map((branch) => {
+          {visibleBranches.map((branch) => {
             const pending = branch.tasks.filter((t) => t.status === "EMPTY");
             return (
               <div key={branch.branchId}>
@@ -95,6 +115,12 @@ export default function PendingTasksWidget() {
               </div>
             );
           })}
+          {hiddenCount > 0 && (
+            <p className="text-[11px] text-slate-500">
+              Mostrando {visibleBranches.length} de {branchesWithPending.length}{" "}
+              sucursales
+            </p>
+          )}
         </div>
       )}
 

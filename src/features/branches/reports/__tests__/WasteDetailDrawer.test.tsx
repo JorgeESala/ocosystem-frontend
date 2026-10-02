@@ -9,7 +9,6 @@ const { mockReport } = vi.hoisted(() => ({
       lossQuantity: 9.1,
       operationalQuantity: 175.9,
       totalQuantity: 185,
-      totalValue: 950,
     },
     byProduct: [
       {
@@ -17,9 +16,8 @@ const { mockReport } = vi.hoisted(() => ({
         productName: "Tripa",
         tripa: true,
         quantity: 175.9,
-        value: 900,
         branchBreakdown: [
-          { branchId: 1, branchName: "Centro", quantity: 175.9, value: 900 },
+          { branchId: 1, branchName: "Centro", quantity: 175.9 },
         ],
       },
       {
@@ -27,10 +25,7 @@ const { mockReport } = vi.hoisted(() => ({
         productName: "Pierna",
         tripa: false,
         quantity: 9.1,
-        value: 50,
-        branchBreakdown: [
-          { branchId: 1, branchName: "Centro", quantity: 9.1, value: 50 },
-        ],
+        branchBreakdown: [{ branchId: 1, branchName: "Centro", quantity: 9.1 }],
       },
     ],
     byBranch: [
@@ -40,7 +35,6 @@ const { mockReport } = vi.hoisted(() => ({
         lossQuantity: 9.1,
         tripaQuantity: 175.9,
         totalQuantity: 185,
-        value: 950,
       },
     ],
   } as WasteReportDTO,

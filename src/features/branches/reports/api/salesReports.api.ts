@@ -5,7 +5,7 @@ import { toApiDateRange } from "@/utils/date.utils";
 export interface CategorySalesDTO {
   categoryId: number;
   categoryName: string;
-  totalSales: number;
+  totalSales: number | null;
   quantitySold: number;
 }
 
@@ -28,7 +28,7 @@ export interface ProductSalesDTO {
   productName: string;
   categoryName: string;
   quantitySold: number;
-  totalSales: number;
+  totalSales: number | null;
   unitName: string;
   attachmentFrequency: number;
   categoryId: number;

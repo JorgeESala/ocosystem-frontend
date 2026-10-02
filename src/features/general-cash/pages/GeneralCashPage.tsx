@@ -95,7 +95,9 @@ export default function GeneralCashPage() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Caja General</h1>
           <p className="text-sm text-slate-400">
-            Posicion de efectivo por sucursal, flujo de caja y alertas.
+            Movimientos de efectivo por sucursal: ventas registradas, gastos y
+            pagos. Las ventas POS de otros productos se guardan como ingresos
+            reportados, sin costo ni cobro conciliado.
           </p>
         </div>
         <div className="flex gap-2">

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { HiChevronLeft, HiChevronRight, HiCalendar } from "react-icons/hi";
+import { parseDateParam } from "@/utils/scopeParams";
 import { checklistApi } from "../api/checklist.api";
 import { checklistKeys } from "../api/checklist.keys";
 import BranchTaskGroup from "../components/BranchTaskGroup";
@@ -24,7 +25,14 @@ function formatDate(d: Date): string {
 
 export default function MyTasksPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [searchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    () => parseDateParam(searchParams.get("date")) ?? new Date(),
+  );
+  const [branchFilter, setBranchFilter] = useState<number | null>(() => {
+    const raw = searchParams.get("branch");
+    return raw !== null && /^\d+$/.test(raw) ? Number(raw) : null;
+  });
 
   const dateStr = toLocalDateString(selectedDate);
 
@@ -33,7 +41,16 @@ export default function MyTasksPage() {
     queryFn: () => checklistApi.getDaily({ date: dateStr }),
   });
 
-  const branches = data?.branches ?? [];
+  const allBranches = data?.branches ?? [];
+  const branches =
+    branchFilter === null
+      ? allBranches
+      : allBranches.filter((branch) => branch.branchId === branchFilter);
+  const filteredBranchName =
+    branchFilter === null
+      ? null
+      : (allBranches.find((branch) => branch.branchId === branchFilter)
+          ?.branchName ?? `Sucursal ${branchFilter}`);
   const totalTasks = branches.reduce((sum, b) => sum + b.tasks.length, 0);
   const doneTasks = branches.reduce(
     (sum, b) => sum + b.tasks.filter((t) => t.status === "DONE").length,
@@ -100,6 +117,23 @@ export default function MyTasksPage() {
           >
             {pendingTasks} pendientes
           </span>
+        </div>
+      )}
+
+      {!isLoading && branchFilter !== null && (
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-800/60 px-4 py-2.5 text-sm">
+          <span className="text-slate-300">
+            Mostrando solo:{" "}
+            <span className="font-semibold text-white">
+              {filteredBranchName}
+            </span>
+          </span>
+          <button
+            onClick={() => setBranchFilter(null)}
+            className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+          >
+            Mostrar todas
+          </button>
         </div>
       )}
 

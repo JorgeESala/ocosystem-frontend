@@ -16,7 +16,6 @@ const row = (
   avgTicket: 125,
   totalSlaughtered: 20,
   mermaQuantity: 1.5,
-  mermaValue: 30,
   totalChickenTickets: 6,
   ticketsWithComplements: 3,
   attachRate: 50,

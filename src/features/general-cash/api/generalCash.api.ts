@@ -9,6 +9,7 @@ import type {
   CashReserveResponseDTO,
   CreateCashAdjustmentDTO,
   CreateCashReserveDTO,
+  PosReportedTotalDTO,
   UpdateCashAdjustmentDTO,
   UpdateCashReserveDTO,
 } from "../types";
@@ -97,6 +98,13 @@ export const cashReserveApi = {
 
     const { data } = await http.get<CashFlowHistoryDTO[]>(
       `${BASE_URL}/${id}/history?${params.toString()}`,
+    );
+    return data;
+  },
+
+  getPosReportedTotal: async (id: number): Promise<PosReportedTotalDTO> => {
+    const { data } = await http.get<PosReportedTotalDTO>(
+      `${BASE_URL}/${id}/pos-reported-total`,
     );
     return data;
   },

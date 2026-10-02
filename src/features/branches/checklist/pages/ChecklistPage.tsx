@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Spinner, Button } from "flowbite-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { HiQuestionMarkCircle, HiCog } from "react-icons/hi";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import { useBranchPerformance } from "../api/checklist.queries";
@@ -10,6 +10,7 @@ import ChecklistHeader, {
   type DateRangePreset,
 } from "../components/ChecklistHeader";
 import PerformanceSummaryCard from "../components/PerformanceSummaryCard";
+import { parseScopeParams } from "@/utils/scopeParams";
 import { toIsoDateString } from "../utils/week";
 import {
   getCurrentMonth,
@@ -44,15 +45,33 @@ export default function ChecklistPage() {
 
   const clampToToday = (d: Date) => (d > today ? today : d);
 
+  const [searchParams] = useSearchParams();
+  const scopeRange = useMemo(() => {
+    const scope = parseScopeParams(searchParams, []);
+    return scope.start && scope.end
+      ? { from: scope.start, to: scope.end }
+      : null;
+  }, [searchParams]);
+
   // Applied state - what the query uses
-  const [appliedFrom, setAppliedFrom] = useState<Date>(initial.from);
-  const [appliedTo, setAppliedTo] = useState<Date>(clampToToday(initial.to));
+  const [appliedFrom, setAppliedFrom] = useState<Date>(
+    scopeRange?.from ?? initial.from,
+  );
+  const [appliedTo, setAppliedTo] = useState<Date>(
+    scopeRange ? clampToToday(scopeRange.to) : clampToToday(initial.to),
+  );
 
   // Pending state - what the user is editing
-  const [pendingFrom, setPendingFrom] = useState<Date>(initial.from);
-  const [pendingTo, setPendingTo] = useState<Date>(clampToToday(initial.to));
+  const [pendingFrom, setPendingFrom] = useState<Date>(
+    scopeRange?.from ?? initial.from,
+  );
+  const [pendingTo, setPendingTo] = useState<Date>(
+    scopeRange ? clampToToday(scopeRange.to) : clampToToday(initial.to),
+  );
 
-  const [preset, setPreset] = useState<DateRangePreset>("current-week");
+  const [preset, setPreset] = useState<DateRangePreset>(
+    scopeRange ? "custom" : "current-week",
+  );
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
   const [expandedBranchId, setExpandedBranchId] = useState<number | null>(null);
   const [daysIncluded, setDaysIncluded] = useState(false);
@@ -71,9 +90,12 @@ export default function ChecklistPage() {
     const nonExcluded = branches
       .filter((b) => !excludedIds.has(b.id))
       .map((b) => b.id);
-    setSelectedBranchIds(nonExcluded);
+    const scope = parseScopeParams(searchParams, nonExcluded);
+    setSelectedBranchIds(
+      scope.branchIds.length > 0 ? scope.branchIds : nonExcluded,
+    );
     setInitialized(true);
-  }, [branches, excludedIds, loadingBranches, initialized]);
+  }, [branches, excludedIds, loadingBranches, initialized, searchParams]);
 
   const branchIds = useMemo(
     () => [...selectedBranchIds].sort((a, b) => a - b),

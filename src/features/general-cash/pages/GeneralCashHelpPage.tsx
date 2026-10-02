@@ -5,7 +5,7 @@ import { HiArrowLeft } from "react-icons/hi";
 const GENERAL_HELP = {
   title: "Qué es la Caja General",
   content:
-    "La Caja General muestra cuánto dinero tiene cada sucursal en tiempo real. Cada venta, gasto, pago o ajuste actualiza el saldo automáticamente. Es tu visión centralizada del efectivo en toda la operación.",
+    "La Caja General muestra cuánto dinero tiene cada sucursal en tiempo real. Cada venta, gasto, pago o ajuste actualiza el saldo automáticamente. Las ventas POS de otros productos se guardan como ingresos reportados, sin costo ni cobro conciliado. Es tu visión centralizada del efectivo en toda la operación.",
 };
 
 const IMPORTANCE_HELP = {
@@ -97,6 +97,10 @@ const FAQ = [
   {
     q: "¿Qué significa 'Sin datos en el rango seleccionado'?",
     a: "No hay movimientos registrados en ese periodo. Prueba con un rango de fechas más amplio o verifica que se hayan registrado ventas, gastos o pagos.",
+  },
+  {
+    q: "¿Puedo ocultar las ventas POS de otros productos en el historial?",
+    a: "Sí. En el historial de cada caja hay un filtro para mostrarlas u ocultarlas. Solo cambia las filas visibles; el saldo y los totales no se recalculan.",
   },
   {
     q: "¿Subir reportes duplica los datos del pollo?",
