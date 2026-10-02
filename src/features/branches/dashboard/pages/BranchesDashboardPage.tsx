@@ -79,13 +79,20 @@ export default function BranchesDashboardPage() {
 
   const taskSummaries = useMemo<BranchTaskSummary[]>(() => {
     const branchList = tasksQuery.data?.branches ?? [];
-    return branchList.map((branch) => ({
-      branchId: branch.branchId,
-      branchName: branch.branchName,
-      pending: branch.tasks.filter((task) => task.status === "EMPTY").length,
-      late: branch.tasks.filter((task) => task.status === "EMPTY" && task.late)
-        .length,
-    }));
+    return branchList.map((branch) => {
+      const pendingTasks = branch.tasks.filter(
+        (task) => task.status === "EMPTY",
+      );
+      return {
+        branchId: branch.branchId,
+        branchName: branch.branchName,
+        pending: pendingTasks.length,
+        late: pendingTasks.filter((task) => task.late).length,
+        onlyUploadPending:
+          pendingTasks.length > 0 &&
+          pendingTasks.every((task) => task.taskId === "UPLOAD_SALES_REPORT"),
+      };
+    });
   }, [tasksQuery.data]);
 
   const attentionItems = useMemo(
@@ -197,6 +204,16 @@ export default function BranchesDashboardPage() {
         isLoading={dashboardQuery.isLoading || tasksQuery.isLoading}
         isError={tasksQuery.isError}
         onRetry={refetchAll}
+        linkContext={
+          dashboardQuery.data
+            ? {
+                slug: slug ?? "sucursales",
+                start: dashboardQuery.data.startDate,
+                end: dashboardQuery.data.endDate,
+                today,
+              }
+            : undefined
+        }
       />
 
       <BranchHealthTable

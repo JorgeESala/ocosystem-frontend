@@ -14,6 +14,7 @@ export interface BranchTaskSummary {
   branchName: string;
   pending: number;
   late: number;
+  onlyUploadPending: boolean;
 }
 
 export interface AttentionItem {
@@ -123,6 +124,9 @@ export const buildAttentionItems = ({
 
   for (const task of tasks) {
     if (task.pending <= 0) continue;
+    if (task.onlyUploadPending && branchesMissingReport.has(task.branchId)) {
+      continue;
+    }
     items.push({
       id: `PENDING_TASKS-${task.branchId}`,
       kind: "PENDING_TASKS",
@@ -165,6 +169,52 @@ const groupDetail = (items: AttentionItem[]): string => {
   return `${names.length} sucursales: ${shown}${rest > 0 ? ` +${rest} más` : ""}`;
 };
 
+export interface GroupLinkContext {
+  slug: string;
+  start: string;
+  end: string;
+  today: string;
+}
+
+const groupRoute = (kind: AttentionKind, slug: string): string | null => {
+  switch (kind) {
+    case "MISSING_REPORT":
+      return `/business/${slug}/reports`;
+    case "CHICKEN_DIFFERENCE":
+    case "CHICKEN_INCOMPLETE":
+      return `/business/${slug}/profit`;
+    case "PENDING_TASKS":
+      return `/business/${slug}/mis-tareas`;
+    default:
+      return null;
+  }
+};
+
+const scopedGroupLink = (
+  items: AttentionItem[],
+  ctx: GroupLinkContext,
+): string | null => {
+  const branchIds = [
+    ...new Set(
+      items
+        .map((entry) => entry.branchId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+  if (branchIds.length === 0) return items[0]?.to ?? null;
+  const route = groupRoute(items[0].kind, ctx.slug);
+  if (!route) return items[0]?.to ?? null;
+  const params = new URLSearchParams();
+  params.append("branches", branchIds.join(","));
+  if (items[0].kind === "PENDING_TASKS") {
+    params.append("date", ctx.today);
+  } else {
+    params.append("start", ctx.start);
+    params.append("end", ctx.end);
+  }
+  return `${route}?${params.toString()}`;
+};
+
 const groupLink = (items: AttentionItem[]): string | null => {
   if (items.length === 1) return items[0].to;
   const first = items[0].to;
@@ -174,6 +224,7 @@ const groupLink = (items: AttentionItem[]): string | null => {
 
 export const groupAttentionItems = (
   items: AttentionItem[],
+  ctx?: GroupLinkContext,
 ): AttentionGroup[] => {
   const byKey = new Map<string, AttentionItem[]>();
   const firstSeen = new Map<string, number>();
@@ -198,7 +249,10 @@ export const groupAttentionItems = (
         title: first.title,
         detail: groupDetail(groupItems),
         branchNames: groupItems.map((entry) => entry.branchName),
-        to: groupLink(groupItems),
+        to:
+          ctx && groupItems.length > 1
+            ? scopedGroupLink(groupItems, ctx)
+            : groupLink(groupItems),
         items: groupItems,
       } satisfies AttentionGroup,
       order: firstSeen.get(key) ?? 0,

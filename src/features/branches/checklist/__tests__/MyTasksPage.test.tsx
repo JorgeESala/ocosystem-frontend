@@ -68,6 +68,34 @@ describe("MyTasksPage scope params", () => {
     expect(screen.getByText("Sucursal 1")).toBeTruthy();
   });
 
+  it("filters to multiple branches with the plural param", async () => {
+    mockGetDaily.mockResolvedValue({
+      branches: [branch(1), branch(2), branch(3)],
+    });
+
+    renderPage("/business/sucursales/mis-tareas?branches=1,3");
+
+    expect(await screen.findByText("Sucursal 1")).toBeTruthy();
+    expect(screen.getAllByText("Sucursal 3")).not.toHaveLength(0);
+    expect(screen.queryByText("Sucursal 2")).toBeNull();
+    expect(screen.getByText(/Mostrando solo:/).textContent).toContain(
+      "2 sucursales",
+    );
+  });
+
+  it("shows the empty state for unknown branch ids", async () => {
+    mockGetDaily.mockResolvedValue({ branches: [branch(1), branch(2)] });
+
+    renderPage("/business/sucursales/mis-tareas?branches=99");
+
+    expect(
+      await screen.findByText(/No hay tareas registradas/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Mostrando solo:/).textContent).toContain(
+      "Sucursal 99",
+    );
+  });
+
   it("shows every branch without params", async () => {
     mockGetDaily.mockResolvedValue({ branches: [branch(1), branch(2)] });
 
