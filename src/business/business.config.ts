@@ -20,7 +20,7 @@ export interface BusinessConfig {
   hasTasks?: boolean;
 }
 
-import { FaChartBar, FaFileAlt, FaBoxes } from "react-icons/fa";
+import { FaChartBar, FaFileAlt, FaBoxes, FaClipboardList } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import { HiClipboardList, HiClipboardCheck, HiUserGroup, HiOutlineTerminal } from "react-icons/hi";
 import { HiBanknotes } from "react-icons/hi2";
@@ -39,6 +39,7 @@ const BRANCHES_MENU = [
   { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
   { to: "graphs", label: "Comparativas", icon: FaChartBar },
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
+  { to: "recepciones", label: "Recepción de productos", icon: FaClipboardList },
   { to: "expenses", label: "Gastos", icon: GiPayMoney },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
