@@ -7,6 +7,14 @@ export function lineDisplayName(line: ReceiptLineDTO): string {
   return `Línea ${line.lineNumber}`;
 }
 
+export function unitSingular(unit: string): string {
+  const name = (unit || "").trim();
+  if (name.length > 3 && name.toLowerCase().endsWith("s")) {
+    return name.slice(0, -1);
+  }
+  return name;
+}
+
 export function normalizedLineCost(
   line: ReceiptLineDTO,
   cost: ReceiptCostDTO,

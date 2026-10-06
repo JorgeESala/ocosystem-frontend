@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ReceiptFilters, RecordCostPayload, ResolveLinePayload } from "../types";
+import type {
+  ReceiptFilters,
+  RecordCostPayload,
+  ResolveLinePayload,
+  ResolveWithProductPayload,
+} from "../types";
 import { productReceiptsApi } from "./product-receipts.api";
 import { productReceiptsKeys } from "./product-receipts.keys";
 
@@ -44,3 +49,27 @@ export const useResolveLine = (receiptId: number) => {
     },
   });
 };
+
+export const useResolveWithProduct = (receiptId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      lineId,
+      payload,
+    }: {
+      lineId: number;
+      payload: ResolveWithProductPayload;
+    }) => productReceiptsApi.resolveWithProduct(lineId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productReceiptsKeys.detail(receiptId) });
+      queryClient.invalidateQueries({ queryKey: productReceiptsKeys.all });
+    },
+  });
+};
+
+export const useCatalogProducts = () =>
+  useQuery({
+    queryKey: [...productReceiptsKeys.all, "catalog"] as const,
+    queryFn: productReceiptsApi.catalogProducts,
+  });

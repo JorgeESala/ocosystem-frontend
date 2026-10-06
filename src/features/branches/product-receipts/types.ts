@@ -61,3 +61,21 @@ export interface ResolveLinePayload {
   productBarcode: string;
   toProductUnitFactor?: number | null;
 }
+
+export interface ResolveWithProductPayload {
+  productBarcode: string;
+  name: string;
+  categoryId: number;
+  unitId: number;
+}
+
+export interface ResolveLineResponse {
+  line: ReceiptLineDTO;
+  productCreated: boolean;
+}
+
+export interface CatalogProduct {
+  barcode: string;
+  name: string;
+  status?: string | null;
+}

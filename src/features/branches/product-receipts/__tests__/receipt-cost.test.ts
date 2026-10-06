@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { lineDisplayName, normalizedLineCost } from "../utils/receipt-cost";
+import { lineDisplayName, normalizedLineCost, unitSingular } from "../utils/receipt-cost";
 import type { ReceiptCostDTO, ReceiptLineDTO } from "../types";
 
 const line = (overrides: Partial<ReceiptLineDTO> = {}): ReceiptLineDTO => ({
@@ -26,6 +26,20 @@ const cost = (overrides: Partial<ReceiptCostDTO> = {}): ReceiptCostDTO => ({
   enteredBy: "gerente@ocosur.mx",
   enteredAt: "2026-09-15T10:00:00Z",
   ...overrides,
+});
+
+describe("unitSingular", () => {
+  it("singularizes plural units for display", () => {
+    expect(unitSingular("piezas")).toBe("pieza");
+    expect(unitSingular("kilos")).toBe("kilo");
+    expect(unitSingular("bultos")).toBe("bulto");
+  });
+
+  it("leaves singular units untouched", () => {
+    expect(unitSingular("Kilo")).toBe("Kilo");
+    expect(unitSingular("paquete")).toBe("paquete");
+    expect(unitSingular("")).toBe("");
+  });
 });
 
 describe("receipt-cost", () => {

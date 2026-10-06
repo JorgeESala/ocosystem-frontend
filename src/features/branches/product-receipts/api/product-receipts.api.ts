@@ -1,11 +1,14 @@
 import { http } from "@/shared/api/http";
 import type {
+  CatalogProduct,
   ReceiptDetailDTO,
   ReceiptFilters,
   ReceiptLineDTO,
   ReceiptSummaryDTO,
   RecordCostPayload,
   ResolveLinePayload,
+  ResolveLineResponse,
+  ResolveWithProductPayload,
 } from "../types";
 
 export const productReceiptsApi = {
@@ -37,6 +40,22 @@ export const productReceiptsApi = {
     payload: ResolveLinePayload,
   ): Promise<ReceiptLineDTO> => {
     const { data } = await http.put(`/api/receipts/lines/${lineId}/resolve`, payload);
+    return data;
+  },
+
+  resolveWithProduct: async (
+    lineId: number,
+    payload: ResolveWithProductPayload,
+  ): Promise<ResolveLineResponse> => {
+    const { data } = await http.post(
+      `/api/receipts/lines/${lineId}/resolve-with-product`,
+      payload,
+    );
+    return data;
+  },
+
+  catalogProducts: async (): Promise<CatalogProduct[]> => {
+    const { data } = await http.get<CatalogProduct[]>("/api/products");
     return data;
   },
 

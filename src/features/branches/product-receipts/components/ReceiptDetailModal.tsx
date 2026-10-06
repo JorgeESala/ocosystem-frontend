@@ -1,18 +1,33 @@
-import { Alert, Badge, Button, Label, Modal, ModalBody, ModalHeader, TextInput } from "flowbite-react";
+import { Alert, Badge, Button, Checkbox, Label, Modal, ModalBody, ModalHeader, Select, TextInput, Tooltip } from "flowbite-react";
 import { useState } from "react";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
 import type { ReceiptLineDTO } from "../types";
-import { useReceiptDetail, useRecordCost, useResolveLine } from "../api/product-receipts.queries";
-import { lineDisplayName, normalizedLineCost } from "../utils/receipt-cost";
+import {
+  useCatalogProducts,
+  useReceiptDetail,
+  useRecordCost,
+  useResolveLine,
+  useResolveWithProduct,
+} from "../api/product-receipts.queries";
+import { useCategories } from "../../product/api/categories.queries";
+import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
+import { lineDisplayName, normalizedLineCost, unitSingular } from "../utils/receipt-cost";
 
 interface CostForm {
   unitCost: string;
-  costUnit: string;
   factor: string;
 }
 
-const emptyCostForm: CostForm = { unitCost: "", costUnit: "", factor: "" };
+export function CostEquivalenceHelp() {
+  return (
+    <span>
+      Vendemos por pieza, pero el proveedor a veces da el precio por caja o
+      bulto. Si el precio ya es por unidad recibida, desmarca la casilla de
+      paquete.
+    </span>
+  );
+}
 
 function parsePositive(value: string): number | null {
   if (!value.trim()) return null;
@@ -28,33 +43,57 @@ function CostFormFields({
   line: ReceiptLineDTO;
   receiptId: number;
 }) {
-  const [form, setForm] = useState<CostForm>(emptyCostForm);
+  const freshForm = { unitCost: "", factor: "" };
+  const [form, setForm] = useState<CostForm>(freshForm);
+  const [isPackage, setIsPackage] = useState(false);
   const recordCost = useRecordCost(receiptId);
   const amount = parsePositive(form.unitCost);
   const factor = form.factor.trim() ? parsePositive(form.factor) : null;
-  const factorInvalid = form.factor.trim() !== "" && (factor === null || factor <= 0);
-  const valid = amount !== null && form.costUnit.trim() !== "" && !factorInvalid;
+  const factorInvalid = isPackage && (factor === null || factor <= 0);
+  const valid = amount !== null && !factorInvalid;
+  const preview =
+    isPackage && amount !== null && factor !== null && factor > 0
+      ? normalizedLineCost(line, {
+          id: 0,
+          unitCost: amount,
+          costUnit: "paquete",
+          toLineUnitFactor: factor,
+          enteredBy: "",
+          enteredAt: "",
+        })
+      : null;
 
   const handleSave = () => {
     if (!valid || amount === null) return;
     recordCost.mutate(
       {
         lineId: line.id,
-        payload: {
-          unitCost: amount,
-          costUnit: form.costUnit.trim(),
-          toLineUnitFactor: factor,
+        payload: isPackage
+          ? {
+              unitCost: amount,
+              costUnit: "paquete",
+              toLineUnitFactor: factor,
+            }
+          : {
+              unitCost: amount,
+              costUnit: line.unitName,
+              toLineUnitFactor: null,
+            },
+      },
+      {
+        onSuccess: () => {
+          setForm(freshForm);
+          setIsPackage(false);
         },
       },
-      { onSuccess: () => setForm(emptyCostForm) },
     );
   };
 
   return (
     <div className="mt-2 space-y-2 rounded border border-slate-700 p-3">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <div>
-          <Label>Costo unitario</Label>
+          <Label>Costo $</Label>
           <TextInput
             type="number"
             min="0"
@@ -64,26 +103,42 @@ function CostFormFields({
             onChange={(e) => setForm((prev) => ({ ...prev, unitCost: e.target.value }))}
           />
         </div>
+        <span className="rounded bg-slate-700 px-2 py-2 text-sm text-slate-200">
+          por {isPackage ? "paquete" : unitSingular(line.unitName)}
+        </span>
+      </div>
+      <label className="flex items-center gap-2 text-sm text-slate-300">
+        <Checkbox
+          checked={isPackage}
+          onChange={(e) => setIsPackage(e.target.checked)}
+        />
+        Es precio por paquete (caja/bulto)
+      </label>
+      {isPackage && (
         <div>
-          <Label>Unidad del costo</Label>
-          <TextInput
-            placeholder="Kilo"
-            value={form.costUnit}
-            onChange={(e) => setForm((prev) => ({ ...prev, costUnit: e.target.value }))}
-          />
-        </div>
-        <div>
-          <Label>Equivalencia (opcional)</Label>
+          <Label>
+            ¿A cuántas unidades equivale el paquete?{" "}
+            <Tooltip content={<CostEquivalenceHelp />}>
+              <span className="cursor-help text-slate-400 underline">¿Qué es esto?</span>
+            </Tooltip>
+          </Label>
           <TextInput
             type="number"
             min="0"
             step="0.000001"
-            placeholder="Unidades por costo"
+            placeholder={`Ej: 1 caja = 12 ${line.unitName}, escribe 12`}
             value={form.factor}
             onChange={(e) => setForm((prev) => ({ ...prev, factor: e.target.value }))}
           />
+          <p className="text-xs text-slate-400">Recibido en {line.unitName}.</p>
         </div>
-      </div>
+      )}
+      {preview && (
+        <p className="text-sm text-slate-200">
+          {formatMXN(amount!)} por paquete ≈ {formatMXN(preview.amount)} por{" "}
+          {preview.unit}
+        </p>
+      )}
       {factorInvalid && (
         <p className="text-xs text-red-400">La equivalencia debe ser mayor a cero.</p>
       )}
@@ -98,54 +153,189 @@ function CostFormFields({
 }
 
 function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: number }) {
-  const [barcode, setBarcode] = useState("");
-  const [factor, setFactor] = useState("");
+  const [query, setQuery] = useState("");
+  const [selectedBarcode, setSelectedBarcode] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState(line.observedName ?? line.sourceBarcode ?? "");
+  const [barcode, setBarcode] = useState(line.sourceBarcode ?? "");
+  const [categoryId, setCategoryId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const resolve = useResolveLine(receiptId);
-  const parsedFactor = factor.trim() ? parsePositive(factor) : null;
-  const valid = barcode.trim() !== "" && (factor.trim() === "" || (parsedFactor !== null && parsedFactor > 0));
+  const resolveWithProduct = useResolveWithProduct(receiptId);
+  const { data: products = [] } = useCatalogProducts();
+  const { data: categories = [] } = useCategories();
+  const { data: units = [] } = useMeasurementUnits();
+
+  const matches =
+    query.trim() === ""
+      ? []
+      : products
+          .filter(
+            (product) =>
+              product.barcode.toLowerCase().includes(query.trim().toLowerCase()) ||
+              product.name.toLowerCase().includes(query.trim().toLowerCase()),
+          )
+          .slice(0, 20);
+
+  const startCreating = () => {
+    setCreating(true);
+    setSelectedBarcode(null);
+    const matchingUnit = units.find(
+      (unit) => unit.name.toLowerCase() === line.unitName.toLowerCase(),
+    );
+    if (matchingUnit && !unitId) setUnitId(String(matchingUnit.id));
+  };
+
+  const createValid =
+    name.trim() !== "" && barcode.trim() !== "" && categoryId !== "" && unitId !== "";
+
+  const handleCreate = () => {
+    if (!createValid) return;
+    resolveWithProduct.mutate(
+      {
+        lineId: line.id,
+        payload: {
+          productBarcode: barcode.trim(),
+          name: name.trim(),
+          categoryId: Number(categoryId),
+          unitId: Number(unitId),
+        },
+      },
+      {
+        onSuccess: (result) => {
+          setNotice(
+            result.productCreated
+              ? "Producto creado y vinculado."
+              : "El producto ya existía; se vinculó.",
+          );
+          setCreating(false);
+        },
+      },
+    );
+  };
 
   return (
     <div className="mt-2 space-y-2 rounded border border-amber-700 p-3">
       <p className="text-xs text-amber-200">
-        Línea sin resolver: vincúlala a un producto del catálogo.
+        Busca el producto por código o nombre para vincularlo. Si no existe,
+        créalo aquí mismo.
       </p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label>Código del producto</Label>
-          <TextInput
-            placeholder="Código de barras"
-            value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label>Equivalencia (opcional)</Label>
-          <TextInput
-            type="number"
-            min="0"
-            step="0.000001"
-            placeholder="A unidad del producto"
-            value={factor}
-            onChange={(e) => setFactor(e.target.value)}
-          />
-        </div>
+      <div>
+        <Label>Buscar producto</Label>
+        <TextInput
+          placeholder="Código o nombre"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedBarcode(null);
+          }}
+        />
       </div>
+      {query.trim() !== "" && (
+        <div>
+          {matches.length === 0 ? (
+            <p className="text-xs text-slate-400">Sin coincidencias en el catálogo.</p>
+          ) : (
+            <ul className="max-h-32 space-y-1 overflow-y-auto">
+              {matches.map((product) => (
+                <li key={product.barcode}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBarcode(product.barcode);
+                      setCreating(false);
+                    }}
+                    className={`w-full rounded px-2 py-1 text-left text-sm ${
+                      selectedBarcode === product.barcode
+                        ? "bg-amber-600 text-white"
+                        : "bg-slate-800 text-slate-200"
+                    }`}
+                  >
+                    {product.barcode} — {product.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!creating && (
+            <Button
+              size="xs"
+              color="light"
+              className="mt-2"
+              onClick={startCreating}
+            >
+              No es ninguno: crear producto
+            </Button>
+          )}
+        </div>
+      )}
+      {selectedBarcode && !creating && (
+        <Button
+          size="xs"
+          color="yellow"
+          disabled={resolve.isPending}
+          onClick={() =>
+            resolve.mutate({
+              lineId: line.id,
+              payload: { productBarcode: selectedBarcode, toProductUnitFactor: null },
+            })
+          }
+        >
+          Vincular producto
+        </Button>
+      )}
+      {creating && (
+        <div className="space-y-2 rounded border border-slate-700 p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Nombre</Label>
+              <TextInput value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Código de barras</Label>
+              <TextInput value={barcode} onChange={(e) => setBarcode(e.target.value)} />
+            </div>
+            <div>
+              <Label>Categoría</Label>
+              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                <option value="">Selecciona…</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label>Unidad</Label>
+              <Select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+                <option value="">Selecciona…</option>
+                {units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          {resolveWithProduct.isError && (
+            <p className="text-xs text-red-400">No se pudo crear el producto.</p>
+          )}
+          <Button
+            size="xs"
+            color="yellow"
+            disabled={!createValid || resolveWithProduct.isPending}
+            onClick={handleCreate}
+          >
+            Crear y vincular
+          </Button>
+        </div>
+      )}
       {resolve.isError && (
         <p className="text-xs text-red-400">No se pudo vincular. Verifica el código.</p>
       )}
-      <Button
-        size="xs"
-        color="warning"
-        disabled={!valid || resolve.isPending}
-        onClick={() =>
-          resolve.mutate({
-            lineId: line.id,
-            payload: { productBarcode: barcode.trim(), toProductUnitFactor: parsedFactor },
-          })
-        }
-      >
-        Vincular producto
-      </Button>
+      {notice && <p className="text-xs text-green-400">{notice}</p>}
     </div>
   );
 }
