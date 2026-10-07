@@ -1,4 +1,5 @@
 import { http } from "@/shared/api/http";
+import { visibleCatalogProducts } from "@/features/branches/product-catalog/utils/catalog-filter";
 import type {
   CatalogProduct,
   ReceiptDetailDTO,
@@ -56,7 +57,7 @@ export const productReceiptsApi = {
 
   catalogProducts: async (): Promise<CatalogProduct[]> => {
     const { data } = await http.get<CatalogProduct[]>("/api/products");
-    return data;
+    return visibleCatalogProducts(data);
   },
 
   unresolved: async (): Promise<ReceiptLineDTO[]> => {
