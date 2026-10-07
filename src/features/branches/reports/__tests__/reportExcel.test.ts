@@ -26,6 +26,7 @@ const analyticsRow = (
   cancelledSubtotal: 0,
   branchBreakdown: [],
   abcClass: "A",
+  receivedQuantity: null,
   ...overrides,
 });
 
@@ -77,6 +78,7 @@ describe("salesProductsSheet", () => {
       unitName: "kg",
       attachmentFrequency: 1,
       categoryId: 4,
+      receivedQuantity: 6,
     };
 
     const sheet = salesProductsSheet([product]);
@@ -94,6 +96,7 @@ describe("salesProductsSheet", () => {
       unitName: "kg",
       attachmentFrequency: 0,
       categoryId: 3,
+      receivedQuantity: null,
     };
 
     const sheet = salesProductsSheet([merma]);

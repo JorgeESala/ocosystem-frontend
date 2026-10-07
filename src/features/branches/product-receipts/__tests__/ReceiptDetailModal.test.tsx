@@ -70,7 +70,11 @@ vi.mock("../api/product-receipts.queries", () => ({
     isError: false,
   })),
   useCatalogProducts: vi.fn(() => ({
-    data: [{ barcode: "A1", name: "Frijol negro" }],
+    data: [
+      { barcode: "A1", name: "Frijol negro", status: "ACTIVE" },
+      { barcode: "IT-9", name: "IT Prueba", status: "ACTIVE" },
+      { barcode: "P1", name: "Pendiente", status: "PENDING" },
+    ],
   })),
 }));
 

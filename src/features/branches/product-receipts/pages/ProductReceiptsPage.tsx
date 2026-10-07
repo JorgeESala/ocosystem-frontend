@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Checkbox, Label, Spinner, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, TextInput } from "flowbite-react";
+import { Alert, Badge, Button, Checkbox, Datepicker, Label, Spinner, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import { useState } from "react";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import { useBranches } from "@/features/branches/branch/branch.queries";
@@ -7,16 +7,37 @@ import type { ReceiptFilters } from "../types";
 import { useProductReceipts } from "../api/product-receipts.queries";
 import ReceiptDetailModal from "../components/ReceiptDetailModal";
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const toLocalIso = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}`;
+
+const defaultRange = () => {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(to.getDate() - 6);
+  return { from, to };
+};
+
+const defaultFilters = (): ReceiptFilters => {
+  const { from, to } = defaultRange();
+  return {
+    branchIds: [],
+    from: toLocalIso(from),
+    to: toLocalIso(to),
+    pendingCostOnly: false,
+    unresolvedOnly: false,
+  };
+};
 
 export default function ProductReceiptsPage() {
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
-  const [from, setFrom] = useState(todayIso());
-  const [to, setTo] = useState(todayIso());
-  const [pendingCostOnly, setPendingCostOnly] = useState(true);
+  const [from, setFrom] = useState<Date | null>(() => defaultRange().from);
+  const [to, setTo] = useState<Date | null>(() => defaultRange().to);
+  const [pendingCostOnly, setPendingCostOnly] = useState(false);
   const [unresolvedOnly, setUnresolvedOnly] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<ReceiptFilters | null>(null);
+  const [activeFilters, setActiveFilters] = useState<ReceiptFilters>(defaultFilters);
   const [selectedReceiptId, setSelectedReceiptId] = useState<number | null>(null);
 
   const receiptsQuery = useProductReceipts(activeFilters);
@@ -26,11 +47,21 @@ export default function ProductReceiptsPage() {
     if (!from || !to) return;
     setActiveFilters({
       branchIds: selectedBranchIds,
-      from,
-      to,
+      from: toLocalIso(from),
+      to: toLocalIso(to),
       pendingCostOnly,
       unresolvedOnly,
     });
+  };
+
+  const handleClear = () => {
+    const { from: defaultFrom, to: defaultTo } = defaultRange();
+    setSelectedBranchIds([]);
+    setFrom(defaultFrom);
+    setTo(defaultTo);
+    setPendingCostOnly(false);
+    setUnresolvedOnly(false);
+    setActiveFilters(defaultFilters());
   };
 
   return (
@@ -50,11 +81,11 @@ export default function ProductReceiptsPage() {
         />
         <div>
           <Label>Desde</Label>
-          <TextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <Datepicker language="es-MX" value={from} onChange={setFrom} />
         </div>
         <div>
           <Label>Hasta</Label>
-          <TextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <Datepicker language="es-MX" value={to} onChange={setTo} />
         </div>
         <div className="flex items-end gap-4">
           <label className="flex items-center gap-2 text-sm text-slate-300">
@@ -76,26 +107,12 @@ export default function ProductReceiptsPage() {
 
       <div className="flex gap-2">
         <Button onClick={handleSearch}>Buscar</Button>
-        <Button
-          color="light"
-          onClick={() => {
-            setSelectedBranchIds([]);
-            setFrom(todayIso());
-            setTo(todayIso());
-            setPendingCostOnly(true);
-            setUnresolvedOnly(false);
-            setActiveFilters(null);
-          }}
-        >
+        <Button color="light" onClick={handleClear}>
           Limpiar
         </Button>
       </div>
 
-      {!activeFilters ? (
-        <p className="text-sm text-slate-400">
-          Selecciona el rango de fechas y presiona Buscar para ver las recepciones.
-        </p>
-      ) : receiptsQuery.isLoading || loadingBranches ? (
+      {receiptsQuery.isLoading || loadingBranches ? (
         <div className="flex justify-center py-10">
           <Spinner size="lg" />
         </div>

@@ -24,6 +24,7 @@ export interface ProductAnalyticsRowDTO {
   cancelledSubtotal: number;
   branchBreakdown: ProductBranchBreakdownDTO[];
   abcClass: "A" | "B" | "C";
+  receivedQuantity: number | null;
 }
 
 export interface ProductAnalyticsDTO {

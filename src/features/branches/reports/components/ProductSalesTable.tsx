@@ -68,9 +68,10 @@ export const ProductSalesTable = ({
     return sortedProducts.reduce(
       (acc, curr) => ({
         qty: acc.qty + curr.quantitySold,
+        received: acc.received + (curr.receivedQuantity ?? 0),
         sales: acc.sales + (curr.totalSales ?? 0),
       }),
-      { qty: 0, sales: 0 },
+      { qty: 0, received: 0, sales: 0 },
     );
   }, [sortedProducts]);
 
@@ -164,6 +165,18 @@ export const ProductSalesTable = ({
                 ))}
             </TableHeadCell>
             <TableHeadCell
+              onClick={() => requestSort("receivedQuantity")}
+              className="cursor-pointer text-center hover:bg-gray-700"
+            >
+              Cant. Recibida{" "}
+              {sortConfig?.key === "receivedQuantity" &&
+                (sortConfig.direction === "asc" ? (
+                  <HiChevronUp className="inline" />
+                ) : (
+                  <HiChevronDown className="inline" />
+                ))}
+            </TableHeadCell>
+            <TableHeadCell
               onClick={() => requestSort("totalSales")}
               className="cursor-pointer hover:bg-gray-700"
             >
@@ -216,6 +229,18 @@ export const ProductSalesTable = ({
                     {prod.unitName}
                   </span>
                 </TableCell>
+                <TableCell className="text-center font-mono">
+                  {prod.receivedQuantity == null ? (
+                    <span className="text-gray-500">—</span>
+                  ) : (
+                    <>
+                      {formatUnits(prod.receivedQuantity)}{" "}
+                      <span className="text-[10px] text-gray-500">
+                        {prod.unitName}
+                      </span>
+                    </>
+                  )}
+                </TableCell>
                 <TableCell className="font-bold">
                   <div className="flex flex-col items-end">
                     {/* Monto Total */}
@@ -264,6 +289,9 @@ export const ProductSalesTable = ({
               <TableCell className="text-center">—</TableCell>
               <TableCell className="text-center text-lg text-white">
                 {formatUnits(totals.qty)}
+              </TableCell>
+              <TableCell className="text-center text-lg text-white">
+                {formatUnits(totals.received)}
               </TableCell>
               <TableCell className="text-lg text-green-400">
                 {formatMXN(totals.sales)}
