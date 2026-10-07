@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductReceiptsPage from "../pages/ProductReceiptsPage";
+import type { ReceiptFilters } from "../types";
 
 vi.mock("../../branch/branch.queries", () => ({
   useBranches: vi.fn(() => ({
@@ -17,6 +18,8 @@ vi.mock("../api/product-receipts.queries", () => ({
   useReceiptDetail: vi.fn(),
   useRecordCost: vi.fn(),
   useResolveLine: vi.fn(),
+  useResolveWithProduct: vi.fn(),
+  useCatalogProducts: vi.fn(),
 }));
 
 vi.mock("../components/ReceiptDetailModal", () => ({
@@ -39,6 +42,9 @@ function renderPage() {
     </QueryClientProvider>,
   );
 }
+
+const lastCallFilters = (): ReceiptFilters =>
+  useProductReceipts.mock.calls[useProductReceipts.mock.calls.length - 1][0];
 
 const summaries = [
   {
@@ -66,44 +72,65 @@ const summaries = [
 describe("ProductReceiptsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useProductReceipts.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+    useProductReceipts.mockReturnValue({ data: summaries, isLoading: false, isError: false });
   });
 
-  it("asks for a search before listing receipts", () => {
+  it("shows the last 7 days from all branches on load, without searching", () => {
     renderPage();
 
     expect(screen.getByText("Recepción de productos")).toBeInTheDocument();
-    expect(screen.getByText(/presiona Buscar/)).toBeInTheDocument();
-    expect(useProductReceipts).toHaveBeenCalledWith(null);
+    expect(screen.getByText("#11")).toBeInTheDocument();
+
+    const filters = lastCallFilters();
+    expect(filters.branchIds).toEqual([]);
+    expect(filters.pendingCostOnly).toBe(false);
+    expect(filters.unresolvedOnly).toBe(false);
+    const spanDays =
+      (new Date(filters.to).getTime() - new Date(filters.from).getTime()) / 86400000;
+    expect(spanDays).toBe(6);
   });
 
   it("lists receipts with pending-cost and unresolved states", () => {
-    useProductReceipts.mockReturnValue({ data: summaries, isLoading: false, isError: false });
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
-
-    expect(screen.getByText("#11")).toBeInTheDocument();
     expect(screen.getByText("Sin costo (2)")).toBeInTheDocument();
     expect(screen.getByText("Sin resolver (1)")).toBeInTheDocument();
     expect(screen.getByText("Con costo")).toBeInTheDocument();
   });
 
-  it("does not search without a date range", () => {
+  it("uses flowbite date selectors", () => {
     renderPage();
 
-    const dateInputs = screen.getAllByDisplayValue(/\d{4}-\d{2}-\d{2}/);
-    fireEvent.change(dateInputs[0], { target: { value: "" } });
+    expect(screen.getByText("Desde")).toBeInTheDocument();
+    expect(screen.getByText("Hasta")).toBeInTheDocument();
+  });
+
+  it("applies the toggles when searching", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText("Sin costo"));
     fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
 
-    expect(screen.getByText(/presiona Buscar/)).toBeInTheDocument();
+    expect(lastCallFilters().pendingCostOnly).toBe(true);
+  });
+
+  it("restores the default 7-day view when clearing", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByText("Sin costo"));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    expect(lastCallFilters().pendingCostOnly).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpiar" }));
+
+    const filters = lastCallFilters();
+    expect(filters.pendingCostOnly).toBe(false);
+    expect(filters.branchIds).toEqual([]);
   });
 
   it("opens the receipt detail when a row is clicked", () => {
-    useProductReceipts.mockReturnValue({ data: summaries, isLoading: false, isError: false });
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
     fireEvent.click(screen.getByText("#11"));
 
     expect(screen.getByTestId("receipt-modal")).toHaveTextContent("Detalle 11");
@@ -112,8 +139,6 @@ describe("ProductReceiptsPage", () => {
   it("shows an error state when loading fails", () => {
     useProductReceipts.mockReturnValue({ data: undefined, isLoading: false, isError: true });
     renderPage();
-
-    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
 
     expect(screen.getByText("No se pudieron cargar las recepciones.")).toBeInTheDocument();
   });
