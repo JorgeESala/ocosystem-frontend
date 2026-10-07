@@ -86,7 +86,7 @@ describe("ProductReceiptsPage", () => {
     expect(filters.pendingCostOnly).toBe(false);
     expect(filters.unresolvedOnly).toBe(false);
     const spanDays =
-      (new Date(filters.to).getTime() - new Date(filters.from).getTime()) / 86400000;
+      (new Date(filters.to!).getTime() - new Date(filters.from!).getTime()) / 86400000;
     expect(spanDays).toBe(6);
   });
 
