@@ -20,6 +20,7 @@ const row = (
   cancelledQuantity: 0,
   cancelledSubtotal: 0,
   abcClass: "C",
+  receivedQuantity: null,
   branchBreakdown: [
     { branchId: 1, branchName: "Centro", quantity: 7, sales: 700 },
     { branchId: 2, branchName: "Norte", quantity: 3, sales: 300 },

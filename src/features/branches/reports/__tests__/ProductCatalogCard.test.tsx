@@ -23,6 +23,7 @@ const row = (
   cancelledSubtotal: 0,
   branchBreakdown: [],
   abcClass: "C",
+  receivedQuantity: null,
   ...overrides,
 });
 
@@ -120,6 +121,26 @@ describe("ProductCatalogCard", () => {
     });
 
     expect(onSearchChange).toHaveBeenCalledWith("pollo");
+  });
+
+  it("shows received quantities and a dash when nothing was recorded", () => {
+    render(
+      <ProductCatalogCard
+        {...baseProps}
+        rows={[
+          row("IT-A", "Producto A", { quantity: 4, receivedQuantity: 12.5 }),
+          row("IT-B", "Producto B", { receivedQuantity: null }),
+        ]}
+        total={2}
+        page={0}
+        pageSize={10}
+        onPageChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Recibido")).toBeTruthy();
+    expect(screen.getByText("12.5")).toBeTruthy();
+    expect(screen.getByText("—")).toBeTruthy();
   });
 
   it("shows an empty state without matches", () => {
