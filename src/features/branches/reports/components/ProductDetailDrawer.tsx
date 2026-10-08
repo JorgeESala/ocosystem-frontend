@@ -153,7 +153,7 @@ export const ProductDetailDrawer = ({
                             {variant.productBarcode}
                             {variant.isCanonical && (
                               <Badge color="success" className="ml-2">
-                                canónico
+                                principal
                               </Badge>
                             )}
                           </td>

@@ -14,13 +14,13 @@ export interface CatalogProductRow {
   categoryName: string | null;
   unitName: string | null;
   status: string | null;
-  /** Stable group key shared by every variant of this product. */
+  /** Stable key shared by every code of this product. */
   sku: string;
-  /** True when this row owns the group (its name/category win in reports). */
+  /** True when this row is the principal code (its name/category win in reports). */
   isCanonical: boolean;
 }
 
-export interface ProductGroupVariant {
+export interface ProductCanonicalMember {
   barcode: string;
   name: string;
   status: string | null;
@@ -28,11 +28,11 @@ export interface ProductGroupVariant {
   isCanonical: boolean;
 }
 
-export interface ProductGroup {
+export interface ProductCanonical {
   sku: string;
   canonicalBarcode: string;
   canonicalName: string;
-  variants: ProductGroupVariant[];
+  members: ProductCanonicalMember[];
 }
 
 export interface CreateProductPayload {

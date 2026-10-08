@@ -40,11 +40,11 @@ export default function LinkProductModal({
       .slice(0, 30);
   }, [products, query, product]);
 
-  const groupOf = (row: CatalogProductRow) =>
+  const codesOf = (row: CatalogProductRow) =>
     products.filter((candidate) => candidate.sku === row.sku);
 
-  const sourceGroup = groupOf(product);
-  const targetGroup = target ? groupOf(target) : [];
+  const sourceCodes = codesOf(product);
+  const targetCodes = target ? codesOf(target) : [];
 
   const handleLink = async () => {
     if (!target) return;
@@ -104,16 +104,16 @@ export default function LinkProductModal({
               ))
             )}
           </div>
-          {target && sourceGroup.length > 1 && (
+          {target && sourceCodes.length > 1 && (
             <Alert color="warning">
-              "{product.name}" tiene {sourceGroup.length} códigos en el catálogo
-              y se moverán todos al grupo destino.
+              "{product.name}" tiene {sourceCodes.length} códigos en el catálogo
+              y se moverán todos al producto destino.
             </Alert>
           )}
-          {target && targetGroup.length > 1 && (
+          {target && targetCodes.length > 1 && (
             <Alert color="warning">
-              El destino ya tiene {targetGroup.length} códigos: los de este
-              grupo se unirán con ellos.
+              El producto destino ya tiene {targetCodes.length} códigos: los de
+              este producto se unirán a ellos.
             </Alert>
           )}
           {target && categoryChanged && (

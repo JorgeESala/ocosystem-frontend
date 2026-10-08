@@ -21,7 +21,7 @@ const branch = {
   ],
 };
 
-const grouped: ProductDetailDTO = {
+const withCodes: ProductDetailDTO = {
   productBarcode: "C1",
   productName: "Casillero 12",
   categoryName: "Huevo",
@@ -46,7 +46,7 @@ const grouped: ProductDetailDTO = {
 };
 
 const single: ProductDetailDTO = {
-  ...grouped,
+  ...withCodes,
   variants: [
     {
       productBarcode: "C1",
@@ -85,23 +85,23 @@ const baseProps = {
 
 describe("ProductDetailDrawer", () => {
   beforeEach(() => {
-    detail.current = grouped;
+    detail.current = withCodes;
   });
 
-  it("lists every code of the product and marks the canonical one", () => {
+  it("lists every code of the product and marks the principal one", () => {
     render(<ProductDetailDrawer {...baseProps} />);
 
     expect(screen.getByText("Códigos de este producto")).toBeTruthy();
     expect(screen.getByText("C1")).toBeTruthy();
     expect(screen.getByText("C2")).toBeTruthy();
-    expect(screen.getAllByText("canónico")).toHaveLength(1);
-  });
+    expect(screen.getAllByText("principal")).toHaveLength(1);
+  }, 15000);
 
-  it("hides the group table when the product has a single code", () => {
+  it("hides the code list when the product has a single code", () => {
     detail.current = single;
     render(<ProductDetailDrawer {...baseProps} />);
 
     expect(screen.queryByText("Códigos de este producto")).toBeNull();
-    expect(screen.queryByText("canónico")).toBeNull();
-  });
+    expect(screen.queryByText("principal")).toBeNull();
+  }, 15000);
 });

@@ -281,7 +281,7 @@ describe("ProductsPage", () => {
     confirmSpy.mockRestore();
   });
 
-  it("groups the codes together and marks the canonical row", () => {
+  it("lists the codes of a product together and marks the principal row", () => {
     catalogData = [
       {
         barcode: "Z1",
@@ -320,7 +320,7 @@ describe("ProductsPage", () => {
       .filter(Boolean);
 
     expect(codes).toEqual(["C1", "C2", "Z1"]);
-    expect(screen.getAllByText("canónico")).toHaveLength(1);
+    expect(screen.getAllByText("principal")).toHaveLength(1);
     expect(screen.getByText("de C1")).toBeInTheDocument();
   });
 });

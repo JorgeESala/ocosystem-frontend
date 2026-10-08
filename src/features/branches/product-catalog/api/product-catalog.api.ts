@@ -2,7 +2,7 @@ import { http } from "@/shared/api/http";
 import type {
   CatalogProductRow,
   CreateProductPayload,
-  ProductGroup,
+  ProductCanonical,
 } from "../types";
 import { isTestRow } from "../utils/catalog-filter";
 
@@ -41,16 +41,16 @@ export const productCatalogApi = {
   link: async (
     targetBarcode: string,
     barcodes: string[],
-  ): Promise<ProductGroup> => {
-    const { data } = await http.post<ProductGroup>("/api/products/link", {
+  ): Promise<ProductCanonical> => {
+    const { data } = await http.post<ProductCanonical>("/api/products/link", {
       targetBarcode,
       barcodes,
     });
     return data;
   },
 
-  unlink: async (barcode: string): Promise<ProductGroup> => {
-    const { data } = await http.post<ProductGroup>(
+  unlink: async (barcode: string): Promise<ProductCanonical> => {
+    const { data } = await http.post<ProductCanonical>(
       `/api/products/${encodeURIComponent(barcode)}/unlink`,
     );
     return data;

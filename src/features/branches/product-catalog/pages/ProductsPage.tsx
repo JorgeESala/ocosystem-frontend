@@ -28,7 +28,7 @@ export default function ProductsPage() {
   const { data: products = [], isLoading, isError } = useProductCatalog();
   const unlink = useUnlinkProduct();
 
-  const groupCounts = useMemo(() => {
+  const codeCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const product of products) {
       counts.set(product.sku, (counts.get(product.sku) ?? 0) + 1);
@@ -56,9 +56,10 @@ export default function ProductsPage() {
               product.name.toLowerCase().includes(query.trim().toLowerCase()),
           );
     return filtered.sort((left, right) => {
-      const leftGroup = canonicalBySku.get(left.sku) ?? left.sku;
-      const rightGroup = canonicalBySku.get(right.sku) ?? right.sku;
-      if (leftGroup !== rightGroup) return leftGroup.localeCompare(rightGroup);
+      const leftProduct = canonicalBySku.get(left.sku) ?? left.sku;
+      const rightProduct = canonicalBySku.get(right.sku) ?? right.sku;
+      if (leftProduct !== rightProduct)
+        return leftProduct.localeCompare(rightProduct);
       if (left.isCanonical !== right.isCanonical) {
         return left.isCanonical ? -1 : 1;
       }
@@ -126,22 +127,22 @@ export default function ProductsPage() {
               <TableHeadCell>Categoría</TableHeadCell>
               <TableHeadCell>Unidad</TableHeadCell>
               <TableHeadCell>Estado</TableHeadCell>
-              <TableHeadCell>Grupo</TableHeadCell>
+              <TableHeadCell>Códigos</TableHeadCell>
               <TableHeadCell>
                 <span className="sr-only">Acciones</span>
               </TableHeadCell>
             </TableHead>
             <TableBody>
               {matches.map((product, index) => {
-                const groupSize = groupCounts.get(product.sku) ?? 1;
-                const startsGroup =
-                  groupSize > 1 &&
+                const codeCount = codeCounts.get(product.sku) ?? 1;
+                const startsProduct =
+                  codeCount > 1 &&
                   (index === 0 || matches[index - 1].sku !== product.sku);
                 return (
                   <TableRow
                     key={product.barcode}
                     className={
-                      startsGroup ? "border-t border-slate-700" : undefined
+                      startsProduct ? "border-t border-slate-700" : undefined
                     }
                   >
                     <TableCell className="font-mono">
@@ -170,11 +171,11 @@ export default function ProductsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {groupSize > 1 ? (
+                      {codeCount > 1 ? (
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge color="info">{groupSize} códigos</Badge>
+                          <Badge color="info">{codeCount} códigos</Badge>
                           {product.isCanonical && (
-                            <Badge color="success">canónico</Badge>
+                            <Badge color="success">principal</Badge>
                           )}
                         </div>
                       ) : (
