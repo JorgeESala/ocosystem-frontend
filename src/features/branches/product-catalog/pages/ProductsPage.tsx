@@ -36,16 +36,35 @@ export default function ProductsPage() {
     return counts;
   }, [products]);
 
-  const matches =
-    query.trim() === ""
-      ? products
-      : products.filter(
-          (product) =>
-            product.barcode
-              .toLowerCase()
-              .includes(query.trim().toLowerCase()) ||
-            product.name.toLowerCase().includes(query.trim().toLowerCase()),
-        );
+  const canonicalBySku = useMemo(() => {
+    const canonical = new Map<string, string>();
+    for (const product of products) {
+      if (product.isCanonical) canonical.set(product.sku, product.barcode);
+    }
+    return canonical;
+  }, [products]);
+
+  const matches = useMemo(() => {
+    const filtered =
+      query.trim() === ""
+        ? [...products]
+        : products.filter(
+            (product) =>
+              product.barcode
+                .toLowerCase()
+                .includes(query.trim().toLowerCase()) ||
+              product.name.toLowerCase().includes(query.trim().toLowerCase()),
+          );
+    return filtered.sort((left, right) => {
+      const leftGroup = canonicalBySku.get(left.sku) ?? left.sku;
+      const rightGroup = canonicalBySku.get(right.sku) ?? right.sku;
+      if (leftGroup !== rightGroup) return leftGroup.localeCompare(rightGroup);
+      if (left.isCanonical !== right.isCanonical) {
+        return left.isCanonical ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name, "es");
+    });
+  }, [products, query, canonicalBySku]);
 
   const handleUnlink = async (barcode: string) => {
     if (
@@ -113,19 +132,32 @@ export default function ProductsPage() {
               </TableHeadCell>
             </TableHead>
             <TableBody>
-              {matches.map((product) => {
+              {matches.map((product, index) => {
                 const groupSize = groupCounts.get(product.sku) ?? 1;
+                const startsGroup =
+                  groupSize > 1 &&
+                  (index === 0 || matches[index - 1].sku !== product.sku);
                 return (
-                  <TableRow key={product.barcode}>
+                  <TableRow
+                    key={product.barcode}
+                    className={
+                      startsGroup ? "border-t border-slate-700" : undefined
+                    }
+                  >
                     <TableCell className="font-mono">
                       {product.barcode}
                     </TableCell>
                     <TableCell>
                       {product.name}
                       {!product.isCanonical && (
-                        <Badge color="indigo" className="ml-2">
-                          variante
-                        </Badge>
+                        <>
+                          <Badge color="indigo" className="ml-2">
+                            variante
+                          </Badge>
+                          <span className="ml-2 text-xs text-slate-500">
+                            de {canonicalBySku.get(product.sku) ?? product.sku}
+                          </span>
+                        </>
                       )}
                     </TableCell>
                     <TableCell>{product.categoryName ?? "-"}</TableCell>
@@ -139,7 +171,12 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       {groupSize > 1 ? (
-                        <Badge color="info">{groupSize} códigos</Badge>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge color="info">{groupSize} códigos</Badge>
+                          {product.isCanonical && (
+                            <Badge color="success">canónico</Badge>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-slate-500">-</span>
                       )}

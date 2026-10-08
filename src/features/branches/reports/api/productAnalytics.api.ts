@@ -58,6 +58,7 @@ export interface ProductVariantDTO {
   productName: string;
   quantity: number;
   sales: number;
+  isCanonical?: boolean;
 }
 
 export interface ProductDetailDTO {

@@ -280,4 +280,47 @@ describe("ProductsPage", () => {
     expect(unlinkProduct).toHaveBeenCalledWith("C2");
     confirmSpy.mockRestore();
   });
+
+  it("groups the codes together and marks the canonical row", () => {
+    catalogData = [
+      {
+        barcode: "Z1",
+        name: "Zeta",
+        categoryName: "Abarrotes",
+        unitName: "Kilo",
+        status: "ACTIVE",
+        sku: "Z1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+    ];
+
+    renderPage();
+
+    const codes = screen
+      .getAllByRole("row")
+      .map((row) => row.querySelector("td")?.textContent ?? "")
+      .filter(Boolean);
+
+    expect(codes).toEqual(["C1", "C2", "Z1"]);
+    expect(screen.getAllByText("canónico")).toHaveLength(1);
+    expect(screen.getByText("de C1")).toBeInTheDocument();
+  });
 });

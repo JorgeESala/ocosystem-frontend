@@ -151,6 +151,11 @@ export const ProductDetailDrawer = ({
                         <tr key={variant.productBarcode}>
                           <td className="py-2 font-mono text-white">
                             {variant.productBarcode}
+                            {variant.isCanonical && (
+                              <Badge color="success" className="ml-2">
+                                canónico
+                              </Badge>
+                            )}
                           </td>
                           <td className="py-2 text-white">
                             {variant.productName}
