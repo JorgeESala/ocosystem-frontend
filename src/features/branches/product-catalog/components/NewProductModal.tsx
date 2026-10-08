@@ -4,19 +4,7 @@ import { useCategories } from "../../product/api/categories.queries";
 import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
 import { visibleCatalogEntries } from "../utils/catalog-filter";
 import { useCreateProduct } from "../api/product-catalog.queries";
-
-function serverMessage(error: unknown): string {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "response" in error &&
-    typeof (error as { response?: unknown }).response === "object"
-  ) {
-    const data = (error as { response?: { data?: { message?: unknown } } }).response?.data;
-    if (data && typeof data.message === "string" && data.message) return data.message;
-  }
-  return "No se pudo crear el producto.";
-}
+import { serverMessage } from "../utils/error-message";
 
 export default function NewProductModal({ onClose }: { onClose: () => void }) {
   const [barcode, setBarcode] = useState("");
@@ -94,7 +82,10 @@ export default function NewProductModal({ onClose }: { onClose: () => void }) {
           </div>
           {createProduct.isError && (
             <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
-              {serverMessage(createProduct.error)}
+              {serverMessage(
+                createProduct.error,
+                "No se pudo crear el producto.",
+              )}
             </Alert>
           )}
           <Button

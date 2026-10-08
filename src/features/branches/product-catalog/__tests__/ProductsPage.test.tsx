@@ -4,27 +4,41 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductsPage from "../pages/ProductsPage";
 
 const createProduct = vi.fn();
+const linkProduct = vi.fn();
+const unlinkProduct = vi.fn();
 
+const defaultCatalog = [
+  {
+    barcode: "A1",
+    name: "Frijol negro",
+    categoryName: "Abarrotes",
+    unitName: "Kilo",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: true,
+  },
+  {
+    barcode: "H1",
+    name: "Horchata",
+    categoryName: null,
+    unitName: "Pieza",
+    status: "ACTIVE",
+    sku: "H1",
+    isCanonical: true,
+  },
+];
+
+let catalogData: Record<string, unknown>[] = [...defaultCatalog];
 let createState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let linkState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let unlinkState: { isError: boolean; error: unknown } = {
+  isError: false,
+  error: null,
+};
 
 vi.mock("../api/product-catalog.queries", () => ({
   useProductCatalog: vi.fn(() => ({
-    data: [
-      {
-        barcode: "A1",
-        name: "Frijol negro",
-        categoryName: "Abarrotes",
-        unitName: "Kilo",
-        status: "ACTIVE",
-      },
-      {
-        barcode: "H1",
-        name: "Horchata",
-        categoryName: null,
-        unitName: "Pieza",
-        status: "ACTIVE",
-      },
-    ],
+    data: catalogData,
     isLoading: false,
     isError: false,
   })),
@@ -33,6 +47,18 @@ vi.mock("../api/product-catalog.queries", () => ({
     isPending: false,
     isError: createState.isError,
     error: createState.error,
+  })),
+  useLinkProduct: vi.fn(() => ({
+    mutateAsync: linkProduct,
+    isPending: false,
+    isError: linkState.isError,
+    error: linkState.error,
+  })),
+  useUnlinkProduct: vi.fn(() => ({
+    mutateAsync: unlinkProduct,
+    isPending: false,
+    isError: unlinkState.isError,
+    error: unlinkState.error,
   })),
 }));
 
@@ -68,7 +94,10 @@ function renderPage() {
 describe("ProductsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    catalogData = [...defaultCatalog];
     createState = { isError: false, error: null };
+    linkState = { isError: false, error: null };
+    unlinkState = { isError: false, error: null };
   });
 
   it("lists catalog products with their status", () => {
@@ -129,5 +158,126 @@ describe("ProductsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Nuevo producto" }));
 
     expect(screen.getByText("El producto ya existe: A1")).toBeInTheDocument();
+  });
+
+  it("shows how many codes share the same product", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    expect(screen.getAllByText("2 códigos")).toHaveLength(2);
+    expect(screen.getByText("variante")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Desvincular" })).toHaveLength(1);
+  });
+
+  it("shows the server message when the link fails", () => {
+    linkState = {
+      isError: true,
+      error: {
+        response: { data: { message: "Debe indicar el producto destino" } },
+      },
+    };
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+
+    expect(
+      screen.getByText("Debe indicar el producto destino"),
+    ).toBeInTheDocument();
+  });
+
+  it("warns that every code of a multi-code product moves with it", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Casillero 24/ }));
+
+    expect(screen.getByText(/2 códigos en el catálogo/)).toBeInTheDocument();
+  });
+
+  it("asks for confirmation before unlinking a variant", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+    ];
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(unlinkProduct).not.toHaveBeenCalled();
+
+    confirmSpy.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
+
+    expect(unlinkProduct).toHaveBeenCalledWith("C2");
+    confirmSpy.mockRestore();
   });
 });
