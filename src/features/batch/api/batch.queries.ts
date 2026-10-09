@@ -190,6 +190,7 @@ export const useBulkUpdateBatchSaleRoute = () => {
 export const useWeeklySalesReport = (
   startDate: string | null,
   endDate: string | null,
+  fixedWeeks?: boolean,
 ) => {
   const { slug } = useParams<{ slug: string }>();
 
@@ -198,8 +199,9 @@ export const useWeeklySalesReport = (
       slug,
       startDate ?? undefined,
       endDate ?? undefined,
+      fixedWeeks,
     ),
-    queryFn: () => api.getWeeklySalesReport(startDate!, endDate!),
+    queryFn: () => api.getWeeklySalesReport(startDate!, endDate!, fixedWeeks),
     enabled: !!slug && !!startDate && !!endDate,
   });
 };

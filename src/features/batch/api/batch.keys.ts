@@ -21,6 +21,7 @@ export const batchKeys = {
     business: string | undefined,
     startDate?: string,
     endDate?: string,
+    fixedWeeks?: boolean,
   ) =>
     [
       ...batchKeys.all,
@@ -28,6 +29,7 @@ export const batchKeys = {
       business ?? "public",
       startDate,
       endDate,
+      fixedWeeks ?? false,
     ] as const,
 
   salesByClient: (
