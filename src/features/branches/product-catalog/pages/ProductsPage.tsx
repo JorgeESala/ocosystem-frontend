@@ -150,12 +150,24 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       {product.name}
-                      {!product.isCanonical && (
+                      {product.isCanonical ? (
+                        codeCount > 1 && (
+                          <Badge
+                            color="success"
+                            className="ml-2 inline-flex w-fit"
+                          >
+                            principal
+                          </Badge>
+                        )
+                      ) : (
                         <>
-                          <Badge color="indigo" className="ml-2">
+                          <Badge
+                            color="indigo"
+                            className="ml-2 inline-flex w-fit"
+                          >
                             variante
                           </Badge>
-                          <span className="ml-2 text-xs text-slate-500">
+                          <span className="ml-2 text-xs whitespace-nowrap text-slate-500">
                             de {canonicalBySku.get(product.sku) ?? product.sku}
                           </span>
                         </>
@@ -165,19 +177,20 @@ export default function ProductsPage() {
                     <TableCell>{product.unitName ?? "-"}</TableCell>
                     <TableCell>
                       {product.status === "ACTIVE" ? (
-                        <Badge color="success">Activo</Badge>
+                        <Badge color="success" className="inline-flex w-fit">
+                          Activo
+                        </Badge>
                       ) : (
-                        <Badge color="gray">{product.status ?? "-"}</Badge>
+                        <Badge color="gray" className="inline-flex w-fit">
+                          {product.status ?? "-"}
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {codeCount > 1 ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge color="info">{codeCount} códigos</Badge>
-                          {product.isCanonical && (
-                            <Badge color="success">principal</Badge>
-                          )}
-                        </div>
+                        <Badge color="info" className="inline-flex w-fit">
+                          {codeCount} códigos
+                        </Badge>
                       ) : (
                         <span className="text-slate-500">-</span>
                       )}

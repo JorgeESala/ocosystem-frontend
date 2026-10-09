@@ -152,7 +152,10 @@ export const ProductDetailDrawer = ({
                           <td className="py-2 font-mono text-white">
                             {variant.productBarcode}
                             {variant.isCanonical && (
-                              <Badge color="success" className="ml-2">
+                              <Badge
+                                color="success"
+                                className="ml-2 inline-flex w-fit"
+                              >
                                 principal
                               </Badge>
                             )}
