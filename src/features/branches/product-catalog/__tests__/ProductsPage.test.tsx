@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductsPage from "../pages/ProductsPage";
 
@@ -322,5 +322,103 @@ describe("ProductsPage", () => {
     expect(codes).toEqual(["C1", "C2", "Z1"]);
     expect(screen.getAllByText("principal")).toHaveLength(1);
     expect(screen.getByText("de C1")).toBeInTheDocument();
+  });
+
+  it("only lists principal products as link targets", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+      {
+        barcode: "D2",
+        name: "Casillero 24 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByText("Casillero 24")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Casillero 12 promo")).toBeNull();
+    expect(within(dialog).queryByText("Casillero 24 promo")).toBeNull();
+  });
+
+  it("shows how many codes a link target already has", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+      {
+        barcode: "D2",
+        name: "Casillero 24 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByText("2 códigos")).toBeInTheDocument();
   });
 });

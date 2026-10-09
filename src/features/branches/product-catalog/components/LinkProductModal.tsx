@@ -26,12 +26,20 @@ export default function LinkProductModal({
   const [target, setTarget] = useState<CatalogProductRow | null>(null);
   const link = useLinkProduct();
 
+  const codeCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of products) {
+      counts.set(row.sku, (counts.get(row.sku) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
+
   const candidates = useMemo(() => {
     const q = query.trim().toLowerCase();
     return products
       .filter(
         (candidate) =>
-          candidate.barcode !== product.barcode &&
+          candidate.isCanonical &&
           candidate.sku !== product.sku &&
           (q === "" ||
             candidate.name.toLowerCase().includes(q) ||
@@ -40,11 +48,8 @@ export default function LinkProductModal({
       .slice(0, 30);
   }, [products, query, product]);
 
-  const codesOf = (row: CatalogProductRow) =>
-    products.filter((candidate) => candidate.sku === row.sku);
-
-  const sourceCodes = codesOf(product);
-  const targetCodes = target ? codesOf(target) : [];
+  const sourceCount = codeCounts.get(product.sku) ?? 1;
+  const targetCount = target ? (codeCounts.get(target.sku) ?? 1) : 0;
 
   const handleLink = async () => {
     if (!target) return;
@@ -92,28 +97,31 @@ export default function LinkProductModal({
                   key={candidate.barcode}
                   type="button"
                   onClick={() => setTarget(candidate)}
-                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-700 ${
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-100 hover:bg-gray-700 ${
                     target?.barcode === candidate.barcode ? "bg-gray-700" : ""
                   }`}
                 >
                   <span>{candidate.name}</span>
-                  <span className="font-mono text-xs text-gray-400">
-                    {candidate.barcode}
+                  <span className="flex items-center gap-2 text-xs text-gray-400">
+                    {(codeCounts.get(candidate.sku) ?? 1) > 1 && (
+                      <span>{codeCounts.get(candidate.sku)} códigos</span>
+                    )}
+                    <span className="font-mono">{candidate.barcode}</span>
                   </span>
                 </button>
               ))
             )}
           </div>
-          {target && sourceCodes.length > 1 && (
+          {target && sourceCount > 1 && (
             <Alert color="warning">
-              "{product.name}" tiene {sourceCodes.length} códigos en el catálogo
-              y se moverán todos al producto destino.
+              "{product.name}" tiene {sourceCount} códigos en el catálogo y se
+              moverán todos al producto destino.
             </Alert>
           )}
-          {target && targetCodes.length > 1 && (
+          {target && targetCount > 1 && (
             <Alert color="warning">
-              El producto destino ya tiene {targetCodes.length} códigos: los de
-              este producto se unirán a ellos.
+              El producto destino ya tiene {targetCount} códigos: los de este
+              producto se unirán a ellos.
             </Alert>
           )}
           {target && categoryChanged && (
