@@ -13,6 +13,7 @@ export interface InlineMovement {
   quantity?: number;
   saleTotal?: number;
   clientId?: number;
+  internalClient?: boolean;
   reason?: string;
   [key: string]: unknown;
 }
@@ -42,6 +43,55 @@ const safeNumber = (v: unknown) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
+
+const emptyTotals = (): TripGroup["totals"] => ({
+  kgSold: 0,
+  kgSent: 0,
+  totalPieces: 0,
+  saleTotal: 0,
+  salesCount: 0,
+});
+
+function accumulateTotals(
+  movements: InlineMovement[],
+  into: TripGroup["totals"] = emptyTotals(),
+): TripGroup["totals"] {
+  for (const m of movements) {
+    into.kgSold += safeNumber(m.weight);
+    into.kgSent += safeNumber(m.kgSent);
+    into.totalPieces += safeNumber(m.quantity);
+    into.saleTotal += safeNumber(m.saleTotal);
+    into.salesCount += 1;
+  }
+  return into;
+}
+
+export interface ClientTypeSplit {
+  internal: InlineMovement[];
+  external: InlineMovement[];
+  internalTotals: TripGroup["totals"];
+  externalTotals: TripGroup["totals"];
+}
+
+export function splitMovementsByClientType(
+  movements: InlineMovement[],
+): ClientTypeSplit {
+  const internal: InlineMovement[] = [];
+  const external: InlineMovement[] = [];
+  for (const m of movements) {
+    if (m.type === "SALE" && m.internalClient === true) {
+      internal.push(m);
+    } else {
+      external.push(m);
+    }
+  }
+  return {
+    internal,
+    external,
+    internalTotals: accumulateTotals(internal),
+    externalTotals: accumulateTotals(external),
+  };
+}
 
 const groupKey = (driverId: number | null, date: string) =>
   `${driverId ?? "_"}|${date}`;
