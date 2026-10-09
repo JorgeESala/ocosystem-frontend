@@ -25,6 +25,8 @@ export interface ProductAnalyticsRowDTO {
   branchBreakdown: ProductBranchBreakdownDTO[];
   abcClass: "A" | "B" | "C";
   receivedQuantity: number | null;
+  /** Other codes of the same canonical product (this row shows the canonical one). */
+  variantBarcodes?: string[];
 }
 
 export interface ProductAnalyticsDTO {
@@ -51,12 +53,22 @@ export interface ProductBranchSeriesDTO {
   daily: ProductDailyPointDTO[];
 }
 
+export interface ProductVariantDTO {
+  productBarcode: string;
+  productName: string;
+  quantity: number;
+  sales: number;
+  isCanonical?: boolean;
+}
+
 export interface ProductDetailDTO {
   productBarcode: string;
   productName: string;
   categoryName: string;
   unitName: string;
   branches: ProductBranchSeriesDTO[];
+  /** Every code of the group (canonical included) with its own sales. */
+  variants?: ProductVariantDTO[];
 }
 
 export interface ProductAnalyticsQuery {
