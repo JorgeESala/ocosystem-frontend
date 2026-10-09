@@ -72,6 +72,7 @@ export interface TripSaleDTO {
   batchLabel: string | null;
   clientId?: number | null;
   clientName?: string | null;
+  internalClient?: boolean | null;
   employeeName?: string | null;
   routeName?: string | null;
   saleDate: string;

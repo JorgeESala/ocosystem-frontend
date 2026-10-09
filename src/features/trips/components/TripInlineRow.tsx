@@ -23,7 +23,11 @@ import {
   useUpdateTrip,
 } from "../api/trips.queries";
 import { useBulkUpdateBatchSaleRoute } from "@/features/batch/api/batch.queries";
-import { saleIsFromOtherBatch, type TripGroup } from "../utils/tripGrouping";
+import {
+  saleIsFromOtherBatch,
+  splitMovementsByClientType,
+  type TripGroup,
+} from "../utils/tripGrouping";
 
 interface TripInlineRowProps {
   unitType: TripsUnitType;
@@ -160,6 +164,11 @@ export default function TripInlineRow({
         saleIsFromOtherBatch(s, currentBatchId),
       ),
     [allTripSales, currentBatchId],
+  );
+
+  const clientSplit = useMemo(
+    () => splitMovementsByClientType(group.movements),
+    [group.movements],
   );
 
   const handleSaveKg = () => {
@@ -481,6 +490,33 @@ export default function TripInlineRow({
                 <div className="px-3 py-3 text-xs text-slate-500">
                   Aún no hay ventas registradas en este despacho.
                 </div>
+              ) : clientSplit.internal.length > 0 ? (
+                <div>
+                  <MovementsSubsection
+                    label="Clientes internos"
+                    accentClassName="text-amber-300"
+                    movements={clientSplit.internal}
+                    totals={clientSplit.internalTotals}
+                    isEgg={isEgg}
+                    renderSaleColumns={renderSaleColumns}
+                    renderHeaderColumns={renderHeaderColumns}
+                  />
+                  <MovementsSubsection
+                    label="Clientes externos"
+                    accentClassName="text-slate-300"
+                    movements={clientSplit.external}
+                    totals={clientSplit.externalTotals}
+                    isEgg={isEgg}
+                    renderSaleColumns={renderSaleColumns}
+                    renderHeaderColumns={renderHeaderColumns}
+                  />
+                  <SubtotalBar
+                    label="Total"
+                    totals={group.totals}
+                    isEgg={isEgg}
+                    className="border-t border-slate-700/60 bg-slate-950/50"
+                  />
+                </div>
               ) : (
                 <div>
                   <div className="grid grid-cols-12 items-center gap-2 border-b border-slate-800 bg-slate-950/40 px-3 py-1.5">
@@ -577,6 +613,108 @@ export default function TripInlineRow({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function MovementsSubsection({
+  label,
+  accentClassName,
+  movements,
+  totals,
+  isEgg,
+  renderSaleColumns,
+  renderHeaderColumns,
+}: {
+  label: string;
+  accentClassName: string;
+  movements: any[];
+  totals: TripGroup["totals"];
+  isEgg: boolean;
+  renderSaleColumns: (sale: any, isOtherBatch: boolean) => React.ReactNode;
+  renderHeaderColumns: () => React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-slate-800/60">
+      <div className="flex items-center justify-between gap-3 bg-slate-950/30 px-3 py-2">
+        <span
+          className={`text-[10px] font-semibold tracking-wider uppercase ${accentClassName}`}
+        >
+          {label} ({movements.length})
+        </span>
+        <SubtotalBar label="" totals={totals} isEgg={isEgg} />
+      </div>
+      <div className="grid grid-cols-12 items-center gap-2 border-y border-slate-800 bg-slate-950/40 px-3 py-1.5">
+        {renderHeaderColumns()}
+      </div>
+      <div className="divide-y divide-slate-800/60">
+        {movements.map((mov) => (
+          <div
+            key={`${mov.type}-${mov.id}`}
+            className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+          >
+            {renderSaleColumns(mov, false)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SubtotalBar({
+  label,
+  totals,
+  isEgg,
+  className,
+}: {
+  label: string;
+  totals: TripGroup["totals"];
+  isEgg: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-end gap-4 text-right text-xs ${className ?? ""}`}
+    >
+      {label && (
+        <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
+          {label}
+        </span>
+      )}
+      <div>
+        <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+          Ventas
+        </p>
+        <p className="font-mono font-semibold text-white">
+          {totals.salesCount}
+        </p>
+      </div>
+      <div>
+        <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+          Total
+        </p>
+        <p className="font-mono font-semibold text-white">
+          {formatMXN(totals.saleTotal)}
+        </p>
+      </div>
+      <div>
+        <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+          {isEgg ? "Piezas" : "Vendido"}
+        </p>
+        {isEgg ? (
+          <EggQuantityDisplay totalPieces={totals.totalPieces} />
+        ) : (
+          <p className="font-mono font-semibold text-white">
+            {formatKg(totals.kgSold)}
+          </p>
+        )}
+      </div>
+      <div>
+        <p className="text-[10px] tracking-wider text-slate-500 uppercase">
+          Enviado
+        </p>
+        <p className="font-mono text-slate-300">{formatKg(totals.kgSent)}</p>
+      </div>
     </div>
   );
 }
