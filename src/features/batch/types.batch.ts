@@ -91,6 +91,7 @@ export interface Movement {
   weight: number;
   // Campos opcionales según el tipo de movimiento
   clientId?: number;
+  internalClient?: boolean;
   employeeId?: number;
   saleTotal?: number;
   reason?: string;
