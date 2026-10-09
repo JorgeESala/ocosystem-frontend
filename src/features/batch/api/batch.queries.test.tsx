@@ -139,6 +139,7 @@ describe("batch queries tenant scoping", () => {
       "huevo",
       "2026-01-01",
       "2026-02-01",
+      false,
     ]);
   });
 });

@@ -29,6 +29,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [startDate, setStartDate] = useState<Date | null>(THIRTY_DAYS_AGO);
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [activeTab, setActiveTab] = useState<TabKey>("availability");
+  const [fixedWeeks, setFixedWeeks] = useState(false);
   const [expandedBatchId, setExpandedBatchId] = useState<number | null>(null);
   const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
     useState(true);
@@ -144,6 +145,13 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
           Limpiar
         </Button>
         <div className="ml-auto flex items-center gap-2 pb-1">
+          {activeTab === "weekly" && (
+            <ToggleSwitch
+              checked={fixedWeeks}
+              label="Semana fijas (7 días)"
+              onChange={setFixedWeeks}
+            />
+          )}
           <ToggleSwitch
             checked={showOnlyWithAvailability}
             label="Solo con disponibilidad"
@@ -198,6 +206,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
           unitType={unitType}
           startDate={startDate}
           endDate={endDate}
+          fixedWeeks={fixedWeeks}
         />
       )}
 
