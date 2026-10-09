@@ -18,6 +18,9 @@ export interface CatalogProductRow {
   sku: string;
   /** True when this row is the principal code (its name/category win in reports). */
   isCanonical: boolean;
+  description?: string | null;
+  categoryId?: number | null;
+  unitId?: number | null;
 }
 
 export interface ProductCanonicalMember {
@@ -38,6 +41,13 @@ export interface ProductCanonical {
 export interface CreateProductPayload {
   barcode: string;
   name: string;
+  categoryId: number;
+  unitId: number;
+}
+
+export interface UpdateProductPayload {
+  name: string;
+  description: string | null;
   categoryId: number;
   unitId: number;
 }

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductsPage from "../pages/ProductsPage";
 
 const createProduct = vi.fn();
+const updateProduct = vi.fn();
 const linkProduct = vi.fn();
 const unlinkProduct = vi.fn();
 
@@ -28,8 +29,36 @@ const defaultCatalog = [
   },
 ];
 
+const editableCatalog = () => [
+  {
+    barcode: "A1",
+    name: "Frijol negro",
+    categoryName: "Abarrotes",
+    unitName: "Kilo",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: true,
+    description: "Bolsa de 1 kg",
+    categoryId: 10,
+    unitId: 1,
+  },
+  {
+    barcode: "H1",
+    name: "Horchata",
+    categoryName: "Abarrotes",
+    unitName: "Pieza",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: false,
+    description: null,
+    categoryId: 10,
+    unitId: 1,
+  },
+];
+
 let catalogData: Record<string, unknown>[] = [...defaultCatalog];
 let createState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let updateState: { isError: boolean; error: unknown } = { isError: false, error: null };
 let linkState: { isError: boolean; error: unknown } = { isError: false, error: null };
 let unlinkState: { isError: boolean; error: unknown } = {
   isError: false,
@@ -47,6 +76,12 @@ vi.mock("../api/product-catalog.queries", () => ({
     isPending: false,
     isError: createState.isError,
     error: createState.error,
+  })),
+  useUpdateProduct: vi.fn(() => ({
+    mutate: updateProduct,
+    isPending: false,
+    isError: updateState.isError,
+    error: updateState.error,
   })),
   useLinkProduct: vi.fn(() => ({
     mutateAsync: linkProduct,
@@ -96,6 +131,7 @@ describe("ProductsPage", () => {
     vi.clearAllMocks();
     catalogData = [...defaultCatalog];
     createState = { isError: false, error: null };
+    updateState = { isError: false, error: null };
     linkState = { isError: false, error: null };
     unlinkState = { isError: false, error: null };
   });
@@ -420,5 +456,70 @@ describe("ProductsPage", () => {
     const dialog = screen.getByRole("dialog");
 
     expect(within(dialog).getByText("2 códigos")).toBeInTheDocument();
+  });
+
+  it("edits a product from the catalog", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    fireEvent.change(screen.getByPlaceholderText("Nombre del producto"), {
+      target: { value: "Frijol andino" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateProduct).toHaveBeenCalledWith(
+      {
+        barcode: "A1",
+        payload: {
+          name: "Frijol andino",
+          description: "Bolsa de 1 kg",
+          categoryId: 10,
+          unitId: 1,
+        },
+      },
+      expect.anything(),
+    );
+  });
+
+  it("does not let the barcode be edited", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).queryByPlaceholderText("Código")).toBeNull();
+    expect(within(dialog).getByText("A1")).toBeInTheDocument();
+  });
+
+  it("warns a variant that reports follow the principal category", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[1]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText(
+        /Los reportes usan la categoría del producto principal \(A1\)/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the server message when the update fails", () => {
+    updateState = {
+      isError: true,
+      error: { response: { data: { message: "Categoría no encontrada: 99" } } },
+    };
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText("Categoría no encontrada: 99"),
+    ).toBeInTheDocument();
   });
 });

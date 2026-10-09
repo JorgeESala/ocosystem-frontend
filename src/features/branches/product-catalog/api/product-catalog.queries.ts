@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateProductPayload } from "../types";
+import type { CreateProductPayload, UpdateProductPayload } from "../types";
 import { productCatalogApi } from "./product-catalog.api";
 import { productCatalogKeys } from "./product-catalog.keys";
 
@@ -17,6 +17,25 @@ export const useCreateProduct = () => {
       productCatalogApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productCatalogKeys.all });
+    },
+  });
+};
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      barcode,
+      payload,
+    }: {
+      barcode: string;
+      payload: UpdateProductPayload;
+    }) => productCatalogApi.update(barcode, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productCatalogKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["productAnalytics"] });
+      queryClient.invalidateQueries({ queryKey: ["salesReports"] });
     },
   });
 };

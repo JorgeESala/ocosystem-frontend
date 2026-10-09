@@ -3,12 +3,14 @@ import type {
   CatalogProductRow,
   CreateProductPayload,
   ProductCanonical,
+  UpdateProductPayload,
 } from "../types";
 import { isTestRow } from "../utils/catalog-filter";
 
 interface RawProduct {
   barcode: string;
   name: string;
+  description?: string | null;
   status?: string | null;
   sku?: string | null;
   isCanonical?: boolean | null;
@@ -31,11 +33,21 @@ export const productCatalogApi = {
         status: product.status ?? null,
         sku: product.sku || product.barcode,
         isCanonical: product.isCanonical !== false,
+        description: product.description ?? null,
+        categoryId: product.category?.id ?? null,
+        unitId: product.measurement_unit?.id ?? null,
       }));
   },
 
   create: async (payload: CreateProductPayload): Promise<void> => {
     await http.post("/api/products", payload);
+  },
+
+  update: async (
+    barcode: string,
+    payload: UpdateProductPayload,
+  ): Promise<void> => {
+    await http.put(`/api/products/${encodeURIComponent(barcode)}`, payload);
   },
 
   link: async (

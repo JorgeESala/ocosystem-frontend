@@ -17,7 +17,7 @@ import {
   useUnlinkProduct,
 } from "../api/product-catalog.queries";
 import LinkProductModal from "../components/LinkProductModal";
-import NewProductModal from "../components/NewProductModal";
+import ProductFormModal from "../components/ProductFormModal";
 import type { CatalogProductRow } from "../types";
 import { serverMessage } from "../utils/error-message";
 
@@ -25,6 +25,7 @@ export default function ProductsPage() {
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [linking, setLinking] = useState<CatalogProductRow | null>(null);
+  const [editing, setEditing] = useState<CatalogProductRow | null>(null);
   const { data: products = [], isLoading, isError } = useProductCatalog();
   const unlink = useUnlinkProduct();
 
@@ -200,6 +201,13 @@ export default function ProductsPage() {
                         <Button
                           size="xs"
                           color="light"
+                          onClick={() => setEditing(product)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="light"
                           onClick={() => setLinking(product)}
                         >
                           Vincular
@@ -224,7 +232,14 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {showModal && <NewProductModal onClose={() => setShowModal(false)} />}
+      {showModal && <ProductFormModal onClose={() => setShowModal(false)} />}
+      {editing && (
+        <ProductFormModal
+          product={editing}
+          canonicalBarcode={canonicalBySku.get(editing.sku)}
+          onClose={() => setEditing(null)}
+        />
+      )}
       {linking && (
         <LinkProductModal
           product={linking}
