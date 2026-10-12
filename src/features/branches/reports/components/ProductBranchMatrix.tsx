@@ -133,7 +133,14 @@ export const ProductBranchMatrix = ({
                 >
                   <TableCell className="sticky left-0 z-10 bg-gray-800 font-medium text-white">
                     <div className="flex flex-col">
-                      <span>{row.productName}</span>
+                      <span className="flex items-center gap-2">
+                        {row.productName}
+                        {(row.variantBarcodes?.length ?? 0) > 0 && (
+                          <span className="rounded bg-indigo-900/60 px-1.5 py-0.5 text-[10px] font-normal text-indigo-300">
+                            {(row.variantBarcodes?.length ?? 0) + 1} códigos
+                          </span>
+                        )}
+                      </span>
                       <span className="text-[10px] text-gray-500 uppercase">
                         {row.categoryName}
                       </span>

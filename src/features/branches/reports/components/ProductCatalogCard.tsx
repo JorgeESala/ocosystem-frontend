@@ -61,7 +61,9 @@ export const ProductCatalogCard = ({
               media) y clase C el resto (baja rotación). Se calcula con todo el
               catálogo del periodo, sin Merma ni Matados, y no cambia al buscar
               ni al paginar. Solo cambia si ocultas pollo o huevo en "Ocultar en
-              tops".
+              tops". La columna Recibido suma las recepciones registradas en el
+              periodo; “—” significa que no se registró recepción y las líneas
+              sin resolver no se atribuyen a ningún producto.
             </InfoTip>
           </h3>
           <p className="text-xs text-gray-500">
@@ -102,6 +104,7 @@ export const ProductCatalogCard = ({
                 <TableHeadCell>Categoría</TableHeadCell>
                 <TableHeadCell className="text-center">Clase</TableHeadCell>
                 <TableHeadCell className="text-center">Cantidad</TableHeadCell>
+                <TableHeadCell className="text-center">Recibido</TableHeadCell>
                 <TableHeadCell className="text-right">
                   {metric === "sales" ? "Venta real" : "Unidades"}
                 </TableHeadCell>
@@ -123,7 +126,14 @@ export const ProductCatalogCard = ({
                 >
                   <TableCell className="font-medium text-white">
                     <div className="flex flex-col">
-                      <span>{row.productName}</span>
+                      <span className="flex items-center gap-2">
+                        {row.productName}
+                        {(row.variantBarcodes?.length ?? 0) > 0 && (
+                          <span className="rounded bg-indigo-900/60 px-1.5 py-0.5 text-[10px] font-normal text-indigo-300">
+                            {(row.variantBarcodes?.length ?? 0) + 1} códigos
+                          </span>
+                        )}
+                      </span>
                       <span className="font-mono text-[10px] text-gray-500">
                         {row.productBarcode}
                       </span>
@@ -140,6 +150,18 @@ export const ProductCatalogCard = ({
                     <span className="ml-1 text-[10px] text-gray-500">
                       {row.unitName}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-center text-white">
+                    {row.receivedQuantity == null ? (
+                      <span className="text-gray-500">—</span>
+                    ) : (
+                      <>
+                        {formatUnits(row.receivedQuantity)}
+                        <span className="ml-1 text-[10px] text-gray-500">
+                          {row.unitName}
+                        </span>
+                      </>
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-green-400">
                     {formatMXN(row.sales)}

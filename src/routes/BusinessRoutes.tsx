@@ -32,6 +32,8 @@ import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutes
 import { ClientsRoutesHelpPage } from "@/features/clients-routes/pages/ClientsRoutesHelpPage";
 import RouteGuard from "./RouteGuard";
 import ProductApprovalsPage from "@/features/branches/product-approvals/pages/ProductApprovalsPage";
+import ProductReceiptsPage from "@/features/branches/product-receipts/pages/ProductReceiptsPage";
+import ProductsPage from "@/features/branches/product-catalog/pages/ProductsPage";
 import DiagnosticsPage from "@/features/branches/diagnostics/pages/DiagnosticsPage";
 export default function BusinessRoutes() {
   const { slug } = useParams();
@@ -95,6 +97,8 @@ export default function BusinessRoutes() {
         <Route path="reports/help" element={<BranchReportsHelpPage />} />
         <Route path="accounting" element={<BranchAccountsPage />} />
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
+        <Route path="recepciones" element={<ProductReceiptsPage />} />
+        <Route path="productos" element={<ProductsPage />} />
         <Route path="expenses" element={<BranchExpensesPage />} />
         <Route path="checklist" element={<ChecklistPage />} />
         <Route

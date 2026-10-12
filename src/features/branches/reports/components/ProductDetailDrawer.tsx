@@ -127,6 +127,56 @@ export const ProductDetailDrawer = ({
               )}
             </div>
 
+            {(data.variants?.length ?? 0) > 1 && (
+              <div>
+                <h3 className="text-md font-semibold text-gray-200">
+                  Códigos de este producto
+                </h3>
+                <p className="text-xs text-gray-400">
+                  En los reportes se venden como uno; aquí está lo que aporta
+                  cada código.
+                </p>
+                <div className="mt-2 overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-700 text-left text-xs tracking-wider text-gray-400 uppercase">
+                        <th className="py-2">Código</th>
+                        <th className="py-2">Nombre</th>
+                        <th className="py-2 text-right">Cantidad</th>
+                        <th className="py-2 text-right">Venta</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {data.variants?.map((variant) => (
+                        <tr key={variant.productBarcode}>
+                          <td className="py-2 font-mono text-white">
+                            {variant.productBarcode}
+                            {variant.isCanonical && (
+                              <Badge
+                                color="success"
+                                className="ml-2 inline-flex w-fit"
+                              >
+                                principal
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="py-2 text-white">
+                            {variant.productName}
+                          </td>
+                          <td className="py-2 text-right text-white">
+                            {formatUnits(variant.quantity)}
+                          </td>
+                          <td className="py-2 text-right text-green-400">
+                            {formatMXN(variant.sales)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <h3 className="text-md font-semibold text-gray-200">
                 Venta diaria por sucursal

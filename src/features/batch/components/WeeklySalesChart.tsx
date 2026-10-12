@@ -20,6 +20,7 @@ interface WeeklySalesChartProps {
   unitType: BusinessUnitType;
   startDate: Date | null;
   endDate: Date | null;
+  fixedWeeks?: boolean;
 }
 
 interface TooltipPayloadItem {
@@ -102,6 +103,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
   unitType,
   startDate,
   endDate,
+  fixedWeeks = false,
 }) => {
   const startDateStr = startDate ? startDate.toISOString().split("T")[0] : null;
   const endDateStr = endDate ? endDate.toISOString().split("T")[0] : null;
@@ -109,6 +111,7 @@ export const WeeklySalesChart: React.FC<WeeklySalesChartProps> = ({
   const { data: rawData = [], isLoading } = useWeeklySalesReport(
     startDateStr,
     endDateStr,
+    fixedWeeks,
   );
 
   const weeklyData = rawData.map((w) => ({

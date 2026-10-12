@@ -82,8 +82,10 @@ export const getBatchFullDetail = async (
 export const getWeeklySalesReport = async (
   startDate: string,
   endDate: string,
+  fixedWeeks?: boolean,
 ): Promise<WeeklySalesData[]> => {
   const params = new URLSearchParams({ startDate, endDate });
+  if (fixedWeeks) params.set("fixedWeeks", "true");
   const { data } = await http.get<WeeklySalesData[]>(
     `${API_BASE}/batches/weekly-sales?${params}`,
   );
