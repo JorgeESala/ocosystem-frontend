@@ -1,30 +1,73 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductsPage from "../pages/ProductsPage";
 
 const createProduct = vi.fn();
+const updateProduct = vi.fn();
+const linkProduct = vi.fn();
+const unlinkProduct = vi.fn();
 
+const defaultCatalog = [
+  {
+    barcode: "A1",
+    name: "Frijol negro",
+    categoryName: "Abarrotes",
+    unitName: "Kilo",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: true,
+  },
+  {
+    barcode: "H1",
+    name: "Horchata",
+    categoryName: null,
+    unitName: "Pieza",
+    status: "ACTIVE",
+    sku: "H1",
+    isCanonical: true,
+  },
+];
+
+const editableCatalog = () => [
+  {
+    barcode: "A1",
+    name: "Frijol negro",
+    categoryName: "Abarrotes",
+    unitName: "Kilo",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: true,
+    description: "Bolsa de 1 kg",
+    categoryId: 10,
+    unitId: 1,
+  },
+  {
+    barcode: "H1",
+    name: "Horchata",
+    categoryName: "Abarrotes",
+    unitName: "Pieza",
+    status: "ACTIVE",
+    sku: "A1",
+    isCanonical: false,
+    description: null,
+    categoryId: 10,
+    unitId: 1,
+  },
+];
+
+let catalogData: Record<string, unknown>[] = [...defaultCatalog];
 let createState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let updateState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let linkState: { isError: boolean; error: unknown } = { isError: false, error: null };
+let unlinkState: { isError: boolean; error: unknown } = {
+  isError: false,
+  error: null,
+};
 
 vi.mock("../api/product-catalog.queries", () => ({
   useProductCatalog: vi.fn(() => ({
-    data: [
-      {
-        barcode: "A1",
-        name: "Frijol negro",
-        categoryName: "Abarrotes",
-        unitName: "Kilo",
-        status: "ACTIVE",
-      },
-      {
-        barcode: "H1",
-        name: "Horchata",
-        categoryName: null,
-        unitName: "Pieza",
-        status: "ACTIVE",
-      },
-    ],
+    data: catalogData,
     isLoading: false,
     isError: false,
   })),
@@ -33,6 +76,24 @@ vi.mock("../api/product-catalog.queries", () => ({
     isPending: false,
     isError: createState.isError,
     error: createState.error,
+  })),
+  useUpdateProduct: vi.fn(() => ({
+    mutate: updateProduct,
+    isPending: false,
+    isError: updateState.isError,
+    error: updateState.error,
+  })),
+  useLinkProduct: vi.fn(() => ({
+    mutateAsync: linkProduct,
+    isPending: false,
+    isError: linkState.isError,
+    error: linkState.error,
+  })),
+  useUnlinkProduct: vi.fn(() => ({
+    mutateAsync: unlinkProduct,
+    isPending: false,
+    isError: unlinkState.isError,
+    error: unlinkState.error,
   })),
 }));
 
@@ -68,7 +129,11 @@ function renderPage() {
 describe("ProductsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    catalogData = [...defaultCatalog];
     createState = { isError: false, error: null };
+    updateState = { isError: false, error: null };
+    linkState = { isError: false, error: null };
+    unlinkState = { isError: false, error: null };
   });
 
   it("lists catalog products with their status", () => {
@@ -129,5 +194,332 @@ describe("ProductsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Nuevo producto" }));
 
     expect(screen.getByText("El producto ya existe: A1")).toBeInTheDocument();
+  });
+
+  it("shows how many codes share the same product", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    expect(screen.getAllByText("2 códigos")).toHaveLength(2);
+    expect(screen.getByText("variante")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Desvincular" })).toHaveLength(1);
+  });
+
+  it("shows the server message when the link fails", () => {
+    linkState = {
+      isError: true,
+      error: {
+        response: { data: { message: "Debe indicar el producto destino" } },
+      },
+    };
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+
+    expect(
+      screen.getByText("Debe indicar el producto destino"),
+    ).toBeInTheDocument();
+  });
+
+  it("warns that every code of a multi-code product moves with it", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Casillero 24/ }));
+
+    expect(screen.getByText(/2 códigos en el catálogo/)).toBeInTheDocument();
+  });
+
+  it("asks for confirmation before unlinking a variant", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+    ];
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
+
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(unlinkProduct).not.toHaveBeenCalled();
+
+    confirmSpy.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
+
+    expect(unlinkProduct).toHaveBeenCalledWith("C2");
+    confirmSpy.mockRestore();
+  });
+
+  it("lists the codes of a product together and marks the principal row", () => {
+    catalogData = [
+      {
+        barcode: "Z1",
+        name: "Zeta",
+        categoryName: "Abarrotes",
+        unitName: "Kilo",
+        status: "ACTIVE",
+        sku: "Z1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+    ];
+
+    renderPage();
+
+    const codes = screen
+      .getAllByRole("row")
+      .map((row) => row.querySelector("td")?.textContent ?? "")
+      .filter(Boolean);
+
+    expect(codes).toEqual(["C1", "C2", "Z1"]);
+    expect(screen.getAllByText("principal")).toHaveLength(1);
+    expect(screen.getByText("de C1")).toBeInTheDocument();
+  });
+
+  it("only lists principal products as link targets", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+      {
+        barcode: "D2",
+        name: "Casillero 24 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByText("Casillero 24")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Casillero 12 promo")).toBeNull();
+    expect(within(dialog).queryByText("Casillero 24 promo")).toBeNull();
+  });
+
+  it("shows how many codes a link target already has", () => {
+    catalogData = [
+      {
+        barcode: "C1",
+        name: "Casillero 12",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: true,
+      },
+      {
+        barcode: "C2",
+        name: "Casillero 12 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "C1",
+        isCanonical: false,
+      },
+      {
+        barcode: "D1",
+        name: "Casillero 24",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: true,
+      },
+      {
+        barcode: "D2",
+        name: "Casillero 24 promo",
+        categoryName: "Huevo",
+        unitName: "Pieza",
+        status: "ACTIVE",
+        sku: "D1",
+        isCanonical: false,
+      },
+    ];
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Vincular" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).getByText("2 códigos")).toBeInTheDocument();
+  });
+
+  it("edits a product from the catalog", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    fireEvent.change(screen.getByPlaceholderText("Nombre del producto"), {
+      target: { value: "Frijol andino" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    expect(updateProduct).toHaveBeenCalledWith(
+      {
+        barcode: "A1",
+        payload: {
+          name: "Frijol andino",
+          description: "Bolsa de 1 kg",
+          categoryId: 10,
+          unitId: 1,
+        },
+      },
+      expect.anything(),
+    );
+  });
+
+  it("does not let the barcode be edited", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(within(dialog).queryByPlaceholderText("Código")).toBeNull();
+    expect(within(dialog).getByText("A1")).toBeInTheDocument();
+  });
+
+  it("warns a variant that reports follow the principal category", () => {
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[1]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText(
+        /Los reportes usan la categoría del producto principal \(A1\)/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the server message when the update fails", () => {
+    updateState = {
+      isError: true,
+      error: { response: { data: { message: "Categoría no encontrada: 99" } } },
+    };
+    catalogData = editableCatalog().map((row) => ({ ...row }));
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
+    const dialog = screen.getByRole("dialog");
+
+    expect(
+      within(dialog).getByText("Categoría no encontrada: 99"),
+    ).toBeInTheDocument();
   });
 });
