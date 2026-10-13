@@ -26,32 +26,3 @@ export const useApproveProduct = () => {
     },
   });
 };
-
-export const useApiKeys = () => {
-  return useQuery({
-    queryKey: approvalKeys.apiKeys(),
-    queryFn: approvalsApi.getApiKeys,
-  });
-};
-
-export const useCreateApiKey = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: approvalsApi.createApiKey,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: approvalKeys.apiKeys() });
-    },
-  });
-};
-
-export const useRevokeApiKey = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: approvalsApi.revokeApiKey,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: approvalKeys.apiKeys() });
-    },
-  });
-};
