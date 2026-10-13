@@ -27,6 +27,7 @@ import {
   FaBoxes,
   FaClipboardList,
   FaTags,
+  FaCheckCircle,
 } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import {
@@ -47,14 +48,7 @@ export const BASE_MENU = [
 const BRANCHES_MENU = [
   { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "checklist", label: "Desempeño", icon: HiClipboardList },
-  { to: "reports", label: "Reportes", icon: FaFileAlt, group: "Reportes" },
-  {
-    to: "upload-reports",
-    label: "Subir reporte",
-    icon: FaFileAlt,
-    group: "Reportes",
-  },
-  { to: "graphs", label: "Comparativas", icon: FaChartBar, group: "Reportes" },
+  { to: "reports", label: "Reportes", icon: FaFileAlt },
   {
     to: "salesAndBatches",
     label: "Entradas y Ventas",
@@ -73,6 +67,13 @@ const BRANCHES_MENU = [
     icon: FaTags,
     group: "Operación",
   },
+  {
+    to: "aprobaciones",
+    label: "Productos pendientes",
+    icon: FaCheckCircle,
+    adminOnly: true,
+    group: "Operación",
+  },
   { to: "expenses", label: "Gastos", icon: GiPayMoney, group: "Finanzas" },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney, group: "Finanzas" },
   {
@@ -88,15 +89,8 @@ const BRANCHES_MENU = [
     group: "Finanzas",
   },
   {
-    to: "aprobaciones",
-    label: "Aprobaciones",
-    icon: HiClipboardCheck,
-    adminOnly: true,
-    group: "Administración",
-  },
-  {
     to: "diagnostico",
-    label: "Diagnóstico",
+    label: "App sucursal",
     icon: HiOutlineTerminal,
     adminOnly: true,
     group: "Administración",

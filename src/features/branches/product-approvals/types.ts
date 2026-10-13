@@ -18,18 +18,3 @@ export interface ApproveProductPayload {
   categoryId?: number;
   unitId?: number;
 }
-
-export interface BranchApiKeyDTO {
-  id: number;
-  branchId: number;
-  branchName: string;
-  label: string | null;
-  active: boolean;
-  createdAt: string;
-  lastUsedAt: string | null;
-}
-
-export interface CreatedApiKeyDTO {
-  id: number;
-  plaintextKey: string;
-}

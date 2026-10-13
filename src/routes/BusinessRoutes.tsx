@@ -2,10 +2,16 @@ import BusinessDashboard from "@/components/BussinesDashboard";
 import BranchesDashboardPage from "@/features/branches/dashboard/pages/BranchesDashboardPage";
 import ComparisonsGraphs from "@/components/ComparisonGraphs";
 import SalesAndBatches from "@/components/SalesAndBatches";
-import BranchReportsPage from "@/features/branches/reports/pages/BranchReportsPage";
+import BranchReportsHubPage from "@/features/branches/reports/pages/BranchReportsHubPage";
 import { UploadSalesReportPage } from "@/features/branches/report-reader/pages/UploadSalesReportPage";
 import { AccountsPage } from "@/features/live-chicken/accounting/pages/AccountsPage";
-import { Routes, Route, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useParams,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { BranchAccountsPage } from "@/features/branches/accounting/pages/BranchAccountsPage";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
@@ -35,6 +41,19 @@ import ProductApprovalsPage from "@/features/branches/product-approvals/pages/Pr
 import ProductReceiptsPage from "@/features/branches/product-receipts/pages/ProductReceiptsPage";
 import ProductsPage from "@/features/branches/product-catalog/pages/ProductsPage";
 import DiagnosticsPage from "@/features/branches/diagnostics/pages/DiagnosticsPage";
+
+function UploadReportsRedirect() {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set("tab", "importar");
+  return (
+    <Navigate
+      replace
+      to={{ pathname: "reports", search: `?${params.toString()}` }}
+    />
+  );
+}
+
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -92,8 +111,8 @@ export default function BusinessRoutes() {
       <Routes>
         <Route index element={<BranchesDashboardPage />} />
         <Route path="mis-tareas" element={<MyTasksPage />} />
-        <Route path="upload-reports" element={<UploadSalesReportPage />} />
-        <Route path="reports" element={<BranchReportsPage />} />
+        <Route path="upload-reports" element={<UploadReportsRedirect />} />
+        <Route path="reports" element={<BranchReportsHubPage />} />
         <Route path="reports/help" element={<BranchReportsHelpPage />} />
         <Route path="accounting" element={<BranchAccountsPage />} />
         <Route path="salesAndBatches" element={<SalesAndBatches />} />
@@ -120,7 +139,10 @@ export default function BusinessRoutes() {
         <Route path="delivery-schedule" element={<DeliverySchedulePage />} />
 
         {/* Rutas compartidas */}
-        <Route path="graphs" element={<ComparisonsGraphs />} />
+        <Route
+          path="graphs"
+          element={<Navigate replace to="reports?tab=comparativas" />}
+        />
         <Route path="profit" element={<BranchProfitReportPage />} />
         <Route path="profit/help" element={<BranchProfitHelpPage />} />
         <Route

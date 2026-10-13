@@ -132,7 +132,7 @@ export const REPORTS_FAQ: HelpFaqItem[] = [
   },
   {
     q: "¿De dónde salen los datos?",
-    a: "De los reportes de punto de venta que se suben en Subir reporte o que envía la aplicación de sucursal. Cada reporte se agrega por sucursal y día.",
+    a: "De los reportes de punto de venta que se suben en Reportes › Importar o que envía la aplicación de sucursal. Cada reporte se agrega por sucursal y día.",
   },
   {
     q: "¿Por qué una sucursal no aparece por ningún lado?",
