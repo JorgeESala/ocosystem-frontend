@@ -10,7 +10,6 @@ interface BranchExpensesFiltersProps {
   endDate: Date | null;
   onStartDateChange: (date: Date | null) => void;
   onEndDateChange: (date: Date | null) => void;
-  onSearch: () => void;
   onClear: () => void;
 }
 
@@ -22,7 +21,6 @@ export default function BranchExpensesFilters({
   endDate,
   onStartDateChange,
   onEndDateChange,
-  onSearch,
   onClear,
 }: BranchExpensesFiltersProps) {
   return (
@@ -37,7 +35,8 @@ export default function BranchExpensesFilters({
           </h2>
         </div>
         <p className="text-sm text-slate-400">
-          Combina una o varias sucursales con el periodo que quieres revisar.
+          Los filtros se aplican automáticamente. Sin sucursales seleccionadas
+          se muestran todas.
         </p>
       </div>
 
@@ -63,6 +62,7 @@ export default function BranchExpensesFilters({
             language="es-MX"
             value={endDate}
             onChange={onEndDateChange}
+            minDate={startDate ?? undefined}
           />
         </div>
       </div>
@@ -71,7 +71,6 @@ export default function BranchExpensesFilters({
         <Button color="gray" onClick={onClear}>
           Limpiar
         </Button>
-        <Button onClick={onSearch}>Buscar</Button>
       </div>
     </section>
   );
