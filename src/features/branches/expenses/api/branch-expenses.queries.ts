@@ -3,12 +3,6 @@ import type { BranchExpenseFilters, BranchExpenseRequestDTO } from "../types";
 import { branchExpensesApi } from "./branch-expenses.api";
 import { branchExpensesKeys } from "./branch-expenses.keys";
 
-export const useLatestBranchExpenses = () =>
-  useQuery({
-    queryKey: branchExpensesKeys.latest(),
-    queryFn: branchExpensesApi.getLatest,
-  });
-
 export const useBranchExpensesSearch = (filters: BranchExpenseFilters | null) =>
   useQuery({
     queryKey: filters

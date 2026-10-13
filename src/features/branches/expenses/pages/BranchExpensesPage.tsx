@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Button, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
@@ -7,43 +7,50 @@ import BranchExpenseBreakdowns from "../components/BranchExpenseBreakdowns";
 import BranchExpenseSummary from "../components/BranchExpenseSummary";
 import BranchExpensesFilters from "../components/BranchExpensesFilters";
 import BranchExpensesTable from "../components/BranchExpensesTable";
-import {
-  useBranchExpensesSearch,
-  useLatestBranchExpenses,
-} from "../api/branch-expenses.queries";
+import { useBranchExpensesSearch } from "../api/branch-expenses.queries";
 import type { BranchExpenseFilters, BranchExpenseResponseDTO } from "../types";
 import { buildBranchExpenseSummary } from "../utils/expense-summary";
-import { formatHumanDate } from "@/utils/date.utils";
+import { formatHumanDate, getLastDays } from "@/utils/date.utils";
 
 export default function BranchExpensesPage() {
   const [searchParams] = useSearchParams();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
+  const defaultRange = useMemo(() => getLastDays(7), []);
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>(
     searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
   );
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [activeFilters, setActiveFilters] =
-    useState<BranchExpenseFilters | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(defaultRange.start);
+  const [endDate, setEndDate] = useState<Date | null>(defaultRange.end);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] =
     useState<BranchExpenseResponseDTO | null>(null);
 
-  const latestExpensesQuery = useLatestBranchExpenses();
-  const filteredExpensesQuery = useBranchExpensesSearch(activeFilters);
+  const startOfDay = (date: Date) => {
+    const copy = new Date(date);
+    copy.setHours(0, 0, 0, 0);
+    return copy.getTime();
+  };
 
-  const usingFilters = Boolean(activeFilters);
-  const expenses = usingFilters
-    ? (filteredExpensesQuery.data ?? [])
-    : (latestExpensesQuery.data ?? []);
-  const isLoading = usingFilters
-    ? filteredExpensesQuery.isLoading
-    : latestExpensesQuery.isLoading;
-  const isError = usingFilters
-    ? filteredExpensesQuery.isError
-    : latestExpensesQuery.isError;
+  const rangeError = (() => {
+    if (!startDate || !endDate) return "Selecciona el rango de fechas.";
+    if (startOfDay(endDate) < startOfDay(startDate))
+      return "La fecha final no puede ser menor a la inicial.";
+    return null;
+  })();
+
+  const activeFilters: BranchExpenseFilters | null = rangeError
+    ? null
+    : {
+        branchIds: selectedBranchIds,
+        startDate: startDate!,
+        endDate: endDate!,
+      };
+
+  const searchQuery = useBranchExpensesSearch(activeFilters);
+  const expenses = searchQuery.data ?? [];
+  const isLoading = searchQuery.isLoading;
+  const isError = searchQuery.isError;
   const hasExpenses = expenses.length > 0;
   const showSpinner = (loadingBranches || isLoading) && !hasExpenses;
   const showFullError = isError && !hasExpenses;
@@ -62,30 +69,12 @@ export default function BranchExpensesPage() {
               ? ` +${selectedBranchNames.length - 2}`
               : ""
           }`;
-  const scopeLabel = usingFilters
-    ? `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")} | ${selectedBranchLabel}`
-    : "Ultimos gastos cargados";
-
-  const handleSearch = () => {
-    if (selectedBranchIds.length === 0 || !startDate || !endDate) {
-      setValidationError("Selecciona sucursales y un rango de fechas.");
-      return;
-    }
-
-    setValidationError(null);
-    setActiveFilters({
-      branchIds: selectedBranchIds,
-      startDate,
-      endDate,
-    });
-  };
+  const scopeLabel = `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")} | ${selectedBranchLabel}`;
 
   const handleClearFilters = () => {
     setSelectedBranchIds([]);
-    setStartDate(new Date());
-    setEndDate(new Date());
-    setActiveFilters(null);
-    setValidationError(null);
+    setStartDate(defaultRange.start);
+    setEndDate(defaultRange.end);
   };
 
   const handleCreateClick = () => {
@@ -121,57 +110,64 @@ export default function BranchExpensesPage() {
         endDate={endDate}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
-        onSearch={handleSearch}
         onClear={handleClearFilters}
       />
 
-      {validationError && (
+      {rangeError && (
         <Alert
           color="failure"
           className="border border-red-900/40 bg-red-950/40"
         >
-          {validationError}
+          {rangeError}
         </Alert>
       )}
 
-      <BranchExpenseSummary
-        totalAmount={summary.totalAmount}
-        expenseCount={summary.expenseCount}
-        averageAmount={summary.averageAmount}
-        scopeLabel={scopeLabel}
-        topBranch={summary.topBranch?.label}
-        topBusinessUnit={summary.topBusinessUnit?.label}
-        topExpenseCategory={summary.topExpenseCategory?.label}
-      />
+      {!rangeError && (
+        <>
+          <BranchExpenseSummary
+            totalAmount={summary.totalAmount}
+            expenseCount={summary.expenseCount}
+            averageAmount={summary.averageAmount}
+            scopeLabel={scopeLabel}
+            topBranch={summary.topBranch?.label}
+            topBusinessUnit={summary.topBusinessUnit?.label}
+            topExpenseCategory={summary.topExpenseCategory?.label}
+          />
 
-      <BranchExpenseBreakdowns
-        byBranch={summary.byBranch}
-        byBusinessUnit={summary.byBusinessUnit}
-        byExpenseCategory={summary.byExpenseCategory}
-      />
+          <BranchExpenseBreakdowns
+            byBranch={summary.byBranch}
+            byBusinessUnit={summary.byBusinessUnit}
+            byExpenseCategory={summary.byExpenseCategory}
+          />
 
-      {isError && hasExpenses && (
-        <Alert
-          color="warning"
-          className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
-        >
-          No se pudo refrescar el origen. Se muestran los gastos ya cargados.
-        </Alert>
-      )}
+          {isError && hasExpenses && (
+            <Alert
+              color="warning"
+              className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
+            >
+              No se pudo refrescar el origen. Se muestran los gastos ya
+              cargados.
+            </Alert>
+          )}
 
-      {showSpinner ? (
-        <div className="flex justify-center py-10">
-          <Spinner size="lg" />
-        </div>
-      ) : showFullError ? (
-        <Alert
-          color="failure"
-          className="border border-red-900/40 bg-red-950/40"
-        >
-          No se pudieron cargar los gastos.
-        </Alert>
-      ) : (
-        <BranchExpensesTable expenses={expenses} onSelect={handleEditClick} />
+          {showSpinner ? (
+            <div className="flex justify-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : showFullError ? (
+            <Alert
+              color="failure"
+              className="border border-red-900/40 bg-red-950/40"
+            >
+              No se pudieron cargar los gastos.
+            </Alert>
+          ) : (
+            <BranchExpensesTable
+              expenses={expenses}
+              onSelect={handleEditClick}
+            />
+          )}
+        </>
       )}
 
       <BranchExpenseModal
