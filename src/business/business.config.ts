@@ -9,6 +9,7 @@ export interface BusinessMenuItem {
   label: string;
   icon: IconType;
   adminOnly?: boolean;
+  group?: string;
 }
 
 export interface BusinessConfig {
@@ -20,9 +21,20 @@ export interface BusinessConfig {
   hasTasks?: boolean;
 }
 
-import { FaChartBar, FaFileAlt, FaBoxes, FaClipboardList, FaTags } from "react-icons/fa";
+import {
+  FaChartBar,
+  FaFileAlt,
+  FaBoxes,
+  FaClipboardList,
+  FaTags,
+} from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
-import { HiClipboardList, HiClipboardCheck, HiUserGroup, HiOutlineTerminal } from "react-icons/hi";
+import {
+  HiClipboardList,
+  HiClipboardCheck,
+  HiUserGroup,
+  HiOutlineTerminal,
+} from "react-icons/hi";
 import { HiBanknotes } from "react-icons/hi2";
 
 export const BASE_MENU = [
@@ -35,18 +47,60 @@ export const BASE_MENU = [
 const BRANCHES_MENU = [
   { to: "mis-tareas", label: "Mis tareas", icon: HiClipboardCheck },
   { to: "checklist", label: "Desempeño", icon: HiClipboardList },
-  { to: "reports", label: "Reportes", icon: FaFileAlt },
-  { to: "upload-reports", label: "Subir reporte", icon: FaFileAlt },
-  { to: "graphs", label: "Comparativas", icon: FaChartBar },
-  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
-  { to: "recepciones", label: "Recepción de productos", icon: FaClipboardList },
-  { to: "productos", label: "Productos", icon: FaTags },
-  { to: "expenses", label: "Gastos", icon: GiPayMoney },
-  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
-  { to: "general-cash", label: "Caja general", icon: HiBanknotes },
-  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
-  { to: "aprobaciones", label: "Aprobaciones", icon: HiClipboardCheck, adminOnly: true },
-  { to: "diagnostico", label: "Diagnóstico", icon: HiOutlineTerminal, adminOnly: true },
+  { to: "reports", label: "Reportes", icon: FaFileAlt, group: "Reportes" },
+  {
+    to: "upload-reports",
+    label: "Subir reporte",
+    icon: FaFileAlt,
+    group: "Reportes",
+  },
+  { to: "graphs", label: "Comparativas", icon: FaChartBar, group: "Reportes" },
+  {
+    to: "salesAndBatches",
+    label: "Entradas y Ventas",
+    icon: FaBoxes,
+    group: "Operación",
+  },
+  {
+    to: "recepciones",
+    label: "Recepción",
+    icon: FaClipboardList,
+    group: "Operación",
+  },
+  {
+    to: "productos",
+    label: "Productos",
+    icon: FaTags,
+    group: "Operación",
+  },
+  { to: "expenses", label: "Gastos", icon: GiPayMoney, group: "Finanzas" },
+  { to: "profit", label: "Ganancias", icon: GiReceiveMoney, group: "Finanzas" },
+  {
+    to: "general-cash",
+    label: "Caja general",
+    icon: HiBanknotes,
+    group: "Finanzas",
+  },
+  {
+    to: "accounting",
+    label: "Contabilidad",
+    icon: GiReceiveMoney,
+    group: "Finanzas",
+  },
+  {
+    to: "aprobaciones",
+    label: "Aprobaciones",
+    icon: HiClipboardCheck,
+    adminOnly: true,
+    group: "Administración",
+  },
+  {
+    to: "diagnostico",
+    label: "Diagnóstico",
+    icon: HiOutlineTerminal,
+    adminOnly: true,
+    group: "Administración",
+  },
 ];
 
 const LIVE_CHICKEN_MENU = [
