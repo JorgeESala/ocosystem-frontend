@@ -334,6 +334,16 @@ export const ProductDetailDrawer = ({
                           </td>
                         </tr>
                       ))}
+                      <tr className="border-t border-gray-700 font-semibold">
+                        <td className="py-2 text-white">Total</td>
+                        <td className="py-2 text-right text-white">
+                          {formatUnits(totalQuantity)}
+                        </td>
+                        <td className="py-2 text-right text-green-400">
+                          {formatMXN(totalSales)}
+                        </td>
+                        <td className="py-2 text-right text-gray-400">—</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
