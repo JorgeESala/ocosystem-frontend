@@ -9,7 +9,7 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiCheck, HiChevronDown, HiX } from "react-icons/hi";
+import { HiCheck, HiChevronDown, HiPlus, HiX } from "react-icons/hi";
 import {
   useClient,
   useCreateClient,
@@ -17,6 +17,7 @@ import {
   useUpdateClient,
 } from "@/core/client/api/client.queries";
 import { useLocalities } from "@/core/locality/api/locality.queries";
+import CreateLocalityInlineForm from "@/core/locality/components/CreateLocalityInlineForm";
 import { emptyClientForm, type ClientFormState } from "../types/forms";
 
 interface ClientFormModalProps {
@@ -41,6 +42,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [localitySearch, setLocalitySearch] = useState("");
   const [localityOpen, setLocalityOpen] = useState(false);
+  const [isAddingLocality, setIsAddingLocality] = useState(false);
   const localityRef = useRef<HTMLDivElement | null>(null);
 
   const createMutation = useCreateClient();
@@ -58,6 +60,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       setError(null);
       setLocalitySearch("");
       setLocalityOpen(false);
+      setIsAddingLocality(false);
       setIsInternal(false);
       return;
     }
@@ -262,7 +265,22 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
               />
             </div>
             <div ref={localityRef} className="relative">
-              <Label htmlFor="client-locality">Localidad</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="client-locality">Localidad</Label>
+                {!isAddingLocality && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingLocality(true);
+                      setLocalityOpen(false);
+                    }}
+                    disabled={isSaving}
+                    className="flex items-center gap-1 text-[11px] font-medium text-blue-400 transition-colors hover:text-blue-300 disabled:opacity-50"
+                  >
+                    <HiPlus className="h-3 w-3" /> Nueva Localidad
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <TextInput
                   id="client-locality"
@@ -333,6 +351,17 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
                   Seleccionado:{" "}
                   <span className="text-gray-300">{selectedLocality.name}</span>
                 </p>
+              )}
+              {isAddingLocality && (
+                <CreateLocalityInlineForm
+                  onCancel={() => setIsAddingLocality(false)}
+                  onCreated={(locality) => {
+                    setForm((prev) => ({ ...prev, localityId: locality.id }));
+                    setLocalitySearch(locality.name);
+                    setLocalityOpen(false);
+                    setIsAddingLocality(false);
+                  }}
+                />
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2">

@@ -9,13 +9,14 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiCheck, HiChevronDown, HiX } from "react-icons/hi";
+import { HiCheck, HiChevronDown, HiPlus, HiX } from "react-icons/hi";
 import {
   useCreateRoute,
   useRoute,
   useUpdateRoute,
 } from "@/core/api/route/routes.queries";
 import { useLocalities } from "@/core/locality/api/locality.queries";
+import CreateLocalityInlineForm from "@/core/locality/components/CreateLocalityInlineForm";
 import { emptyRouteForm, type RouteFormState } from "../types/forms";
 import { WEEKDAYS } from "../config/unitConfig";
 
@@ -39,6 +40,7 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [localitySearch, setLocalitySearch] = useState("");
   const [localityOpen, setLocalityOpen] = useState(false);
+  const [isAddingLocality, setIsAddingLocality] = useState(false);
   const localityRef = useRef<HTMLDivElement | null>(null);
 
   const createMutation = useCreateRoute();
@@ -51,6 +53,7 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
       setError(null);
       setLocalitySearch("");
       setLocalityOpen(false);
+      setIsAddingLocality(false);
       return;
     }
     if (isEdit && editingRoute) {
@@ -171,7 +174,22 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
             </div>
 
             <div ref={localityRef} className="relative">
-              <Label htmlFor="route-locality">Localidades</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="route-locality">Localidades</Label>
+                {!isAddingLocality && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingLocality(true);
+                      setLocalityOpen(false);
+                    }}
+                    disabled={isSaving}
+                    className="flex items-center gap-1 text-[11px] font-medium text-blue-400 transition-colors hover:text-blue-300 disabled:opacity-50"
+                  >
+                    <HiPlus className="h-3 w-3" /> Nueva Localidad
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <TextInput
                   id="route-locality"
@@ -241,6 +259,22 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
                     </span>
                   ))}
                 </div>
+              )}
+              {isAddingLocality && (
+                <CreateLocalityInlineForm
+                  onCancel={() => setIsAddingLocality(false)}
+                  onCreated={(locality) => {
+                    setForm((prev) =>
+                      prev.localityIds.includes(locality.id)
+                        ? prev
+                        : {
+                            ...prev,
+                            localityIds: [...prev.localityIds, locality.id],
+                          },
+                    );
+                    setIsAddingLocality(false);
+                  }}
+                />
               )}
             </div>
 
