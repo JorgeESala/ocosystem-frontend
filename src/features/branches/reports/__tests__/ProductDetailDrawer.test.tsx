@@ -104,4 +104,14 @@ describe("ProductDetailDrawer", () => {
     expect(screen.queryByText("Códigos de este producto")).toBeNull();
     expect(screen.queryByText("principal")).toBeNull();
   }, 15000);
+
+  it("muestra la fila de totales al final de la tabla por sucursal", () => {
+    render(<ProductDetailDrawer {...baseProps} />);
+
+    const totalRow = screen.getByText("Total").closest("tr");
+    const cells = Array.from(totalRow?.querySelectorAll("td") ?? []).map(
+      (cell) => cell.textContent,
+    );
+    expect(cells).toEqual(["Total", "12", "$120.00", "—"]);
+  }, 15000);
 });
