@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BranchExpensesPage from "../pages/BranchExpensesPage";
 import type { BranchExpenseResponseDTO } from "../types";
@@ -167,17 +167,22 @@ describe("BranchExpensesPage", () => {
 
     renderPage();
 
-    const breakdownCell = screen
-      .getAllByText("Limpieza")
-      .find((element) => element.closest("tr"));
-    expect(breakdownCell).toBeTruthy();
+    const breakdownSection = screen
+      .getByText("Desglose por tipo de gasto")
+      .closest("section");
+    expect(breakdownSection).toBeTruthy();
 
-    fireEvent.click(breakdownCell!);
+    const breakdownRow = within(breakdownSection!)
+      .getByText("Limpieza")
+      .closest("tr");
+    expect(breakdownRow).toBeTruthy();
+
+    fireEvent.click(breakdownRow!);
 
     expect(screen.queryByText("Compra de plumas")).toBeNull();
     expect(screen.getByText("Jabon y desinfectante")).toBeTruthy();
 
-    fireEvent.click(breakdownCell!);
+    fireEvent.click(breakdownRow!);
 
     expect(screen.getByText("Compra de plumas")).toBeTruthy();
     expect(screen.getByText("Jabon y desinfectante")).toBeTruthy();
