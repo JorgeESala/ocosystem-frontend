@@ -12,6 +12,11 @@ import {
 } from "../api/product-receipts.queries";
 import { useCategories } from "../../product/api/categories.queries";
 import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
+import {
+  categoryOptions,
+  isEggPiezaCategory,
+} from "../../product/utils/categoryOptions";
+import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { lineDisplayName, normalizedLineCost, unitSingular } from "../utils/receipt-cost";
 
 interface CostForm {
@@ -300,7 +305,7 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
               <Label>Categoría</Label>
               <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 <option value="">Selecciona…</option>
-                {categories.map((category) => (
+                {categoryOptions(categories).map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -348,6 +353,17 @@ export default function ReceiptDetailModal({
   onClose: () => void;
 }) {
   const { data: receipt, isLoading, isError } = useReceiptDetail(receiptId);
+  const { data: catalogProducts = [] } = useCatalogProducts();
+  const { data: allCategories = [] } = useCategories();
+
+  const categoriesById = new Map(allCategories.map((category) => [category.id, category]));
+  const eggBarcodes = new Set(
+    catalogProducts
+      .filter((product) =>
+        isEggPiezaCategory(product.category?.id ?? null, categoriesById),
+      )
+      .map((product) => product.barcode),
+  );
 
   return (
     <Modal show onClose={onClose} size="4xl">
@@ -396,15 +412,25 @@ export default function ReceiptDetailModal({
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Recibido: {line.quantity} {line.unitName}
-                    {line.sourceBarcode && ` · Código: ${line.sourceBarcode}`}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+                    {eggBarcodes.has(line.productBarcode ?? "") ? (
+                      <>
+                        <span>Recibido:</span>
+                        <EggQuantityDisplay totalPieces={line.quantity} />
+                        <span>{unitSingular(line.unitName)}</span>
+                      </>
+                    ) : (
+                      <span>
+                        Recibido: {line.quantity} {line.unitName}
+                      </span>
+                    )}
+                    {line.sourceBarcode && `· Código: ${line.sourceBarcode}`}
                     {line.toProductUnitFactor &&
                       ` · Equivalencia: ${line.toProductUnitFactor}`}
                     {normalized &&
                       ` · Costo: ${formatMXN(normalized.amount)} por ${normalized.unit}`}
                     {line.latestCost && !normalized && " · Costo sin equivalencia base"}
-                  </p>
+                  </div>
                   {line.productBarcode === null && (
                     <ResolveForm line={line} receiptId={receipt.id} />
                   )}

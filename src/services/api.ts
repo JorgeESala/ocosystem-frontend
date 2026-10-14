@@ -53,6 +53,7 @@ export interface ExpenseCategory {
 export interface Category {
   id: number;
   name: string;
+  parentId?: number | null;
 }
 export interface Branch {
   id: number;

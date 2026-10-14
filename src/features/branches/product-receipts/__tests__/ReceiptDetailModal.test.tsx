@@ -57,6 +57,20 @@ const detail = {
       latestCost: null,
       costHistory: [],
     },
+    {
+      id: 104,
+      lineNumber: 4,
+      productBarcode: "H1",
+      productName: "Huevo piezas",
+      sourceBarcode: "H1",
+      observedName: null,
+      quantity: 815,
+      unitName: "piezas",
+      unitId: 2,
+      toProductUnitFactor: 1,
+      latestCost: null,
+      costHistory: [],
+    },
   ],
 };
 
@@ -74,13 +88,23 @@ vi.mock("../api/product-receipts.queries", () => ({
       { barcode: "A1", name: "Frijol negro", status: "ACTIVE" },
       { barcode: "IT-9", name: "IT Prueba", status: "ACTIVE" },
       { barcode: "P1", name: "Pendiente", status: "PENDING" },
+      {
+        barcode: "H1",
+        name: "Huevo piezas",
+        status: "ACTIVE",
+        category: { id: 7, name: "Piezas de huevo", parentId: 9 },
+      },
     ],
   })),
 }));
 
 vi.mock("../../product/api/categories.queries", () => ({
   useCategories: vi.fn(() => ({
-    data: [{ id: 10, name: "Verduras" }],
+    data: [
+      { id: 10, name: "Verduras" },
+      { id: 7, name: "Piezas de huevo", parentId: 9 },
+      { id: 9, name: "Huevo", parentId: null },
+    ],
   })),
 }));
 
@@ -190,7 +214,7 @@ describe("ReceiptDetailModal", () => {
   it("shows singular and gender-neutral wording for plural units", () => {
     renderModal();
 
-    expect(screen.getByText("por pieza")).toBeInTheDocument();
+    expect(screen.getAllByText("por pieza").length).toBeGreaterThan(0);
 
     const toggles = screen.getAllByRole("checkbox");
     fireEvent.click(toggles[2]);
@@ -198,6 +222,16 @@ describe("ReceiptDetailModal", () => {
     expect(
       screen.getByText("¿A cuántas unidades equivale el paquete?"),
     ).toBeInTheDocument();
+  });
+
+  it("decomposes egg quantities into cajas, casilleros and piezas", () => {
+    renderModal();
+
+    expect(screen.getByTitle("Cajas")).toHaveTextContent("2");
+    expect(screen.getByTitle("Casilleros")).toHaveTextContent("3");
+    expect(screen.getByTitle("Piezas")).toHaveTextContent("5");
+    expect(screen.getByText("Huevo piezas")).toBeInTheDocument();
+    expect(screen.queryByText("Recibido: 815 piezas")).not.toBeInTheDocument();
   });
 
   it("searches the catalog and links the selected product", () => {
