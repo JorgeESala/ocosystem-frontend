@@ -33,7 +33,7 @@ import {
 } from "@/core/client/api/client.queries";
 import { useLocalities } from "@/core/locality/api/locality.queries";
 import type { ClientCreateRequestDTO } from "@/core/client/api/client.api";
-import CreateLocalityInlineForm from "./CreateLocalityInlineForm";
+import CreateLocalityInlineForm from "@/core/locality/components/CreateLocalityInlineForm";
 import type { Batch } from "../types.batch";
 import { toLocalDateString } from "@/utils/date.utils";
 import { calculateEggUnits } from "@/utils/egg.utils";

@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { RouteFormModal } from "../components/RouteFormModal";
 
 const mocks = vi.hoisted(() => ({
@@ -7,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   useCreateRoute: vi.fn(),
   useUpdateRoute: vi.fn(),
   useLocalities: vi.fn(),
+  useCreateLocality: vi.fn(),
 }));
 
 vi.mock("@/core/api/route/routes.queries", () => ({
@@ -24,11 +31,13 @@ vi.mock("@/core/api/route/routes.queries", () => ({
 
 vi.mock("@/core/locality/api/locality.queries", () => ({
   useLocalities: mocks.useLocalities,
+  useCreateLocality: mocks.useCreateLocality,
 }));
 
 const localities = [
   { id: 1, name: "Centro", active: true },
   { id: 2, name: "Sur", active: true },
+  { id: 3, name: "Norte", active: true },
 ];
 
 describe("RouteFormModal", () => {
@@ -44,6 +53,12 @@ describe("RouteFormModal", () => {
       isPending: false,
     });
     mocks.useLocalities.mockReturnValue({ data: localities, isLoading: false });
+    mocks.useCreateLocality.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      error: null,
+      reset: vi.fn(),
+    });
   });
 
   it("envía localidades y días de entrega al crear", async () => {
@@ -146,5 +161,51 @@ describe("RouteFormModal", () => {
 
     expect(screen.getByText("El nombre es obligatorio.")).toBeInTheDocument();
     expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("crea una localidad nueva y la agrega a la selección", async () => {
+    const localityMutate = vi.fn();
+    mocks.useCreateLocality.mockReturnValue({
+      mutate: localityMutate,
+      isPending: false,
+      error: null,
+      reset: vi.fn(),
+    });
+    const mutateAsync = vi.fn().mockResolvedValue({});
+    mocks.useCreateRoute.mockReturnValue({ mutateAsync, isPending: false });
+
+    render(<RouteFormModal show routeIdToEdit={null} onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Nueva Localidad/ }));
+    expect(screen.getByRole("button", { name: "Guardar" })).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText("Ej. Cancun"), {
+      target: { value: "Norte" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(localityMutate).toHaveBeenCalledWith(
+      { name: "Norte" },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    act(() => {
+      localityMutate.mock.calls[0][1].onSuccess({ id: 3, name: "Norte" });
+    });
+
+    expect(screen.getByText("Norte")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Ruta Norte" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        name: "Ruta Norte",
+        localityIds: [3],
+        deliveryDays: [],
+      }),
+    );
   });
 });

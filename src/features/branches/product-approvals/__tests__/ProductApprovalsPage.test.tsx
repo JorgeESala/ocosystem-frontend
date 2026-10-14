@@ -4,8 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ProductApprovalsPage from "../pages/ProductApprovalsPage";
 
 const approve = vi.fn();
-const createKey = vi.fn();
-const revokeKey = vi.fn();
 
 vi.mock("../api/approvals.queries", () => ({
   usePendingProducts: vi.fn(() => ({
@@ -29,23 +27,6 @@ vi.mock("../api/approvals.queries", () => ({
     isError: false,
   })),
   useApproveProduct: vi.fn(() => ({ mutate: approve, isPending: false })),
-  useApiKeys: vi.fn(() => ({
-    data: [
-      {
-        id: 1,
-        branchId: 2,
-        branchName: "Sucursal Dos",
-        label: "PC caja",
-        active: true,
-        createdAt: "2026-06-09T10:00:00",
-        lastUsedAt: null,
-      },
-    ],
-    isLoading: false,
-    isError: false,
-  })),
-  useCreateApiKey: vi.fn(() => ({ mutate: createKey, isPending: false })),
-  useRevokeApiKey: vi.fn(() => ({ mutate: revokeKey, isPending: false })),
 }));
 
 vi.mock("../../product/api/categories.queries", () => ({
@@ -57,12 +38,6 @@ vi.mock("../../product/api/categories.queries", () => ({
 vi.mock("../../product/api/measurementUnits.queries", () => ({
   useMeasurementUnits: vi.fn(() => ({
     data: [{ id: 1, name: "Pieza" }],
-  })),
-}));
-
-vi.mock("../../branch/branch.queries", () => ({
-  useBranches: vi.fn(() => ({
-    data: [{ id: 2, name: "Sucursal Dos" }],
   })),
 }));
 
@@ -93,7 +68,9 @@ describe("ProductApprovalsPage", () => {
   it("disables confirm until a category is chosen", () => {
     renderPage();
 
-    const confirmButton = screen.getByRole("button", { name: /Confirmar/i }) as HTMLButtonElement;
+    const confirmButton = screen.getByRole("button", {
+      name: /Confirmar/i,
+    }) as HTMLButtonElement;
     expect(confirmButton.disabled).toBe(true);
   });
 
@@ -103,7 +80,9 @@ describe("ProductApprovalsPage", () => {
     const categorySelect = screen.getAllByRole("combobox")[0];
     fireEvent.change(categorySelect, { target: { value: "10" } });
 
-    const confirmButton = screen.getByRole("button", { name: /Confirmar/i }) as HTMLButtonElement;
+    const confirmButton = screen.getByRole("button", {
+      name: /Confirmar/i,
+    }) as HTMLButtonElement;
     expect(confirmButton.disabled).toBe(false);
 
     fireEvent.click(confirmButton);
@@ -114,15 +93,5 @@ describe("ProductApprovalsPage", () => {
         payload: { name: "Nuevo producto", categoryId: 10, unitId: 1 },
       });
     });
-  });
-
-  it("shows api keys section with revoke action", () => {
-    renderPage();
-
-    expect(screen.getByText("Llaves de sucursal (app de reportes)")).toBeInTheDocument();
-    expect(screen.getByText("PC caja")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /Revocar/i }));
-    expect(revokeKey).toHaveBeenCalledWith(1);
   });
 });

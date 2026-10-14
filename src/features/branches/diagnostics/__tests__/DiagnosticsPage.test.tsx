@@ -33,6 +33,26 @@ vi.mock("../api/diagnostics.queries", () => ({
   })),
 }));
 
+vi.mock("../api/api-keys.queries", () => ({
+  useApiKeys: vi.fn(() => ({
+    data: [
+      {
+        id: 1,
+        branchId: 1,
+        branchName: "Express FCP",
+        label: "PC caja",
+        active: true,
+        createdAt: "2026-06-09T10:00:00",
+        lastUsedAt: null,
+      },
+    ],
+    isLoading: false,
+    isError: false,
+  })),
+  useCreateApiKey: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRevokeApiKey: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}));
+
 vi.mock("@/features/branches/branch/branch.queries", () => ({
   useBranches: vi.fn(() => ({ data: [{ id: 1, name: "Express FCP" }] })),
 }));
@@ -48,11 +68,24 @@ describe("DiagnosticsPage", () => {
   it("renders the diagnostics table", () => {
     renderPage();
 
-    expect(screen.getByText("Diagnóstico")).toBeTruthy();
+    expect(screen.getByText("App sucursal")).toBeTruthy();
     expect(screen.getByText("missing_categories")).toBeTruthy();
-    expect(screen.getByText("Reporte sin categorías obligatorias")).toBeTruthy();
+    expect(
+      screen.getByText("Reporte sin categorías obligatorias"),
+    ).toBeTruthy();
     expect(screen.getAllByText("Express FCP").length).toBeGreaterThan(0);
     expect(screen.getByText("Buscar")).toBeTruthy();
+  });
+
+  it("switches to the api keys view", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /Llaves API/i }));
+
+    expect(
+      screen.getByText("Llaves de sucursal (app de reportes)"),
+    ).toBeTruthy();
+    expect(screen.queryByText("missing_categories")).toBeNull();
   });
 
   it("opens the detail modal with context and stacktrace", async () => {

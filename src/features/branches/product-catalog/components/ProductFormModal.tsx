@@ -18,6 +18,7 @@ import {
 import type { CatalogProductRow } from "../types";
 import { serverMessage } from "../utils/error-message";
 import { visibleCatalogEntries } from "../utils/catalog-filter";
+import { categoryOptions } from "../../product/utils/categoryOptions";
 
 interface Props {
   onClose: () => void;
@@ -141,7 +142,7 @@ export default function ProductFormModal({
                 onChange={(e) => setCategoryId(e.target.value)}
               >
                 <option value="">Selecciona…</option>
-                {visibleCatalogEntries(categories).map((category) => (
+                {categoryOptions(categories).map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
