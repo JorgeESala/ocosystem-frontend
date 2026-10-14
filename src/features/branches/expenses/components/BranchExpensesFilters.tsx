@@ -62,24 +62,11 @@ export default function BranchExpensesFilters({
     }),
   );
 
-  return (
-    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-      <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
-            Filtros
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-white">
-            Sucursales, periodo y conceptos
-          </h2>
-        </div>
-        <p className="text-sm text-slate-400">
-          Los filtros se aplican automáticamente. Sin sucursales seleccionadas
-          se muestran todas.
-        </p>
-      </div>
+  const hasChips = categoryOptions.length > 0 || businessUnitOptions.length > 0;
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(280px,1fr)_160px_160px] lg:items-end">
+  return (
+    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/95 p-4 shadow-lg lg:sticky lg:top-0 lg:z-30 lg:backdrop-blur">
+      <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_150px_150px_minmax(180px,240px)_auto] lg:items-end">
         <BranchMultiSelect
           branches={branches}
           selected={selectedBranchIds}
@@ -87,7 +74,7 @@ export default function BranchExpensesFilters({
         />
 
         <div>
-          <Label>Inicio</Label>
+          <Label className="text-xs">Inicio</Label>
           <Datepicker
             language="es-MX"
             value={startDate}
@@ -96,7 +83,7 @@ export default function BranchExpensesFilters({
         </div>
 
         <div>
-          <Label>Fin</Label>
+          <Label className="text-xs">Fin</Label>
           <Datepicker
             language="es-MX"
             value={endDate}
@@ -104,34 +91,11 @@ export default function BranchExpensesFilters({
             minDate={startDate ?? undefined}
           />
         </div>
-      </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {categoryOptions.length > 0 && (
-          <FilterChipGroup
-            label="Tipo de gasto"
-            options={categoryOptions}
-            selected={selectedCategoryIds.map(String)}
-            onChange={(values) =>
-              onSelectedCategoryIdsChange(values.map(Number))
-            }
-          />
-        )}
-        {businessUnitOptions.length > 0 && (
-          <FilterChipGroup
-            label="Unidad de negocio"
-            options={businessUnitOptions}
-            selected={selectedBusinessUnitIds.map(String)}
-            onChange={(values) =>
-              onSelectedBusinessUnitIdsChange(values.map(Number))
-            }
-          />
-        )}
-      </div>
-
-      <div className="mt-6 flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="w-full sm:w-80">
-          <Label htmlFor="motivo-search">Motivo</Label>
+        <div>
+          <Label className="text-xs" htmlFor="motivo-search">
+            Motivo
+          </Label>
           <TextInput
             id="motivo-search"
             icon={HiSearch}
@@ -140,12 +104,38 @@ export default function BranchExpensesFilters({
             onChange={(e) => onMotivoSearchChange(e.target.value)}
           />
         </div>
-        <div className="flex justify-end gap-2">
-          <Button color="gray" onClick={onClear}>
+
+        <div className="flex justify-end">
+          <Button color="gray" size="sm" onClick={onClear}>
             Limpiar
           </Button>
         </div>
       </div>
+
+      {hasChips && (
+        <div className="mt-3 flex flex-wrap gap-x-8 gap-y-3 border-t border-slate-800 pt-3">
+          {categoryOptions.length > 0 && (
+            <FilterChipGroup
+              label="Tipo de gasto"
+              options={categoryOptions}
+              selected={selectedCategoryIds.map(String)}
+              onChange={(values) =>
+                onSelectedCategoryIdsChange(values.map(Number))
+              }
+            />
+          )}
+          {businessUnitOptions.length > 0 && (
+            <FilterChipGroup
+              label="Unidad de negocio"
+              options={businessUnitOptions}
+              selected={selectedBusinessUnitIds.map(String)}
+              onChange={(values) =>
+                onSelectedBusinessUnitIdsChange(values.map(Number))
+              }
+            />
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -28,17 +28,17 @@ const Stat = ({
   value: string;
   hint: string;
 }) => (
-  <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4 shadow-sm">
-    <div className="flex items-start justify-between gap-3">
+  <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-3 shadow-sm">
+    <div className="flex items-start justify-between gap-2">
       <div className="min-w-0">
         <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
           {label}
         </p>
-        <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-        <p className="mt-1 text-sm text-slate-400">{hint}</p>
+        <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+        <p className="mt-0.5 text-xs text-slate-400">{hint}</p>
       </div>
-      <div className="rounded-xl bg-blue-500/10 p-3 text-blue-300">
-        <Icon className="h-5 w-5" />
+      <div className="rounded-lg bg-blue-500/10 p-2 text-blue-300">
+        <Icon className="h-4 w-4" />
       </div>
     </div>
   </div>
@@ -54,19 +54,14 @@ export default function BranchExpenseSummary({
   topExpenseCategory,
 }: SummaryProps) {
   return (
-    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-      <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
-            Resumen Ejecutivo
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-white">
-            {scopeLabel}
-          </h2>
-        </div>
-        <p className="text-sm text-slate-400">
-          Totales calculados con los gastos cargados en pantalla.
+    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-4">
+      <div className="mb-3">
+        <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
+          Resumen Ejecutivo
         </p>
+        <h2 className="mt-0.5 text-base font-semibold text-white">
+          {scopeLabel}
+        </h2>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

@@ -173,7 +173,7 @@ export default function BranchExpensesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-4 p-6">
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">
@@ -227,6 +227,34 @@ export default function BranchExpensesPage() {
             topExpenseCategory={summary.topExpenseCategory?.label}
           />
 
+          {isError && hasExpenses && (
+            <Alert
+              color="warning"
+              className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
+            >
+              No se pudo refrescar el origen. Se muestran los gastos ya
+              cargados.
+            </Alert>
+          )}
+
+          {showSpinner ? (
+            <div className="flex justify-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : showFullError ? (
+            <Alert
+              color="failure"
+              className="border border-red-900/40 bg-red-950/40"
+            >
+              No se pudieron cargar los gastos.
+            </Alert>
+          ) : (
+            <BranchExpensesTable
+              expenses={expenses}
+              onSelect={handleEditClick}
+            />
+          )}
+
           <BranchExpenseBreakdowns
             byBranch={summary.byBranch}
             byBusinessUnit={summary.byBusinessUnit}
@@ -259,34 +287,6 @@ export default function BranchExpensesPage() {
               )
             }
           />
-
-          {isError && hasExpenses && (
-            <Alert
-              color="warning"
-              className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
-            >
-              No se pudo refrescar el origen. Se muestran los gastos ya
-              cargados.
-            </Alert>
-          )}
-
-          {showSpinner ? (
-            <div className="flex justify-center py-10">
-              <Spinner size="lg" />
-            </div>
-          ) : showFullError ? (
-            <Alert
-              color="failure"
-              className="border border-red-900/40 bg-red-950/40"
-            >
-              No se pudieron cargar los gastos.
-            </Alert>
-          ) : (
-            <BranchExpensesTable
-              expenses={expenses}
-              onSelect={handleEditClick}
-            />
-          )}
         </>
       )}
 
