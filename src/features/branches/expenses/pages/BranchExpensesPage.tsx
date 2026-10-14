@@ -8,19 +8,68 @@ import BranchExpenseSummary from "../components/BranchExpenseSummary";
 import BranchExpensesFilters from "../components/BranchExpensesFilters";
 import BranchExpensesTable from "../components/BranchExpensesTable";
 import { useBranchExpensesSearch } from "../api/branch-expenses.queries";
-import type { BranchExpenseFilters, BranchExpenseResponseDTO } from "../types";
-import { buildBranchExpenseSummary } from "../utils/expense-summary";
+import {
+  useBranchBusinessCategories,
+  useExpenseCategories,
+} from "../api/branch-categories.queries";
+import type { BranchExpenseResponseDTO } from "../types";
+import {
+  buildBranchExpenseSummary,
+  type ExpenseSummaryItem,
+} from "../utils/expense-summary";
 import { formatHumanDate, getLastDays } from "@/utils/date.utils";
+
+interface CatalogEntry {
+  id: number;
+  name: string;
+}
+
+const matchesSelection = (
+  rowId: number | null | undefined,
+  rowName: string | null | undefined,
+  selectedIds: number[],
+  catalog: CatalogEntry[],
+) => {
+  if (selectedIds.length === 0) return true;
+  if (rowId != null && selectedIds.includes(rowId)) return true;
+  if (!rowName) return false;
+  return catalog.some(
+    (entry) => selectedIds.includes(entry.id) && entry.name === rowName,
+  );
+};
+
+const toggleByItem = (
+  item: ExpenseSummaryItem,
+  catalog: CatalogEntry[],
+  current: number[],
+  setter: (ids: number[]) => void,
+) => {
+  const target =
+    item.id ?? catalog.find((entry) => entry.name === item.label)?.id;
+  if (target == null) return;
+  setter(
+    current.includes(target)
+      ? current.filter((id) => id !== target)
+      : [...current, target],
+  );
+};
 
 export default function BranchExpensesPage() {
   const [searchParams] = useSearchParams();
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
+  const { data: expenseCategories = [] } = useExpenseCategories();
+  const { data: businessCategories = [] } = useBranchBusinessCategories();
   const defaultRange = useMemo(() => getLastDays(7), []);
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>(
     searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
   );
   const [startDate, setStartDate] = useState<Date | null>(defaultRange.start);
   const [endDate, setEndDate] = useState<Date | null>(defaultRange.end);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [selectedBusinessUnitIds, setSelectedBusinessUnitIds] = useState<
+    number[]
+  >([]);
+  const [motivoSearch, setMotivoSearch] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] =
@@ -39,18 +88,40 @@ export default function BranchExpensesPage() {
     return null;
   })();
 
-  const activeFilters: BranchExpenseFilters | null = rangeError
-    ? null
-    : {
-        branchIds: selectedBranchIds,
-        startDate: startDate!,
-        endDate: endDate!,
-      };
+  const activeFilters =
+    rangeError || !startDate || !endDate
+      ? null
+      : { branchIds: selectedBranchIds, startDate, endDate };
 
   const searchQuery = useBranchExpensesSearch(activeFilters);
-  const expenses = searchQuery.data ?? [];
+  const rawExpenses = searchQuery.data ?? [];
   const isLoading = searchQuery.isLoading;
   const isError = searchQuery.isError;
+
+  const motivoTerm = motivoSearch.trim().toLowerCase();
+  const activeFilterCount =
+    selectedCategoryIds.length +
+    selectedBusinessUnitIds.length +
+    (motivoTerm ? 1 : 0);
+
+  const expenses = rawExpenses.filter((expense) => {
+    const matchesCategory = matchesSelection(
+      expense.expenseCategoryId,
+      expense.expenseCategoryName,
+      selectedCategoryIds,
+      expenseCategories,
+    );
+    const matchesUnit = matchesSelection(
+      expense.businessUnitCategoryId,
+      expense.businessUnitCategoryName ?? expense.businessUnitName,
+      selectedBusinessUnitIds,
+      businessCategories,
+    );
+    const matchesMotivo =
+      !motivoTerm || (expense.reason ?? "").toLowerCase().includes(motivoTerm);
+    return matchesCategory && matchesUnit && matchesMotivo;
+  });
+
   const hasExpenses = expenses.length > 0;
   const showSpinner = (loadingBranches || isLoading) && !hasExpenses;
   const showFullError = isError && !hasExpenses;
@@ -69,12 +140,26 @@ export default function BranchExpensesPage() {
               ? ` +${selectedBranchNames.length - 2}`
               : ""
           }`;
-  const scopeLabel = `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")} | ${selectedBranchLabel}`;
+  const scopeLabel = (() => {
+    const parts = [
+      `Rango ${formatHumanDate(startDate ?? new Date(), "short")} - ${formatHumanDate(endDate ?? new Date(), "short")}`,
+      selectedBranchLabel,
+    ];
+    if (activeFilterCount > 0) {
+      parts.push(
+        `${activeFilterCount} filtro${activeFilterCount > 1 ? "s" : ""} activo${activeFilterCount > 1 ? "s" : ""}`,
+      );
+    }
+    return parts.join(" | ");
+  })();
 
   const handleClearFilters = () => {
     setSelectedBranchIds([]);
     setStartDate(defaultRange.start);
     setEndDate(defaultRange.end);
+    setSelectedCategoryIds([]);
+    setSelectedBusinessUnitIds([]);
+    setMotivoSearch("");
   };
 
   const handleCreateClick = () => {
@@ -110,6 +195,14 @@ export default function BranchExpensesPage() {
         endDate={endDate}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
+        expenseCategories={expenseCategories}
+        businessCategories={businessCategories}
+        selectedCategoryIds={selectedCategoryIds}
+        onSelectedCategoryIdsChange={setSelectedCategoryIds}
+        selectedBusinessUnitIds={selectedBusinessUnitIds}
+        onSelectedBusinessUnitIdsChange={setSelectedBusinessUnitIds}
+        motivoSearch={motivoSearch}
+        onMotivoSearchChange={setMotivoSearch}
         onClear={handleClearFilters}
       />
 
@@ -138,6 +231,33 @@ export default function BranchExpensesPage() {
             byBranch={summary.byBranch}
             byBusinessUnit={summary.byBusinessUnit}
             byExpenseCategory={summary.byExpenseCategory}
+            activeBranchIds={selectedBranchIds}
+            activeBusinessUnitIds={selectedBusinessUnitIds}
+            activeCategoryIds={selectedCategoryIds}
+            onBranchSelect={(item) =>
+              toggleByItem(
+                item,
+                branches,
+                selectedBranchIds,
+                setSelectedBranchIds,
+              )
+            }
+            onBusinessUnitSelect={(item) =>
+              toggleByItem(
+                item,
+                businessCategories,
+                selectedBusinessUnitIds,
+                setSelectedBusinessUnitIds,
+              )
+            }
+            onExpenseCategorySelect={(item) =>
+              toggleByItem(
+                item,
+                expenseCategories,
+                selectedCategoryIds,
+                setSelectedCategoryIds,
+              )
+            }
           />
 
           {isError && hasExpenses && (

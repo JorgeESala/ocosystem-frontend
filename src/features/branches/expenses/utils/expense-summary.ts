@@ -1,6 +1,7 @@
 import type { BranchExpenseResponseDTO } from "../types";
 
 export interface ExpenseSummaryItem {
+  id?: number;
   label: string;
   totalAmount: number;
   expenseCount: number;
@@ -21,25 +22,34 @@ export interface BranchExpenseSummary {
 
 const sumBy = (
   expenses: BranchExpenseResponseDTO[],
-  getKey: (expense: BranchExpenseResponseDTO) => string,
+  getId: (expense: BranchExpenseResponseDTO) => number | null | undefined,
+  getLabel: (expense: BranchExpenseResponseDTO) => string,
 ) => {
   const map = new Map<
     string,
-    { label: string; totalAmount: number; expenseCount: number }
+    {
+      id?: number;
+      label: string;
+      totalAmount: number;
+      expenseCount: number;
+    }
   >();
 
   for (const expense of expenses) {
-    const key = getKey(expense);
-    const current = map.get(key);
+    const label = getLabel(expense);
+    const id = getId(expense) ?? undefined;
+    const current = map.get(label);
     if (!current) {
-      map.set(key, {
-        label: key,
+      map.set(label, {
+        id,
+        label,
         totalAmount: Number(expense.amount || 0),
         expenseCount: 1,
       });
       continue;
     }
 
+    if (current.id == null && id != null) current.id = id;
     current.totalAmount += Number(expense.amount || 0);
     current.expenseCount += 1;
   }
@@ -48,7 +58,12 @@ const sumBy = (
 };
 
 const addPercentages = (
-  items: Array<{ label: string; totalAmount: number; expenseCount: number }>,
+  items: Array<{
+    id?: number;
+    label: string;
+    totalAmount: number;
+    expenseCount: number;
+  }>,
   totalAmount: number,
 ) =>
   items
@@ -69,12 +84,17 @@ export const buildBranchExpenseSummary = (
   const averageAmount = expenseCount > 0 ? totalAmount / expenseCount : 0;
 
   const byBranch = addPercentages(
-    sumBy(expenses, (expense) => expense.branchName || "Sin sucursal"),
+    sumBy(
+      expenses,
+      (expense) => expense.branchId,
+      (expense) => expense.branchName || "Sin sucursal",
+    ),
     totalAmount,
   );
   const byBusinessUnit = addPercentages(
     sumBy(
       expenses,
+      (expense) => expense.businessUnitCategoryId,
       (expense) =>
         expense.businessUnitCategoryName ??
         expense.businessUnitName ??
@@ -83,7 +103,11 @@ export const buildBranchExpenseSummary = (
     totalAmount,
   );
   const byExpenseCategory = addPercentages(
-    sumBy(expenses, (expense) => expense.expenseCategoryName || "Sin tipo"),
+    sumBy(
+      expenses,
+      (expense) => expense.expenseCategoryId,
+      (expense) => expense.expenseCategoryName || "Sin tipo",
+    ),
     totalAmount,
   );
 
