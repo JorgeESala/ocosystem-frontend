@@ -78,4 +78,5 @@ export interface CatalogProduct {
   barcode: string;
   name: string;
   status?: string | null;
+  category?: { id: number; name: string; parentId?: number | null } | null;
 }

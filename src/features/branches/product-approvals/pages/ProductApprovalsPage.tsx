@@ -18,6 +18,7 @@ import {
 } from "../api/approvals.queries";
 import { useCategories } from "../../product/api/categories.queries";
 import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
+import { categoryOptions } from "../../product/utils/categoryOptions";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
 
@@ -131,7 +132,7 @@ function PendingProductsTable() {
                         }}
                       >
                         <option value="">Sin categoría</option>
-                        {categories?.map((category) => (
+                        {categoryOptions(categories ?? []).map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.name}
                           </option>
