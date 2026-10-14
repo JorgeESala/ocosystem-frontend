@@ -5,6 +5,12 @@ interface Props {
   byBranch: ExpenseSummaryItem[];
   byBusinessUnit: ExpenseSummaryItem[];
   byExpenseCategory: ExpenseSummaryItem[];
+  onBranchSelect?: (item: ExpenseSummaryItem) => void;
+  onBusinessUnitSelect?: (item: ExpenseSummaryItem) => void;
+  onExpenseCategorySelect?: (item: ExpenseSummaryItem) => void;
+  activeBranchIds?: number[];
+  activeBusinessUnitIds?: number[];
+  activeCategoryIds?: number[];
 }
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
@@ -13,10 +19,14 @@ const BreakdownTable = ({
   title,
   items,
   emptyLabel,
+  onRowClick,
+  isActive,
 }: {
   title: string;
   items: ExpenseSummaryItem[];
   emptyLabel: string;
+  onRowClick?: (item: ExpenseSummaryItem) => void;
+  isActive?: (item: ExpenseSummaryItem) => boolean;
 }) => (
   <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
     <div className="mb-4 flex items-center justify-between gap-2">
@@ -42,25 +52,39 @@ const BreakdownTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800 bg-slate-950/40">
-            {items.map((item, index) => (
-              <tr
-                key={`${item.label}-${index}`}
-                className="hover:bg-slate-900/40"
-              >
-                <td className="px-4 py-3">
-                  <div className="font-medium text-slate-100">{item.label}</div>
-                </td>
-                <td className="px-4 py-3 font-mono text-slate-100">
-                  {formatMXN(item.totalAmount)}
-                </td>
-                <td className="px-4 py-3 text-slate-300">
-                  {item.expenseCount.toLocaleString("es-MX")}
-                </td>
-                <td className="px-4 py-3 text-slate-300">
-                  {formatPercent(item.percentage)}
-                </td>
-              </tr>
-            ))}
+            {items.map((item, index) => {
+              const selected = isActive?.(item) ?? false;
+              return (
+                <tr
+                  key={`${item.label}-${index}`}
+                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  className={
+                    onRowClick
+                      ? `cursor-pointer transition-colors ${
+                          selected
+                            ? "bg-blue-600/15 ring-1 ring-blue-500/40 ring-inset"
+                            : "hover:bg-slate-900/40"
+                        }`
+                      : undefined
+                  }
+                >
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-slate-100">
+                      {item.label}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-slate-100">
+                    {formatMXN(item.totalAmount)}
+                  </td>
+                  <td className="px-4 py-3 text-slate-300">
+                    {item.expenseCount.toLocaleString("es-MX")}
+                  </td>
+                  <td className="px-4 py-3 text-slate-300">
+                    {formatPercent(item.percentage)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -72,24 +96,41 @@ export default function BranchExpenseBreakdowns({
   byBranch,
   byBusinessUnit,
   byExpenseCategory,
+  onBranchSelect,
+  onBusinessUnitSelect,
+  onExpenseCategorySelect,
+  activeBranchIds = [],
+  activeBusinessUnitIds = [],
+  activeCategoryIds = [],
 }: Props) {
+  const isActive =
+    (activeIds: number[]) =>
+    (item: ExpenseSummaryItem): boolean =>
+      item.id != null && activeIds.includes(item.id);
+
   return (
     <div className="grid gap-4 xl:grid-cols-2">
       <BreakdownTable
         title="Desglose por sucursal"
         items={byBranch}
         emptyLabel="No hay datos por sucursal para el filtro actual."
+        onRowClick={onBranchSelect}
+        isActive={isActive(activeBranchIds)}
       />
       <BreakdownTable
         title="Desglose por unidad de negocio"
         items={byBusinessUnit}
         emptyLabel="No hay datos por unidad de negocio para el filtro actual."
+        onRowClick={onBusinessUnitSelect}
+        isActive={isActive(activeBusinessUnitIds)}
       />
       <div className="xl:col-span-2">
         <BreakdownTable
           title="Desglose por tipo de gasto"
           items={byExpenseCategory}
           emptyLabel="No hay datos por tipo de gasto para el filtro actual."
+          onRowClick={onExpenseCategorySelect}
+          isActive={isActive(activeCategoryIds)}
         />
       </div>
     </div>
