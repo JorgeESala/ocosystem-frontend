@@ -187,4 +187,14 @@ describe("BranchExpensesPage", () => {
     expect(screen.getByText("Compra de plumas")).toBeTruthy();
     expect(screen.getByText("Jabon y desinfectante")).toBeTruthy();
   });
+
+  it("muestra una fila de totales al final de la tabla", () => {
+    renderPage();
+
+    const totalRow = screen.getByText("Total").closest("tr");
+    const cells = Array.from(totalRow?.querySelectorAll("td") ?? []).map(
+      (cell) => cell.textContent,
+    );
+    expect(cells).toEqual(["Total", "$150.00", ""]);
+  });
 });
