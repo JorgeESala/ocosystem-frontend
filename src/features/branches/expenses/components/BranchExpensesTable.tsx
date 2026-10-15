@@ -26,6 +26,11 @@ export default function BranchExpensesTable({
     );
   }
 
+  const total = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount || 0),
+    0,
+  );
+
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
       <div className="flex justify-end border-b border-slate-800 px-4 py-2">
@@ -88,6 +93,17 @@ export default function BranchExpensesTable({
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-slate-600 bg-slate-900/50 font-semibold">
+              <td colSpan={5} className="px-4 py-2.5 text-slate-100">
+                Total
+              </td>
+              <td className="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap text-white">
+                {formatCurrency(total)}
+              </td>
+              <td className="px-4 py-2.5" />
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>
