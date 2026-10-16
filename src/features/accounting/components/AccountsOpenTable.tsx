@@ -172,6 +172,7 @@ export const AccountsOpenTable = ({
           )}
           <TableHeadCell>Relación</TableHeadCell>
           <TableHeadCell>Origen</TableHeadCell>
+          <TableHeadCell>Ruta</TableHeadCell>
           <TableHeadCell>Solicitante</TableHeadCell>
           <TableHeadCell>
             <button
@@ -251,6 +252,14 @@ export const AccountsOpenTable = ({
                     setPreviewSaleId(saleId ?? null);
                   }}
                 />
+              </TableCell>
+
+              <TableCell>
+                {row.routeName ? (
+                  <span className="text-xs text-gray-300">{row.routeName}</span>
+                ) : (
+                  <span className="text-xs text-gray-600">—</span>
+                )}
               </TableCell>
 
               <TableCell>

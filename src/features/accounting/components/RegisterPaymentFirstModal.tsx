@@ -42,6 +42,8 @@ interface Props {
   secondaryAccounts: AccountsPayableResponse[];
   primaryLoading: boolean;
   secondaryLoading: boolean;
+  initialRouteId?: number | null;
+  initialAmount?: number | null;
 }
 
 type PaymentKind = "NORMAL" | "COMPENSATION" | "ADVANCE";
@@ -100,6 +102,8 @@ export const RegisterPaymentFirstModal = ({
   secondaryAccounts,
   primaryLoading,
   secondaryLoading,
+  initialRouteId,
+  initialAmount,
 }: Props) => {
   const createPayment = useCreatePayment();
   const createCompensationPayment = useCreateCompensationPaymentFromAP();
@@ -207,7 +211,10 @@ export const RegisterPaymentFirstModal = ({
       setFolio("");
       setnote("");
       setDriverId("");
-      setRouteId("");
+      setRouteId(initialRouteId ? String(initialRouteId) : "");
+      setAmount(
+        initialAmount != null && initialAmount > 0 ? String(initialAmount) : "",
+      );
       setCompensationError(null);
       setPendingConfirmation(null);
       setAdvancePreview(null);
@@ -217,7 +224,7 @@ export const RegisterPaymentFirstModal = ({
       setAdvanceReceiverId("");
       setAdvanceError(null);
     }
-  }, [open]);
+  }, [open, initialRouteId, initialAmount]);
 
   const resetForm = () => {
     setSelectedAp(null);

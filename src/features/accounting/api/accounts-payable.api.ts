@@ -29,6 +29,7 @@ export const fetchOpenAccounts = (params: {
   from?: string;
   to?: string;
   status?: AccountStatus;
+  routeId?: number;
 }) => {
   return http.get<AccountsPayableResponse[]>(
     "/api/read/accounts-payable/open",

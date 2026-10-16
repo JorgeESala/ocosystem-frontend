@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Button, TextInput, ToggleSwitch } from "flowbite-react";
+import { Button, Select, TextInput, ToggleSwitch } from "flowbite-react";
 import { HiClock, HiPlus } from "react-icons/hi";
 import { HiDocumentDownload, HiQuestionMarkCircle } from "react-icons/hi";
 
@@ -17,6 +17,11 @@ import { useAccountingEntities } from "@/features/accounting/api/accounting-enti
 import { AccountDetailDrawer } from "@/features/accounting/components/AccountDetailDrawer";
 import { ClientReportDrawer } from "@/features/accounting/components/ClientReportDrawer";
 import { CreateAccountsPayableModal } from "@/features/accounting/components/CreateAccountsPayableModal";
+import { RouteCollectionsPanel } from "@/features/accounting/components/RouteCollectionsPanel";
+import { PaidSummaryCard } from "@/features/accounting/components/PaidSummaryCard";
+import { ClientPaymentsDrawer } from "@/features/accounting/components/ClientPaymentsDrawer";
+import { useRoutes } from "@/core/api/route/routes.queries";
+import { usePaymentsSummary } from "@/features/accounting/api/payments-summary.queries";
 import {
   applyAccountSort,
   filterAccountsBySearch,
@@ -46,7 +51,7 @@ import {
 } from "../components/EggAccountingHelpContent";
 import { toEggCedisOptions } from "../utils/eggCedisOptions";
 
-type ViewMode = "RECEIVABLE" | "PAYABLE" | "FINANCIAL";
+type ViewMode = "RECEIVABLE" | "COBRANZA" | "PAYABLE" | "FINANCIAL";
 
 const PAGE_SIZE = 20;
 
@@ -171,6 +176,39 @@ export const EggAccountsPage = () => {
     [eggCedisOptions],
   );
 
+  const receiverPks = useMemo(() => {
+    if (
+      selectedCedis.length === 0 ||
+      selectedCedis.length === allCedisIds.length
+    ) {
+      return undefined;
+    }
+    return eggCedisEntities
+      .filter(
+        (e) =>
+          e.entityType === "EGGCEDIS" && selectedCedis.includes(e.entityId),
+      )
+      .map((e) => e.id);
+  }, [selectedCedis, allCedisIds.length, eggCedisEntities]);
+
+  const paymentsSummaryParams =
+    viewMode === "RECEIVABLE"
+      ? {
+          from: formatDateToISO(dateRange.start),
+          to: formatDateToISO(dateRange.end),
+          receiverType: "EGGCEDIS",
+          receiverEntityIds: receiverPks,
+          payerEntityIds:
+            selectedClients.length > 0 ? selectedClients : undefined,
+        }
+      : null;
+
+  const {
+    data: paymentsSummary,
+    isLoading: paymentsSummaryLoading,
+    isError: paymentsSummaryError,
+  } = usePaymentsSummary(paymentsSummaryParams);
+
   useEffect(() => {
     if (selectedCedis.length === 0 && allCedisIds.length > 0) {
       const fromUrl = parseIds(searchParams.get("cedis"));
@@ -243,6 +281,10 @@ export const EggAccountsPage = () => {
         ? allCedisIds
         : undefined;
 
+  const [routeFilter, setRouteFilter] = useState<number | null>(null);
+  const [showClientPayments, setShowClientPayments] = useState(false);
+  const { data: routeOptions = [] } = useRoutes();
+
   const queryParams = receivable
     ? {
         creditorOriginalIds: cedisFilter,
@@ -251,6 +293,7 @@ export const EggAccountsPage = () => {
         from: formatDateToISO(dateRange.start),
         to: formatDateToISO(dateRange.end),
         status: accountStatus,
+        routeId: routeFilter ?? undefined,
       }
     : {
         debtorOriginalIds: cedisFilter,
@@ -336,6 +379,7 @@ export const EggAccountsPage = () => {
     dateRangeModified ||
     cedisModified ||
     accountStatus !== "OPEN" ||
+    routeFilter != null ||
     search.trim() !== "";
 
   const clearFilters = () => {
@@ -344,6 +388,7 @@ export const EggAccountsPage = () => {
     setSelectedCedis(allCedisIds);
     setDateRange(defaultRange);
     setAccountStatus("OPEN");
+    setRouteFilter(null);
     setSearch("");
     setPage(0);
     setSelectedIds([]);
@@ -426,6 +471,7 @@ export const EggAccountsPage = () => {
         className="flex gap-2 overflow-x-auto pb-1"
       >
         {tabButton("RECEIVABLE", "Por cobrar")}
+        {tabButton("COBRANZA", "Cobranza")}
         {tabButton("PAYABLE", "Por pagar")}
         {tabButton("FINANCIAL", "Resumen financiero")}
       </div>
@@ -456,7 +502,13 @@ export const EggAccountsPage = () => {
         </div>
       )}
 
-      {viewMode === "FINANCIAL" ? (
+      {viewMode === "COBRANZA" ? (
+        <RouteCollectionsPanel
+          creditorEntityType="EGGCEDIS"
+          businessUnitName="Huevo"
+          onSuccessToast={setToastMessage}
+        />
+      ) : viewMode === "FINANCIAL" ? (
         <CedisFinancialSummary
           cedisIds={selectedCedis.length > 0 ? selectedCedis : undefined}
           entityType="EGGCEDIS"
@@ -471,6 +523,16 @@ export const EggAccountsPage = () => {
             data={filtered}
             filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
             countLabel={accountStatus === "OPEN" ? undefined : "Documentos"}
+            extraCard={
+              receivable ? (
+                <PaidSummaryCard
+                  data={paymentsSummary}
+                  isLoading={paymentsSummaryLoading}
+                  isError={paymentsSummaryError}
+                  onShowByClient={() => setShowClientPayments(true)}
+                />
+              ) : undefined
+            }
             tooltips={{
               total: <TotalPendienteHelpContent />,
               count:
@@ -480,6 +542,16 @@ export const EggAccountsPage = () => {
               antiquity: <AntiguedadHelpContent />,
             }}
           />
+
+          {receivable && (
+            <ClientPaymentsDrawer
+              open={showClientPayments}
+              onClose={() => setShowClientPayments(false)}
+              payers={paymentsSummary?.payers ?? []}
+              isLoading={paymentsSummaryLoading}
+              periodLabel={`${formatUiDate(dateRange.start, "short")} — ${formatUiDate(dateRange.end, "short")}`}
+            />
+          )}
 
           <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="w-72">
@@ -508,6 +580,27 @@ export const EggAccountsPage = () => {
                       setPage(0);
                     }}
                   />
+                </div>
+                <div className="w-56">
+                  <label className="mb-1 block text-xs text-gray-400">
+                    Ruta
+                  </label>
+                  <Select
+                    value={routeFilter ?? ""}
+                    onChange={(e) => {
+                      setRouteFilter(
+                        e.target.value ? Number(e.target.value) : null,
+                      );
+                      setPage(0);
+                    }}
+                  >
+                    <option value="">Todas las rutas</option>
+                    {routeOptions.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
             ) : (
