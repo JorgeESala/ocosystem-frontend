@@ -28,6 +28,7 @@ import {
   FaClipboardList,
   FaTags,
   FaCheckCircle,
+  FaFileInvoiceDollar,
 } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import {
@@ -104,6 +105,11 @@ const LIVE_CHICKEN_MENU = [
   { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
   { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
+  {
+    to: "income-statement",
+    label: "Estado de resultados",
+    icon: FaFileInvoiceDollar,
+  },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
 ];
@@ -114,6 +120,11 @@ const EGG_MENU = [
   { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
   { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
+  {
+    to: "income-statement",
+    label: "Estado de resultados",
+    icon: FaFileInvoiceDollar,
+  },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
 ];
