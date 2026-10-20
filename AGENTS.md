@@ -187,6 +187,12 @@ comments"`). Don't add code comments, JSDoc, or file headers.
     calendar day in the range; a branch missing from that day's map means "no
     report that day" (≠ zero sales). Anomaly baselines use the median of the
     same weekday (min 3 samples, excluding the day itself).
+12. **Local vitest is tuned for the dev laptop** (4-core/8-thread): the config
+    caps forks at 4 and raises test/hook/teardown timeouts so loaded runs don't
+    produce random 5s timeouts or a non-zero exit after a green run. Don't run
+    `npm run test` concurrently with the backend's `mvn verify` on the laptop —
+    use `npm run test:light` if you must. CI (Linux runners, `CI` env set) uses
+    stock worker counts and is the authority on green.
 
 ## Typecheck / build before pushing
 
@@ -236,4 +242,3 @@ Caveats:
 - Build output is `dist/` (Vite), publish dir for Netlify.
 - `workflow_dispatch` (Run workflow button) only works when the workflow file is
   on the default branch (`main`).
-

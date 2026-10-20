@@ -26,17 +26,14 @@ export default function BranchExpensesTable({
     );
   }
 
+  const total = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount || 0),
+    0,
+  );
+
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
-        <div>
-          <h3 className="text-base font-semibold text-white">
-            Detalle de gastos
-          </h3>
-          <p className="text-sm text-slate-400">
-            Ordenado para revision rapida y edicion directa.
-          </p>
-        </div>
+      <div className="flex justify-end border-b border-slate-800 px-4 py-2">
         <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
           {expenses.length.toLocaleString("es-MX")} registros
         </span>
@@ -46,13 +43,13 @@ export default function BranchExpensesTable({
         <table className="min-w-full border-collapse text-left">
           <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
-              <th className="px-5 py-3 font-semibold">Fecha</th>
-              <th className="px-5 py-3 font-semibold">Sucursal</th>
-              <th className="px-5 py-3 font-semibold">Tipo</th>
-              <th className="px-5 py-3 font-semibold">Unidad</th>
-              <th className="px-5 py-3 font-semibold">Motivo</th>
-              <th className="px-5 py-3 text-right font-semibold">Monto</th>
-              <th className="px-5 py-3 text-right font-semibold">Accion</th>
+              <th className="px-4 py-2.5 font-semibold">Fecha</th>
+              <th className="px-4 py-2.5 font-semibold">Sucursal</th>
+              <th className="px-4 py-2.5 font-semibold">Tipo</th>
+              <th className="px-4 py-2.5 font-semibold">Unidad</th>
+              <th className="px-4 py-2.5 font-semibold">Motivo</th>
+              <th className="px-4 py-2.5 text-right font-semibold">Monto</th>
+              <th className="px-4 py-2.5 text-right font-semibold">Accion</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800 bg-slate-950/40">
@@ -62,40 +59,51 @@ export default function BranchExpensesTable({
                 onClick={() => onSelect?.(expense)}
                 className="group cursor-pointer transition hover:bg-slate-900/50"
               >
-                <td className="px-5 py-4 text-sm whitespace-nowrap text-slate-300">
+                <td className="px-4 py-2.5 text-sm whitespace-nowrap text-slate-300">
                   {formatHumanDate(expense.date, "short")}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-2.5">
                   <Badge color="gray" className="inline-flex">
                     {expense.branchName}
                   </Badge>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-2.5">
                   <Badge color="info" className="inline-flex">
                     {expense.expenseCategoryName}
                   </Badge>
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-2.5">
                   <Badge color="success" className="inline-flex">
                     {expense.businessUnitCategoryName ??
                       expense.businessUnitName ??
                       "Sin unidad"}
                   </Badge>
                 </td>
-                <td className="px-5 py-4 text-sm text-slate-200">
+                <td className="px-4 py-2.5 text-sm text-slate-200">
                   <div className="max-w-[18rem] truncate">{expense.reason}</div>
                 </td>
-                <td className="px-5 py-4 text-right font-mono text-base font-semibold whitespace-nowrap text-white">
+                <td className="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap text-white">
                   {formatCurrency(expense.amount)}
                 </td>
-                <td className="px-5 py-4 text-right">
+                <td className="px-4 py-2.5 text-right">
                   <Tooltip content="Editar gasto">
-                    <HiPencil className="ml-auto h-5 w-5 text-slate-400 opacity-0 transition group-hover:opacity-100" />
+                    <HiPencil className="ml-auto h-4 w-4 text-slate-400 opacity-0 transition group-hover:opacity-100" />
                   </Tooltip>
                 </td>
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-slate-600 bg-slate-900/50 font-semibold">
+              <td colSpan={5} className="px-4 py-2.5 text-slate-100">
+                Total
+              </td>
+              <td className="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap text-white">
+                {formatCurrency(total)}
+              </td>
+              <td className="px-4 py-2.5" />
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>

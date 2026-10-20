@@ -119,7 +119,7 @@ export const RegisterPaymentModal = ({
       setPaymentMethod("DEPOSIT");
       setAmount("");
       setDriverId("");
-      setRouteId("");
+      setRouteId(account.routeId ? String(account.routeId) : "");
       setSelectedAPId("");
       setCompensationError(null);
       setPendingConfirmation(null);

@@ -34,6 +34,7 @@ import AdminConfigPage from "@/features/branches/checklist/pages/AdminConfigPage
 import HelpPage from "@/features/branches/checklist/pages/HelpPage";
 import MyTasksPage from "@/features/branches/checklist/pages/MyTasksPage";
 import { ProfitReportPage } from "@/features/batch/profit/pages/ProfitReportPage";
+import { IncomeStatementPage } from "@/features/income-statement/pages/IncomeStatementPage";
 import { ClientsRoutesPage } from "@/features/clients-routes/pages/ClientsRoutesPage";
 import { ClientsRoutesHelpPage } from "@/features/clients-routes/pages/ClientsRoutesHelpPage";
 import RouteGuard from "./RouteGuard";
@@ -88,6 +89,10 @@ export default function BusinessRoutes() {
         />
         <Route path="clients-routes/help" element={<ClientsRoutesHelpPage />} />
         <Route path="accounting" element={<AccountsPage />} />
+        <Route
+          path="income-statement"
+          element={<IncomeStatementPage unitType="LIVE_CHICKEN" />}
+        />
         <Route
           path="general-cash"
           element={<UnitGeneralCashPage unitType="LIVE_CHICKEN" />}
@@ -181,6 +186,10 @@ export default function BusinessRoutes() {
         />
         <Route path="accounting" element={<EggAccountsPage />} />
         <Route path="accounting/help" element={<EggAccountingHelpPage />} />
+        <Route
+          path="income-statement"
+          element={<IncomeStatementPage unitType="EGG" />}
+        />
         <Route
           path="salesAndBatches"
           element={<BatchPage unitType={"EGG"} />}

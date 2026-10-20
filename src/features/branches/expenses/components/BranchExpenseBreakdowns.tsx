@@ -28,9 +28,9 @@ const BreakdownTable = ({
   onRowClick?: (item: ExpenseSummaryItem) => void;
   isActive?: (item: ExpenseSummaryItem) => boolean;
 }) => (
-  <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-    <div className="mb-4 flex items-center justify-between gap-2">
-      <h3 className="text-base font-semibold text-white">{title}</h3>
+  <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-4">
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold text-white">{title}</h3>
       <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
         Ordenado por total
       </span>
@@ -45,10 +45,10 @@ const BreakdownTable = ({
         <table className="w-full border-collapse text-left">
           <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
-              <th className="px-4 py-3 font-semibold">Concepto</th>
-              <th className="px-4 py-3 font-semibold">Monto</th>
-              <th className="px-4 py-3 font-semibold">Movs</th>
-              <th className="px-4 py-3 font-semibold">%</th>
+              <th className="px-4 py-2.5 font-semibold">Concepto</th>
+              <th className="px-4 py-2.5 font-semibold">Monto</th>
+              <th className="px-4 py-2.5 font-semibold">Movs</th>
+              <th className="px-4 py-2.5 font-semibold">%</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800 bg-slate-950/40">
@@ -68,18 +68,18 @@ const BreakdownTable = ({
                       : undefined
                   }
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-2.5">
                     <div className="font-medium text-slate-100">
                       {item.label}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-slate-100">
+                  <td className="px-4 py-2.5 font-mono text-sm text-slate-100">
                     {formatMXN(item.totalAmount)}
                   </td>
-                  <td className="px-4 py-3 text-slate-300">
+                  <td className="px-4 py-2.5 text-sm text-slate-300">
                     {item.expenseCount.toLocaleString("es-MX")}
                   </td>
-                  <td className="px-4 py-3 text-slate-300">
+                  <td className="px-4 py-2.5 text-sm text-slate-300">
                     {formatPercent(item.percentage)}
                   </td>
                 </tr>
