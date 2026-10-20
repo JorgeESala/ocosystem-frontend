@@ -17,6 +17,7 @@ import ForbiddenPage from "@/pages/ForbiddenPage";
 import ComingSoonPage from "@/pages/ComingSoonPage";
 import { EggAccountsPage } from "@/features/egg/accounting/pages/EggAccountsPage";
 import { EggAccountingHelpPage } from "@/features/egg/accounting/pages/EggAccountingHelpPage";
+import EggCashFlowPage from "@/features/egg-cash-flow/pages/EggCashFlowPage";
 import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import { BatchPage } from "@/features/batch/pages/BatchPage";
 import BranchExpensesPage from "@/features/branches/expenses/pages/BranchExpensesPage";
@@ -208,6 +209,7 @@ export default function BusinessRoutes() {
           path="general-cash/help"
           element={<UnitGeneralCashHelpPage unitType="EGG" />}
         />
+        <Route path="cash-flow" element={<EggCashFlowPage />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />
