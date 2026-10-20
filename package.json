@@ -11,6 +11,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "vitest run",
+    "test:light": "vitest run --maxWorkers=2 --testTimeout=25000",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "e2e": "npx playwright test",

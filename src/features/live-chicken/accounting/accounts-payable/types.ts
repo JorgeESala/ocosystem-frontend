@@ -51,6 +51,8 @@ export interface AccountsPayableResponse {
   sourceType?: AccountsPayableSourceType;
   sourceId?: number;
   sourceBatchId?: number;
+  routeId?: number | null;
+  routeName?: string | null;
   solicitorName?: string;
   solicitorId?: number;
   date: string;

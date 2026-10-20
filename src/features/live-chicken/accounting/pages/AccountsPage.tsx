@@ -10,6 +10,10 @@ import { AccountingSummaryCards } from "../../../accounting/components/Accountin
 import { AccountingErrorAlert } from "../../../accounting/components/AccountingErrorAlert";
 import { AccountingToast } from "../../../accounting/components/AccountingToast";
 import { RecentPaymentsDrawer } from "../../../accounting/components/RecentPaymentsDrawer";
+import { RouteCollectionsPanel } from "../../../accounting/components/RouteCollectionsPanel";
+import { PaidSummaryCard } from "../../../accounting/components/PaidSummaryCard";
+import { ClientPaymentsDrawer } from "../../../accounting/components/ClientPaymentsDrawer";
+import { usePaymentsSummary } from "../../../accounting/api/payments-summary.queries";
 import { useOpenAccounts } from "../../../accounting/api/accounts-payable.queries";
 import type { AccountsPayableResponse } from "../accounts-payable/types";
 import { AccountsPayableHistoryDrawer } from "../../../accounting/components/AccountsPayableHistoryDrawer";
@@ -19,7 +23,7 @@ import { useSuppliers } from "@/core/supplier/supplier.queries";
 import SupplierMultiSelect from "@/components/SupplierMultiSelect";
 import InternalClientMultiSelect from "@/components/InternalClientMultiSelect";
 import DateRangeFilter, { type DateRange } from "@/components/DateRangeFilter";
-import { formatDateToISO, getLastDays } from "@/utils/date.utils";
+import { formatDateToISO, formatUiDate, getLastDays } from "@/utils/date.utils";
 import { WeeklyWeightDiffTable } from "../weight-diff/WeeklyWeightDiffTable";
 import { WeightDiffSummaryCards } from "../weight-diff/WeightDiffSummaryCards";
 import { WeightDiffToolbar } from "../weight-diff/WeightDiffToolbar";
@@ -28,7 +32,12 @@ import { ToggleSwitch } from "flowbite-react";
 
 const CEDIS_ID = 2;
 
-type ViewMode = "RECEIVABLE" | "PAYABLE" | "WEIGHT_DIFF" | "FINANCIAL";
+type ViewMode =
+  | "RECEIVABLE"
+  | "COBRANZA"
+  | "PAYABLE"
+  | "WEIGHT_DIFF"
+  | "FINANCIAL";
 
 const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
@@ -74,6 +83,7 @@ export const AccountsPage = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPaymentFirstOpen, setIsPaymentFirstOpen] = useState(false);
   const [isRecentOpen, setIsRecentOpen] = useState(false);
+  const [showClientPayments, setShowClientPayments] = useState(false);
 
   const defaultRange = useMemo(() => getLastDays(30), []);
   const [dateRange, setDateRange] = useState<DateRange>(defaultRange);
@@ -116,6 +126,24 @@ export const AccountsPage = () => {
 
   const startIso = formatDateToISO(dateRange.start);
   const endIso = formatDateToISO(dateRange.end);
+
+  const paymentsSummaryParams =
+    viewMode === "RECEIVABLE"
+      ? {
+          from: startIso,
+          to: endIso,
+          receiverType: "CEDIS",
+          receiverEntityIds: [CEDIS_ID],
+          payerEntityIds:
+            selectedClients.length > 0 ? selectedClients : undefined,
+        }
+      : null;
+
+  const {
+    data: paymentsSummary,
+    isLoading: paymentsSummaryLoading,
+    isError: paymentsSummaryError,
+  } = usePaymentsSummary(paymentsSummaryParams);
 
   const weightDiffStartIso = formatDateToISO(weightDiffDateRange.start);
   const weightDiffEndIso = formatDateToISO(weightDiffDateRange.end);
@@ -229,6 +257,13 @@ export const AccountsPage = () => {
         </Button>
 
         <Button
+          color={viewMode === "COBRANZA" ? "blue" : "gray"}
+          onClick={() => handleSetViewMode("COBRANZA")}
+        >
+          Cobranza
+        </Button>
+
+        <Button
           color={viewMode === "PAYABLE" ? "blue" : "gray"}
           onClick={() => handleSetViewMode("PAYABLE")}
         >
@@ -250,12 +285,40 @@ export const AccountsPage = () => {
         </Button>
       </div>
 
-      {!isWeightDiff && !isFinancial && (
+      {viewMode === "COBRANZA" && (
+        <RouteCollectionsPanel
+          creditorEntityType="CEDIS"
+          businessUnitName="Pollo vivo"
+          onSuccessToast={setToastMessage}
+        />
+      )}
+
+      {!isWeightDiff && !isFinancial && viewMode !== "COBRANZA" && (
         <>
           <AccountingSummaryCards
             data={data}
             filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
+            extraCard={
+              receivable ? (
+                <PaidSummaryCard
+                  data={paymentsSummary}
+                  isLoading={paymentsSummaryLoading}
+                  isError={paymentsSummaryError}
+                  onShowByClient={() => setShowClientPayments(true)}
+                />
+              ) : undefined
+            }
           />
+
+          {receivable && (
+            <ClientPaymentsDrawer
+              open={showClientPayments}
+              onClose={() => setShowClientPayments(false)}
+              payers={paymentsSummary?.payers ?? []}
+              isLoading={paymentsSummaryLoading}
+              periodLabel={`${formatUiDate(dateRange.start, "short")} — ${formatUiDate(dateRange.end, "short")}`}
+            />
+          )}
 
           <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
             {receivable ? (

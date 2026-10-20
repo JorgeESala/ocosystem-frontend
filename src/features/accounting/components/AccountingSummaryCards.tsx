@@ -7,6 +7,7 @@ interface Props {
   data: AccountsPayableResponse[];
   filterLabel: string | null;
   countLabel?: string;
+  extraCard?: ReactNode;
   tooltips?: {
     total?: ReactNode;
     count?: ReactNode;
@@ -47,6 +48,7 @@ export const AccountingSummaryCards = ({
   data,
   filterLabel,
   countLabel,
+  extraCard,
   tooltips,
 }: Props) => {
   const totalDebt = useMemo(
@@ -68,7 +70,13 @@ export const AccountingSummaryCards = ({
   );
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div
+      className={
+        extraCard
+          ? "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+          : "grid grid-cols-1 gap-4 md:grid-cols-3"
+      }
+    >
       <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
         <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
           Total Pendiente {filterLabel && `(${filterLabel})`}
@@ -119,6 +127,7 @@ export const AccountingSummaryCards = ({
           Basado en la cuenta más antigua.
         </p>
       </div>
+      {extraCard}
     </div>
   );
 };

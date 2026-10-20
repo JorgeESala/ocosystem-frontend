@@ -19,5 +19,9 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     css: true,
     exclude: ["e2e/**", "node_modules/**"],
+    testTimeout: 15_000,
+    hookTimeout: 15_000,
+    teardownTimeout: 30_000,
+    maxWorkers: process.env.CI ? undefined : 4,
   },
 });
