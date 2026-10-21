@@ -9,17 +9,18 @@ import {
   Select,
   TextInput,
 } from "flowbite-react";
-import {
-  formatCurrency,
-  formatDate,
-  toLocalDateString,
-} from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import AccountingErrorAlert from "@/features/accounting/components/AccountingErrorAlert";
+import { formatDate } from "../utils/cashFlow.utils";
 import type { AvailableExpense } from "../types/eggCashFlow.types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   expenses: AvailableExpense[];
+  error?: unknown;
+  onRetryExpenses?: () => void;
   onSave: (payload: {
     expenseId: number;
     date?: string | null;
@@ -33,6 +34,8 @@ export default function CashExpenseModal({
   open,
   onClose,
   expenses,
+  error,
+  onRetryExpenses,
   onSave,
   isSaving,
 }: Props) {
@@ -75,15 +78,25 @@ export default function CashExpenseModal({
               {available.map((e) => (
                 <option key={e.id} value={e.id}>
                   {formatDate(e.date)} — {e.reason ?? e.categoryName} (
-                  {formatCurrency(e.amount)})
+                  {formatMXN(e.amount)})
                 </option>
               ))}
             </Select>
-            {available.length === 0 && (
-              <p className="mt-1 text-xs text-slate-500">
-                No hay gastos disponibles para vincular. Registra un gasto
-                primero en la sección Gastos.
-              </p>
+            {error != null ? (
+              <div className="mt-1">
+                <AccountingErrorAlert
+                  error={error}
+                  title="No se pudieron cargar los gastos"
+                  onRetry={onRetryExpenses}
+                />
+              </div>
+            ) : (
+              available.length === 0 && (
+                <p className="mt-1 text-xs text-slate-500">
+                  No hay gastos disponibles para vincular. Registra un gasto
+                  primero en la sección Gastos.
+                </p>
+              )
             )}
           </div>
 

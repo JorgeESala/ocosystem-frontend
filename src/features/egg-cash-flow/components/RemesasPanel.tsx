@@ -1,6 +1,7 @@
 import { Badge, Button } from "flowbite-react";
 import { HiCreditCard } from "react-icons/hi";
-import { formatCurrency, formatDate } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatDate } from "../utils/cashFlow.utils";
 import type { Remesa } from "../types/eggCashFlow.types";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -39,7 +40,7 @@ export default function RemesasPanel({ remesas, accountHolder, onPay }: Props) {
         <div className="text-right">
           <div className="text-xs text-slate-500">Deuda total</div>
           <div className="font-mono text-lg font-bold text-amber-400">
-            {formatCurrency(totalDebt)}
+            {formatMXN(totalDebt)}
           </div>
         </div>
       </div>
@@ -79,13 +80,13 @@ export default function RemesasPanel({ remesas, accountHolder, onPay }: Props) {
                     {r.supplierName ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-sm text-slate-300">
-                    {formatCurrency(r.totalAmount)}
+                    {formatMXN(r.totalAmount)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-sm text-emerald-400">
-                    {formatCurrency(r.paid)}
+                    {formatMXN(r.paid)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-amber-400">
-                    {formatCurrency(r.balance)}
+                    {formatMXN(r.balance)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge

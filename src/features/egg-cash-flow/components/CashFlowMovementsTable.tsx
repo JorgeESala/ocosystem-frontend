@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Badge, Tooltip } from "flowbite-react";
 import { HiTrash } from "react-icons/hi";
-import { formatCurrency, formatDate } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatDate } from "../utils/cashFlow.utils";
 import type { CashFlowMovement } from "../types/eggCashFlow.types";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -41,9 +43,16 @@ export default function CashFlowMovementsTable({
   onDelete,
   accountFilter,
 }: Props) {
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+
   const filtered = movements?.filter(
     (m) => accountFilter === "ALL" || m.account === accountFilter,
   );
+
+  const handleDelete = (id: number) => {
+    setConfirmDelete(null);
+    onDelete(id);
+  };
 
   if (!filtered?.length) {
     return (
@@ -119,17 +128,35 @@ export default function CashFlowMovementsTable({
                   }`}
                 >
                   {m.direction === "IN" ? "+" : "−"}
-                  {formatCurrency(m.amount)}
+                  {formatMXN(m.amount)}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <Tooltip content="Eliminar movimiento">
-                    <button
-                      onClick={() => onDelete(m.id)}
-                      className="ml-auto text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-red-400"
-                    >
-                      <HiTrash className="h-4 w-4" />
-                    </button>
-                  </Tooltip>
+                  {m.category === "REMESA_PAYMENT" ? null : confirmDelete ===
+                    m.id ? (
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleDelete(m.id)}
+                        className="rounded bg-red-600 px-2 py-0.5 text-xs text-white hover:bg-red-500"
+                      >
+                        Si
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="rounded bg-slate-600 px-2 py-0.5 text-xs text-white hover:bg-slate-500"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <Tooltip content="Eliminar movimiento">
+                      <button
+                        onClick={() => setConfirmDelete(m.id)}
+                        className="ml-auto text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-red-400"
+                      >
+                        <HiTrash className="h-4 w-4" />
+                      </button>
+                    </Tooltip>
+                  )}
                 </td>
               </tr>
             ))}

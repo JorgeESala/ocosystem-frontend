@@ -8,7 +8,7 @@ import {
   ModalHeader,
   TextInput,
 } from "flowbite-react";
-import { toLocalDateString } from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
 import type { CashFlowSettings } from "../types/eggCashFlow.types";
 
 interface Props {

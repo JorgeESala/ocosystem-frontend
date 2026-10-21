@@ -1,5 +1,6 @@
 export type CashFlowAccount = "CASH" | "BANK";
 export type CashFlowDirection = "IN" | "OUT";
+export type EggCashFlowUnit = "EGG";
 
 export type CashFlowCategory =
   | "TRIP_COLLECTION"
@@ -116,6 +117,7 @@ export interface CashFlowSummary {
   totalCashExpenses: number;
   totalDeposits: number;
   totalRemesaPayments: number;
+  totalCashRemesaPayments: number;
   totalCashAdjustments: number;
   totalBankAdjustments: number;
   remesaDebtTotal: number;

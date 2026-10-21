@@ -9,64 +9,96 @@ import type {
   CreateDepositRequestDTO,
   CreateIncomeRequestDTO,
   CreateRemesaPaymentRequestDTO,
+  EggCashFlowUnit,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
 
-export const useCashFlowSettings = () =>
+const STALE_TIME = 30_000;
+
+export const useCashFlowSettings = (unit: EggCashFlowUnit) =>
   useQuery({
-    queryKey: eggCashFlowKeys.settings(),
+    queryKey: eggCashFlowKeys(unit).settings(),
     queryFn: () => eggCashFlowApi.getSettings(),
+    staleTime: STALE_TIME,
   });
 
-export const useCashFlowSummary = (from: string, to: string) =>
+export const useCashFlowSummary = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
   useQuery({
-    queryKey: eggCashFlowKeys.summary(from, to),
+    queryKey: eggCashFlowKeys(unit).summary(from, to),
     queryFn: () => eggCashFlowApi.getSummary(from, to),
+    staleTime: STALE_TIME,
   });
 
-export const useCashFlowMovements = (from: string, to: string) =>
+export const useCashFlowMovements = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
   useQuery({
-    queryKey: eggCashFlowKeys.movements(from, to),
+    queryKey: eggCashFlowKeys(unit).movements(from, to),
     queryFn: () => eggCashFlowApi.getMovements(from, to),
+    staleTime: STALE_TIME,
   });
 
-export const useTripSuggestions = (from: string, to: string) =>
+export const useTripSuggestions = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
   useQuery({
-    queryKey: eggCashFlowKeys.tripSuggestions(from, to),
+    queryKey: eggCashFlowKeys(unit).tripSuggestions(from, to),
     queryFn: () => eggCashFlowApi.getTripSuggestions(from, to),
+    staleTime: STALE_TIME,
   });
 
-export const useCollectionSuggestions = (from: string, to: string) =>
+export const useCollectionSuggestions = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
   useQuery({
-    queryKey: eggCashFlowKeys.collectionSuggestions(from, to),
+    queryKey: eggCashFlowKeys(unit).collectionSuggestions(from, to),
     queryFn: () => eggCashFlowApi.getCollectionSuggestions(from, to),
+    staleTime: STALE_TIME,
   });
 
-export const useRemesas = () =>
+export const useRemesas = (unit: EggCashFlowUnit) =>
   useQuery({
-    queryKey: eggCashFlowKeys.remesas(),
+    queryKey: eggCashFlowKeys(unit).remesas(),
     queryFn: () => eggCashFlowApi.getRemesas(),
+    staleTime: STALE_TIME,
   });
 
-export const useAvailableExpenses = (from: string, to: string) =>
+export const useAvailableExpenses = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
   useQuery({
-    queryKey: eggCashFlowKeys.availableExpenses(from, to),
+    queryKey: eggCashFlowKeys(unit).availableExpenses(from, to),
     queryFn: () => eggCashFlowApi.getAvailableExpenses(from, to),
+    staleTime: STALE_TIME,
   });
 
-export const useCashFlowCuts = () =>
+export const useCashFlowCuts = (unit: EggCashFlowUnit) =>
   useQuery({
-    queryKey: eggCashFlowKeys.cuts(),
+    queryKey: eggCashFlowKeys(unit).cuts(),
     queryFn: () => eggCashFlowApi.getCuts(),
+    staleTime: STALE_TIME,
   });
 
-const useInvalidate = () => {
+const useInvalidate = (unit: EggCashFlowUnit) => {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: eggCashFlowKeys.all });
+  return () =>
+    queryClient.invalidateQueries({ queryKey: eggCashFlowKeys(unit).all });
 };
 
-export const useCreateCashFlowSettings = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowSettings = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateCashFlowSettingsDTO) =>
       eggCashFlowApi.createSettings(payload),
@@ -74,8 +106,8 @@ export const useCreateCashFlowSettings = () => {
   });
 };
 
-export const useUpdateCashFlowSettings = () => {
-  const invalidate = useInvalidate();
+export const useUpdateCashFlowSettings = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: UpdateCashFlowSettingsDTO) =>
       eggCashFlowApi.updateSettings(payload),
@@ -83,8 +115,8 @@ export const useUpdateCashFlowSettings = () => {
   });
 };
 
-export const useCreateCashFlowIncome = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowIncome = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateIncomeRequestDTO) =>
       eggCashFlowApi.createIncome(payload),
@@ -92,8 +124,8 @@ export const useCreateCashFlowIncome = () => {
   });
 };
 
-export const useCreateCashFlowDeposit = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowDeposit = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateDepositRequestDTO) =>
       eggCashFlowApi.createDeposit(payload),
@@ -101,8 +133,8 @@ export const useCreateCashFlowDeposit = () => {
   });
 };
 
-export const useCreateCashFlowExpense = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowExpense = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateCashExpenseRequestDTO) =>
       eggCashFlowApi.createCashExpense(payload),
@@ -110,8 +142,8 @@ export const useCreateCashFlowExpense = () => {
   });
 };
 
-export const useCreateCashFlowRemesaPayment = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowRemesaPayment = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateRemesaPaymentRequestDTO) =>
       eggCashFlowApi.createRemesaPayment(payload),
@@ -119,8 +151,8 @@ export const useCreateCashFlowRemesaPayment = () => {
   });
 };
 
-export const useCreateCashFlowAdjustment = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowAdjustment = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateAdjustmentRequestDTO) =>
       eggCashFlowApi.createAdjustment(payload),
@@ -128,16 +160,16 @@ export const useCreateCashFlowAdjustment = () => {
   });
 };
 
-export const useDeleteCashFlowMovement = () => {
-  const invalidate = useInvalidate();
+export const useDeleteCashFlowMovement = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (id: number) => eggCashFlowApi.deleteMovement(id),
     onSuccess: invalidate,
   });
 };
 
-export const useCreateCashFlowCut = () => {
-  const invalidate = useInvalidate();
+export const useCreateCashFlowCut = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateCashFlowCutDTO) =>
       eggCashFlowApi.createCut(payload),

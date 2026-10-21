@@ -1,4 +1,4 @@
-import { formatCurrency } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 import type { CashFlowSummary } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -28,7 +28,7 @@ function Row({
       <span
         className={`font-mono ${color ?? (bold ? "text-white" : "text-slate-300")}`}
       >
-        {formatCurrency(amount)}
+        {formatMXN(amount)}
       </span>
     </div>
   );
@@ -44,7 +44,8 @@ export default function WeeklySummaryCard({
   const cashBeforeDeposit =
     summary.cashOpeningBalance +
     summary.totalIncome -
-    summary.totalCashExpenses +
+    summary.totalCashExpenses -
+    summary.totalCashRemesaPayments +
     summary.totalCashAdjustments;
 
   return (
@@ -79,6 +80,11 @@ export default function WeeklySummaryCard({
           <Row
             label="− Gastos en efectivo"
             amount={summary.totalCashExpenses}
+            color="text-red-400"
+          />
+          <Row
+            label="− Pago de remesas"
+            amount={summary.totalCashRemesaPayments}
             color="text-red-400"
           />
           <Row label="± Ajustes" amount={summary.totalCashAdjustments} />

@@ -9,7 +9,7 @@ import {
   Select,
   TextInput,
 } from "flowbite-react";
-import { toLocalDateString } from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
 
 interface Props {
   open: boolean;

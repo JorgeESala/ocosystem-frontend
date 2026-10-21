@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   Datepicker,
@@ -9,11 +9,9 @@ import {
   Select,
   TextInput,
 } from "flowbite-react";
-import {
-  formatCurrency,
-  formatDate,
-  toLocalDateString,
-} from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatDate } from "../utils/cashFlow.utils";
 import type {
   CollectionSuggestion,
   TripSuggestion,
@@ -56,9 +54,11 @@ export default function IncomeModal({
   const [description, setDescription] = useState("");
   const [folio, setFolio] = useState("");
   const [note, setNote] = useState("");
+  const appliedPrefill = useRef("");
 
   useEffect(() => {
     if (!open) return;
+    appliedPrefill.current = "";
     setSource("trip");
     setDate(new Date());
     setAmount("");
@@ -67,25 +67,32 @@ export default function IncomeModal({
     setDescription("");
     setFolio("");
     setNote("");
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialTripId == null && initialPaymentId == null) return;
+    const key = `${initialTripId ?? ""}/${initialPaymentId ?? ""}`;
+    if (appliedPrefill.current === key) return;
 
     if (initialTripId != null) {
       const trip = trips.find((t) => t.tripId === initialTripId);
-      if (trip) {
-        setSource("trip");
-        setTripId(String(initialTripId));
-        setAmount(String(trip.pending));
-        setDescription(
-          `Despacho ${formatDate(trip.departureDate)} - ${trip.driverName ?? ""}`,
-        );
-      }
+      if (!trip) return;
+      setSource("trip");
+      setTripId(String(initialTripId));
+      setAmount(String(trip.pending));
+      setDescription(
+        `Despacho ${formatDate(trip.departureDate)} - ${trip.driverName ?? ""}`,
+      );
+      appliedPrefill.current = key;
     } else if (initialPaymentId != null) {
       const col = collections.find((c) => c.paymentId === initialPaymentId);
-      if (col) {
-        setSource("payment");
-        setPaymentId(String(initialPaymentId));
-        setAmount(String(col.pending));
-        setDescription(`Cobro ${col.payerName ?? ""}`);
-      }
+      if (!col) return;
+      setSource("payment");
+      setPaymentId(String(initialPaymentId));
+      setAmount(String(col.pending));
+      setDescription(`Cobro ${col.payerName ?? ""}`);
+      appliedPrefill.current = key;
     }
   }, [open, initialTripId, initialPaymentId, trips, collections]);
 
@@ -156,7 +163,7 @@ export default function IncomeModal({
                 {pendingTrips.map((t) => (
                   <option key={t.tripId} value={t.tripId}>
                     {formatDate(t.departureDate)} —{" "}
-                    {t.driverName ?? "Sin chofer"} ({formatCurrency(t.pending)}{" "}
+                    {t.driverName ?? "Sin chofer"} ({formatMXN(t.pending)}{" "}
                     pendiente)
                   </option>
                 ))}
@@ -175,7 +182,7 @@ export default function IncomeModal({
                 {pendingCollections.map((c) => (
                   <option key={c.paymentId} value={c.paymentId}>
                     {formatDate(c.paymentDate)} — {c.payerName ?? "Sin nombre"}{" "}
-                    ({formatCurrency(c.pending)} pendiente)
+                    ({formatMXN(c.pending)} pendiente)
                   </option>
                 ))}
               </Select>

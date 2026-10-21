@@ -209,7 +209,7 @@ export default function BusinessRoutes() {
           path="general-cash/help"
           element={<UnitGeneralCashHelpPage unitType="EGG" />}
         />
-        <Route path="cash-flow" element={<EggCashFlowPage />} />
+        <Route path="cash-flow" element={<EggCashFlowPage unitType="EGG" />} />
 
         {/* Rutas compartidas */}
         <Route path="graphs" element={<ComparisonsGraphs />} />

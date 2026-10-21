@@ -8,7 +8,8 @@ import {
   ModalHeader,
   TextInput,
 } from "flowbite-react";
-import { toLocalDateString } from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 
 interface Props {
   open: boolean;
@@ -56,10 +57,7 @@ export default function DepositModal({
               Efectivo disponible en caja chica
             </div>
             <div className="text-xl font-bold text-white">
-              $
-              {cashBalance.toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-              })}
+              {formatMXN(cashBalance)}
             </div>
           </div>
 

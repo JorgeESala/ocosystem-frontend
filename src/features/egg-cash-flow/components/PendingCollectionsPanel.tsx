@@ -1,6 +1,7 @@
 import { Button } from "flowbite-react";
 import { HiArrowDown, HiCash } from "react-icons/hi";
-import { formatCurrency, formatDate } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatDate } from "../utils/cashFlow.utils";
 import type {
   CollectionSuggestion,
   TripSuggestion,
@@ -59,8 +60,8 @@ export default function PendingCollectionsPanel({
                     {t.driverName ?? "Sin chofer"}
                   </div>
                   <div className="text-xs text-slate-500">
-                    Cobrable: {formatCurrency(t.collectible)} · Ya registrado:{" "}
-                    {formatCurrency(t.collected)}
+                    Cobrable: {formatMXN(t.collectible)} · Ya registrado:{" "}
+                    {formatMXN(t.collected)}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -70,7 +71,7 @@ export default function PendingCollectionsPanel({
                     }`}
                   >
                     {t.pending > 0 ? "+" : ""}
-                    {formatCurrency(t.pending)}
+                    {formatMXN(t.pending)}
                   </span>
                   <Button size="xs" onClick={() => onCollectTrip(t)}>
                     <HiCash className="mr-1 h-3 w-3" />
@@ -99,13 +100,13 @@ export default function PendingCollectionsPanel({
                     {formatDate(c.paymentDate)} — {c.payerName ?? "Sin nombre"}
                   </div>
                   <div className="text-xs text-slate-500">
-                    Monto: {formatCurrency(c.amount)} · Ya registrado:{" "}
-                    {formatCurrency(c.collected)}
+                    Monto: {formatMXN(c.amount)} · Ya registrado:{" "}
+                    {formatMXN(c.collected)}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-semibold text-emerald-400">
-                    +{formatCurrency(c.pending)}
+                    +{formatMXN(c.pending)}
                   </span>
                   <Button size="xs" onClick={() => onCollectPayment(c)}>
                     <HiArrowDown className="mr-1 h-3 w-3" />

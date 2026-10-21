@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   Datepicker,
@@ -9,7 +9,8 @@ import {
   Select,
   TextInput,
 } from "flowbite-react";
-import { formatCurrency, toLocalDateString } from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 import type { Remesa } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -44,6 +45,7 @@ export default function RemesaPaymentModal({
   const [amount, setAmount] = useState("");
   const [folio, setFolio] = useState("");
   const [note, setNote] = useState("");
+  const appliedPrefill = useRef(false);
 
   const selectRemesa = (value: string) => {
     setApId(value);
@@ -55,19 +57,22 @@ export default function RemesaPaymentModal({
 
   useEffect(() => {
     if (!open) return;
+    appliedPrefill.current = false;
     setApId("");
     setAccount("BANK");
     setDate(new Date());
     setAmount("");
     setFolio("");
     setNote("");
-    if (initialApId != null) {
-      setApId(String(initialApId));
-      const remesa = remesas.find((r) => r.accountsPayableId === initialApId);
-      if (remesa) {
-        setAmount(String(remesa.balance));
-      }
-    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || initialApId == null || appliedPrefill.current) return;
+    const remesa = remesas.find((r) => r.accountsPayableId === initialApId);
+    if (!remesa) return;
+    setApId(String(initialApId));
+    setAmount(String(remesa.balance));
+    appliedPrefill.current = true;
   }, [open, initialApId, remesas]);
 
   const openRemesas = remesas.filter((r) => r.status !== "PAGADA");
@@ -91,7 +96,7 @@ export default function RemesaPaymentModal({
               {openRemesas.map((r) => (
                 <option key={r.accountsPayableId} value={r.accountsPayableId}>
                   Remesa #{r.batchId} — {r.supplierName ?? "Proveedor"} (
-                  {formatCurrency(r.balance)} pendiente)
+                  {formatMXN(r.balance)} pendiente)
                 </option>
               ))}
             </Select>

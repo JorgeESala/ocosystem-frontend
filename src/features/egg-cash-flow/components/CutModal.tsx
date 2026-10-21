@@ -8,7 +8,8 @@ import {
   ModalHeader,
   TextInput,
 } from "flowbite-react";
-import { toLocalDateString } from "../utils/cashFlow.utils";
+import { toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 
 interface Props {
   open: boolean;
@@ -67,10 +68,7 @@ export default function CutModal({
                   Cierre caja chica (esperado)
                 </div>
                 <div className="text-lg font-bold text-white">
-                  $
-                  {summary.cashClosingBalance.toLocaleString("es-MX", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMXN(summary.cashClosingBalance)}
                 </div>
               </div>
               <div className="rounded-lg bg-slate-700/50 px-4 py-3">
@@ -78,10 +76,7 @@ export default function CutModal({
                   Cierre caja general (esperado)
                 </div>
                 <div className="text-lg font-bold text-white">
-                  $
-                  {summary.bankClosingBalance.toLocaleString("es-MX", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMXN(summary.bankClosingBalance)}
                 </div>
               </div>
             </div>

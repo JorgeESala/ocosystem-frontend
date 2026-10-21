@@ -1,4 +1,5 @@
-import { formatCurrency, formatDate } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
+import { formatDate } from "../utils/cashFlow.utils";
 import type { CashFlowCut } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -45,17 +46,17 @@ export default function CutsPanel({ cuts }: Props) {
                   {formatDate(c.weekStart)} — {formatDate(c.weekEnd)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-white">
-                  {formatCurrency(c.cashClosingBalance)}
+                  {formatMXN(c.cashClosingBalance)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-white">
-                  {formatCurrency(c.bankClosingBalance)}
+                  {formatMXN(c.bankClosingBalance)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-amber-400">
-                  {formatCurrency(c.remesaDebtTotal)}
+                  {formatMXN(c.remesaDebtTotal)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-slate-300">
                   {c.realBankBalance != null
-                    ? formatCurrency(c.realBankBalance)
+                    ? formatMXN(c.realBankBalance)
                     : "—"}
                 </td>
                 <td
@@ -67,9 +68,7 @@ export default function CutsPanel({ cuts }: Props) {
                         : "text-red-400"
                   }`}
                 >
-                  {c.bankDifference != null
-                    ? formatCurrency(c.bankDifference)
-                    : "—"}
+                  {c.bankDifference != null ? formatMXN(c.bankDifference) : "—"}
                 </td>
                 <td className="px-5 py-3 text-sm text-slate-400">
                   {c.note ?? "—"}

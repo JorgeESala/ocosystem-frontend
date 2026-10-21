@@ -8,6 +8,9 @@ import {
   HiReceiptRefund,
   HiScissors,
 } from "react-icons/hi";
+import { formatDateRange, toLocalDateString } from "@/utils/date.utils";
+import { extractErrorMessage } from "@/features/accounting/utils/errorMessage";
+import AccountingErrorAlert from "@/features/accounting/components/AccountingErrorAlert";
 import {
   useAvailableExpenses,
   useCashFlowCuts,
@@ -40,13 +43,14 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import {
-  currentWeekEnd,
-  currentWeekStart,
-  toLocalDateString,
-} from "../utils/cashFlow.utils";
+import { currentWeekEnd, currentWeekStart } from "../utils/cashFlow.utils";
+import type { EggCashFlowUnit } from "../types/eggCashFlow.types";
 
-export default function EggCashFlowPage() {
+interface Props {
+  unitType: EggCashFlowUnit;
+}
+
+export default function EggCashFlowPage({ unitType }: Props) {
   const weekStart = useMemo(() => currentWeekStart(), []);
   const weekEnd = useMemo(() => currentWeekEnd(), []);
 
@@ -63,6 +67,7 @@ export default function EggCashFlowPage() {
   const [showRemesaPayment, setShowRemesaPayment] = useState(false);
   const [showAdjustment, setShowAdjustment] = useState(false);
   const [showCut, setShowCut] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
     tripId?: number | null;
     paymentId?: number | null;
@@ -72,37 +77,60 @@ export default function EggCashFlowPage() {
   const from = toLocalDateString(rangeStart);
   const to = toLocalDateString(rangeEnd);
 
-  const settingsQuery = useCashFlowSettings();
-  const summaryQuery = useCashFlowSummary(from, to);
-  const movementsQuery = useCashFlowMovements(from, to);
-  const tripsQuery = useTripSuggestions(from, to);
-  const collectionsQuery = useCollectionSuggestions(from, to);
-  const remesasQuery = useRemesas();
-  const cutsQuery = useCashFlowCuts();
-  const expensesQuery = useAvailableExpenses(from, to);
+  const settingsQuery = useCashFlowSettings(unitType);
+  const summaryQuery = useCashFlowSummary(unitType, from, to);
+  const movementsQuery = useCashFlowMovements(unitType, from, to);
+  const tripsQuery = useTripSuggestions(unitType, from, to);
+  const collectionsQuery = useCollectionSuggestions(unitType, from, to);
+  const remesasQuery = useRemesas(unitType);
+  const cutsQuery = useCashFlowCuts(unitType);
+  const expensesQuery = useAvailableExpenses(unitType, from, to);
 
-  const createSettings = useCreateCashFlowSettings();
-  const updateSettings = useUpdateCashFlowSettings();
-  const createIncome = useCreateCashFlowIncome();
-  const createDeposit = useCreateCashFlowDeposit();
-  const createExpense = useCreateCashFlowExpense();
-  const createRemesaPayment = useCreateCashFlowRemesaPayment();
-  const createAdjustment = useCreateCashFlowAdjustment();
-  const createCut = useCreateCashFlowCut();
-  const deleteMovement = useDeleteCashFlowMovement();
+  const createSettings = useCreateCashFlowSettings(unitType);
+  const updateSettings = useUpdateCashFlowSettings(unitType);
+  const createIncome = useCreateCashFlowIncome(unitType);
+  const createDeposit = useCreateCashFlowDeposit(unitType);
+  const createExpense = useCreateCashFlowExpense(unitType);
+  const createRemesaPayment = useCreateCashFlowRemesaPayment(unitType);
+  const createAdjustment = useCreateCashFlowAdjustment(unitType);
+  const createCut = useCreateCashFlowCut(unitType);
+  const deleteMovement = useDeleteCashFlowMovement(unitType);
 
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
   const accountHolder = settings?.accountHolder ?? "Enrique";
 
+  const handleActionError = (error: unknown) =>
+    setActionError(extractErrorMessage(error));
+
   const handleDelete = (id: number) => {
-    deleteMovement.mutate(id);
+    deleteMovement.mutate(id, { onError: handleActionError });
   };
 
   if (settingsQuery.isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (settingsQuery.isError) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6 p-6">
+        <header className="border-b border-slate-800 pb-4">
+          <h1 className="text-2xl font-semibold text-white">
+            Flujo de efectivo
+          </h1>
+          <p className="text-sm text-slate-400">
+            Control de efectivo y cuenta bancaria del negocio de huevo.
+          </p>
+        </header>
+        <AccountingErrorAlert
+          error={settingsQuery.error}
+          title="No se pudo cargar la configuración"
+          onRetry={() => settingsQuery.refetch()}
+        />
       </div>
     );
   }
@@ -142,6 +170,7 @@ export default function EggCashFlowPage() {
           onSave={(p) =>
             createSettings.mutate(p, {
               onSuccess: () => setShowSettings(false),
+              onError: handleActionError,
             })
           }
           isSaving={createSettings.isPending}
@@ -213,6 +242,16 @@ export default function EggCashFlowPage() {
         </div>
       </header>
 
+      {actionError && (
+        <Alert
+          color="failure"
+          onDismiss={() => setActionError(null)}
+          className="border border-red-900/40 bg-red-950/40"
+        >
+          {actionError}
+        </Alert>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-300">
@@ -260,12 +299,11 @@ export default function EggCashFlowPage() {
       </div>
 
       {summaryQuery.isError && (
-        <Alert
-          color="failure"
-          className="border border-red-900/40 bg-red-950/40"
-        >
-          No se pudo cargar el resumen.
-        </Alert>
+        <AccountingErrorAlert
+          error={summaryQuery.error}
+          title="No se pudo cargar el resumen"
+          onRetry={() => summaryQuery.refetch()}
+        />
       )}
 
       {summaryQuery.isLoading ? (
@@ -280,35 +318,60 @@ export default function EggCashFlowPage() {
           />
           <WeeklySummaryCard
             summary={summary}
-            rangeLabel={`(${from} al ${to})`}
+            rangeLabel={`(${formatDateRange(rangeStart, rangeEnd)})`}
             accountHolder={accountHolder}
           />
         </>
       )}
 
-      <PendingCollectionsPanel
-        trips={tripsQuery.data ?? []}
-        collections={collectionsQuery.data ?? []}
-        onCollectTrip={(t) => {
-          setIncomePrefill({ tripId: t.tripId });
-          setShowIncome(true);
-        }}
-        onCollectPayment={(c) => {
-          setIncomePrefill({ paymentId: c.paymentId });
-          setShowIncome(true);
-        }}
-      />
+      {tripsQuery.isError || collectionsQuery.isError ? (
+        <AccountingErrorAlert
+          error={tripsQuery.error ?? collectionsQuery.error}
+          title="No se pudo cargar el estado de cobranza"
+          onRetry={() => {
+            if (tripsQuery.isError) tripsQuery.refetch();
+            if (collectionsQuery.isError) collectionsQuery.refetch();
+          }}
+        />
+      ) : (
+        <PendingCollectionsPanel
+          trips={tripsQuery.data ?? []}
+          collections={collectionsQuery.data ?? []}
+          onCollectTrip={(t) => {
+            setIncomePrefill({ tripId: t.tripId });
+            setShowIncome(true);
+          }}
+          onCollectPayment={(c) => {
+            setIncomePrefill({ paymentId: c.paymentId });
+            setShowIncome(true);
+          }}
+        />
+      )}
 
-      <RemesasPanel
-        remesas={remesasQuery.data ?? []}
-        accountHolder={accountHolder}
-        onPay={(r) => {
-          setRemesaPrefill(r.accountsPayableId);
-          setShowRemesaPayment(true);
-        }}
-      />
+      {remesasQuery.isError ? (
+        <AccountingErrorAlert
+          error={remesasQuery.error}
+          title="No se pudieron cargar las remesas"
+          onRetry={() => remesasQuery.refetch()}
+        />
+      ) : (
+        <RemesasPanel
+          remesas={remesasQuery.data ?? []}
+          accountHolder={accountHolder}
+          onPay={(r) => {
+            setRemesaPrefill(r.accountsPayableId);
+            setShowRemesaPayment(true);
+          }}
+        />
+      )}
 
-      {movementsQuery.isLoading ? (
+      {movementsQuery.isError ? (
+        <AccountingErrorAlert
+          error={movementsQuery.error}
+          title="No se pudieron cargar los movimientos"
+          onRetry={() => movementsQuery.refetch()}
+        />
+      ) : movementsQuery.isLoading ? (
         <div className="flex justify-center py-10">
           <Spinner size="lg" />
         </div>
@@ -320,18 +383,27 @@ export default function EggCashFlowPage() {
         />
       )}
 
-      <CutsPanel cuts={cutsQuery.data ?? []} />
+      {cutsQuery.isError ? (
+        <AccountingErrorAlert
+          error={cutsQuery.error}
+          title="No se pudieron cargar los cortes"
+          onRetry={() => cutsQuery.refetch()}
+        />
+      ) : (
+        <CutsPanel cuts={cutsQuery.data ?? []} />
+      )}
 
       <SettingsModal
         open={showSettings}
         onClose={() => setShowSettings(false)}
         settings={settings}
         onSave={(p) =>
-          (settings ? updateSettings : createSettings).mutate(p, {
+          updateSettings.mutate(p, {
             onSuccess: () => setShowSettings(false),
+            onError: handleActionError,
           })
         }
-        isSaving={createSettings.isPending || updateSettings.isPending}
+        isSaving={updateSettings.isPending}
       />
 
       <IncomeModal
@@ -350,6 +422,7 @@ export default function EggCashFlowPage() {
               setShowIncome(false);
               setIncomePrefill(null);
             },
+            onError: handleActionError,
           })
         }
         isSaving={createIncome.isPending}
@@ -360,7 +433,10 @@ export default function EggCashFlowPage() {
         onClose={() => setShowDeposit(false)}
         cashBalance={summary?.cashClosingBalance ?? 0}
         onSave={(p) =>
-          createDeposit.mutate(p, { onSuccess: () => setShowDeposit(false) })
+          createDeposit.mutate(p, {
+            onSuccess: () => setShowDeposit(false),
+            onError: handleActionError,
+          })
         }
         isSaving={createDeposit.isPending}
       />
@@ -369,9 +445,12 @@ export default function EggCashFlowPage() {
         open={showCashExpense}
         onClose={() => setShowCashExpense(false)}
         expenses={expensesQuery.data ?? []}
+        error={expensesQuery.isError ? expensesQuery.error : null}
+        onRetryExpenses={() => expensesQuery.refetch()}
         onSave={(p) =>
           createExpense.mutate(p, {
             onSuccess: () => setShowCashExpense(false),
+            onError: handleActionError,
           })
         }
         isSaving={createExpense.isPending}
@@ -392,6 +471,7 @@ export default function EggCashFlowPage() {
               setShowRemesaPayment(false);
               setRemesaPrefill(null);
             },
+            onError: handleActionError,
           })
         }
         isSaving={createRemesaPayment.isPending}
@@ -403,6 +483,7 @@ export default function EggCashFlowPage() {
         onSave={(p) =>
           createAdjustment.mutate(p, {
             onSuccess: () => setShowAdjustment(false),
+            onError: handleActionError,
           })
         }
         isSaving={createAdjustment.isPending}
@@ -423,7 +504,10 @@ export default function EggCashFlowPage() {
             : null
         }
         onSave={(p) =>
-          createCut.mutate(p, { onSuccess: () => setShowCut(false) })
+          createCut.mutate(p, {
+            onSuccess: () => setShowCut(false),
+            onError: handleActionError,
+          })
         }
         isSaving={createCut.isPending}
       />

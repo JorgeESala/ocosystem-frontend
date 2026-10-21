@@ -1,5 +1,5 @@
 import { HiOfficeBuilding, HiCash, HiGlobeAlt } from "react-icons/hi";
-import { formatCurrency } from "../utils/cashFlow.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 import type { CashFlowSummary } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -21,7 +21,7 @@ export default function CashFlowBalanceCards({
           Caja chica
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {formatCurrency(summary.cashClosingBalance)}
+          {formatMXN(summary.cashClosingBalance)}
         </div>
         <div className="mt-1 text-xs text-slate-500">Efectivo en oficina</div>
       </div>
@@ -32,7 +32,7 @@ export default function CashFlowBalanceCards({
           Caja general
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {formatCurrency(summary.bankClosingBalance)}
+          {formatMXN(summary.bankClosingBalance)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
           Cuenta de {accountHolder}
@@ -45,10 +45,10 @@ export default function CashFlowBalanceCards({
           Total
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
-          {formatCurrency(summary.totalBalance)}
+          {formatMXN(summary.totalBalance)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
-          Deuda con remesas: {formatCurrency(summary.remesaDebtTotal)}
+          Deuda con remesas: {formatMXN(summary.remesaDebtTotal)}
         </div>
       </div>
     </div>
