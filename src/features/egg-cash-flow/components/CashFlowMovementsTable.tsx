@@ -131,8 +131,8 @@ export default function CashFlowMovementsTable({
                   {formatMXN(m.amount)}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  {m.category === "REMESA_PAYMENT" ? null : confirmDelete ===
-                    m.id ? (
+                  {m.sourceType ===
+                  "ACCOUNTS_PAYABLE" ? null : confirmDelete === m.id ? (
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleDelete(m.id)}

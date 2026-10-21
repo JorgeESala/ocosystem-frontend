@@ -34,7 +34,7 @@ export default function SettingsModal({
   const isCreate = !settings;
   const [cashOpening, setCashOpening] = useState("0");
   const [bankOpening, setBankOpening] = useState("0");
-  const [accountHolder, setAccountHolder] = useState("Enrique");
+  const [accountHolder, setAccountHolder] = useState("Titular");
   const [trackingStart, setTrackingStart] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function SettingsModal({
       } else {
         setCashOpening("0");
         setBankOpening("0");
-        setAccountHolder("Enrique");
+        setAccountHolder("Titular");
         setTrackingStart(new Date());
       }
     }
@@ -94,7 +94,7 @@ export default function SettingsModal({
               id="settingsAccountHolder"
               value={accountHolder}
               onChange={(e) => setAccountHolder(e.target.value)}
-              placeholder="Ej: Enrique"
+              placeholder="Ej: Titular de la cuenta"
             />
           </div>
 
@@ -119,7 +119,7 @@ export default function SettingsModal({
                 onSave({
                   cashOpeningBalance: parseFloat(cashOpening) || 0,
                   bankOpeningBalance: parseFloat(bankOpening) || 0,
-                  accountHolder: accountHolder.trim() || "Enrique",
+                  accountHolder: accountHolder.trim() || "Titular",
                   trackingStartDate: toLocalDateString(trackingStart),
                 })
               }

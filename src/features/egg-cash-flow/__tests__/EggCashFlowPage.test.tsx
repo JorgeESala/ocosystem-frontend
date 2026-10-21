@@ -131,7 +131,7 @@ describe("EggCashFlowPage", () => {
         id: 1,
         cashOpeningBalance: 0,
         bankOpeningBalance: 0,
-        accountHolder: "Enrique",
+        accountHolder: "Titular",
         trackingStartDate: "2026-10-01",
         createdAt: "2026-10-01T00:00:00",
         updatedAt: null,

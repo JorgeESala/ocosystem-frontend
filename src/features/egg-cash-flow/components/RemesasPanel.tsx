@@ -18,11 +18,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface Props {
   remesas: Remesa[];
-  accountHolder: string;
   onPay: (remesa: Remesa) => void;
 }
 
-export default function RemesasPanel({ remesas, accountHolder, onPay }: Props) {
+export default function RemesasPanel({ remesas, onPay }: Props) {
   const openRemesas = remesas.filter((r) => r.status !== "PAGADA");
   const totalDebt = openRemesas.reduce((sum, r) => sum + r.balance, 0);
 
@@ -31,7 +30,7 @@ export default function RemesasPanel({ remesas, accountHolder, onPay }: Props) {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-white">
-            Deuda con {accountHolder} · Remesas por pagar
+            Remesas por pagar
           </h3>
           <p className="text-sm text-slate-400">
             Remesas (lotes) con saldo pendiente en cuentas por pagar.

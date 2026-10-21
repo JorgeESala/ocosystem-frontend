@@ -83,7 +83,7 @@ export default function RemesaPaymentModal({
 
   return (
     <Modal show={open} onClose={onClose} size="md" popup>
-      <ModalHeader>Pagar remesa · Deuda con {accountHolder}</ModalHeader>
+      <ModalHeader>Pagar remesa · Deuda con proveedores</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
           <div>

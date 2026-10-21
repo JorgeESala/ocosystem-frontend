@@ -98,7 +98,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
 
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
-  const accountHolder = settings?.accountHolder ?? "Enrique";
+  const accountHolder = settings?.accountHolder ?? "Titular";
 
   const handleActionError = (error: unknown) =>
     setActionError(extractErrorMessage(error));
@@ -357,7 +357,6 @@ export default function EggCashFlowPage({ unitType }: Props) {
       ) : (
         <RemesasPanel
           remesas={remesasQuery.data ?? []}
-          accountHolder={accountHolder}
           onPay={(r) => {
             setRemesaPrefill(r.accountsPayableId);
             setShowRemesaPayment(true);
