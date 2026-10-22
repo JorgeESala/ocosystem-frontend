@@ -30,9 +30,7 @@ export default function CutsPanel({ cuts }: Props) {
             <tr>
               <th className="px-5 py-3 font-semibold">Semana</th>
               <th className="px-5 py-3 text-right font-semibold">Caja chica</th>
-              <th className="px-5 py-3 text-right font-semibold">
-                Caja general
-              </th>
+              <th className="px-5 py-3 text-right font-semibold">Banco</th>
               <th className="px-5 py-3 text-right font-semibold">Deuda</th>
               <th className="px-5 py-3 text-right font-semibold">Saldo real</th>
               <th className="px-5 py-3 text-right font-semibold">Diferencia</th>

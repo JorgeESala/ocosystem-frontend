@@ -10,6 +10,7 @@ import type {
   CreateIncomeRequestDTO,
   CreateRemesaPaymentRequestDTO,
   EggCashFlowUnit,
+  MoveCashFlowMovementRequestDTO,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
 
@@ -164,6 +165,20 @@ export const useDeleteCashFlowMovement = (unit: EggCashFlowUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (id: number) => eggCashFlowApi.deleteMovement(id),
+    onSuccess: invalidate,
+  });
+};
+
+export const useMoveCashFlowMovement = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: MoveCashFlowMovementRequestDTO;
+    }) => eggCashFlowApi.moveMovement(id, payload),
     onSuccess: invalidate,
   });
 };

@@ -73,7 +73,7 @@ export default function CutModal({
               </div>
               <div className="rounded-lg bg-slate-700/50 px-4 py-3">
                 <div className="text-xs text-slate-400">
-                  Cierre caja general (esperado)
+                  Cierre banco (esperado)
                 </div>
                 <div className="text-lg font-bold text-white">
                   {formatMXN(summary.bankClosingBalance)}

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
+
+vi.mock("@/core/client/api/client.queries", () => ({
+  useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
+}));
 
 const mocks = vi.hoisted(() => ({
   useCashFlowSettings: vi.fn(),
@@ -38,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   })),
   useCreateCashFlowCut: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useDeleteCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
+  useMoveCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
 vi.mock("../api/eggCashFlow.queries", () => ({
@@ -58,6 +64,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCreateCashFlowAdjustment: mocks.useCreateCashFlowAdjustment,
   useCreateCashFlowCut: mocks.useCreateCashFlowCut,
   useDeleteCashFlowMovement: mocks.useDeleteCashFlowMovement,
+  useMoveCashFlowMovement: mocks.useMoveCashFlowMovement,
 }));
 
 const emptyQuery = <T,>(data: T = undefined as T) => ({
@@ -75,6 +82,18 @@ const mutationQuery = {
   error: null,
   refetch: vi.fn(),
 };
+
+const renderPage = () =>
+  render(
+    <MemoryRouter initialEntries={["/business/huevo/cash-flow"]}>
+      <Routes>
+        <Route
+          path="/business/:slug/cash-flow"
+          element={<EggCashFlowPage unitType="EGG" />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
 
 describe("EggCashFlowPage", () => {
   beforeEach(() => {
@@ -96,7 +115,7 @@ describe("EggCashFlowPage", () => {
       error: new Error("boom"),
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/No se pudo cargar la configuración/),
@@ -114,7 +133,7 @@ describe("EggCashFlowPage", () => {
       isLoading: false,
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/Configura tu flujo de efectivo/),
@@ -147,7 +166,7 @@ describe("EggCashFlowPage", () => {
       error: new Error("movements down"),
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/No se pudieron cargar los movimientos/),

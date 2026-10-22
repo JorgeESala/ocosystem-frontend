@@ -1,16 +1,19 @@
 import { useMemo, useState } from "react";
 import { Alert, Button, Datepicker, Spinner } from "flowbite-react";
+import { Link, useParams } from "react-router-dom";
 import {
   HiCreditCard,
   HiCog,
   HiDownload,
   HiPlus,
+  HiQuestionMarkCircle,
   HiReceiptRefund,
   HiScissors,
 } from "react-icons/hi";
 import { formatDateRange, toLocalDateString } from "@/utils/date.utils";
 import { extractErrorMessage } from "@/features/accounting/utils/errorMessage";
 import AccountingErrorAlert from "@/features/accounting/components/AccountingErrorAlert";
+import { useClients } from "@/core/client/api/client.queries";
 import {
   useAvailableExpenses,
   useCashFlowCuts,
@@ -26,6 +29,7 @@ import {
   useCreateCashFlowRemesaPayment,
   useCreateCashFlowSettings,
   useDeleteCashFlowMovement,
+  useMoveCashFlowMovement,
   useRemesas,
   useTripSuggestions,
   useUpdateCashFlowSettings,
@@ -51,6 +55,7 @@ interface Props {
 }
 
 export default function EggCashFlowPage({ unitType }: Props) {
+  const { slug } = useParams();
   const weekStart = useMemo(() => currentWeekStart(), []);
   const weekEnd = useMemo(() => currentWeekEnd(), []);
 
@@ -85,6 +90,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const remesasQuery = useRemesas(unitType);
   const cutsQuery = useCashFlowCuts(unitType);
   const expensesQuery = useAvailableExpenses(unitType, from, to);
+  const clientsQuery = useClients();
 
   const createSettings = useCreateCashFlowSettings(unitType);
   const updateSettings = useUpdateCashFlowSettings(unitType);
@@ -95,6 +101,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const createAdjustment = useCreateCashFlowAdjustment(unitType);
   const createCut = useCreateCashFlowCut(unitType);
   const deleteMovement = useDeleteCashFlowMovement(unitType);
+  const moveMovement = useMoveCashFlowMovement(unitType);
 
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
@@ -105,6 +112,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
 
   const handleDelete = (id: number) => {
     deleteMovement.mutate(id, { onError: handleActionError });
+  };
+
+  const handleMove = (id: number, account: "CASH" | "BANK") => {
+    moveMovement.mutate(
+      { id, payload: { account } },
+      { onError: handleActionError },
+    );
   };
 
   if (settingsQuery.isLoading) {
@@ -167,6 +181,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
           open={showSettings}
           onClose={() => setShowSettings(false)}
           settings={settings}
+          clients={clientsQuery.data ?? []}
           onSave={(p) =>
             createSettings.mutate(p, {
               onSuccess: () => setShowSettings(false),
@@ -236,6 +251,12 @@ export default function EggCashFlowPage({ unitType }: Props) {
             <HiScissors className="mr-1 h-3 w-3" />
             Corte de semana
           </Button>
+          <Link to={`/business/${slug}/cash-flow/help`}>
+            <Button color="light" size="sm">
+              <HiQuestionMarkCircle className="mr-1 h-3 w-3" />
+              Ayuda
+            </Button>
+          </Link>
           <Button color="light" size="sm" onClick={() => setShowSettings(true)}>
             <HiCog className="mr-1 h-3 w-3" />
           </Button>
@@ -378,6 +399,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         <CashFlowMovementsTable
           movements={movementsQuery.data}
           onDelete={handleDelete}
+          onMove={handleMove}
           accountFilter={accountFilter}
         />
       )}
@@ -396,6 +418,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         open={showSettings}
         onClose={() => setShowSettings(false)}
         settings={settings}
+        clients={clientsQuery.data ?? []}
         onSave={(p) =>
           updateSettings.mutate(p, {
             onSuccess: () => setShowSettings(false),
@@ -413,6 +436,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         }}
         trips={tripsQuery.data ?? []}
         collections={collectionsQuery.data ?? []}
+        clients={clientsQuery.data ?? []}
         initialTripId={incomePrefill?.tripId ?? null}
         initialPaymentId={incomePrefill?.paymentId ?? null}
         onSave={(p) =>

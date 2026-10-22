@@ -35,6 +35,7 @@ const baseProps = {
   onClose: vi.fn(),
   onSave: vi.fn(),
   isSaving: false,
+  clients: [],
 };
 
 const renderModal = (
