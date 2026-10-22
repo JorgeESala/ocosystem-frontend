@@ -12,6 +12,7 @@ interface Props {
   collections: CollectionSuggestion[];
   onCollectTrip: (trip: TripSuggestion) => void;
   onCollectPayment: (col: CollectionSuggestion) => void;
+  onRegisterAllPending?: (trips: TripSuggestion[]) => void;
 }
 
 export default function PendingCollectionsPanel({
@@ -19,8 +20,9 @@ export default function PendingCollectionsPanel({
   collections,
   onCollectTrip,
   onCollectPayment,
+  onRegisterAllPending,
 }: Props) {
-  const pendingTrips = trips.filter((t) => t.pending !== 0);
+  const pendingTrips = trips.filter((t) => t.pending > 0);
   const pendingCollections = collections.filter((c) => c.pending > 0);
 
   if (pendingTrips.length === 0 && pendingCollections.length === 0) {
@@ -36,11 +38,22 @@ export default function PendingCollectionsPanel({
 
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-      <div className="mb-4">
-        <h3 className="text-base font-semibold text-white">Por cobrar</h3>
-        <p className="text-sm text-slate-400">
-          Despachos y cobros con dinero pendiente de ingresar a caja chica.
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-white">Por cobrar</h3>
+          <p className="text-sm text-slate-400">
+            Despachos y cobros con dinero pendiente de ingresar a caja chica.
+          </p>
+        </div>
+        {pendingTrips.length > 0 && onRegisterAllPending && (
+          <Button
+            size="xs"
+            color="light"
+            onClick={() => onRegisterAllPending(pendingTrips)}
+          >
+            Registrar todo ({pendingTrips.length})
+          </Button>
+        )}
       </div>
 
       {pendingTrips.length > 0 && (

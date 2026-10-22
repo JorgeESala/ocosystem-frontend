@@ -121,6 +121,27 @@ export default function EggCashFlowPage({ unitType }: Props) {
     );
   };
 
+  const handleRegisterAllPending = (
+    trips: {
+      tripId: number;
+      departureDate: string;
+      driverName: string | null;
+      pending: number;
+    }[],
+  ) => {
+    for (const trip of trips) {
+      createIncome.mutate(
+        {
+          date: trip.departureDate,
+          amount: trip.pending,
+          tripId: trip.tripId,
+          description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
+        },
+        { onError: handleActionError },
+      );
+    }
+  };
+
   if (settingsQuery.isLoading) {
     return (
       <div className="flex justify-center py-20">
@@ -366,6 +387,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
             setIncomePrefill({ paymentId: c.paymentId });
             setShowIncome(true);
           }}
+          onRegisterAllPending={handleRegisterAllPending}
         />
       )}
 
