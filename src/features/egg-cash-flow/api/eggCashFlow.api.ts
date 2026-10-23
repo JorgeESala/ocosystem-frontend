@@ -13,6 +13,7 @@ import type {
   CreateDepositRequestDTO,
   CreateIncomeRequestDTO,
   CreateRemesaPaymentRequestDTO,
+  MoveCashFlowMovementRequestDTO,
   Remesa,
   TripSuggestion,
   UpdateCashFlowSettingsDTO,
@@ -121,6 +122,17 @@ export const eggCashFlowApi = {
     await http.delete(`${BASE_URL}/movements/${id}`);
   },
 
+  moveMovement: async (
+    id: number,
+    payload: MoveCashFlowMovementRequestDTO,
+  ): Promise<CashFlowMovement> => {
+    const { data } = await http.patch<CashFlowMovement>(
+      `${BASE_URL}/movements/${id}`,
+      payload,
+    );
+    return data;
+  },
+
   getTripSuggestions: async (
     from: string,
     to: string,
@@ -171,5 +183,9 @@ export const eggCashFlowApi = {
   createCut: async (payload: CreateCashFlowCutDTO): Promise<CashFlowCut> => {
     const { data } = await http.post<CashFlowCut>(`${BASE_URL}/cuts`, payload);
     return data;
+  },
+
+  deleteCut: async (id: number): Promise<void> => {
+    await http.delete(`${BASE_URL}/cuts/${id}`);
   },
 };

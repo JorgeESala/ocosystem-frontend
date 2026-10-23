@@ -10,6 +10,8 @@ import type {
   CreateIncomeRequestDTO,
   CreateRemesaPaymentRequestDTO,
   EggCashFlowUnit,
+  MoveCashFlowMovementRequestDTO,
+  TripSuggestion,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
 
@@ -124,6 +126,31 @@ export const useCreateCashFlowIncome = (unit: EggCashFlowUnit) => {
   });
 };
 
+export const useRegisterAllCashFlowIncome = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: async (trips: TripSuggestion[]) => {
+      let registered = 0;
+      const failed: { trip: TripSuggestion; error: unknown }[] = [];
+      for (const trip of trips) {
+        try {
+          await eggCashFlowApi.createIncome({
+            date: trip.departureDate,
+            amount: trip.pending,
+            tripId: trip.tripId,
+            description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
+          });
+          registered += 1;
+        } catch (error) {
+          failed.push({ trip, error });
+        }
+      }
+      return { registered, failed };
+    },
+    onSuccess: invalidate,
+  });
+};
+
 export const useCreateCashFlowDeposit = (unit: EggCashFlowUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
@@ -168,11 +195,33 @@ export const useDeleteCashFlowMovement = (unit: EggCashFlowUnit) => {
   });
 };
 
+export const useMoveCashFlowMovement = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: MoveCashFlowMovementRequestDTO;
+    }) => eggCashFlowApi.moveMovement(id, payload),
+    onSuccess: invalidate,
+  });
+};
+
 export const useCreateCashFlowCut = (unit: EggCashFlowUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
     mutationFn: (payload: CreateCashFlowCutDTO) =>
       eggCashFlowApi.createCut(payload),
+    onSuccess: invalidate,
+  });
+};
+
+export const useDeleteCashFlowCut = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: (id: number) => eggCashFlowApi.deleteCut(id),
     onSuccess: invalidate,
   });
 };

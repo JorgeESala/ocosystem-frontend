@@ -26,6 +26,7 @@ export interface CashFlowSettings {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  directDepositClientIds: number[];
   createdAt: string;
   updatedAt: string | null;
   updatedBy: number | null;
@@ -36,6 +37,7 @@ export interface CreateCashFlowSettingsDTO {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  directDepositClientIds?: number[];
 }
 
 export interface UpdateCashFlowSettingsDTO {
@@ -43,6 +45,7 @@ export interface UpdateCashFlowSettingsDTO {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  directDepositClientIds?: number[];
 }
 
 export interface CashFlowMovement {
@@ -58,6 +61,7 @@ export interface CashFlowMovement {
   folio: string | null;
   description: string | null;
   note: string | null;
+  auto: boolean;
   createdBy: number | null;
   createdAt: string;
 }
@@ -102,6 +106,11 @@ export interface CreateAdjustmentRequestDTO {
   date: string;
   amount: number;
   reason: string;
+  note?: string | null;
+}
+
+export interface MoveCashFlowMovementRequestDTO {
+  account: CashFlowAccount;
   note?: string | null;
 }
 

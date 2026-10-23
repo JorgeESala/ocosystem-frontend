@@ -103,7 +103,7 @@ export default function WeeklySummaryCard({
 
         <div>
           <h3 className="mb-2 text-sm font-semibold text-blue-400">
-            Caja general · cuenta de {accountHolder}
+            Banco · cuenta de {accountHolder}
           </h3>
           <Row label="Corte anterior" amount={summary.bankOpeningBalance} />
           <Row
