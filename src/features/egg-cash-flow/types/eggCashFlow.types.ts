@@ -61,6 +61,7 @@ export interface CashFlowMovement {
   folio: string | null;
   description: string | null;
   note: string | null;
+  auto: boolean;
   createdBy: number | null;
   createdAt: string;
 }

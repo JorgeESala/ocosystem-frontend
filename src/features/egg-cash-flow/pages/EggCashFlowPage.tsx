@@ -28,6 +28,7 @@ import {
   useCreateCashFlowIncome,
   useCreateCashFlowRemesaPayment,
   useCreateCashFlowSettings,
+  useDeleteCashFlowCut,
   useDeleteCashFlowMovement,
   useMoveCashFlowMovement,
   useRemesas,
@@ -47,7 +48,7 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import { currentWeekEnd, currentWeekStart } from "../utils/cashFlow.utils";
+import { previousWeekRange } from "../utils/cashFlow.utils";
 import type { EggCashFlowUnit } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -56,11 +57,10 @@ interface Props {
 
 export default function EggCashFlowPage({ unitType }: Props) {
   const { slug } = useParams();
-  const weekStart = useMemo(() => currentWeekStart(), []);
-  const weekEnd = useMemo(() => currentWeekEnd(), []);
+  const previousWeek = useMemo(() => previousWeekRange(), []);
 
-  const [rangeStart, setRangeStart] = useState<Date>(weekStart);
-  const [rangeEnd, setRangeEnd] = useState<Date>(weekEnd);
+  const [rangeStart, setRangeStart] = useState<Date>(previousWeek.start);
+  const [rangeEnd, setRangeEnd] = useState<Date>(previousWeek.end);
   const [accountFilter, setAccountFilter] = useState<"ALL" | "CASH" | "BANK">(
     "ALL",
   );
@@ -102,6 +102,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const createCut = useCreateCashFlowCut(unitType);
   const deleteMovement = useDeleteCashFlowMovement(unitType);
   const moveMovement = useMoveCashFlowMovement(unitType);
+  const deleteCut = useDeleteCashFlowCut(unitType);
 
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
@@ -433,7 +434,12 @@ export default function EggCashFlowPage({ unitType }: Props) {
           onRetry={() => cutsQuery.refetch()}
         />
       ) : (
-        <CutsPanel cuts={cutsQuery.data ?? []} />
+        <CutsPanel
+          cuts={cutsQuery.data ?? []}
+          onReopen={(id) =>
+            deleteCut.mutate(id, { onError: handleActionError })
+          }
+        />
       )}
 
       <SettingsModal

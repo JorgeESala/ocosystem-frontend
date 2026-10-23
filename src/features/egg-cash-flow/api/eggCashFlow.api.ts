@@ -184,4 +184,8 @@ export const eggCashFlowApi = {
     const { data } = await http.post<CashFlowCut>(`${BASE_URL}/cuts`, payload);
     return data;
   },
+
+  deleteCut: async (id: number): Promise<void> => {
+    await http.delete(`${BASE_URL}/cuts/${id}`);
+  },
 };

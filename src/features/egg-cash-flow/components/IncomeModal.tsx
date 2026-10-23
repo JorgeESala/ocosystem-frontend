@@ -167,7 +167,9 @@ export default function IncomeModal({
               }
             >
               <option value="trip">Despacho (ruta)</option>
-              <option value="payment">Cobro registrado en Contabilidad</option>
+              <option value="payment">
+                Cobro pendiente (registrado en Contabilidad)
+              </option>
               <option value="client">Cliente (pago en efectivo)</option>
               <option value="other">Otro</option>
             </Select>

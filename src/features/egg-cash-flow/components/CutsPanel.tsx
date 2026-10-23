@@ -1,19 +1,24 @@
+import { useState } from "react";
+import { Button } from "flowbite-react";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatDate } from "../utils/cashFlow.utils";
 import type { CashFlowCut } from "../types/eggCashFlow.types";
 
 interface Props {
   cuts: CashFlowCut[];
+  onReopen?: (id: number) => void;
 }
 
-export default function CutsPanel({ cuts }: Props) {
+export default function CutsPanel({ cuts, onReopen }: Props) {
+  const [confirmReopen, setConfirmReopen] = useState<number | null>(null);
+
   if (cuts.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
         <h3 className="text-base font-semibold text-white">Cortes de semana</h3>
         <p className="mt-1 text-sm text-slate-400">
-          No hay cortes registrados. Usa "Corte de semana" para cerrar el
-          periodo actual.
+          No hay cortes registrados. Usa "Corte de semana" para cerrar una
+          semana que ya termino.
         </p>
       </section>
     );
@@ -23,6 +28,9 @@ export default function CutsPanel({ cuts }: Props) {
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
       <div className="border-b border-slate-800 px-5 py-4">
         <h3 className="text-base font-semibold text-white">Cortes de semana</h3>
+        <p className="mt-1 text-sm text-slate-400">
+          Solo el ultimo corte se puede reabrir para corregir su semana.
+        </p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse text-left">
@@ -35,10 +43,11 @@ export default function CutsPanel({ cuts }: Props) {
               <th className="px-5 py-3 text-right font-semibold">Saldo real</th>
               <th className="px-5 py-3 text-right font-semibold">Diferencia</th>
               <th className="px-5 py-3 font-semibold">Nota</th>
+              <th className="px-5 py-3 text-right font-semibold">Acción</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800 bg-slate-950/40">
-            {cuts.map((c) => (
+            {cuts.map((c, index) => (
               <tr key={c.id} className="transition hover:bg-slate-900/50">
                 <td className="px-5 py-3 text-sm whitespace-nowrap text-slate-300">
                   {formatDate(c.weekStart)} — {formatDate(c.weekEnd)}
@@ -70,6 +79,41 @@ export default function CutsPanel({ cuts }: Props) {
                 </td>
                 <td className="px-5 py-3 text-sm text-slate-400">
                   {c.note ?? "—"}
+                </td>
+                <td className="px-5 py-3 text-right">
+                  {index === 0 && onReopen ? (
+                    confirmReopen === c.id ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="xs"
+                          color="failure"
+                          onClick={() => {
+                            setConfirmReopen(null);
+                            onReopen(c.id);
+                          }}
+                        >
+                          Si
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="gray"
+                          onClick={() => setConfirmReopen(null)}
+                        >
+                          No
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="xs"
+                        color="light"
+                        onClick={() => setConfirmReopen(c.id)}
+                      >
+                        Reabrir
+                      </Button>
+                    )
+                  ) : (
+                    <span className="text-xs text-slate-600">—</span>
+                  )}
                 </td>
               </tr>
             ))}

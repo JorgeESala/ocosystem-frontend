@@ -56,8 +56,7 @@ export default function CashFlowMovementsTable({
     onDelete(id);
   };
 
-  const isAuto = (movement: CashFlowMovement) =>
-    movement.sourceType === "EXPENSE" || movement.sourceType === "PAYMENT";
+  const isAuto = (movement: CashFlowMovement) => movement.auto;
 
   if (!filtered?.length) {
     return (
@@ -161,22 +160,27 @@ export default function CashFlowMovementsTable({
                     </div>
                   ) : (
                     <div className="flex items-center justify-end gap-2">
-                      <Tooltip
-                        content={
-                          m.account === "CASH"
-                            ? "Mover al banco"
-                            : "Mover a caja chica"
-                        }
-                      >
-                        <button
-                          onClick={() =>
-                            onMove(m.id, m.account === "CASH" ? "BANK" : "CASH")
+                      {m.transferGroupId == null && (
+                        <Tooltip
+                          content={
+                            m.account === "CASH"
+                              ? "Mover al banco"
+                              : "Mover a caja chica"
                           }
-                          className="text-slate-400 transition hover:text-blue-400"
                         >
-                          <HiSwitchHorizontal className="h-4 w-4" />
-                        </button>
-                      </Tooltip>
+                          <button
+                            onClick={() =>
+                              onMove(
+                                m.id,
+                                m.account === "CASH" ? "BANK" : "CASH",
+                              )
+                            }
+                            className="text-slate-400 transition hover:text-blue-400"
+                          >
+                            <HiSwitchHorizontal className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                      )}
                       <Tooltip content="Eliminar movimiento">
                         <button
                           onClick={() => setConfirmDelete(m.id)}

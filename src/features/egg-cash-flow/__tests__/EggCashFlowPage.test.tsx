@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => ({
   useCreateCashFlowCut: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useDeleteCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
   useMoveCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
+  useDeleteCashFlowCut: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
 vi.mock("../api/eggCashFlow.queries", () => ({
@@ -65,6 +66,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCreateCashFlowCut: mocks.useCreateCashFlowCut,
   useDeleteCashFlowMovement: mocks.useDeleteCashFlowMovement,
   useMoveCashFlowMovement: mocks.useMoveCashFlowMovement,
+  useDeleteCashFlowCut: mocks.useDeleteCashFlowCut,
 }));
 
 const emptyQuery = <T,>(data: T = undefined as T) => ({

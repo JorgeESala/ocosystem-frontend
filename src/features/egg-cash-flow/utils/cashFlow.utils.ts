@@ -20,3 +20,11 @@ export const currentWeekEnd = (): Date => {
   end.setDate(start.getDate() + 6);
   return end;
 };
+
+export const previousWeekRange = (): { start: Date; end: Date } => {
+  const start = currentWeekStart();
+  start.setDate(start.getDate() - 7);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+};

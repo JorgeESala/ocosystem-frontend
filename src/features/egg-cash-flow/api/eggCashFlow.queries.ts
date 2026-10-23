@@ -191,3 +191,11 @@ export const useCreateCashFlowCut = (unit: EggCashFlowUnit) => {
     onSuccess: invalidate,
   });
 };
+
+export const useDeleteCashFlowCut = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: (id: number) => eggCashFlowApi.deleteCut(id),
+    onSuccess: invalidate,
+  });
+};
