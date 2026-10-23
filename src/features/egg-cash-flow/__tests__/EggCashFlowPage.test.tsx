@@ -25,7 +25,8 @@ const mocks = vi.hoisted(() => ({
     mutate: vi.fn(),
     isPending: false,
   })),
-  useCreateCashFlowIncome: vi.fn(() => ({
+  useCreateCashFlowIncome: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRegisterAllCashFlowIncome: vi.fn(() => ({
     mutate: vi.fn(),
     mutateAsync: vi.fn(),
     isPending: false,
@@ -64,6 +65,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCreateCashFlowSettings: mocks.useCreateCashFlowSettings,
   useUpdateCashFlowSettings: mocks.useUpdateCashFlowSettings,
   useCreateCashFlowIncome: mocks.useCreateCashFlowIncome,
+  useRegisterAllCashFlowIncome: mocks.useRegisterAllCashFlowIncome,
   useCreateCashFlowDeposit: mocks.useCreateCashFlowDeposit,
   useCreateCashFlowExpense: mocks.useCreateCashFlowExpense,
   useCreateCashFlowRemesaPayment: mocks.useCreateCashFlowRemesaPayment,
@@ -234,7 +236,7 @@ describe("EggCashFlowPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("registers pending trips sequentially and summarizes failures", async () => {
+  it("registers pending trips and summarizes failures", async () => {
     mocks.useCashFlowSettings.mockReturnValue({
       ...mutationQuery,
       data: settingsData,
@@ -251,13 +253,21 @@ describe("EggCashFlowPage", () => {
         }),
       ]),
     );
-    const mutateAsync = vi
-      .fn()
-      .mockResolvedValueOnce({})
-      .mockRejectedValueOnce(
-        new Error("Esta fecha esta dentro de una semana cerrada."),
-      );
-    mocks.useCreateCashFlowIncome.mockReturnValue({
+    const mutateAsync = vi.fn().mockResolvedValue({
+      registered: 1,
+      failed: [
+        {
+          trip: trip({
+            tripId: 2,
+            driverName: "Chofer Dos",
+            departureDate: "2026-10-06",
+            pending: 500,
+          }),
+          error: new Error("Esta fecha esta dentro de una semana cerrada."),
+        },
+      ],
+    });
+    mocks.useRegisterAllCashFlowIncome.mockReturnValue({
       mutate: vi.fn(),
       mutateAsync,
       isPending: false,
@@ -274,14 +284,12 @@ describe("EggCashFlowPage", () => {
       await screen.findByText(/1 despacho registrado/),
     ).toBeInTheDocument();
     expect(screen.getByText(/semana cerrada/)).toBeInTheDocument();
-    expect(mutateAsync).toHaveBeenCalledTimes(2);
-    expect(mutateAsync).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({ tripId: 1 }),
-    );
-    expect(mutateAsync).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ tripId: 2 }),
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ tripId: 1 }),
+        expect.objectContaining({ tripId: 2 }),
+      ]),
     );
   });
 });

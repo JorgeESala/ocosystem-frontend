@@ -31,6 +31,7 @@ import {
   useDeleteCashFlowCut,
   useDeleteCashFlowMovement,
   useMoveCashFlowMovement,
+  useRegisterAllCashFlowIncome,
   useRemesas,
   useTripSuggestions,
   useUpdateCashFlowSettings,
@@ -103,6 +104,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const createSettings = useCreateCashFlowSettings(unitType);
   const updateSettings = useUpdateCashFlowSettings(unitType);
   const createIncome = useCreateCashFlowIncome(unitType);
+  const registerAllIncome = useRegisterAllCashFlowIncome(unitType);
   const createDeposit = useCreateCashFlowDeposit(unitType);
   const createExpense = useCreateCashFlowExpense(unitType);
   const createRemesaPayment = useCreateCashFlowRemesaPayment(unitType);
@@ -133,28 +135,24 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const handleRegisterAllPending = async (trips: TripSuggestion[]) => {
     setRegisterAllBusy(true);
     setRegisterAllResult(null);
-    let registered = 0;
-    const failed: { label: string; reason: string }[] = [];
 
-    for (const trip of trips) {
-      try {
-        await createIncome.mutateAsync({
-          date: trip.departureDate,
-          amount: trip.pending,
-          tripId: trip.tripId,
-          description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
-        });
-        registered += 1;
-      } catch (error) {
-        failed.push({
+    try {
+      const result = await registerAllIncome.mutateAsync(trips);
+      setRegisterAllResult({
+        registered: result.registered,
+        failed: result.failed.map(({ trip, error }) => ({
           label: `${formatDate(trip.departureDate)} · ${trip.driverName ?? "Sin chofer"}`,
           reason: extractErrorMessage(error),
-        });
-      }
+        })),
+      });
+    } catch (error) {
+      setRegisterAllResult({
+        registered: 0,
+        failed: [{ label: "Despachos", reason: extractErrorMessage(error) }],
+      });
+    } finally {
+      setRegisterAllBusy(false);
     }
-
-    setRegisterAllResult({ registered, failed });
-    setRegisterAllBusy(false);
   };
 
   if (settingsQuery.isLoading) {

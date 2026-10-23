@@ -11,6 +11,7 @@ import type {
   CreateRemesaPaymentRequestDTO,
   EggCashFlowUnit,
   MoveCashFlowMovementRequestDTO,
+  TripSuggestion,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
 
@@ -121,6 +122,31 @@ export const useCreateCashFlowIncome = (unit: EggCashFlowUnit) => {
   return useMutation({
     mutationFn: (payload: CreateIncomeRequestDTO) =>
       eggCashFlowApi.createIncome(payload),
+    onSuccess: invalidate,
+  });
+};
+
+export const useRegisterAllCashFlowIncome = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: async (trips: TripSuggestion[]) => {
+      let registered = 0;
+      const failed: { trip: TripSuggestion; error: unknown }[] = [];
+      for (const trip of trips) {
+        try {
+          await eggCashFlowApi.createIncome({
+            date: trip.departureDate,
+            amount: trip.pending,
+            tripId: trip.tripId,
+            description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
+          });
+          registered += 1;
+        } catch (error) {
+          failed.push({ trip, error });
+        }
+      }
+      return { registered, failed };
+    },
     onSuccess: invalidate,
   });
 };
