@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "flowbite-react";
 import { HiArrowDown, HiCash } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -13,6 +14,7 @@ interface Props {
   onCollectTrip: (trip: TripSuggestion) => void;
   onCollectPayment: (col: CollectionSuggestion) => void;
   onRegisterAllPending?: (trips: TripSuggestion[]) => void;
+  registerAllBusy?: boolean;
 }
 
 export default function PendingCollectionsPanel({
@@ -21,9 +23,12 @@ export default function PendingCollectionsPanel({
   onCollectTrip,
   onCollectPayment,
   onRegisterAllPending,
+  registerAllBusy,
 }: Props) {
-  const pendingTrips = trips.filter((t) => t.pending > 0);
+  const [confirmAll, setConfirmAll] = useState(false);
+  const pendingTrips = trips.filter((t) => t.pending > 0 && t.collected === 0);
   const pendingCollections = collections.filter((c) => c.pending > 0);
+  const pendingTotal = pendingTrips.reduce((sum, t) => sum + t.pending, 0);
 
   if (pendingTrips.length === 0 && pendingCollections.length === 0) {
     return (
@@ -46,13 +51,45 @@ export default function PendingCollectionsPanel({
           </p>
         </div>
         {pendingTrips.length > 0 && onRegisterAllPending && (
-          <Button
-            size="xs"
-            color="light"
-            onClick={() => onRegisterAllPending(pendingTrips)}
-          >
-            Registrar todo ({pendingTrips.length})
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {confirmAll ? (
+              <>
+                <span className="text-xs text-slate-400">
+                  {pendingTrips.length} despachos · {formatMXN(pendingTotal)}
+                </span>
+                <Button
+                  size="xs"
+                  color="failure"
+                  disabled={registerAllBusy}
+                  onClick={() => {
+                    setConfirmAll(false);
+                    onRegisterAllPending(pendingTrips);
+                  }}
+                >
+                  {registerAllBusy ? "Registrando..." : "Si, registrar"}
+                </Button>
+                <Button
+                  size="xs"
+                  color="gray"
+                  disabled={registerAllBusy}
+                  onClick={() => setConfirmAll(false)}
+                >
+                  No
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="xs"
+                color="light"
+                disabled={registerAllBusy}
+                onClick={() => setConfirmAll(true)}
+              >
+                {registerAllBusy
+                  ? "Registrando..."
+                  : `Registrar todo (${pendingTrips.length})`}
+              </Button>
+            )}
+          </div>
         )}
       </div>
 

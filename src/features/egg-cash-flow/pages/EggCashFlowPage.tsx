@@ -48,8 +48,11 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import { previousWeekRange } from "../utils/cashFlow.utils";
-import type { EggCashFlowUnit } from "../types/eggCashFlow.types";
+import { formatDate, previousWeekRange } from "../utils/cashFlow.utils";
+import type {
+  EggCashFlowUnit,
+  TripSuggestion,
+} from "../types/eggCashFlow.types";
 
 interface Props {
   unitType: EggCashFlowUnit;
@@ -78,6 +81,11 @@ export default function EggCashFlowPage({ unitType }: Props) {
     paymentId?: number | null;
   } | null>(null);
   const [remesaPrefill, setRemesaPrefill] = useState<number | null>(null);
+  const [registerAllBusy, setRegisterAllBusy] = useState(false);
+  const [registerAllResult, setRegisterAllResult] = useState<{
+    registered: number;
+    failed: { label: string; reason: string }[];
+  } | null>(null);
 
   const from = toLocalDateString(rangeStart);
   const to = toLocalDateString(rangeEnd);
@@ -122,25 +130,31 @@ export default function EggCashFlowPage({ unitType }: Props) {
     );
   };
 
-  const handleRegisterAllPending = (
-    trips: {
-      tripId: number;
-      departureDate: string;
-      driverName: string | null;
-      pending: number;
-    }[],
-  ) => {
+  const handleRegisterAllPending = async (trips: TripSuggestion[]) => {
+    setRegisterAllBusy(true);
+    setRegisterAllResult(null);
+    let registered = 0;
+    const failed: { label: string; reason: string }[] = [];
+
     for (const trip of trips) {
-      createIncome.mutate(
-        {
+      try {
+        await createIncome.mutateAsync({
           date: trip.departureDate,
           amount: trip.pending,
           tripId: trip.tripId,
           description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
-        },
-        { onError: handleActionError },
-      );
+        });
+        registered += 1;
+      } catch (error) {
+        failed.push({
+          label: `${formatDate(trip.departureDate)} · ${trip.driverName ?? "Sin chofer"}`,
+          reason: extractErrorMessage(error),
+        });
+      }
     }
+
+    setRegisterAllResult({ registered, failed });
+    setRegisterAllBusy(false);
   };
 
   if (settingsQuery.isLoading) {
@@ -187,9 +201,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
             Configura tu flujo de efectivo
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-            Define los saldos iniciales de caja chica y caja general, y el
-            titular de la cuenta, para empezar a registrar ingresos, depósitos y
-            gastos.
+            Define los saldos iniciales de caja chica y banco, y el titular de
+            la cuenta, para empezar a registrar ingresos, depósitos y gastos.
           </p>
           <Button
             className="mx-auto mt-4"
@@ -295,6 +308,38 @@ export default function EggCashFlowPage({ unitType }: Props) {
         </Alert>
       )}
 
+      {registerAllResult && (
+        <Alert
+          color={
+            registerAllResult.failed.length === 0
+              ? "success"
+              : registerAllResult.registered === 0
+                ? "failure"
+                : "warning"
+          }
+          onDismiss={() => setRegisterAllResult(null)}
+        >
+          <div className="text-sm font-medium">
+            {registerAllResult.registered === 0
+              ? "No se registro ningun despacho."
+              : `${registerAllResult.registered} ${
+                  registerAllResult.registered === 1
+                    ? "despacho registrado"
+                    : "despachos registrados"
+                }.`}
+          </div>
+          {registerAllResult.failed.length > 0 && (
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
+              {registerAllResult.failed.map((f) => (
+                <li key={`${f.label}-${f.reason}`}>
+                  {f.label}: {f.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Alert>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-300">
@@ -336,7 +381,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
             size="xs"
             onClick={() => setAccountFilter("BANK")}
           >
-            Caja general
+            Banco
           </Button>
         </div>
       </div>
@@ -389,6 +434,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
             setShowIncome(true);
           }}
           onRegisterAllPending={handleRegisterAllPending}
+          registerAllBusy={registerAllBusy}
         />
       )}
 

@@ -38,7 +38,12 @@ const SECTIONS: Section[] = [
   },
   {
     title: "El corte de semana",
-    body: "Cierra la semana con el corte: guarda los saldos de caja chica y banco, el saldo real de la cuenta y la deuda con remesas. Una vez cerrada, la semana queda bloqueada para movimientos.",
+    body: "Cierra la semana con el corte: guarda los saldos de caja chica y banco, el saldo real de la cuenta y la deuda con remesas. Una vez cerrada, la semana queda bloqueada para movimientos. Conviene cortar despues de capturar el fin de semana, porque la venta del domingo suele registrarse el lunes.",
+    items: [
+      "Si te falto capturar algo, reabre el ultimo corte desde Cortes de semana: se borra el corte y la semana se desbloquea para corregir y volver a cortar.",
+      "Solo el ultimo corte se puede reabrir; los cortes posteriores encadenan su apertura desde el cierre anterior.",
+      "Un deposito no se puede mover de bolsa: se corrige eliminando el movimiento y volviendolo a registrar, porque mueve caja chica y banco al mismo tiempo.",
+    ],
   },
   {
     title: "Por que no siempre coincide con el Estado de resultados",
@@ -46,7 +51,7 @@ const SECTIONS: Section[] = [
   },
   {
     title: "Clientes que depositan directo al banco",
-    body: "En Configurar puedes marcar clientes cuyo pago llega directo a la cuenta. Su cobranza entra a Banco; la de los demas entra a Caja chica. Cualquier movimiento se puede mover de bolsa con el boton de cambiar cuenta.",
+    body: "En Configurar puedes marcar clientes cuyo pago llega directo a la cuenta. Su cobranza entra a Banco; la de los demas entra a Caja chica. Un ingreso se puede cambiar de bolsa con el boton de cambiar cuenta; los depositos no, porque mueven las dos bolsas a la vez.",
   },
 ];
 

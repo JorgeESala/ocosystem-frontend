@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
+import type { TripSuggestion } from "../types/eggCashFlow.types";
 
 vi.mock("@/core/client/api/client.queries", () => ({
   useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
@@ -24,7 +25,11 @@ const mocks = vi.hoisted(() => ({
     mutate: vi.fn(),
     isPending: false,
   })),
-  useCreateCashFlowIncome: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useCreateCashFlowIncome: vi.fn(() => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
   useCreateCashFlowDeposit: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: false,
@@ -84,6 +89,30 @@ const mutationQuery = {
   error: null,
   refetch: vi.fn(),
 };
+
+const settingsData = {
+  id: 1,
+  cashOpeningBalance: 0,
+  bankOpeningBalance: 0,
+  accountHolder: "Titular",
+  trackingStartDate: "2026-10-01",
+  directDepositClientIds: [],
+  createdAt: "2026-10-01T00:00:00",
+  updatedAt: null,
+  updatedBy: null,
+};
+
+const trip = (overrides: Partial<TripSuggestion> = {}): TripSuggestion => ({
+  tripId: 1,
+  departureDate: "2026-10-05",
+  driverId: 1,
+  driverName: "Chofer Uno",
+  routeId: 1,
+  collectible: 1000,
+  collected: 0,
+  pending: 1000,
+  ...overrides,
+});
 
 const renderPage = () =>
   render(
@@ -176,5 +205,83 @@ describe("EggCashFlowPage", () => {
     expect(
       screen.queryByText(/No hay movimientos en este periodo/),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not offer trips that already have a partial collection", () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSuggestions.mockReturnValue(
+      emptyQuery([
+        trip({ tripId: 1, driverName: "Chofer Pendiente" }),
+        trip({
+          tripId: 2,
+          driverName: "Chofer Parcial",
+          collected: 400,
+          pending: 600,
+        }),
+      ]),
+    );
+
+    renderPage();
+
+    expect(screen.getByText(/Chofer Pendiente/)).toBeInTheDocument();
+    expect(screen.queryByText(/Chofer Parcial/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Registrar todo \(1\)/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("registers pending trips sequentially and summarizes failures", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSuggestions.mockReturnValue(
+      emptyQuery([
+        trip({ tripId: 1, driverName: "Chofer Uno" }),
+        trip({
+          tripId: 2,
+          driverName: "Chofer Dos",
+          departureDate: "2026-10-06",
+          pending: 500,
+        }),
+      ]),
+    );
+    const mutateAsync = vi
+      .fn()
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(
+        new Error("Esta fecha esta dentro de una semana cerrada."),
+      );
+    mocks.useCreateCashFlowIncome.mockReturnValue({
+      mutate: vi.fn(),
+      mutateAsync,
+      isPending: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Registrar todo \(2\)/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Si, registrar/ }));
+
+    expect(
+      await screen.findByText(/1 despacho registrado/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/semana cerrada/)).toBeInTheDocument();
+    expect(mutateAsync).toHaveBeenCalledTimes(2);
+    expect(mutateAsync).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ tripId: 1 }),
+    );
+    expect(mutateAsync).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ tripId: 2 }),
+    );
   });
 });

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  currentWeekEnd,
   currentWeekStart,
   formatDate,
+  previousWeekRange,
 } from "../utils/cashFlow.utils";
 
 describe("formatDate", () => {
@@ -17,11 +17,15 @@ describe("currentWeekStart", () => {
     const monday = currentWeekStart();
     expect(monday.getDay()).toBe(1);
   });
+});
 
-  it("returns a date 6 days before currentWeekEnd", () => {
-    const start = currentWeekStart();
-    const end = currentWeekEnd();
+describe("previousWeekRange", () => {
+  it("returns the previous Monday through Sunday", () => {
+    const { start, end } = previousWeekRange();
+    expect(start.getDay()).toBe(1);
+    expect(end.getDay()).toBe(0);
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
     expect(Math.round(diff)).toBe(6);
+    expect(start.getTime()).toBeLessThan(currentWeekStart().getTime());
   });
 });
