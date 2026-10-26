@@ -1,16 +1,19 @@
 import { useMemo, useState } from "react";
 import { Alert, Button, Datepicker, Spinner } from "flowbite-react";
+import { Link, useParams } from "react-router-dom";
 import {
   HiCreditCard,
   HiCog,
   HiDownload,
   HiPlus,
+  HiQuestionMarkCircle,
   HiReceiptRefund,
   HiScissors,
 } from "react-icons/hi";
 import { formatDateRange, toLocalDateString } from "@/utils/date.utils";
 import { extractErrorMessage } from "@/features/accounting/utils/errorMessage";
 import AccountingErrorAlert from "@/features/accounting/components/AccountingErrorAlert";
+import { useClients } from "@/core/client/api/client.queries";
 import {
   useAvailableExpenses,
   useCashFlowCuts,
@@ -25,7 +28,10 @@ import {
   useCreateCashFlowIncome,
   useCreateCashFlowRemesaPayment,
   useCreateCashFlowSettings,
+  useDeleteCashFlowCut,
   useDeleteCashFlowMovement,
+  useMoveCashFlowMovement,
+  useRegisterAllCashFlowIncome,
   useRemesas,
   useTripSuggestions,
   useUpdateCashFlowSettings,
@@ -43,19 +49,22 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import { currentWeekEnd, currentWeekStart } from "../utils/cashFlow.utils";
-import type { EggCashFlowUnit } from "../types/eggCashFlow.types";
+import { formatDate, previousWeekRange } from "../utils/cashFlow.utils";
+import type {
+  EggCashFlowUnit,
+  TripSuggestion,
+} from "../types/eggCashFlow.types";
 
 interface Props {
   unitType: EggCashFlowUnit;
 }
 
 export default function EggCashFlowPage({ unitType }: Props) {
-  const weekStart = useMemo(() => currentWeekStart(), []);
-  const weekEnd = useMemo(() => currentWeekEnd(), []);
+  const { slug } = useParams();
+  const previousWeek = useMemo(() => previousWeekRange(), []);
 
-  const [rangeStart, setRangeStart] = useState<Date>(weekStart);
-  const [rangeEnd, setRangeEnd] = useState<Date>(weekEnd);
+  const [rangeStart, setRangeStart] = useState<Date>(previousWeek.start);
+  const [rangeEnd, setRangeEnd] = useState<Date>(previousWeek.end);
   const [accountFilter, setAccountFilter] = useState<"ALL" | "CASH" | "BANK">(
     "ALL",
   );
@@ -73,6 +82,11 @@ export default function EggCashFlowPage({ unitType }: Props) {
     paymentId?: number | null;
   } | null>(null);
   const [remesaPrefill, setRemesaPrefill] = useState<number | null>(null);
+  const [registerAllBusy, setRegisterAllBusy] = useState(false);
+  const [registerAllResult, setRegisterAllResult] = useState<{
+    registered: number;
+    failed: { label: string; reason: string }[];
+  } | null>(null);
 
   const from = toLocalDateString(rangeStart);
   const to = toLocalDateString(rangeEnd);
@@ -85,16 +99,20 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const remesasQuery = useRemesas(unitType);
   const cutsQuery = useCashFlowCuts(unitType);
   const expensesQuery = useAvailableExpenses(unitType, from, to);
+  const clientsQuery = useClients();
 
   const createSettings = useCreateCashFlowSettings(unitType);
   const updateSettings = useUpdateCashFlowSettings(unitType);
   const createIncome = useCreateCashFlowIncome(unitType);
+  const registerAllIncome = useRegisterAllCashFlowIncome(unitType);
   const createDeposit = useCreateCashFlowDeposit(unitType);
   const createExpense = useCreateCashFlowExpense(unitType);
   const createRemesaPayment = useCreateCashFlowRemesaPayment(unitType);
   const createAdjustment = useCreateCashFlowAdjustment(unitType);
   const createCut = useCreateCashFlowCut(unitType);
   const deleteMovement = useDeleteCashFlowMovement(unitType);
+  const moveMovement = useMoveCashFlowMovement(unitType);
+  const deleteCut = useDeleteCashFlowCut(unitType);
 
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
@@ -105,6 +123,36 @@ export default function EggCashFlowPage({ unitType }: Props) {
 
   const handleDelete = (id: number) => {
     deleteMovement.mutate(id, { onError: handleActionError });
+  };
+
+  const handleMove = (id: number, account: "CASH" | "BANK") => {
+    moveMovement.mutate(
+      { id, payload: { account } },
+      { onError: handleActionError },
+    );
+  };
+
+  const handleRegisterAllPending = async (trips: TripSuggestion[]) => {
+    setRegisterAllBusy(true);
+    setRegisterAllResult(null);
+
+    try {
+      const result = await registerAllIncome.mutateAsync(trips);
+      setRegisterAllResult({
+        registered: result.registered,
+        failed: result.failed.map(({ trip, error }) => ({
+          label: `${formatDate(trip.departureDate)} · ${trip.driverName ?? "Sin chofer"}`,
+          reason: extractErrorMessage(error),
+        })),
+      });
+    } catch (error) {
+      setRegisterAllResult({
+        registered: 0,
+        failed: [{ label: "Despachos", reason: extractErrorMessage(error) }],
+      });
+    } finally {
+      setRegisterAllBusy(false);
+    }
   };
 
   if (settingsQuery.isLoading) {
@@ -151,9 +199,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
             Configura tu flujo de efectivo
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-            Define los saldos iniciales de caja chica y caja general, y el
-            titular de la cuenta, para empezar a registrar ingresos, depósitos y
-            gastos.
+            Define los saldos iniciales de caja chica y banco, y el titular de
+            la cuenta, para empezar a registrar ingresos, depósitos y gastos.
           </p>
           <Button
             className="mx-auto mt-4"
@@ -167,6 +214,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
           open={showSettings}
           onClose={() => setShowSettings(false)}
           settings={settings}
+          clients={clientsQuery.data ?? []}
           onSave={(p) =>
             createSettings.mutate(p, {
               onSuccess: () => setShowSettings(false),
@@ -236,6 +284,12 @@ export default function EggCashFlowPage({ unitType }: Props) {
             <HiScissors className="mr-1 h-3 w-3" />
             Corte de semana
           </Button>
+          <Link to={`/business/${slug}/cash-flow/help`}>
+            <Button color="light" size="sm">
+              <HiQuestionMarkCircle className="mr-1 h-3 w-3" />
+              Ayuda
+            </Button>
+          </Link>
           <Button color="light" size="sm" onClick={() => setShowSettings(true)}>
             <HiCog className="mr-1 h-3 w-3" />
           </Button>
@@ -249,6 +303,38 @@ export default function EggCashFlowPage({ unitType }: Props) {
           className="border border-red-900/40 bg-red-950/40"
         >
           {actionError}
+        </Alert>
+      )}
+
+      {registerAllResult && (
+        <Alert
+          color={
+            registerAllResult.failed.length === 0
+              ? "success"
+              : registerAllResult.registered === 0
+                ? "failure"
+                : "warning"
+          }
+          onDismiss={() => setRegisterAllResult(null)}
+        >
+          <div className="text-sm font-medium">
+            {registerAllResult.registered === 0
+              ? "No se registro ningun despacho."
+              : `${registerAllResult.registered} ${
+                  registerAllResult.registered === 1
+                    ? "despacho registrado"
+                    : "despachos registrados"
+                }.`}
+          </div>
+          {registerAllResult.failed.length > 0 && (
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
+              {registerAllResult.failed.map((f) => (
+                <li key={`${f.label}-${f.reason}`}>
+                  {f.label}: {f.reason}
+                </li>
+              ))}
+            </ul>
+          )}
         </Alert>
       )}
 
@@ -293,7 +379,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
             size="xs"
             onClick={() => setAccountFilter("BANK")}
           >
-            Caja general
+            Banco
           </Button>
         </div>
       </div>
@@ -345,6 +431,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
             setIncomePrefill({ paymentId: c.paymentId });
             setShowIncome(true);
           }}
+          onRegisterAllPending={handleRegisterAllPending}
+          registerAllBusy={registerAllBusy}
         />
       )}
 
@@ -378,6 +466,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         <CashFlowMovementsTable
           movements={movementsQuery.data}
           onDelete={handleDelete}
+          onMove={handleMove}
           accountFilter={accountFilter}
         />
       )}
@@ -389,13 +478,19 @@ export default function EggCashFlowPage({ unitType }: Props) {
           onRetry={() => cutsQuery.refetch()}
         />
       ) : (
-        <CutsPanel cuts={cutsQuery.data ?? []} />
+        <CutsPanel
+          cuts={cutsQuery.data ?? []}
+          onReopen={(id) =>
+            deleteCut.mutate(id, { onError: handleActionError })
+          }
+        />
       )}
 
       <SettingsModal
         open={showSettings}
         onClose={() => setShowSettings(false)}
         settings={settings}
+        clients={clientsQuery.data ?? []}
         onSave={(p) =>
           updateSettings.mutate(p, {
             onSuccess: () => setShowSettings(false),
@@ -413,6 +508,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         }}
         trips={tripsQuery.data ?? []}
         collections={collectionsQuery.data ?? []}
+        clients={clientsQuery.data ?? []}
         initialTripId={incomePrefill?.tripId ?? null}
         initialPaymentId={incomePrefill?.paymentId ?? null}
         onSave={(p) =>

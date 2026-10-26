@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Badge, Tooltip } from "flowbite-react";
-import { HiTrash } from "react-icons/hi";
+import { HiSwitchHorizontal, HiTrash } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatDate } from "../utils/cashFlow.utils";
 import type { CashFlowMovement } from "../types/eggCashFlow.types";
@@ -29,18 +29,20 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const ACCOUNT_LABELS: Record<string, string> = {
   CASH: "Caja chica",
-  BANK: "Caja general",
+  BANK: "Banco",
 };
 
 interface Props {
   movements: CashFlowMovement[] | undefined;
   onDelete: (id: number) => void;
+  onMove: (id: number, account: "CASH" | "BANK") => void;
   accountFilter: string;
 }
 
 export default function CashFlowMovementsTable({
   movements,
   onDelete,
+  onMove,
   accountFilter,
 }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
@@ -53,6 +55,8 @@ export default function CashFlowMovementsTable({
     setConfirmDelete(null);
     onDelete(id);
   };
+
+  const isAuto = (movement: CashFlowMovement) => movement.auto;
 
   if (!filtered?.length) {
     return (
@@ -101,12 +105,19 @@ export default function CashFlowMovementsTable({
                   </span>
                 </td>
                 <td className="px-5 py-3">
-                  <Badge
-                    color={(CATEGORY_COLORS[m.category] as never) ?? "gray"}
-                    className="inline-flex"
-                  >
-                    {CATEGORY_LABELS[m.category] ?? m.category}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Badge
+                      color={(CATEGORY_COLORS[m.category] as never) ?? "gray"}
+                      className="inline-flex"
+                    >
+                      {CATEGORY_LABELS[m.category] ?? m.category}
+                    </Badge>
+                    {isAuto(m) && (
+                      <Badge color="info" className="inline-flex">
+                        auto
+                      </Badge>
+                    )}
+                  </div>
                 </td>
                 <td className="max-w-[240px] px-5 py-3 text-sm text-slate-300">
                   <div className="truncate">{m.description ?? "—"}</div>
@@ -148,14 +159,37 @@ export default function CashFlowMovementsTable({
                       </button>
                     </div>
                   ) : (
-                    <Tooltip content="Eliminar movimiento">
-                      <button
-                        onClick={() => setConfirmDelete(m.id)}
-                        className="ml-auto text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-red-400"
-                      >
-                        <HiTrash className="h-4 w-4" />
-                      </button>
-                    </Tooltip>
+                    <div className="flex items-center justify-end gap-2">
+                      {m.transferGroupId == null && (
+                        <Tooltip
+                          content={
+                            m.account === "CASH"
+                              ? "Mover al banco"
+                              : "Mover a caja chica"
+                          }
+                        >
+                          <button
+                            onClick={() =>
+                              onMove(
+                                m.id,
+                                m.account === "CASH" ? "BANK" : "CASH",
+                              )
+                            }
+                            className="text-slate-400 transition hover:text-blue-400"
+                          >
+                            <HiSwitchHorizontal className="h-4 w-4" />
+                          </button>
+                        </Tooltip>
+                      )}
+                      <Tooltip content="Eliminar movimiento">
+                        <button
+                          onClick={() => setConfirmDelete(m.id)}
+                          className="text-slate-400 transition hover:text-red-400"
+                        >
+                          <HiTrash className="h-4 w-4" />
+                        </button>
+                      </Tooltip>
+                    </div>
                   )}
                 </td>
               </tr>

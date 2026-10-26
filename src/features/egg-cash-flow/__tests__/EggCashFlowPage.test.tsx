@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
+import type { TripSuggestion } from "../types/eggCashFlow.types";
+
+vi.mock("@/core/client/api/client.queries", () => ({
+  useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
+}));
 
 const mocks = vi.hoisted(() => ({
   useCashFlowSettings: vi.fn(),
@@ -20,6 +26,11 @@ const mocks = vi.hoisted(() => ({
     isPending: false,
   })),
   useCreateCashFlowIncome: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRegisterAllCashFlowIncome: vi.fn(() => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
   useCreateCashFlowDeposit: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: false,
@@ -38,6 +49,8 @@ const mocks = vi.hoisted(() => ({
   })),
   useCreateCashFlowCut: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useDeleteCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
+  useMoveCashFlowMovement: vi.fn(() => ({ mutate: vi.fn() })),
+  useDeleteCashFlowCut: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
 vi.mock("../api/eggCashFlow.queries", () => ({
@@ -52,12 +65,15 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCreateCashFlowSettings: mocks.useCreateCashFlowSettings,
   useUpdateCashFlowSettings: mocks.useUpdateCashFlowSettings,
   useCreateCashFlowIncome: mocks.useCreateCashFlowIncome,
+  useRegisterAllCashFlowIncome: mocks.useRegisterAllCashFlowIncome,
   useCreateCashFlowDeposit: mocks.useCreateCashFlowDeposit,
   useCreateCashFlowExpense: mocks.useCreateCashFlowExpense,
   useCreateCashFlowRemesaPayment: mocks.useCreateCashFlowRemesaPayment,
   useCreateCashFlowAdjustment: mocks.useCreateCashFlowAdjustment,
   useCreateCashFlowCut: mocks.useCreateCashFlowCut,
   useDeleteCashFlowMovement: mocks.useDeleteCashFlowMovement,
+  useMoveCashFlowMovement: mocks.useMoveCashFlowMovement,
+  useDeleteCashFlowCut: mocks.useDeleteCashFlowCut,
 }));
 
 const emptyQuery = <T,>(data: T = undefined as T) => ({
@@ -75,6 +91,42 @@ const mutationQuery = {
   error: null,
   refetch: vi.fn(),
 };
+
+const settingsData = {
+  id: 1,
+  cashOpeningBalance: 0,
+  bankOpeningBalance: 0,
+  accountHolder: "Titular",
+  trackingStartDate: "2026-10-01",
+  directDepositClientIds: [],
+  createdAt: "2026-10-01T00:00:00",
+  updatedAt: null,
+  updatedBy: null,
+};
+
+const trip = (overrides: Partial<TripSuggestion> = {}): TripSuggestion => ({
+  tripId: 1,
+  departureDate: "2026-10-05",
+  driverId: 1,
+  driverName: "Chofer Uno",
+  routeId: 1,
+  collectible: 1000,
+  collected: 0,
+  pending: 1000,
+  ...overrides,
+});
+
+const renderPage = () =>
+  render(
+    <MemoryRouter initialEntries={["/business/huevo/cash-flow"]}>
+      <Routes>
+        <Route
+          path="/business/:slug/cash-flow"
+          element={<EggCashFlowPage unitType="EGG" />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
 
 describe("EggCashFlowPage", () => {
   beforeEach(() => {
@@ -96,7 +148,7 @@ describe("EggCashFlowPage", () => {
       error: new Error("boom"),
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/No se pudo cargar la configuración/),
@@ -114,7 +166,7 @@ describe("EggCashFlowPage", () => {
       isLoading: false,
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/Configura tu flujo de efectivo/),
@@ -147,7 +199,7 @@ describe("EggCashFlowPage", () => {
       error: new Error("movements down"),
     });
 
-    render(<EggCashFlowPage unitType="EGG" />);
+    renderPage();
 
     expect(
       screen.getByText(/No se pudieron cargar los movimientos/),
@@ -155,5 +207,89 @@ describe("EggCashFlowPage", () => {
     expect(
       screen.queryByText(/No hay movimientos en este periodo/),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not offer trips that already have a partial collection", () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSuggestions.mockReturnValue(
+      emptyQuery([
+        trip({ tripId: 1, driverName: "Chofer Pendiente" }),
+        trip({
+          tripId: 2,
+          driverName: "Chofer Parcial",
+          collected: 400,
+          pending: 600,
+        }),
+      ]),
+    );
+
+    renderPage();
+
+    expect(screen.getByText(/Chofer Pendiente/)).toBeInTheDocument();
+    expect(screen.queryByText(/Chofer Parcial/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Registrar todo \(1\)/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("registers pending trips and summarizes failures", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSuggestions.mockReturnValue(
+      emptyQuery([
+        trip({ tripId: 1, driverName: "Chofer Uno" }),
+        trip({
+          tripId: 2,
+          driverName: "Chofer Dos",
+          departureDate: "2026-10-06",
+          pending: 500,
+        }),
+      ]),
+    );
+    const mutateAsync = vi.fn().mockResolvedValue({
+      registered: 1,
+      failed: [
+        {
+          trip: trip({
+            tripId: 2,
+            driverName: "Chofer Dos",
+            departureDate: "2026-10-06",
+            pending: 500,
+          }),
+          error: new Error("Esta fecha esta dentro de una semana cerrada."),
+        },
+      ],
+    });
+    mocks.useRegisterAllCashFlowIncome.mockReturnValue({
+      mutate: vi.fn(),
+      mutateAsync,
+      isPending: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Registrar todo \(2\)/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Si, registrar/ }));
+
+    expect(
+      await screen.findByText(/1 despacho registrado/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/semana cerrada/)).toBeInTheDocument();
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ tripId: 1 }),
+        expect.objectContaining({ tripId: 2 }),
+      ]),
+    );
   });
 });

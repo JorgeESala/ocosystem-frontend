@@ -29,7 +29,7 @@ export default function CashFlowBalanceCards({
       <div className="rounded-xl bg-slate-800 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <HiGlobeAlt className="h-4 w-4 text-blue-400" />
-          Caja general
+          Banco
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
           {formatMXN(summary.bankClosingBalance)}
