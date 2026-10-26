@@ -49,6 +49,11 @@ export default function PendingCollectionsPanel({
           <p className="text-sm text-slate-400">
             Despachos y cobros con dinero pendiente de ingresar a caja chica.
           </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Aqui aparecen documentos del ERP que aun no tienen movimiento en el
+            flujo. Los que ya registraste dejan de aparecer; lo que queda son
+            documentos fuera de tu hoja de control.
+          </p>
         </div>
         {pendingTrips.length > 0 && onRegisterAllPending && (
           <div className="flex flex-wrap items-center justify-end gap-2">

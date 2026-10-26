@@ -1,4 +1,9 @@
-import { HiOfficeBuilding, HiCash, HiGlobeAlt } from "react-icons/hi";
+import {
+  HiOfficeBuilding,
+  HiCash,
+  HiGlobeAlt,
+  HiTrendingUp,
+} from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { CashFlowSummary } from "../types/eggCashFlow.types";
 
@@ -13,12 +18,14 @@ export default function CashFlowBalanceCards({
 }: Props) {
   if (!summary) return null;
 
+  const periodIncome = summary.totalIncome + summary.totalCashAdjustments;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-xl bg-slate-800 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <HiCash className="h-4 w-4 text-amber-400" />
-          Caja chica
+          Caja chica (saldo)
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
           {formatMXN(summary.cashClosingBalance)}
@@ -36,6 +43,19 @@ export default function CashFlowBalanceCards({
         </div>
         <div className="mt-1 text-xs text-slate-500">
           Cuenta de {accountHolder}
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-slate-800 p-5">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <HiTrendingUp className="h-4 w-4 text-emerald-400" />
+          Cobranza del periodo
+        </div>
+        <div className="mt-1 text-2xl font-bold text-white">
+          {formatMXN(periodIncome)}
+        </div>
+        <div className="mt-1 text-xs text-slate-500">
+          Ingresos a caja chica (incluye ajustes)
         </div>
       </div>
 
