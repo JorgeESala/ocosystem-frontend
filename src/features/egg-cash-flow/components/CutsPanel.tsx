@@ -37,9 +37,16 @@ export default function CutsPanel({ cuts, onReopen }: Props) {
           <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>
               <th className="px-5 py-3 font-semibold">Semana</th>
-              <th className="px-5 py-3 text-right font-semibold">Caja chica</th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Caja chica (ingreso)
+              </th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Cierre caja chica
+              </th>
               <th className="px-5 py-3 text-right font-semibold">Banco</th>
-              <th className="px-5 py-3 text-right font-semibold">Deuda</th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Deuda remesas (proveedores)
+              </th>
               <th className="px-5 py-3 text-right font-semibold">Saldo real</th>
               <th className="px-5 py-3 text-right font-semibold">Diferencia</th>
               <th className="px-5 py-3 font-semibold">Nota</th>
@@ -52,7 +59,10 @@ export default function CutsPanel({ cuts, onReopen }: Props) {
                 <td className="px-5 py-3 text-sm whitespace-nowrap text-slate-300">
                   {formatDate(c.weekStart)} — {formatDate(c.weekEnd)}
                 </td>
-                <td className="px-5 py-3 text-right font-mono text-sm text-white">
+                <td className="px-5 py-3 text-right font-mono text-sm text-emerald-400">
+                  {formatMXN(c.totalDeposits)}
+                </td>
+                <td className="px-5 py-3 text-right font-mono text-sm text-slate-300">
                   {formatMXN(c.cashClosingBalance)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-white">

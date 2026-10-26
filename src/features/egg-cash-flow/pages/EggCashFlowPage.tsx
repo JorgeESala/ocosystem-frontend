@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Button, Datepicker, Spinner } from "flowbite-react";
 import { Link, useParams } from "react-router-dom";
 import {
+  HiCalendar,
   HiCreditCard,
   HiCog,
   HiDownload,
@@ -87,6 +88,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
     registered: number;
     failed: { label: string; reason: string }[];
   } | null>(null);
+  const [rangeTouched, setRangeTouched] = useState(false);
+  const defaultRangeApplied = useRef(false);
 
   const from = toLocalDateString(rangeStart);
   const to = toLocalDateString(rangeEnd);
@@ -117,6 +120,36 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const settings = settingsQuery.data ?? null;
   const summary = summaryQuery.data;
   const accountHolder = settings?.accountHolder ?? "Titular";
+  const cuts = useMemo(() => cutsQuery.data ?? [], [cutsQuery.data]);
+
+  useEffect(() => {
+    if (defaultRangeApplied.current || rangeTouched || cuts.length === 0) {
+      return;
+    }
+    defaultRangeApplied.current = true;
+    const latest = cuts[0];
+    setRangeStart(new Date(`${latest.weekStart}T00:00:00`));
+    setRangeEnd(new Date(`${latest.weekEnd}T00:00:00`));
+  }, [cuts, rangeTouched]);
+
+  const handleRangeStart = (date: Date) => {
+    setRangeStart(date);
+    setRangeTouched(true);
+  };
+
+  const handleRangeEnd = (date: Date) => {
+    setRangeEnd(date);
+    setRangeTouched(true);
+  };
+
+  const handleShowCutPeriod = () => {
+    if (cuts.length === 0) return;
+    const earliest = cuts[cuts.length - 1];
+    const latest = cuts[0];
+    setRangeStart(new Date(`${earliest.weekStart}T00:00:00`));
+    setRangeEnd(new Date(`${latest.weekEnd}T00:00:00`));
+    setRangeTouched(true);
+  };
 
   const handleActionError = (error: unknown) =>
     setActionError(extractErrorMessage(error));
@@ -346,7 +379,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
           <Datepicker
             language="es-MX"
             value={rangeStart}
-            onChange={(d) => d && setRangeStart(d)}
+            onChange={(d) => d && handleRangeStart(d)}
           />
         </div>
         <div>
@@ -356,10 +389,16 @@ export default function EggCashFlowPage({ unitType }: Props) {
           <Datepicker
             language="es-MX"
             value={rangeEnd}
-            onChange={(d) => d && setRangeEnd(d)}
+            onChange={(d) => d && handleRangeEnd(d)}
           />
         </div>
-        <div className="flex gap-2 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          {cuts.length > 0 && (
+            <Button color="light" size="xs" onClick={handleShowCutPeriod}>
+              <HiCalendar className="mr-1 h-3 w-3" />
+              Ver periodo de cortes
+            </Button>
+          )}
           <Button
             color={accountFilter === "ALL" ? "blue" : "gray"}
             size="xs"
@@ -479,7 +518,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         />
       ) : (
         <CutsPanel
-          cuts={cutsQuery.data ?? []}
+          cuts={cuts}
           onReopen={(id) =>
             deleteCut.mutate(id, { onError: handleActionError })
           }

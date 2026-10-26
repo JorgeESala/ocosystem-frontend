@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
-import type { TripSuggestion } from "../types/eggCashFlow.types";
+import type { CashFlowCut, TripSuggestion } from "../types/eggCashFlow.types";
 
 vi.mock("@/core/client/api/client.queries", () => ({
   useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
@@ -113,6 +113,29 @@ const trip = (overrides: Partial<TripSuggestion> = {}): TripSuggestion => ({
   collectible: 1000,
   collected: 0,
   pending: 1000,
+  ...overrides,
+});
+
+const cut = (overrides: Partial<CashFlowCut> = {}): CashFlowCut => ({
+  id: 1,
+  weekStart: "2026-09-26",
+  weekEnd: "2026-10-02",
+  cashOpeningBalance: 0,
+  cashClosingBalance: 0,
+  bankOpeningBalance: 16679.18,
+  bankClosingBalance: 8306.18,
+  totalIncome: 108127,
+  totalCashExpenses: 0,
+  totalDeposits: 108127,
+  totalRemesaPayments: 0,
+  remesaDebtTotal: 95720.88,
+  realBankBalance: 8306.18,
+  realCashBalance: 0,
+  bankDifference: 0,
+  cashDifference: 0,
+  note: "Excel SEP 26- 2 OCT",
+  createdBy: 1,
+  createdAt: "2026-10-26T00:00:00",
   ...overrides,
 });
 
@@ -290,6 +313,55 @@ describe("EggCashFlowPage", () => {
         expect.objectContaining({ tripId: 1 }),
         expect.objectContaining({ tripId: 2 }),
       ]),
+    );
+  });
+
+  it("opens on the latest cut week when cuts exist", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useCashFlowCuts.mockReturnValue(emptyQuery([cut()]));
+    mocks.useCashFlowMovements.mockReturnValue(emptyQuery([]));
+
+    renderPage();
+
+    await waitFor(() =>
+      expect(mocks.useCashFlowSummary).toHaveBeenLastCalledWith(
+        "EGG",
+        "2026-09-26",
+        "2026-10-02",
+      ),
+    );
+  });
+
+  it("jumps to the full cut period with the button", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useCashFlowCuts.mockReturnValue(
+      emptyQuery([
+        cut({ id: 2 }),
+        cut({ id: 1, weekStart: "2026-08-22", weekEnd: "2026-08-28" }),
+      ]),
+    );
+    mocks.useCashFlowMovements.mockReturnValue(emptyQuery([]));
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Ver periodo de cortes/ }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.useCashFlowSummary).toHaveBeenLastCalledWith(
+        "EGG",
+        "2026-08-22",
+        "2026-10-02",
+      ),
     );
   });
 });
