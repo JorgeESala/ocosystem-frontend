@@ -52,6 +52,7 @@ interface Props {
   ) => void;
   onOpenClientReport?: (account: AccountsPayableResponse) => void;
   onSuccessToast?: (message: string) => void;
+  allowCrossCreditor?: boolean;
 }
 
 export const AccountDetailDrawer = ({
@@ -62,6 +63,7 @@ export const AccountDetailDrawer = ({
   onExportPdf,
   onOpenClientReport,
   onSuccessToast,
+  allowCrossCreditor = false,
 }: Props) => {
   const {
     data: movements = [],
@@ -80,7 +82,7 @@ export const AccountDetailDrawer = ({
   const [bulkApplyOpen, setBulkApplyOpen] = useState(false);
   const { data: credits = [] } = useUnappliedPayments(
     account?.debtorId,
-    account?.creditorId,
+    allowCrossCreditor ? undefined : account?.creditorId,
   );
   const creditTotal = totalUnapplied(credits);
   const creditPlan = useMemo(
@@ -233,8 +235,16 @@ export const AccountDetailDrawer = ({
               {account.balance > 0 && creditTotal > 0 && (
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
                   <p className="font-medium">
-                    Saldo a favor disponible: {formatMXN(creditTotal)}
+                    Saldo a favor disponible
+                    {allowCrossCreditor ? " (cualquier CEDIS)" : ""}:{" "}
+                    {formatMXN(creditTotal)}
                   </p>
+                  {allowCrossCreditor && (
+                    <p className="text-xs">
+                      Incluye saldos a favor de otros CEDIS. El pago queda
+                      registrado en el CEDIS que lo recibió.
+                    </p>
+                  )}
                   {bulkApplyOpen ? (
                     <div className="mt-2 space-y-2">
                       <p className="text-xs">
@@ -249,6 +259,9 @@ export const AccountDetailDrawer = ({
                           >
                             <span>
                               {item.folio ? `folio ${item.folio}` : "Sin folio"}
+                              {item.receiverName
+                                ? ` · ${item.receiverName}`
+                                : ""}
                             </span>
                             <span>{formatMXN(item.amount)}</span>
                           </li>
@@ -300,6 +313,9 @@ export const AccountDetailDrawer = ({
                             >
                               <span className="text-xs">
                                 {c.folio ? `Folio ${c.folio} · ` : ""}
+                                {allowCrossCreditor && c.receiverName
+                                  ? `${c.receiverName} · `
+                                  : ""}
                                 {formatHumanDate(c.paymentDate)} ·{" "}
                                 {formatMXN(c.remainingAmount ?? 0)}
                               </span>

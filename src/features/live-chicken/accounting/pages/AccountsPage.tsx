@@ -399,6 +399,7 @@ export const AccountsPage = () => {
               open={historyOpen}
               onClose={() => setHistoryOpen(false)}
               account={selectedAccountForHistory}
+              allowCrossCreditor={viewMode === "RECEIVABLE"}
             />
           </div>
         </>
