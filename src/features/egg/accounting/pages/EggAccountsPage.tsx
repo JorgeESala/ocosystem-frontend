@@ -800,6 +800,7 @@ export const EggAccountsPage = () => {
               onExportPdf={(acc, movs) => exportAccountStatementPdf(acc, movs)}
               onOpenClientReport={(acc) => setSelectedAccountForReport(acc)}
               onSuccessToast={setToastMessage}
+              allowCrossCreditor={viewMode === "RECEIVABLE"}
             />
           </div>
         </>

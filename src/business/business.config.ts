@@ -29,6 +29,7 @@ import {
   FaTags,
   FaCheckCircle,
   FaFileInvoiceDollar,
+  FaUniversity,
 } from "react-icons/fa";
 import { GiPayMoney, GiReceiveMoney } from "react-icons/gi";
 import {
@@ -127,6 +128,7 @@ const EGG_MENU = [
   },
   { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
+  { to: "cash-flow", label: "Flujo de efectivo", icon: FaUniversity },
 ];
 
 export const BUSINESSES: BusinessConfig[] = [

@@ -112,8 +112,8 @@ export const useUnappliedPayments = (payerId?: number, receiverId?: number) => {
 
   return useQuery({
     queryKey: paymentKeys.unapplied(slug, payerId ?? 0, receiverId ?? 0),
-    queryFn: () => fetchUnappliedPayments(payerId!, receiverId!),
-    enabled: !!slug && !!payerId && !!receiverId,
+    queryFn: () => fetchUnappliedPayments(payerId!, receiverId),
+    enabled: !!slug && !!payerId,
     staleTime: 1000 * 30,
   });
 };

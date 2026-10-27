@@ -79,10 +79,14 @@ export const fetchRecentPayments = async (
 
 export const fetchUnappliedPayments = async (
   payerId: number,
-  receiverId: number,
+  receiverId?: number,
 ): Promise<PaymentResponse[]> => {
+  const params = new URLSearchParams({ payerId: String(payerId) });
+  if (receiverId != null) {
+    params.set("receiverId", String(receiverId));
+  }
   const { data } = await http.get<PaymentResponse[]>(
-    `/api/accounting/payments/unapplied?payerId=${payerId}&receiverId=${receiverId}`,
+    `/api/accounting/payments/unapplied?${params.toString()}`,
   );
   return data;
 };
@@ -106,6 +110,8 @@ export interface AppliedCredit {
   paymentId: number;
   folio?: string;
   amount: number;
+  receiverEntityId?: number;
+  receiverName?: string;
 }
 
 export interface ApplyCreditsResponse {
