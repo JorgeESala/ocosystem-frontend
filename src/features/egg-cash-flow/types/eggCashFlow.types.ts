@@ -70,6 +70,8 @@ export interface CreateIncomeRequestDTO {
   date: string;
   amount: number;
   tripId?: number | null;
+  officeAmount?: number | null;
+  account?: CashFlowAccount | null;
   paymentId?: number | null;
   clientId?: number | null;
   folio?: string | null;
@@ -123,6 +125,8 @@ export interface CashFlowSummary {
   bankClosingBalance: number;
   totalBalance: number;
   totalIncome: number;
+  totalBankIncome: number;
+  totalCollections: number;
   totalCashExpenses: number;
   totalDeposits: number;
   totalRemesaPayments: number;
@@ -144,6 +148,9 @@ export interface CashFlowCut {
   bankOpeningBalance: number;
   bankClosingBalance: number;
   totalIncome: number;
+  totalBankIncome: number;
+  totalCollections: number;
+  totalCashAdjustments: number;
   totalCashExpenses: number;
   totalDeposits: number;
   totalRemesaPayments: number;

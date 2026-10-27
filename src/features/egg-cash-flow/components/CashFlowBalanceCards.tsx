@@ -18,19 +18,21 @@ export default function CashFlowBalanceCards({
 }: Props) {
   if (!summary) return null;
 
-  const periodIncome = summary.totalIncome + summary.totalCashAdjustments;
+  const periodIncome = summary.totalCollections + summary.totalCashAdjustments;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-xl bg-slate-800 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <HiCash className="h-4 w-4 text-amber-400" />
-          Caja chica (saldo)
+          Efectivo en oficina (saldo)
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
           {formatMXN(summary.cashClosingBalance)}
         </div>
-        <div className="mt-1 text-xs text-slate-500">Efectivo en oficina</div>
+        <div className="mt-1 text-xs text-slate-500">
+          Efectivo retenido para gastos y nómina
+        </div>
       </div>
 
       <div className="rounded-xl bg-slate-800 p-5">
@@ -55,7 +57,7 @@ export default function CashFlowBalanceCards({
           {formatMXN(periodIncome)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
-          Ingresos a caja chica (incluye ajustes)
+          Cobranza de ruta y clientes (incluye ajustes)
         </div>
       </div>
 

@@ -68,11 +68,19 @@ describe("useRegisterAllCashFlowIncome", () => {
     expect(outcome?.failed[0].trip.tripId).toBe(2);
     expect(createIncome).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ tripId: 1 }),
+      expect.objectContaining({
+        tripId: 1,
+        account: "BANK",
+        officeAmount: 0,
+      }),
     );
     expect(createIncome).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ tripId: 2 }),
+      expect.objectContaining({
+        tripId: 2,
+        account: "BANK",
+        officeAmount: 0,
+      }),
     );
   });
 

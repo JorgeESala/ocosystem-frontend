@@ -13,6 +13,8 @@ const summary: CashFlowSummary = {
   bankClosingBalance: 59829,
   totalBalance: 59829,
   totalIncome: 139605,
+  totalBankIncome: 0,
+  totalCollections: 139605,
   totalCashExpenses: 0,
   totalDeposits: 139605,
   totalRemesaPayments: 0,
@@ -29,7 +31,7 @@ describe("CashFlowBalanceCards", () => {
   it("shows the period cash income next to the balances", () => {
     render(<CashFlowBalanceCards summary={summary} accountHolder="Titular" />);
 
-    expect(screen.getByText("Caja chica (saldo)")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo en oficina (saldo)")).toBeInTheDocument();
     expect(screen.getByText("Cobranza del periodo")).toBeInTheDocument();
     expect(screen.getByText(formatMXN(139605))).toBeInTheDocument();
     expect(screen.getByText("Cuenta de Titular")).toBeInTheDocument();
@@ -41,6 +43,7 @@ describe("CashFlowBalanceCards", () => {
         summary={{
           ...summary,
           totalIncome: 133507,
+          totalCollections: 133507,
           totalCashAdjustments: 21634.47,
         }}
         accountHolder="Titular"

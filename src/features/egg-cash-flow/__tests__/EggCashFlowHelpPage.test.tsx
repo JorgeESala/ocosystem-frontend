@@ -19,6 +19,7 @@ describe("EggCashFlowHelpPage", () => {
     expect(
       screen.getByText("Cómo funciona el Flujo de efectivo"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Cómo se mueve el dinero")).toBeInTheDocument();
     expect(screen.getByText("Primeros pasos")).toBeInTheDocument();
     expect(screen.getByText("Preguntas frecuentes")).toBeInTheDocument();
     expect(screen.getByText("Glosario")).toBeInTheDocument();

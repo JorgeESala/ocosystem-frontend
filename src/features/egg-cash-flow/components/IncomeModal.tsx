@@ -14,6 +14,7 @@ import { formatMXN } from "@/utils/moneyNumbers";
 import type { Client } from "@/core/api/types";
 import { formatDate } from "../utils/cashFlow.utils";
 import type {
+  CashFlowAccount,
   CollectionSuggestion,
   TripSuggestion,
 } from "../types/eggCashFlow.types";
@@ -30,6 +31,8 @@ interface Props {
     date: string;
     amount: number;
     tripId?: number | null;
+    officeAmount?: number | null;
+    account?: CashFlowAccount | null;
     paymentId?: number | null;
     clientId?: number | null;
     description?: string | null;
@@ -38,6 +41,11 @@ interface Props {
   }) => void;
   isSaving: boolean;
 }
+
+type Source = "trip" | "payment" | "client" | "other";
+
+const sourceAccount = (source: Source): CashFlowAccount =>
+  source === "payment" ? "BANK" : "CASH";
 
 export default function IncomeModal({
   open,
@@ -50,11 +58,11 @@ export default function IncomeModal({
   onSave,
   isSaving,
 }: Props) {
-  const [source, setSource] = useState<"trip" | "payment" | "client" | "other">(
-    "trip",
-  );
+  const [source, setSource] = useState<Source>("trip");
   const [date, setDate] = useState<Date>(new Date());
   const [amount, setAmount] = useState("");
+  const [officeAmount, setOfficeAmount] = useState("0");
+  const [account, setAccount] = useState<CashFlowAccount>("CASH");
   const [tripId, setTripId] = useState("");
   const [paymentId, setPaymentId] = useState("");
   const [clientId, setClientId] = useState("");
@@ -69,6 +77,8 @@ export default function IncomeModal({
     setSource("trip");
     setDate(new Date());
     setAmount("");
+    setOfficeAmount("0");
+    setAccount("CASH");
     setTripId("");
     setPaymentId("");
     setClientId("");
@@ -89,6 +99,7 @@ export default function IncomeModal({
       setSource("trip");
       setTripId(String(initialTripId));
       setAmount(String(trip.pending));
+      setOfficeAmount("0");
       setDescription(
         `Despacho ${formatDate(trip.departureDate)} - ${trip.driverName ?? ""}`,
       );
@@ -99,6 +110,7 @@ export default function IncomeModal({
       setSource("payment");
       setPaymentId(String(initialPaymentId));
       setAmount(String(col.pending));
+      setAccount("BANK");
       setDescription(`Cobro ${col.payerName ?? ""}`);
       appliedPrefill.current = key;
     }
@@ -108,11 +120,21 @@ export default function IncomeModal({
   const pendingCollections = collections.filter((c) => c.pending > 0);
   const cashClients = clients.filter((c) => !c.accountingEntityId);
 
+  const handleSourceChange = (value: string) => {
+    const next = value as Source;
+    setSource(next);
+    setAccount(sourceAccount(next));
+    if (next === "trip") {
+      setOfficeAmount("0");
+    }
+  };
+
   const handleTripChange = (value: string) => {
     setTripId(value);
     const trip = trips.find((t) => String(t.tripId) === value);
     if (trip) {
       setAmount(String(trip.pending));
+      setOfficeAmount("0");
       setDescription(
         `Despacho ${formatDate(trip.departureDate)} - ${trip.driverName ?? ""}`,
       );
@@ -124,25 +146,34 @@ export default function IncomeModal({
     const col = collections.find((c) => String(c.paymentId) === value);
     if (col) {
       setAmount(String(col.pending));
+      setAccount("BANK");
       setDescription(`Cobro ${col.payerName ?? ""}`);
     }
   };
 
   const handleClientChange = (value: string) => {
     setClientId(value);
+    setAccount("CASH");
     const client = cashClients.find((c) => String(c.id) === value);
     if (client) {
       setDescription(`Cobro ${client.name}`);
     }
   };
 
-  const canSave = Boolean(amount && parseFloat(amount) > 0);
+  const parsedAmount = parseFloat(amount) || 0;
+  const parsedOffice = parseFloat(officeAmount) || 0;
+  const bankAmount = Math.max(parsedAmount - parsedOffice, 0);
+  const officeValid =
+    source !== "trip" || (parsedOffice >= 0 && parsedOffice <= parsedAmount);
+  const canSave = parsedAmount > 0 && officeValid;
 
   const handleSave = () => {
     onSave({
       date: toLocalDateString(date),
-      amount: parseFloat(amount) || 0,
+      amount: parsedAmount,
       tripId: source === "trip" && tripId ? Number(tripId) : null,
+      officeAmount: source === "trip" ? parsedOffice : null,
+      account: source === "trip" ? null : account,
       paymentId: source === "payment" && paymentId ? Number(paymentId) : null,
       clientId: source === "client" && clientId ? Number(clientId) : null,
       description: description.trim() || null,
@@ -153,20 +184,19 @@ export default function IncomeModal({
 
   return (
     <Modal show={open} onClose={onClose} size="md" popup>
-      <ModalHeader>Nuevo ingreso · Caja chica</ModalHeader>
+      <ModalHeader>Nuevo ingreso</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
           <div>
-            <Label>Origen</Label>
+            <Label htmlFor="incomeSource">Origen</Label>
             <Select
+              id="incomeSource"
               value={source}
-              onChange={(e) =>
-                setSource(
-                  e.target.value as "trip" | "payment" | "client" | "other",
-                )
-              }
+              onChange={(e) => handleSourceChange(e.target.value)}
             >
-              <option value="trip">Despacho (ruta)</option>
+              <option value="trip">
+                Despacho (ruta) — efectivo del chofer
+              </option>
               <option value="payment">
                 Cobro pendiente (registrado en Contabilidad)
               </option>
@@ -176,28 +206,69 @@ export default function IncomeModal({
           </div>
 
           {source === "trip" && (
-            <div>
-              <Label>Despacho</Label>
-              <Select
-                value={tripId}
-                onChange={(e) => handleTripChange(e.target.value)}
-              >
-                <option value="">Seleccionar despacho...</option>
-                {pendingTrips.map((t) => (
-                  <option key={t.tripId} value={t.tripId}>
-                    {formatDate(t.departureDate)} —{" "}
-                    {t.driverName ?? "Sin chofer"} ({formatMXN(t.pending)}{" "}
-                    pendiente)
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <>
+              <div>
+                <Label htmlFor="incomeTrip">Despacho</Label>
+                <Select
+                  id="incomeTrip"
+                  value={tripId}
+                  onChange={(e) => handleTripChange(e.target.value)}
+                >
+                  <option value="">Seleccionar despacho...</option>
+                  {pendingTrips.map((t) => (
+                    <option key={t.tripId} value={t.tripId}>
+                      {formatDate(t.departureDate)} —{" "}
+                      {t.driverName ?? "Sin chofer"} ({formatMXN(t.pending)}{" "}
+                      pendiente)
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="incomeAmount">Total cobrado (MXN)</Label>
+                <TextInput
+                  id="incomeAmount"
+                  type="number"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  El chofer deposita al banco por defecto. Si dejó efectivo en
+                  la oficina, captúralo abajo.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="incomeOfficeAmount">
+                  Enviado a la oficina (MXN)
+                </Label>
+                <TextInput
+                  id="incomeOfficeAmount"
+                  type="number"
+                  step="0.01"
+                  value={officeAmount}
+                  onChange={(e) => setOfficeAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="rounded-lg bg-slate-700/50 px-4 py-3">
+                <div className="text-xs text-slate-400">
+                  Depositado al banco
+                </div>
+                <div className="text-lg font-bold text-white">
+                  {formatMXN(bankAmount)}
+                </div>
+              </div>
+            </>
           )}
 
           {source === "payment" && (
             <div>
-              <Label>Cobro</Label>
+              <Label htmlFor="incomePayment">Cobro</Label>
               <Select
+                id="incomePayment"
                 value={paymentId}
                 onChange={(e) => handlePaymentChange(e.target.value)}
               >
@@ -214,8 +285,9 @@ export default function IncomeModal({
 
           {source === "client" && (
             <div>
-              <Label>Cliente</Label>
+              <Label htmlFor="incomeClient">Cliente</Label>
               <Select
+                id="incomeClient"
                 value={clientId}
                 onChange={(e) => handleClientChange(e.target.value)}
               >
@@ -233,23 +305,41 @@ export default function IncomeModal({
             </div>
           )}
 
+          {source !== "trip" && (
+            <>
+              <div>
+                <Label htmlFor="incomeDestination">Destino</Label>
+                <Select
+                  id="incomeDestination"
+                  value={account}
+                  onChange={(e) =>
+                    setAccount(e.target.value as CashFlowAccount)
+                  }
+                >
+                  <option value="BANK">Banco</option>
+                  <option value="CASH">Efectivo en oficina</option>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="incomeAmount">Monto (MXN)</Label>
+                <TextInput
+                  id="incomeAmount"
+                  type="number"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
           <div>
             <Label>Fecha</Label>
             <Datepicker
               language="es-MX"
               value={date}
               onChange={(d) => d && setDate(d)}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="incomeAmount">Monto (MXN)</Label>
-            <TextInput
-              id="incomeAmount"
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
             />
           </div>
 

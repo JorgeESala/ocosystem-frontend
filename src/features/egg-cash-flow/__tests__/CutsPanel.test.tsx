@@ -13,6 +13,9 @@ const cut = (overrides: Partial<CashFlowCut> = {}): CashFlowCut => ({
   bankOpeningBalance: 153924,
   bankClosingBalance: 59829,
   totalIncome: 139605,
+  totalBankIncome: 0,
+  totalCollections: 139605,
+  totalCashAdjustments: 0,
   totalCashExpenses: 0,
   totalDeposits: 139605,
   totalRemesaPayments: 0,
@@ -32,7 +35,11 @@ describe("CutsPanel", () => {
     render(<CutsPanel cuts={[cut()]} />);
 
     expect(screen.getByText("Caja chica (ingreso)")).toBeInTheDocument();
-    expect(screen.getByText("Cierre caja chica")).toBeInTheDocument();
+    expect(
+      screen.getByText("Efectivo en oficina (cierre)"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Saldo real banco")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo real")).toBeInTheDocument();
     expect(screen.getByText(formatMXN(139605))).toBeInTheDocument();
     expect(screen.getAllByText(formatMXN(0)).length).toBeGreaterThan(0);
     expect(screen.getAllByText(formatMXN(59829)).length).toBeGreaterThan(0);
