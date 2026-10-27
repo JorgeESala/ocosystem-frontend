@@ -31,7 +31,11 @@ const escapeHtml = (value: string | null | undefined): string =>
   });
 
 const debtorTypeLabel = (entityType: string): string =>
-  entityType === "BRANCH" ? "Sucursal" : "Cliente";
+  entityType === "BRANCH"
+    ? "Sucursal"
+    : entityType === "CASH"
+      ? "Contado"
+      : "Cliente";
 
 const money = (value: number): string =>
   new Intl.NumberFormat("es-MX", {

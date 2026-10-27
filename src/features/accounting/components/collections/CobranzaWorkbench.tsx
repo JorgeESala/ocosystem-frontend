@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Alert, Button } from "flowbite-react";
+import { Button } from "flowbite-react";
 import { HiTruck, HiUserGroup } from "react-icons/hi";
 import { ClientCollectionPanel } from "./ClientCollectionPanel";
+import { TripCollectionsPanel } from "./TripCollectionsPanel";
 
 type CollectionMode = "CLIENTE" | "DESPACHO";
 
@@ -38,9 +39,7 @@ export const CobranzaWorkbench = ({ onSuccessToast }: Props) => {
       {mode === "CLIENTE" ? (
         <ClientCollectionPanel onSuccessToast={onSuccessToast} />
       ) : (
-        <Alert color="info">
-          El modo Despacho se conectará en la siguiente fase.
-        </Alert>
+        <TripCollectionsPanel onSuccessToast={onSuccessToast} />
       )}
     </div>
   );
