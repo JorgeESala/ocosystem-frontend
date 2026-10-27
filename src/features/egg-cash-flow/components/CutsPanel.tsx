@@ -41,14 +41,24 @@ export default function CutsPanel({ cuts, onReopen }: Props) {
                 Caja chica (ingreso)
               </th>
               <th className="px-5 py-3 text-right font-semibold">
-                Cierre caja chica
+                Efectivo en oficina (cierre)
               </th>
               <th className="px-5 py-3 text-right font-semibold">Banco</th>
               <th className="px-5 py-3 text-right font-semibold">
                 Deuda remesas (proveedores)
               </th>
-              <th className="px-5 py-3 text-right font-semibold">Saldo real</th>
-              <th className="px-5 py-3 text-right font-semibold">Diferencia</th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Saldo real banco
+              </th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Diferencia banco
+              </th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Efectivo real
+              </th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Diferencia efectivo
+              </th>
               <th className="px-5 py-3 font-semibold">Nota</th>
               <th className="px-5 py-3 text-right font-semibold">Acción</th>
             </tr>
@@ -60,7 +70,7 @@ export default function CutsPanel({ cuts, onReopen }: Props) {
                   {formatDate(c.weekStart)} — {formatDate(c.weekEnd)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-emerald-400">
-                  {formatMXN(c.totalDeposits)}
+                  {formatMXN(c.totalCollections + c.totalCashAdjustments)}
                 </td>
                 <td className="px-5 py-3 text-right font-mono text-sm text-slate-300">
                   {formatMXN(c.cashClosingBalance)}
@@ -86,6 +96,22 @@ export default function CutsPanel({ cuts, onReopen }: Props) {
                   }`}
                 >
                   {c.bankDifference != null ? formatMXN(c.bankDifference) : "—"}
+                </td>
+                <td className="px-5 py-3 text-right font-mono text-sm text-slate-300">
+                  {c.realCashBalance != null
+                    ? formatMXN(c.realCashBalance)
+                    : "—"}
+                </td>
+                <td
+                  className={`px-5 py-3 text-right font-mono text-sm ${
+                    c.cashDifference == null
+                      ? "text-slate-500"
+                      : c.cashDifference >= 0
+                        ? "text-emerald-400"
+                        : "text-red-400"
+                  }`}
+                >
+                  {c.cashDifference != null ? formatMXN(c.cashDifference) : "—"}
                 </td>
                 <td className="px-5 py-3 text-sm text-slate-400">
                   {c.note ?? "—"}

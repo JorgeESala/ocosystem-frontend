@@ -125,6 +125,9 @@ const cut = (overrides: Partial<CashFlowCut> = {}): CashFlowCut => ({
   bankOpeningBalance: 16679.18,
   bankClosingBalance: 8306.18,
   totalIncome: 108127,
+  totalBankIncome: 0,
+  totalCollections: 108127,
+  totalCashAdjustments: 0,
   totalCashExpenses: 0,
   totalDeposits: 108127,
   totalRemesaPayments: 0,
@@ -255,7 +258,7 @@ describe("EggCashFlowPage", () => {
     expect(screen.getByText(/Chofer Pendiente/)).toBeInTheDocument();
     expect(screen.queryByText(/Chofer Parcial/)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Registrar todo \(1\)/ }),
+      screen.getByRole("button", { name: /Registrar todo al banco \(1\)/ }),
     ).toBeInTheDocument();
   });
 
@@ -299,9 +302,9 @@ describe("EggCashFlowPage", () => {
     renderPage();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Registrar todo \(2\)/ }),
+      screen.getByRole("button", { name: /Registrar todo al banco \(2\)/ }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Si, registrar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Si, al banco/ }));
 
     expect(
       await screen.findByText(/1 despacho registrado/),

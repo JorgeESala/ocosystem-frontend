@@ -82,7 +82,7 @@ export default function SettingsModal({
         <div className="space-y-4">
           <div>
             <Label htmlFor="settingsCashOpening">
-              Saldo inicial caja chica (MXN)
+              Saldo inicial efectivo en oficina (MXN)
             </Label>
             <TextInput
               id="settingsCashOpening"
@@ -131,8 +131,9 @@ export default function SettingsModal({
           <div>
             <Label>Clientes que depositan directo a la cuenta</Label>
             <p className="mb-2 text-xs text-slate-500">
-              Su cobranza entra al banco; la de los demás clientes entra a caja
-              chica.
+              Su cobranza entra al banco; la de los demás clientes entra a
+              efectivo en oficina. Las sucursales pagan directo al banco por
+              defecto; si pagan al proveedor, no entra a este flujo.
             </p>
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/50 p-3">
               {paymentClients.length === 0 ? (

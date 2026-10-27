@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { formatMXN } from "@/utils/moneyNumbers";
 import IncomeModal from "../components/IncomeModal";
 import type {
   CollectionSuggestion,
@@ -56,7 +57,7 @@ describe("IncomeModal", () => {
   it("keeps the typed amount when the suggestions arrays change identity", () => {
     const { rerender } = renderModal([trip], [collection]);
 
-    const amountInput = screen.getByLabelText("Monto (MXN)");
+    const amountInput = screen.getByLabelText("Total cobrado (MXN)");
     fireEvent.change(amountInput, { target: { value: "1234.56" } });
 
     rerender(
@@ -69,13 +70,13 @@ describe("IncomeModal", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Monto (MXN)")).toHaveValue(1234.56);
+    expect(screen.getByLabelText("Total cobrado (MXN)")).toHaveValue(1234.56);
   });
 
   it("keeps the typed amount when suggestion data refetches with the same content", () => {
     const { rerender } = renderModal([], []);
 
-    const amountInput = screen.getByLabelText("Monto (MXN)");
+    const amountInput = screen.getByLabelText("Total cobrado (MXN)");
     fireEvent.change(amountInput, { target: { value: "999" } });
 
     rerender(
@@ -88,7 +89,7 @@ describe("IncomeModal", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Monto (MXN)")).toHaveValue(999);
+    expect(screen.getByLabelText("Total cobrado (MXN)")).toHaveValue(999);
   });
 
   it("applies the trip prefill once the suggestion data arrives", () => {
@@ -104,7 +105,9 @@ describe("IncomeModal", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Monto (MXN)")).toHaveValue(10000);
+    expect(screen.getByLabelText("Total cobrado (MXN)")).toHaveValue(10000);
+    expect(screen.getByLabelText("Enviado a la oficina (MXN)")).toHaveValue(0);
+    expect(screen.getByText(formatMXN(10000))).toBeInTheDocument();
     expect(screen.getByLabelText("Concepto")).toHaveValue(
       "Despacho 06 oct 2026 - Samuel",
     );
@@ -123,7 +126,7 @@ describe("IncomeModal", () => {
       />,
     );
 
-    const amountInput = screen.getByLabelText("Monto (MXN)");
+    const amountInput = screen.getByLabelText("Total cobrado (MXN)");
     fireEvent.change(amountInput, { target: { value: "777" } });
 
     rerender(
@@ -136,6 +139,65 @@ describe("IncomeModal", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Monto (MXN)")).toHaveValue(777);
+    expect(screen.getByLabelText("Total cobrado (MXN)")).toHaveValue(777);
+  });
+
+  it("splits the trip total between bank and office", () => {
+    const onSave = vi.fn();
+    render(
+      <IncomeModal
+        {...baseProps}
+        onSave={onSave}
+        trips={[trip]}
+        collections={[collection]}
+        initialTripId={42}
+        initialPaymentId={null}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Enviado a la oficina (MXN)"), {
+      target: { value: "4000" },
+    });
+
+    expect(screen.getByText(formatMXN(6000))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Registrar ingreso" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 10000,
+        officeAmount: 4000,
+        tripId: 42,
+        account: null,
+      }),
+    );
+  });
+
+  it("defaults a payment collection to the bank", () => {
+    const onSave = vi.fn();
+    render(
+      <IncomeModal
+        {...baseProps}
+        onSave={onSave}
+        trips={[trip]}
+        collections={[collection]}
+        initialTripId={null}
+        initialPaymentId={7}
+      />,
+    );
+
+    expect(screen.getByLabelText("Destino")).toHaveValue("BANK");
+    expect(screen.getByLabelText("Monto (MXN)")).toHaveValue(5000);
+
+    fireEvent.click(screen.getByRole("button", { name: "Registrar ingreso" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 5000,
+        paymentId: 7,
+        account: "BANK",
+        officeAmount: null,
+      }),
+    );
   });
 });

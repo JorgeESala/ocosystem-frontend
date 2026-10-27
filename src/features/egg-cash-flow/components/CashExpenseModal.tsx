@@ -65,7 +65,7 @@ export default function CashExpenseModal({
 
   return (
     <Modal show={open} onClose={onClose} size="md" popup>
-      <ModalHeader>Gasto en efectivo · Caja chica</ModalHeader>
+      <ModalHeader>Gasto en efectivo · Efectivo en oficina</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
           <div>

@@ -54,11 +54,15 @@ export default function DepositModal({
         <div className="space-y-4">
           <div className="rounded-lg bg-slate-700/50 px-4 py-3">
             <div className="text-xs text-slate-400">
-              Efectivo disponible en caja chica
+              Efectivo disponible en oficina
             </div>
             <div className="text-xl font-bold text-white">
               {formatMXN(cashBalance)}
             </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Deposita el efectivo que está en la oficina. Si el chofer deposita
+              directo, regístralo como ingreso al banco en el despacho.
+            </p>
           </div>
 
           <div>

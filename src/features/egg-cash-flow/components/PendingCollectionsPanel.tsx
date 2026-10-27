@@ -33,9 +33,11 @@ export default function PendingCollectionsPanel({
   if (pendingTrips.length === 0 && pendingCollections.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-        <h3 className="text-base font-semibold text-white">Por cobrar</h3>
+        <h3 className="text-base font-semibold text-white">
+          Pendiente de ingresar
+        </h3>
         <p className="mt-1 text-sm text-slate-400">
-          No hay despachos ni cobros pendientes de registrar.
+          No hay efectivo en ruta ni cobros pendientes de registrar.
         </p>
       </section>
     );
@@ -45,14 +47,18 @@ export default function PendingCollectionsPanel({
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">Por cobrar</h3>
+          <h3 className="text-base font-semibold text-white">
+            Pendiente de ingresar
+          </h3>
           <p className="text-sm text-slate-400">
-            Despachos y cobros con dinero pendiente de ingresar a caja chica.
+            Efectivo de ruta que el chofer aún no deposita ni entrega a la
+            oficina, y cobros registrados en Contabilidad que aún no están en el
+            flujo.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Aqui aparecen documentos del ERP que aun no tienen movimiento en el
-            flujo. Los que ya registraste dejan de aparecer; lo que queda son
-            documentos fuera de tu hoja de control.
+            Los despachos son efectivo en ruta. Las sucursales que compran a
+            crédito están en Contabilidad → Por cobrar; los cobros de esta lista
+            son pagos ya registrados que faltan en el flujo.
           </p>
         </div>
         {pendingTrips.length > 0 && onRegisterAllPending && (
@@ -71,7 +77,7 @@ export default function PendingCollectionsPanel({
                     onRegisterAllPending(pendingTrips);
                   }}
                 >
-                  {registerAllBusy ? "Registrando..." : "Si, registrar"}
+                  {registerAllBusy ? "Registrando..." : "Si, al banco"}
                 </Button>
                 <Button
                   size="xs"
@@ -91,7 +97,7 @@ export default function PendingCollectionsPanel({
               >
                 {registerAllBusy
                   ? "Registrando..."
-                  : `Registrar todo (${pendingTrips.length})`}
+                  : `Registrar todo al banco (${pendingTrips.length})`}
               </Button>
             )}
           </div>
@@ -101,7 +107,7 @@ export default function PendingCollectionsPanel({
       {pendingTrips.length > 0 && (
         <div className="mb-4">
           <h4 className="mb-2 text-xs font-semibold tracking-[0.18em] text-amber-400 uppercase">
-            Despachos
+            Efectivo en ruta
           </h4>
           <div className="space-y-2">
             {pendingTrips.map((t) => (
@@ -130,7 +136,7 @@ export default function PendingCollectionsPanel({
                   </span>
                   <Button size="xs" onClick={() => onCollectTrip(t)}>
                     <HiCash className="mr-1 h-3 w-3" />
-                    Ingresar
+                    Registrar
                   </Button>
                 </div>
               </div>
@@ -142,7 +148,7 @@ export default function PendingCollectionsPanel({
       {pendingCollections.length > 0 && (
         <div>
           <h4 className="mb-2 text-xs font-semibold tracking-[0.18em] text-blue-400 uppercase">
-            Cobros
+            Cobros por registrar
           </h4>
           <div className="space-y-2">
             {pendingCollections.map((c) => (
@@ -165,7 +171,7 @@ export default function PendingCollectionsPanel({
                   </span>
                   <Button size="xs" onClick={() => onCollectPayment(c)}>
                     <HiArrowDown className="mr-1 h-3 w-3" />
-                    Ingresar
+                    Registrar
                   </Button>
                 </div>
               </div>

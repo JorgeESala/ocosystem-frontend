@@ -232,8 +232,9 @@ export default function EggCashFlowPage({ unitType }: Props) {
             Configura tu flujo de efectivo
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-            Define los saldos iniciales de caja chica y banco, y el titular de
-            la cuenta, para empezar a registrar ingresos, depósitos y gastos.
+            Define los saldos iniciales de efectivo en oficina y banco, y el
+            titular de la cuenta, para empezar a registrar ingresos, depósitos y
+            gastos.
           </p>
           <Button
             className="mx-auto mt-4"
@@ -411,7 +412,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
             size="xs"
             onClick={() => setAccountFilter("CASH")}
           >
-            Caja chica
+            Efectivo en oficina
           </Button>
           <Button
             color={accountFilter === "BANK" ? "blue" : "gray"}

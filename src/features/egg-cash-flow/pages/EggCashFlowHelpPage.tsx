@@ -13,6 +13,7 @@ import {
   GLOSSARY,
   LEDGER_DIFFERENCES,
   MANUAL_ITEMS,
+  MONEY_FLOW,
   PAGE_SECTIONS,
   REMESA_NOTES,
 } from "../help/content";
@@ -49,6 +50,25 @@ export default function EggCashFlowHelpPage() {
           {CASH_FLOW_INTRO}
         </p>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-white">
+          Cómo se mueve el dinero
+        </h2>
+        <div className="space-y-3">
+          {MONEY_FLOW.map((step) => (
+            <div
+              key={step.title}
+              className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"
+            >
+              <h3 className="text-sm font-semibold text-blue-300">
+                {step.title}
+              </h3>
+              <p className="mt-1 text-sm text-slate-300">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">Primeros pasos</h2>
@@ -238,7 +258,8 @@ export default function EggCashFlowHelpPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-white">
-          Por qué no coincide con la caja general o el Estado de resultados
+          Por qué no coincide con la caja general del sistema anterior o el
+          Estado de resultados
         </h2>
         <div className="rounded-xl border-l-4 border-blue-500 bg-blue-950/40 p-5">
           <ul className="space-y-2 text-sm text-blue-200/90">

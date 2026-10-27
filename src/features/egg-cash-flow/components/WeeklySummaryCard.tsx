@@ -69,7 +69,7 @@ export default function WeeklySummaryCard({
       <div className="grid gap-8 md:grid-cols-2">
         <div>
           <h3 className="mb-2 text-sm font-semibold text-amber-400">
-            Caja chica
+            Efectivo en oficina
           </h3>
           <Row label="Apertura" amount={summary.cashOpeningBalance} />
           <Row
@@ -95,7 +95,7 @@ export default function WeeklySummaryCard({
             color="text-blue-400"
           />
           <Row
-            label="= Cierre caja chica"
+            label="= Efectivo en oficina (cierre)"
             amount={summary.cashClosingBalance}
             bold
           />
@@ -106,6 +106,11 @@ export default function WeeklySummaryCard({
             Banco · cuenta de {accountHolder}
           </h3>
           <Row label="Corte anterior" amount={summary.bankOpeningBalance} />
+          <Row
+            label="+ Cobranza directa al banco"
+            amount={summary.totalBankIncome}
+            color="text-emerald-400"
+          />
           <Row
             label="+ Ingreso a cuenta"
             amount={summary.totalDeposits}

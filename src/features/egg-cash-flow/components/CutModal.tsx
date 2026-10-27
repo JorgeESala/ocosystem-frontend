@@ -65,7 +65,7 @@ export default function CutModal({
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-slate-700/50 px-4 py-3">
                 <div className="text-xs text-slate-400">
-                  Cierre caja chica (esperado)
+                  Efectivo en oficina (esperado)
                 </div>
                 <div className="text-lg font-bold text-white">
                   {formatMXN(summary.cashClosingBalance)}

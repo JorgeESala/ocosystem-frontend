@@ -137,6 +137,8 @@ export const useRegisterAllCashFlowIncome = (unit: EggCashFlowUnit) => {
           await eggCashFlowApi.createIncome({
             date: trip.departureDate,
             amount: trip.pending,
+            officeAmount: 0,
+            account: "BANK",
             tripId: trip.tripId,
             description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
           });

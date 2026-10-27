@@ -109,7 +109,7 @@ export default function RemesaPaymentModal({
               onChange={(e) => setAccount(e.target.value as "BANK" | "CASH")}
             >
               <option value="BANK">Banco (cuenta de {accountHolder})</option>
-              <option value="CASH">Caja chica (efectivo)</option>
+              <option value="CASH">Efectivo en oficina (efectivo)</option>
             </Select>
           </div>
 

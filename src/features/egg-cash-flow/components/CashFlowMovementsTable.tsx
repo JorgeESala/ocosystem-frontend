@@ -28,7 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const ACCOUNT_LABELS: Record<string, string> = {
-  CASH: "Caja chica",
+  CASH: "Efectivo en oficina",
   BANK: "Banco",
 };
 
@@ -165,7 +165,7 @@ export default function CashFlowMovementsTable({
                           content={
                             m.account === "CASH"
                               ? "Mover al banco"
-                              : "Mover a caja chica"
+                              : "Mover a efectivo en oficina"
                           }
                         >
                           <button
