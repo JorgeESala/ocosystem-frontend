@@ -5,10 +5,12 @@ import {
   applyRemainder,
   cancelPayment,
   createAdvancePayment,
+  createBulkFifoPayments,
   createCompensationPaymentFromAP,
   createFifoPayment,
   createPayment,
   fetchPaymentApplications,
+  fetchPaymentsByPair,
   fetchRecentPayments,
   fetchUnappliedPayments,
   previewFifoPayment,
@@ -68,16 +70,30 @@ export const useCreateFifoPayment = () => {
 
   return useMutation({
     mutationFn: createFifoPayment,
+    onSuccess: () => invalidateAccountingCaches(queryClient),
+  });
+};
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: paymentKeys.all,
-      });
+export const useCreateBulkFifoPayments = () => {
+  const queryClient = useQueryClient();
 
-      queryClient.invalidateQueries({
-        queryKey: accountsPayableKeys.all,
-      });
-    },
+  return useMutation({
+    mutationFn: createBulkFifoPayments,
+    onSuccess: () => invalidateAccountingCaches(queryClient),
+  });
+};
+
+export const usePaymentsByPair = (
+  payerId?: number,
+  receiverId?: number,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: paymentKeys.byPair(slug, payerId ?? 0, receiverId ?? 0),
+    queryFn: () => fetchPaymentsByPair(payerId!, receiverId!),
+    enabled: !!slug && !!payerId && !!receiverId,
+    staleTime: 1000 * 30,
   });
 };
 
@@ -127,6 +143,8 @@ const invalidateAccountingCaches = (
     queryKey: accountsPayableMovementKeys.all,
   });
   queryClient.invalidateQueries({ queryKey: clientSummaryKeys.all });
+  queryClient.invalidateQueries({ queryKey: ["collections"] });
+  queryClient.invalidateQueries({ queryKey: ["egg-cash-flow"] });
 };
 
 export const useReverseApplication = () => {

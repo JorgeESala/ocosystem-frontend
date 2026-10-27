@@ -21,6 +21,9 @@ export interface CreateFifoPaymentRequest {
 
   folio?: string;
   note?: string;
+  driverId?: number;
+  routeId?: number;
+  tripId?: number;
 }
 
 export interface CreatePaymentRequest {
@@ -36,6 +39,7 @@ export interface CreatePaymentRequest {
   note?: string;
   driverId?: number;
   routeId?: number;
+  tripId?: number;
 }
 
 export interface CreateAdvancePaymentRequest {
@@ -67,6 +71,14 @@ export interface PaymentResponse {
   receiverName?: string;
   payerEntityId?: number;
   receiverEntityId?: number;
+  tripId?: number;
+}
+
+export interface BulkPaymentResult {
+  created: number;
+  appliedTotal: number;
+  parkedTotal: number;
+  paymentIds: number[];
 }
 
 export interface FifoPaymentPreviewItem {
