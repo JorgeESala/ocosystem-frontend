@@ -56,6 +56,11 @@ export const SaldoFavorHelpContent = () => (
       deudas abiertas o si queda como saldo a favor. Aplicarlo después siempre
       pide confirmación.
     </p>
+    <p>
+      Los CEDIS son almacenes de la misma empresa: un saldo a favor de un CEDIS
+      también se puede aplicar a deudas de otro CEDIS. El pago queda registrado
+      en el CEDIS que lo recibió.
+    </p>
   </div>
 );
 

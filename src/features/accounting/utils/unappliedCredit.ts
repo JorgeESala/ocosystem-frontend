@@ -62,6 +62,7 @@ export interface CreditApplicationPlanItem {
   paymentId: number;
   folio?: string;
   amount: number;
+  receiverName?: string;
 }
 
 export interface CreditApplicationPlan {
@@ -82,7 +83,12 @@ export const planCreditApplication = (
     if (!hasUnappliedCredit(credit)) continue;
     const amount = Math.min(credit.remainingAmount ?? 0, remaining);
     if (amount <= 0) continue;
-    items.push({ paymentId: credit.id, folio: credit.folio, amount });
+    items.push({
+      paymentId: credit.id,
+      folio: credit.folio,
+      amount,
+      receiverName: credit.receiverName,
+    });
     remaining -= amount;
   }
 

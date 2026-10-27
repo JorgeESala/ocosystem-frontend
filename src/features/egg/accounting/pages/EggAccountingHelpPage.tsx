@@ -106,6 +106,10 @@ const FAQ = [
     a: "Al registrar un anticipo, el sistema muestra primero cómo se aplicaría a las deudas abiertas, de la más antigua a la más reciente. Puedes elegir 'Aplicar a estas deudas' o 'Solo registrar como saldo a favor'. Nada se guarda hasta que eliges una opción.",
   },
   {
+    q: "¿Puedo aplicar un saldo a favor de un CEDIS a una deuda de otro CEDIS?",
+    a: "Sí. Los CEDIS son almacenes de la misma empresa, así que el saldo a favor de un cliente con un CEDIS se puede aplicar a sus deudas con otros CEDIS. El pago queda registrado en el CEDIS que lo recibió y la deuda baja en el CEDIS que la tenía. En el detalle de la deuda ves de qué CEDIS viene el saldo a favor.",
+  },
+  {
     q: "¿Qué significa la etiqueta Saldo a favor?",
     a: "Es dinero pagado que aún no se aplica a ninguna deuda. Nunca se aplica solo: lo ves como chip en las cuentas abiertas, como sección de saldo a favor en el detalle de la cuenta y con una etiqueta en los movimientos que lo aplican.",
   },
