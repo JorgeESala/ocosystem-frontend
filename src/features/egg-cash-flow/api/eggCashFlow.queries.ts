@@ -24,6 +24,16 @@ export const useCashFlowSettings = (unit: EggCashFlowUnit) =>
     staleTime: STALE_TIME,
   });
 
+export const useCollectionAvailability = (
+  unit: EggCashFlowUnit,
+  date: string,
+) =>
+  useQuery({
+    queryKey: eggCashFlowKeys(unit).collectionAvailability(date),
+    queryFn: () => eggCashFlowApi.getCollectionAvailability(date),
+    staleTime: STALE_TIME,
+  });
+
 export const useCashFlowSummary = (
   unit: EggCashFlowUnit,
   from: string,

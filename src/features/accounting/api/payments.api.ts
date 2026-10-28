@@ -106,6 +106,16 @@ export const fetchUnappliedPayments = async (
   return data;
 };
 
+export const fetchSameDayPayments = async (
+  payerId: number,
+  date: string,
+): Promise<PaymentResponse[]> => {
+  const { data } = await http.get<PaymentResponse[]>(
+    `/api/accounting/payments/same-day?payerId=${payerId}&date=${date}`,
+  );
+  return data;
+};
+
 export const fetchPaymentsByPair = async (
   payerId: number,
   receiverId: number,

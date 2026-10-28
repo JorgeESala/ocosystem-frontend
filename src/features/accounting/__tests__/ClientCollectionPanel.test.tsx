@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClientCollectionPanel } from "../components/collections/ClientCollectionPanel";
@@ -8,7 +8,7 @@ import type { PaymentResponse } from "../types/payment.types";
 const mocks = vi.hoisted(() => ({
   useClients: vi.fn(),
   useOpenAccounts: vi.fn(),
-  usePaymentsByPair: vi.fn(),
+  useSameDayPayments: vi.fn(),
   createPaymentMutate: vi.fn(),
   lastPayload: null as Record<string, unknown> | null,
 }));
@@ -21,12 +21,18 @@ vi.mock("../api/accounts-payable.queries", () => ({
   useOpenAccounts: mocks.useOpenAccounts,
 }));
 
+vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
+  useCollectionAvailability: () => ({
+    data: { writable: true, reason: "OK", message: null },
+  }),
+}));
+
 vi.mock("../api/payments.queries", () => ({
   useCreateFifoPayment: () => ({
     mutate: mocks.createPaymentMutate,
     isPending: false,
   }),
-  usePaymentsByPair: mocks.usePaymentsByPair,
+  useSameDayPayments: mocks.useSameDayPayments,
 }));
 
 const creditClient = {
@@ -121,7 +127,7 @@ describe("ClientCollectionPanel", () => {
       error: null,
       refetch: vi.fn(),
     });
-    mocks.usePaymentsByPair.mockReturnValue({ data: [] });
+    mocks.useSameDayPayments.mockReturnValue({ data: [] });
     mocks.createPaymentMutate.mockImplementation(
       (
         payload: Record<string, unknown>,
@@ -238,7 +244,7 @@ describe("ClientCollectionPanel", () => {
   });
 
   it("warns about a same-day payment with the same amount", async () => {
-    mocks.usePaymentsByPair.mockReturnValue({
+    mocks.useSameDayPayments.mockReturnValue({
       data: [
         {
           id: 9,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -13,7 +13,7 @@ import type { Client } from "@/core/api/types";
 import { useOpenAccounts } from "../../api/accounts-payable.queries";
 import {
   useCreateFifoPayment,
-  usePaymentsByPair,
+  useSameDayPayments,
 } from "../../api/payments.queries";
 import type { PaymentMethod } from "../../types/payment.types";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -24,6 +24,7 @@ import {
   previewClientCollection,
   summarizeClientDebts,
 } from "../../utils/clientCollections";
+import { useCollectionAvailability } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
 import { ClientAutocomplete } from "./ClientAutocomplete";
@@ -41,7 +42,7 @@ interface CollectionResult {
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   CASH: "Efectivo",
   BANK_TRANSFER: "Transferencia",
-  DEPOSIT: "Depósito",
+  DEPOSIT: "DepÃ³sito",
   CHECK: "Cheque",
   OTHER: "Otro",
 };
@@ -84,13 +85,14 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     ? previewClientCollection(selectedCedis.balance, amountValue)
     : { appliedAmount: 0, parkedAmount: 0 };
 
-  const { data: pairPayments = [] } = usePaymentsByPair(
+  const { data: pairPayments = [] } = useSameDayPayments(
     selectedClient?.accountingEntityId,
-    selectedCedisId ?? undefined,
+    isoDate,
   );
 
   const duplicate =
     validAmount && isDuplicatePayment(pairPayments, amountValue, isoDate);
+  const { data: availability } = useCollectionAvailability("EGG", isoDate);
 
   useEffect(() => {
     if (!selectedClient) {
@@ -150,7 +152,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
         onSuccess: (payment) => {
           const appliedAmount = payment.appliedAmount ?? preview.appliedAmount;
           const parkedAmount = payment.remainingAmount ?? preview.parkedAmount;
-          const message = `Cobro registrado · aplicado ${formatMXN(appliedAmount)} · saldo a favor ${formatMXN(parkedAmount)}`;
+          const message = `Cobro registrado Â· aplicado ${formatMXN(appliedAmount)} Â· saldo a favor ${formatMXN(parkedAmount)}`;
           onSuccessToast?.(message);
           setLastResult({ appliedAmount, parkedAmount, duplicate });
           setSelectedClient(null);
@@ -196,16 +198,20 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
       {lastResult && (
         <Alert color="success">
           <span className="font-medium">
-            Cobro registrado · aplicado {formatMXN(lastResult.appliedAmount)} ·
-            saldo a favor {formatMXN(lastResult.parkedAmount)}
+            Cobro registrado Â· aplicado {formatMXN(lastResult.appliedAmount)}{" "}
+            Â· saldo a favor {formatMXN(lastResult.parkedAmount)}
           </span>
           {lastResult.duplicate && (
             <p className="mt-1 text-xs">
-              También había un cobro con el mismo monto ese día para este
+              TambiÃ©n habÃ­a un cobro con el mismo monto ese dÃ­a para este
               cliente.
             </p>
           )}
         </Alert>
+      )}
+
+      {availability && !availability.writable && availability.message && (
+        <Alert color="warning">{availability.message}</Alert>
       )}
 
       {selectedClient && debtsLoading && (
@@ -245,13 +251,13 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
               </div>
               <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
                 <p className="text-xs tracking-wider text-gray-400 uppercase">
-                  Deuda más antigua
+                  Deuda mÃ¡s antigua
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium text-white">
                     {summary.oldestDebtDate
                       ? formatHumanDate(summary.oldestDebtDate, "short")
-                      : "—"}
+                      : "â€”"}
                   </span>
                   {summary.oldestDebtDate && (
                     <AgingBadge isoDate={summary.oldestDebtDate} />
@@ -285,7 +291,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                     >
                       {summary.cedis.map((cedis) => (
                         <option key={cedis.creditorId} value={cedis.creditorId}>
-                          {cedis.creditorName} · {formatMXN(cedis.balance)}
+                          {cedis.creditorName} Â· {formatMXN(cedis.balance)}
                         </option>
                       ))}
                     </Select>
@@ -324,7 +330,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               <div className="grid gap-4 lg:grid-cols-3">
                 <div>
-                  <Label htmlFor="collection-method">Método de pago</Label>
+                  <Label htmlFor="collection-method">MÃ©todo de pago</Label>
                   <Select
                     id="collection-method"
                     value={paymentMethod}
@@ -343,11 +349,11 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                 </div>
                 <div className="flex items-end lg:col-span-2">
                   <p className="text-sm text-gray-300">
-                    Se aplicará{" "}
+                    Se aplicarÃ¡{" "}
                     <strong className="text-white">
                       {formatMXN(preview.appliedAmount)}
                     </strong>{" "}
-                    · saldo a favor{" "}
+                    Â· saldo a favor{" "}
                     <strong className="text-amber-300">
                       {formatMXN(preview.parkedAmount)}
                     </strong>
@@ -357,7 +363,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               {duplicate && (
                 <Alert color="warning">
-                  Ya existe un cobro de {formatMXN(amountValue)} el mismo día
+                  Ya existe un cobro de {formatMXN(amountValue)} el mismo dÃ­a
                   para este cliente. Revisa antes de guardar; puedes continuar
                   si es correcto.
                 </Alert>
@@ -365,7 +371,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-gray-500">
-                  El pago se aplica a las deudas más antiguas de este CEDIS.
+                  El pago se aplica a las deudas mÃ¡s antiguas de este CEDIS.
                 </p>
                 <Button
                   type="submit"

@@ -16,6 +16,7 @@ import {
   HiTruck,
 } from "react-icons/hi";
 import { useRoutes } from "@/core/api/route/routes.queries";
+import { useCollectionAvailability } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { useTripCollections } from "../../api/collections.queries";
@@ -80,6 +81,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
   } = useTripCollections(isoDate, isoDate, routeId);
   const createPayment = useCreateFifoPayment();
   const createBulkPayments = useCreateBulkFifoPayments();
+  const { data: availability } = useCollectionAvailability("EGG", isoDate);
 
   const totalRows = useMemo(
     () =>
@@ -96,7 +98,13 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
   const draftFor = (trip: TripCollection, client: TripCollectionClient) => {
     const key = keyFor(trip, client);
     const existing = drafts[key];
-    const fallbackCedis = client.cedisBalances[0] ?? null;
+    const saleCedis = client.saleCedisBalances?.[0];
+    const deliveryCedis = saleCedis
+      ? client.cedisBalances.find(
+          (item) => item.creditorId === saleCedis.creditorId,
+        )
+      : null;
+    const fallbackCedis = deliveryCedis ?? client.cedisBalances[0] ?? null;
     const cedisId = existing?.cedisId ?? fallbackCedis?.creditorId ?? null;
     const cedis =
       client.cedisBalances.find((item) => item.creditorId === cedisId) ??
@@ -306,6 +314,10 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           {totalRows} cliente{totalRows === 1 ? "" : "s"} con cuenta por cobrar
         </p>
       </div>
+
+      {availability && !availability.writable && availability.message && (
+        <Alert color="warning">{availability.message}</Alert>
+      )}
 
       {error && (
         <Alert color="failure">

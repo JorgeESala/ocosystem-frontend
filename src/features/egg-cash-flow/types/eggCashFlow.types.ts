@@ -216,3 +216,9 @@ export interface AvailableExpense {
   reason: string | null;
   linked: boolean;
 }
+
+export interface CashFlowCollectionAvailability {
+  writable: boolean;
+  reason: "OK" | "NO_SETTINGS" | "BEFORE_TRACKING" | "CLOSED_WEEK";
+  message: string | null;
+}

@@ -22,6 +22,12 @@ vi.mock("../api/collections.queries", () => ({
   useTripCollections: mocks.useTripCollections,
 }));
 
+vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
+  useCollectionAvailability: () => ({
+    data: { writable: true, reason: "OK", message: null },
+  }),
+}));
+
 vi.mock("../api/payments.queries", () => ({
   useCreateBulkFifoPayments: () => ({
     mutate: mocks.bulkMutate,
@@ -44,19 +50,22 @@ const trip: TripCollection = {
   driverName: "Chofer Uno",
   routeId: 3,
   routeName: "Ruta Norte",
-  vehicleName: "Camión 1",
+  vehicleName: "CamiÃ³n 1",
   saleCount: 2,
   totalSold: 800,
   cashOnlyTotal: 300,
   clients: [
     {
       clientId: 10,
-      clientName: "Cliente Crédito",
+      clientName: "Cliente CrÃ©dito",
       phone: "555-100-2000",
       accountingEntityId: 88,
       saleTotal: 500,
       saldoTotal: 900,
       oldestDebtDate: "2026-09-01",
+      saleCedisBalances: [
+        { creditorId: 1, creditorName: "CEDIS Norte", saleTotal: 500 },
+      ],
       cedisBalances: [
         {
           creditorId: 1,
@@ -83,6 +92,7 @@ const trip: TripCollection = {
       saldoTotal: 0,
       oldestDebtDate: null,
       cedisBalances: [],
+      saleCedisBalances: [],
     },
   ],
 };
@@ -126,7 +136,7 @@ describe("TripCollectionsPanel", () => {
 
     fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
 
-    expect(screen.getByText("Cliente Crédito")).toBeInTheDocument();
+    expect(screen.getByText("Cliente CrÃ©dito")).toBeInTheDocument();
     expect(screen.getAllByText("Contado").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Monto")).toHaveValue(900);
     expect(
@@ -172,12 +182,12 @@ describe("TripCollectionsPanel", () => {
 
     expect(openCollectionsSheet).toHaveBeenCalledWith(
       expect.objectContaining({
-        routeName: "Ruta Norte · Chofer Uno",
+        routeName: "Ruta Norte Â· Chofer Uno",
         businessUnitName: "Huevo",
         totalRuta: 900,
         rows: expect.arrayContaining([
           expect.objectContaining({
-            displayName: "Cliente Crédito",
+            displayName: "Cliente CrÃ©dito",
             entityType: "Cliente",
             saldoRuta: 900,
             saldoTotal: 500,

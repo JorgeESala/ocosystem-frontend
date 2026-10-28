@@ -14,11 +14,10 @@ export const paymentKeys = {
   ) =>
     [...paymentKeys.lists(business), "unapplied", payerId, receiverId] as const,
 
-  byPair: (
-    business: string | undefined,
-    payerId: number,
-    receiverId: number,
-  ) =>
+  sameDay: (business: string | undefined, payerId: number, date: string) =>
+    [...paymentKeys.lists(business), "same-day", payerId, date] as const,
+
+  byPair: (business: string | undefined, payerId: number, receiverId: number) =>
     [...paymentKeys.lists(business), "by-pair", payerId, receiverId] as const,
 
   applications: (business: string | undefined, paymentId: number) =>

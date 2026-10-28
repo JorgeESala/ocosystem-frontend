@@ -6,6 +6,12 @@ export interface CedisBalance {
   openDebtCount: number;
 }
 
+export interface SaleCedisBalance {
+  creditorId: number;
+  creditorName: string;
+  saleTotal: number;
+}
+
 export interface TripCollectionClient {
   clientId: number | null;
   clientName: string;
@@ -15,6 +21,7 @@ export interface TripCollectionClient {
   saldoTotal: number;
   oldestDebtDate: string | null;
   cedisBalances: CedisBalance[];
+  saleCedisBalances: SaleCedisBalance[];
 }
 
 export interface TripCollection {
