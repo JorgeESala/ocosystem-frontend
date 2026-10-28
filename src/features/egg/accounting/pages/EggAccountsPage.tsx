@@ -17,7 +17,7 @@ import { useAccountingEntities } from "@/features/accounting/api/accounting-enti
 import { AccountDetailDrawer } from "@/features/accounting/components/AccountDetailDrawer";
 import { ClientReportDrawer } from "@/features/accounting/components/ClientReportDrawer";
 import { CreateAccountsPayableModal } from "@/features/accounting/components/CreateAccountsPayableModal";
-import { RouteCollectionsPanel } from "@/features/accounting/components/RouteCollectionsPanel";
+import { CobranzaWorkbench } from "@/features/accounting/components/collections/CobranzaWorkbench";
 import { PaidSummaryCard } from "@/features/accounting/components/PaidSummaryCard";
 import { ClientPaymentsDrawer } from "@/features/accounting/components/ClientPaymentsDrawer";
 import { useRoutes } from "@/core/api/route/routes.queries";
@@ -88,7 +88,9 @@ export const EggAccountsPage = () => {
 
   const initialMode = (searchParams.get("mode") as ViewMode) || "RECEIVABLE";
   const [viewMode, setViewMode] = useState<ViewMode>(
-    initialMode === "PAYABLE" || initialMode === "FINANCIAL"
+    initialMode === "PAYABLE" ||
+      initialMode === "FINANCIAL" ||
+      initialMode === "COBRANZA"
       ? initialMode
       : "RECEIVABLE",
   );
@@ -503,11 +505,7 @@ export const EggAccountsPage = () => {
       )}
 
       {viewMode === "COBRANZA" ? (
-        <RouteCollectionsPanel
-          creditorEntityType="EGGCEDIS"
-          businessUnitName="Huevo"
-          onSuccessToast={setToastMessage}
-        />
+        <CobranzaWorkbench onSuccessToast={setToastMessage} />
       ) : viewMode === "FINANCIAL" ? (
         <CedisFinancialSummary
           cedisIds={selectedCedis.length > 0 ? selectedCedis : undefined}

@@ -1,5 +1,6 @@
 import { http } from "@/shared/api/http";
 import type {
+  BulkPaymentResult,
   CreateAdvancePaymentRequest,
   CreateFifoPaymentRequest,
   CreatePaymentRequest,
@@ -16,8 +17,22 @@ export const createPayment = (payload: CreatePaymentRequest) => {
   return http.post<PaymentResponse>("/api/accounting/payments", payload);
 };
 
-export const createFifoPayment = (payload: CreateFifoPaymentRequest) => {
-  return http.post<PaymentResponse>("/api/accounting/payments/fifo", payload);
+export const createFifoPayment = async (payload: CreateFifoPaymentRequest) => {
+  const { data } = await http.post<PaymentResponse>(
+    "/api/accounting/payments/fifo",
+    payload,
+  );
+  return data;
+};
+
+export const createBulkFifoPayments = async (
+  payload: CreateFifoPaymentRequest[],
+) => {
+  const { data } = await http.post<BulkPaymentResult>(
+    "/api/accounting/payments/bulk-fifo",
+    payload,
+  );
+  return data;
 };
 
 export const previewFifoPayment = (payload: CreateFifoPaymentRequest) => {
@@ -87,6 +102,26 @@ export const fetchUnappliedPayments = async (
   }
   const { data } = await http.get<PaymentResponse[]>(
     `/api/accounting/payments/unapplied?${params.toString()}`,
+  );
+  return data;
+};
+
+export const fetchSameDayPayments = async (
+  payerId: number,
+  date: string,
+): Promise<PaymentResponse[]> => {
+  const { data } = await http.get<PaymentResponse[]>(
+    `/api/accounting/payments/same-day?payerId=${payerId}&date=${date}`,
+  );
+  return data;
+};
+
+export const fetchPaymentsByPair = async (
+  payerId: number,
+  receiverId: number,
+): Promise<PaymentResponse[]> => {
+  const { data } = await http.get<PaymentResponse[]>(
+    `/api/accounting/payments/by-pair?payerId=${payerId}&receiverId=${receiverId}`,
   );
   return data;
 };

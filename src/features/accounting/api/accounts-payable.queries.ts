@@ -21,30 +21,31 @@ export const useCreateAccountsPayable = () => {
   });
 };
 
-export const useOpenAccounts = (params: {
-  debtorId?: number;
-  debtorIds?: number[];
-  creditorIds?: number[];
-  creditorId?: number;
-  debtorOriginalIds?: number[];
-  debtorEntityType?: string;
-  creditorOriginalIds?: number[];
-  creditorEntityType?: string;
-  from?: string;
-  to?: string;
-  status?: AccountStatus;
-  routeId?: number;
-}) => {
+export const useOpenAccounts = (
+  params: {
+    debtorId?: number;
+    debtorIds?: number[];
+    creditorIds?: number[];
+    creditorId?: number;
+    debtorOriginalIds?: number[];
+    debtorEntityType?: string;
+    creditorOriginalIds?: number[];
+    creditorEntityType?: string;
+    from?: string;
+    to?: string;
+    status?: AccountStatus;
+    routeId?: number;
+  },
+  enabled = true,
+) => {
   const { slug } = useParams<{ slug: string }>();
 
   return useQuery({
-    // La queryKey ya recibe el objeto params completo,
-    // así que los nuevos filtros ya están "protegidos" en el caché.
     queryKey: accountsPayableKeys.open(slug!, params),
 
     queryFn: () => fetchOpenAccounts(params).then((r) => r.data),
 
-    enabled: !!slug,
+    enabled: !!slug && enabled,
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 5,
   });
