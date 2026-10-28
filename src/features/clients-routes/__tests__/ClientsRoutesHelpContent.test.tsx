@@ -4,6 +4,7 @@ import {
   ClientHistoryHelpContent,
   ClientRouteHelpContent,
   ClientTypesHelpContent,
+  LastSalePriceHelpContent,
   RouteDeliveryDaysHelpContent,
   RouteLocalitiesHelpContent,
   RouteProfitabilityHelpContent,
@@ -44,6 +45,14 @@ describe("ClientsRoutesHelpContent", () => {
       screen.getByText(/no tiene peso o cantidad registrada/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/nómina de choferes/i)).toBeInTheDocument();
+  });
+
+  it("explica cómo se calcula el último precio por casillero", () => {
+    render(<LastSalePriceHelpContent />);
+
+    expect(screen.getByText("¿Qué es el último precio?")).toBeInTheDocument();
+    expect(screen.getByText(/30 piezas/i)).toBeInTheDocument();
+    expect(screen.getByText(/guion/i)).toBeInTheDocument();
   });
 
   it("explica qué muestra el historial de compras", () => {

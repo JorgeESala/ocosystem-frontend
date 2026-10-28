@@ -87,6 +87,21 @@ export const ClientHistoryHelpContent = () => (
   </div>
 );
 
+export const LastSalePriceHelpContent = () => (
+  <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
+    <p className="font-semibold text-white">¿Qué es el último precio?</p>
+    <p>
+      Es el precio por casillero de la última compra registrada del cliente. Se
+      calcula con el total de esa venta entre las piezas vendidas y se muestra
+      por casillero de 30 piezas.
+    </p>
+    <p>
+      Si la última venta no tiene cantidades registradas, el precio aparece como
+      guion.
+    </p>
+  </div>
+);
+
 export const SummaryKpiHelpContent = () => (
   <div className="max-w-xs space-y-1.5 text-left text-xs leading-snug text-gray-100">
     <p className="font-semibold text-white">¿Qué significan estos números?</p>

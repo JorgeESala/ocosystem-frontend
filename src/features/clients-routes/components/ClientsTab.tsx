@@ -26,6 +26,7 @@ import {
 import { useRoutes } from "@/core/api/route/routes.queries";
 import type { Client, Route } from "@/core/api/types";
 import { formatHumanDate } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 import { ClientFormModal } from "./ClientFormModal";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { ClientHistoryModal } from "./ClientHistoryModal";
@@ -33,6 +34,7 @@ import { ClientDetailDrawer } from "./ClientDetailDrawer";
 import {
   ClientRouteHelpContent,
   InfoTooltip,
+  LastSalePriceHelpContent,
 } from "./ClientsRoutesHelpContent";
 import { type ClientsRoutesUnitType } from "../config/unitConfig";
 import { includesNormalized } from "../utils/text";
@@ -49,7 +51,7 @@ type RouteFilter = "all" | "none" | number;
 
 type ClientTypeFilter = "all" | "branch" | "internal" | "external";
 
-type SortField = "name" | "lastPurchase";
+type SortField = "name" | "lastPurchase" | "lastPrice";
 
 const DORMANT_OPTIONS = [15, 30, 60, 90];
 
@@ -168,6 +170,16 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
         return sortDir === "asc"
           ? leftDate.localeCompare(rightDate)
           : rightDate.localeCompare(leftDate);
+      }
+      if (sortField === "lastPrice") {
+        const leftPrice = left.lastSalePricePerCarton;
+        const rightPrice = right.lastSalePricePerCarton;
+        if (leftPrice == null && rightPrice == null) return 0;
+        if (leftPrice == null) return 1;
+        if (rightPrice == null) return -1;
+        return sortDir === "asc"
+          ? leftPrice - rightPrice
+          : rightPrice - leftPrice;
       }
       const comparison = left.name.localeCompare(right.name, "es", {
         sensitivity: "base",
@@ -319,7 +331,12 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
           <Button
             color="light"
             onClick={() =>
-              exportClientsToExcel(rows, clientRoutes, "clientes.xlsx")
+              exportClientsToExcel(
+                rows,
+                clientRoutes,
+                "clientes.xlsx",
+                unitType === "EGG",
+              )
             }
             disabled={rows.length === 0}
           >
@@ -396,6 +413,24 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                     {sortIcon("lastPurchase")}
                   </button>
                 </th>
+                {unitType === "EGG" && (
+                  <th className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleSort("lastPrice")}
+                        className="inline-flex items-center gap-1 uppercase"
+                      >
+                        Último precio (casillero)
+                        {sortIcon("lastPrice")}
+                      </button>
+                      <InfoTooltip
+                        label="¿Qué es el último precio?"
+                        content={<LastSalePriceHelpContent />}
+                      />
+                    </span>
+                  </th>
+                )}
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
@@ -454,6 +489,15 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                         <span className="text-gray-600">—</span>
                       )}
                     </td>
+                    {unitType === "EGG" && (
+                      <td className="px-4 py-3 text-gray-400">
+                        {client.lastSalePricePerCarton != null ? (
+                          formatMXN(client.lastSalePricePerCarton)
+                        ) : (
+                          <span className="text-gray-600">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       {client.isInternalBranch ? (
                         <span className="rounded bg-blue-800 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
