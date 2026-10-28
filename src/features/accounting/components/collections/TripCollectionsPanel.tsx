@@ -105,7 +105,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
       key,
       cedisId,
       cedis,
-      amount: existing?.amount ?? (cedis ? String(cedis.balance) : ""),
+      amount:
+        existing?.amount ??
+        (client.saldoTotal > 0 ? String(client.saldoTotal) : ""),
     };
   };
 
@@ -127,15 +129,10 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     client: TripCollectionClient,
     cedisId: number,
   ) => {
-    const cedis = client.cedisBalances.find(
-      (item) => item.creditorId === cedisId,
-    );
+    const draft = draftFor(trip, client);
     setDrafts((current) => ({
       ...current,
-      [keyFor(trip, client)]: {
-        cedisId,
-        amount: cedis ? String(cedis.balance) : "",
-      },
+      [keyFor(trip, client)]: { cedisId, amount: draft.amount },
     }));
     setLastResult(null);
   };

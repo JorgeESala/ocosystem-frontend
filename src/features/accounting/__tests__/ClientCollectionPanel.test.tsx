@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClientCollectionPanel } from "../components/collections/ClientCollectionPanel";
@@ -144,7 +144,7 @@ describe("ClientCollectionPanel", () => {
     );
   });
 
-  it("prefills the largest CEDIS balance, cash and submits the payment", async () => {
+  it("prefills the client debt, cash and submits the payment", async () => {
     const { onSuccessToast } = renderPanel();
 
     selectCreditClient();
@@ -152,10 +152,10 @@ describe("ClientCollectionPanel", () => {
     expect(await screen.findByText("Deuda total")).toBeInTheDocument();
     expect(screen.getByText("$900.00")).toBeInTheDocument();
     expect(screen.getByLabelText("CEDIS")).toHaveValue("1");
-    expect(screen.getByLabelText("Monto")).toHaveValue(600);
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
     expect(screen.getByLabelText("Método de pago")).toHaveValue("CASH");
     expect(screen.getByText(/Se aplicará/)).toHaveTextContent(
-      "Se aplicará $600.00 · saldo a favor $0.00",
+      "Se aplicará $600.00 · saldo a favor $300.00",
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Registrar cobro" }));
@@ -166,7 +166,7 @@ describe("ClientCollectionPanel", () => {
     expect(mocks.lastPayload).toMatchObject({
       payerId: 88,
       receiverId: 1,
-      amount: 600,
+      amount: 900,
       paymentMethod: "CASH",
       paymentDate: toLocalDateString(new Date()),
     });
@@ -178,7 +178,7 @@ describe("ClientCollectionPanel", () => {
     expect(screen.getByText(/Cobro registrado/)).toBeInTheDocument();
   });
 
-  it("changes the amount when the manager picks another CEDIS", async () => {
+  it("keeps the client debt when the manager picks another CEDIS", async () => {
     renderPanel();
     selectCreditClient();
     await screen.findByText("Deuda total");
@@ -187,7 +187,7 @@ describe("ClientCollectionPanel", () => {
       target: { value: "2" },
     });
 
-    expect(screen.getByLabelText("Monto")).toHaveValue(300);
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
   });
 
   it("shows saldo a favor when the amount exceeds the selected CEDIS", async () => {
@@ -242,7 +242,7 @@ describe("ClientCollectionPanel", () => {
       data: [
         {
           id: 9,
-          amount: 600,
+          amount: 900,
           paymentDate: toLocalDateString(new Date()),
           paymentMethod: "CASH",
           status: "ACTIVE",

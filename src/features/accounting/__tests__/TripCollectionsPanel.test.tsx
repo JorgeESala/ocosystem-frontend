@@ -128,7 +128,7 @@ describe("TripCollectionsPanel", () => {
 
     expect(screen.getByText("Cliente Crédito")).toBeInTheDocument();
     expect(screen.getAllByText("Contado").length).toBeGreaterThan(0);
-    expect(screen.getByLabelText("Monto")).toHaveValue(600);
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
     expect(
       screen.getByRole("button", { name: "Registrar cobros (1)" }),
     ).toBeInTheDocument();
@@ -142,7 +142,7 @@ describe("TripCollectionsPanel", () => {
       {
         payerId: 88,
         receiverId: 1,
-        amount: 600,
+        amount: 900,
         paymentDate: toLocalDateString(new Date()),
         paymentMethod: "CASH",
         tripId: 7,
@@ -162,7 +162,7 @@ describe("TripCollectionsPanel", () => {
       target: { value: "2" },
     });
 
-    expect(screen.getByLabelText("Monto")).toHaveValue(300);
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
   });
 
   it("prints the trip collection sheet", () => {
@@ -213,9 +213,9 @@ describe("TripCollectionsPanel", () => {
         mocks.bulkPayload = payload;
         options.onSuccess({
           id: 1,
-          amount: 600,
+          amount: 900,
           appliedAmount: 600,
-          remainingAmount: 0,
+          remainingAmount: 300,
           paymentDate: toLocalDateString(new Date()),
           paymentMethod: "CASH",
           status: "ACTIVE",
@@ -231,7 +231,7 @@ describe("TripCollectionsPanel", () => {
     expect(mocks.bulkPayload).toMatchObject({
       payerId: 88,
       receiverId: 1,
-      amount: 600,
+      amount: 900,
       tripId: 7,
     });
   });

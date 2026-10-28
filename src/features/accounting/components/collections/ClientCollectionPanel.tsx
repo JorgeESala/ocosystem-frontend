@@ -110,7 +110,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     if (!currentIsValid) {
       const largest = summary.cedis[0];
       setSelectedCedisId(largest.creditorId);
-      setAmount(String(largest.balance));
+      setAmount(String(summary.totalDebt));
     }
   }, [selectedClient, debtsLoading, summary, selectedCedisId]);
 
@@ -125,10 +125,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   };
 
   const handleCedisChange = (value: string) => {
-    const creditorId = Number(value);
-    const cedis = summary.cedis.find((item) => item.creditorId === creditorId);
-    setSelectedCedisId(creditorId);
-    setAmount(cedis ? String(cedis.balance) : "");
+    setSelectedCedisId(Number(value));
     setLastResult(null);
   };
 
