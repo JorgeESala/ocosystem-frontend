@@ -51,7 +51,7 @@ const trip: TripCollection = {
   driverName: "Chofer Uno",
   routeId: 3,
   routeName: "Ruta Norte",
-  vehicleName: "CamiÃƒÂ³n 1",
+  vehicleName: "Camión 1",
   saleCount: 2,
   totalSold: 800,
   cashOnlyTotal: 300,

@@ -203,7 +203,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
           </span>
           {lastResult.duplicate && (
             <p className="mt-1 text-xs">
-              TambiÃ©n habÃ­a un cobro con el mismo monto ese dÃ­a para este
+              También había un cobro con el mismo monto ese día para este
               cliente.
             </p>
           )}
@@ -257,7 +257,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                   <span className="text-sm font-medium text-white">
                     {summary.oldestDebtDate
                       ? formatHumanDate(summary.oldestDebtDate, "short")
-                      : "â€”"}
+                      : "—"}
                   </span>
                   {summary.oldestDebtDate && (
                     <AgingBadge isoDate={summary.oldestDebtDate} />
@@ -363,7 +363,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               {duplicate && (
                 <Alert color="warning">
-                  Ya existe un cobro de {formatMXN(amountValue)} el mismo dÃ­a
+                  Ya existe un cobro de {formatMXN(amountValue)} el mismo día
                   para este cliente. Revisa antes de guardar; puedes continuar
                   si es correcto.
                 </Alert>
