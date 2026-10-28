@@ -30,7 +30,10 @@ import type {
 } from "../../types/collection.types";
 import type { PaymentMethod } from "../../types/payment.types";
 import { extractErrorMessage } from "../../utils/errorMessage";
-import { openCollectionsSheet } from "../../utils/collectionsSheet";
+import {
+  openCollectionsSheet,
+  openDayCollectionsSheet,
+} from "../../utils/collectionsSheet";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
 
@@ -253,6 +256,26 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     });
   };
 
+  const handlePrintDay = () => {
+    openDayCollectionsSheet({
+      businessUnitName: "Huevo",
+      dateLabel: formatHumanDate(isoDate, "long"),
+      trips: trips.map((trip) => ({
+        routeName: trip.routeName ?? "Despacho",
+        driverName: trip.driverName,
+        vehicleName: trip.vehicleName,
+        rows: trip.clients.map((client) => ({
+          displayName: client.clientName,
+          entityType: client.accountingEntityId ? "Cliente" : "CASH",
+          saldoRuta: client.saldoTotal,
+          saldoTotal: client.saleTotal,
+          phone: client.phone,
+        })),
+        total: trip.clients.reduce((sum, client) => sum + client.saldoTotal, 0),
+      })),
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 rounded-lg border border-gray-700 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-end">
@@ -310,6 +333,15 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
             ))}
           </Select>
         </div>
+        <Button
+          size="sm"
+          color="gray"
+          disabled={trips.length === 0}
+          onClick={handlePrintDay}
+        >
+          <HiDocumentDownload className="mr-2 h-4 w-4" />
+          Imprimir día
+        </Button>
         <p className="text-sm text-gray-400">
           {totalRows} cliente{totalRows === 1 ? "" : "s"} con cuenta por cobrar
         </p>

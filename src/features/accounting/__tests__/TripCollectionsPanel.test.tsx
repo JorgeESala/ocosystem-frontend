@@ -41,6 +41,7 @@ vi.mock("../api/payments.queries", () => ({
 
 vi.mock("../utils/collectionsSheet", () => ({
   openCollectionsSheet: vi.fn(),
+  openDayCollectionsSheet: vi.fn(),
 }));
 
 const trip: TripCollection = {
@@ -50,14 +51,14 @@ const trip: TripCollection = {
   driverName: "Chofer Uno",
   routeId: 3,
   routeName: "Ruta Norte",
-  vehicleName: "CamiÃ³n 1",
+  vehicleName: "CamiÃƒÂ³n 1",
   saleCount: 2,
   totalSold: 800,
   cashOnlyTotal: 300,
   clients: [
     {
       clientId: 10,
-      clientName: "Cliente CrÃ©dito",
+      clientName: "Cliente Crédito",
       phone: "555-100-2000",
       accountingEntityId: 88,
       saleTotal: 500,
@@ -136,7 +137,7 @@ describe("TripCollectionsPanel", () => {
 
     fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
 
-    expect(screen.getByText("Cliente CrÃ©dito")).toBeInTheDocument();
+    expect(screen.getByText("Cliente Crédito")).toBeInTheDocument();
     expect(screen.getAllByText("Contado").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Monto")).toHaveValue(900);
     expect(
@@ -182,12 +183,12 @@ describe("TripCollectionsPanel", () => {
 
     expect(openCollectionsSheet).toHaveBeenCalledWith(
       expect.objectContaining({
-        routeName: "Ruta Norte Â· Chofer Uno",
+        routeName: "Ruta Norte · Chofer Uno",
         businessUnitName: "Huevo",
         totalRuta: 900,
         rows: expect.arrayContaining([
           expect.objectContaining({
-            displayName: "Cliente CrÃ©dito",
+            displayName: "Cliente Crédito",
             entityType: "Cliente",
             saldoRuta: 900,
             saldoTotal: 500,

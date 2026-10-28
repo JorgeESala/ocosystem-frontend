@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -42,7 +42,7 @@ interface CollectionResult {
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   CASH: "Efectivo",
   BANK_TRANSFER: "Transferencia",
-  DEPOSIT: "DepÃ³sito",
+  DEPOSIT: "Depósito",
   CHECK: "Cheque",
   OTHER: "Otro",
 };
@@ -152,7 +152,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
         onSuccess: (payment) => {
           const appliedAmount = payment.appliedAmount ?? preview.appliedAmount;
           const parkedAmount = payment.remainingAmount ?? preview.parkedAmount;
-          const message = `Cobro registrado Â· aplicado ${formatMXN(appliedAmount)} Â· saldo a favor ${formatMXN(parkedAmount)}`;
+          const message = `Cobro registrado · aplicado ${formatMXN(appliedAmount)} · saldo a favor ${formatMXN(parkedAmount)}`;
           onSuccessToast?.(message);
           setLastResult({ appliedAmount, parkedAmount, duplicate });
           setSelectedClient(null);
@@ -198,8 +198,8 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
       {lastResult && (
         <Alert color="success">
           <span className="font-medium">
-            Cobro registrado Â· aplicado {formatMXN(lastResult.appliedAmount)}{" "}
-            Â· saldo a favor {formatMXN(lastResult.parkedAmount)}
+            Cobro registrado · aplicado {formatMXN(lastResult.appliedAmount)} ·
+            saldo a favor {formatMXN(lastResult.parkedAmount)}
           </span>
           {lastResult.duplicate && (
             <p className="mt-1 text-xs">
@@ -251,7 +251,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
               </div>
               <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
                 <p className="text-xs tracking-wider text-gray-400 uppercase">
-                  Deuda mÃ¡s antigua
+                  Deuda más antigua
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium text-white">
@@ -291,7 +291,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                     >
                       {summary.cedis.map((cedis) => (
                         <option key={cedis.creditorId} value={cedis.creditorId}>
-                          {cedis.creditorName} Â· {formatMXN(cedis.balance)}
+                          {cedis.creditorName} · {formatMXN(cedis.balance)}
                         </option>
                       ))}
                     </Select>
@@ -330,7 +330,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               <div className="grid gap-4 lg:grid-cols-3">
                 <div>
-                  <Label htmlFor="collection-method">MÃ©todo de pago</Label>
+                  <Label htmlFor="collection-method">Método de pago</Label>
                   <Select
                     id="collection-method"
                     value={paymentMethod}
@@ -349,11 +349,11 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                 </div>
                 <div className="flex items-end lg:col-span-2">
                   <p className="text-sm text-gray-300">
-                    Se aplicarÃ¡{" "}
+                    Se aplicará{" "}
                     <strong className="text-white">
                       {formatMXN(preview.appliedAmount)}
                     </strong>{" "}
-                    Â· saldo a favor{" "}
+                    · saldo a favor{" "}
                     <strong className="text-amber-300">
                       {formatMXN(preview.parkedAmount)}
                     </strong>
@@ -371,7 +371,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-gray-500">
-                  El pago se aplica a las deudas mÃ¡s antiguas de este CEDIS.
+                  El pago se aplica a las deudas más antiguas de este CEDIS.
                 </p>
                 <Button
                   type="submit"
