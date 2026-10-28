@@ -16,6 +16,7 @@ const SECTIONS = [
     title: "Clientes",
     paragraphs: [
       "El catálogo de clientes es la base de la distribución: nombre, negocio, localidad y tipo.",
+      "En Huevo, la columna 'Último precio (casillero)' muestra el precio por casillero de la última compra registrada del cliente. Si la venta no tiene cantidades capturadas, aparece un guion.",
       "Los clientes internos (sucursales o clientes con cuenta) generan cuentas por cobrar automáticamente al venderles.",
       "Al eliminar un cliente no se borra: se marca como inactivo y puedes recuperarlo con 'Mostrar inactivos' y el botón Reactivar.",
     ],

@@ -73,6 +73,7 @@ const activeClient = {
   isInternalClient: false,
   active: true,
   lastPurchaseDate: daysAgo(3),
+  lastSalePricePerCarton: 55.5,
 };
 
 const olderClient = {
@@ -85,6 +86,7 @@ const olderClient = {
   isInternalClient: false,
   active: true,
   lastPurchaseDate: daysAgo(60),
+  lastSalePricePerCarton: 48,
 };
 
 const inactiveClient = {
@@ -321,6 +323,36 @@ describe("ClientsTab", () => {
 
     const rows = within(screen.getByRole("table")).getAllByRole("row");
     expect(within(rows[1]).getByText("Cliente Viejo")).toBeInTheDocument();
+  });
+
+  it("muestra y ordena el último precio por casillero", () => {
+    mocks.useClients.mockReturnValue({
+      data: [activeClient, olderClient],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<ClientsTab unitType="EGG" />);
+
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("$55.50")).toBeInTheDocument();
+    expect(within(table).getByText("$48.00")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Último precio \(casillero\)/ }),
+    );
+
+    const rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Cliente Viejo")).toBeInTheDocument();
+  });
+
+  it("oculta el último precio por casillero en pollo vivo", () => {
+    render(<ClientsTab unitType="LIVE_CHICKEN" />);
+
+    expect(
+      screen.queryByRole("button", { name: /Último precio/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("muestra primeros pasos cuando no hay clientes ni rutas", () => {

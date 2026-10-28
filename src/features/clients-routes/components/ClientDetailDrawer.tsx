@@ -135,6 +135,16 @@ export const ClientDetailDrawer: React.FC<ClientDetailDrawerProps> = ({
                     : "—"}
                 </dd>
               </div>
+              {unitType === "EGG" && (
+                <div className="flex gap-2">
+                  <dt className="text-gray-500">Último precio (casillero):</dt>
+                  <dd>
+                    {client.lastSalePricePerCarton != null
+                      ? formatMXN(client.lastSalePricePerCarton)
+                      : "—"}
+                  </dd>
+                </div>
+              )}
             </dl>
 
             <div className="flex flex-wrap gap-2">

@@ -217,6 +217,9 @@ export const RouteDetailDrawer: React.FC<RouteDetailDrawerProps> = ({
                       <th className="px-3 py-2">Cliente</th>
                       <th className="px-3 py-2">Localidad</th>
                       <th className="px-3 py-2">Última compra</th>
+                      {unitType === "EGG" && (
+                        <th className="px-3 py-2">Últ. precio/casillero</th>
+                      )}
                       <th className="px-3 py-2">Contacto</th>
                     </tr>
                   </thead>
@@ -241,6 +244,13 @@ export const RouteDetailDrawer: React.FC<RouteDetailDrawerProps> = ({
                             ? formatHumanDate(client.lastPurchaseDate, "short")
                             : "—"}
                         </td>
+                        {unitType === "EGG" && (
+                          <td className="px-3 py-2">
+                            {client.lastSalePricePerCarton != null
+                              ? formatMXN(client.lastSalePricePerCarton)
+                              : "—"}
+                          </td>
+                        )}
                         <td className="px-3 py-2">
                           {client.phone ? (
                             <span className="inline-flex items-center gap-2">
