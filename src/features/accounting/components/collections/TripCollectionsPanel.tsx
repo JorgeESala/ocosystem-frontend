@@ -40,6 +40,7 @@ import {
 } from "../../utils/collectionsSheet";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
+import { newClientRequestId } from "../../utils/requestId";
 
 interface Props {
   onSuccessToast?: (message: string) => void;
@@ -48,6 +49,7 @@ interface Props {
 interface Draft {
   amount: string;
   cedisId: number | null;
+  requestId?: string;
 }
 
 interface ResultSummary {
@@ -128,6 +130,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
       cedisId,
       cedis,
       amount: existing?.amount ?? "",
+      requestId: existing?.requestId,
     };
   };
 
@@ -139,7 +142,13 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     const draft = draftFor(trip, client);
     setDrafts((current) => ({
       ...current,
-      [draft.key]: { amount, cedisId: draft.cedisId },
+      [draft.key]: {
+        amount,
+        cedisId: draft.cedisId,
+        requestId:
+          draft.requestId ??
+          (Number(amount) > 0 ? newClientRequestId() : undefined),
+      },
     }));
     setLastResult(null);
   };
@@ -152,7 +161,11 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     const draft = draftFor(trip, client);
     setDrafts((current) => ({
       ...current,
-      [keyFor(trip, client)]: { cedisId, amount: draft.amount },
+      [keyFor(trip, client)]: {
+        cedisId,
+        amount: draft.amount,
+        requestId: draft.requestId,
+      },
     }));
     setLastResult(null);
   };
@@ -179,6 +192,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           next[draft.key] = {
             amount: String(client.saldoTotal),
             cedisId: draft.cedisId,
+            requestId: draft.requestId ?? newClientRequestId(),
           };
         }
       });
@@ -203,6 +217,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     paymentDate: isoDate,
     paymentMethod,
     tripId: trip.tripId,
+    clientRequestId: draft.requestId,
   });
 
   const handleBulkSave = (trip: TripCollection) => {
@@ -338,6 +353,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           <Datepicker
             id="trip-collection-date"
             language="es-MX"
+            maxDate={new Date()}
             value={collectionDate}
             onChange={(value) => {
               if (value) {

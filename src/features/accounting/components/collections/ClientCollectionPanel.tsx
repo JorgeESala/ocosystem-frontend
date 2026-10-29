@@ -28,6 +28,7 @@ import { useCollectionAvailability } from "@/features/egg-cash-flow/api/eggCashF
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
 import { ClientAutocomplete } from "./ClientAutocomplete";
+import { newClientRequestId } from "../../utils/requestId";
 
 interface Props {
   onSuccessToast?: (message: string) => void;
@@ -57,6 +58,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   const [lastResult, setLastResult] = useState<CollectionResult | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const requestIdRef = useRef<string | null>(null);
   const createPayment = useCreateFifoPayment();
 
   const { data: clients = [] } = useClients();
@@ -126,6 +128,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   }, [selectedClient, debtsLoading, summary, selectedCedisId]);
 
   const handleClientSelect = (client: Client | null) => {
+    requestIdRef.current = null;
     setSelectedClient(client);
     setSelectedCedisId(null);
     setAmount("");
@@ -136,6 +139,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   };
 
   const handleCedisChange = (value: string) => {
+    requestIdRef.current = null;
     setSelectedCedisId(Number(value));
     setLastResult(null);
   };
@@ -154,6 +158,8 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
     setError(null);
     setLastResult(null);
+    const clientRequestId = requestIdRef.current ?? newClientRequestId();
+    requestIdRef.current = clientRequestId;
     createPayment.mutate(
       {
         payerId: selectedClient.accountingEntityId,
@@ -161,6 +167,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
         amount: amountValue,
         paymentDate: isoDate,
         paymentMethod,
+        clientRequestId,
         note: `Cobranza cliente ${selectedClient.name ?? selectedClient.businessName ?? ""}`.trim(),
       },
       {
@@ -170,6 +177,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
           const message = `Cobro registrado · aplicado ${formatMXN(appliedAmount)} · saldo a favor ${formatMXN(parkedAmount)}`;
           onSuccessToast?.(message);
           setLastResult({ appliedAmount, parkedAmount, duplicate });
+          requestIdRef.current = null;
           setSelectedClient(null);
           setSelectedCedisId(null);
           setAmount("");
@@ -357,6 +365,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                     step="0.01"
                     value={amount}
                     onChange={(event) => {
+                      requestIdRef.current = null;
                       setAmount(event.target.value);
                       setLastResult(null);
                     }}
@@ -367,9 +376,13 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                   <Datepicker
                     id="collection-date"
                     language="es-MX"
+                    maxDate={new Date()}
                     value={paymentDate}
                     onChange={(value) => {
-                      if (value) setPaymentDate(value);
+                      if (value) {
+                        requestIdRef.current = null;
+                        setPaymentDate(value);
+                      }
                     }}
                   />
                 </div>
@@ -381,9 +394,10 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                   <Select
                     id="collection-method"
                     value={paymentMethod}
-                    onChange={(event) =>
-                      setPaymentMethod(event.target.value as PaymentMethod)
-                    }
+                    onChange={(event) => {
+                      requestIdRef.current = null;
+                      setPaymentMethod(event.target.value as PaymentMethod);
+                    }}
                   >
                     {(Object.keys(METHOD_LABELS) as PaymentMethod[]).map(
                       (method) => (

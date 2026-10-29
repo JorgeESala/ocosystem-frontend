@@ -24,6 +24,7 @@ export interface CreateFifoPaymentRequest {
   driverId?: number;
   routeId?: number;
   tripId?: number;
+  clientRequestId?: string;
 }
 
 export interface CreatePaymentRequest {

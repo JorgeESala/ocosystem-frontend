@@ -172,6 +172,7 @@ describe("TripCollectionsPanel", () => {
         paymentDate: toLocalDateString(new Date()),
         paymentMethod: "CASH",
         tripId: 7,
+        clientRequestId: expect.any(String),
       },
     ]);
     expect(toast).toHaveBeenCalledWith(
