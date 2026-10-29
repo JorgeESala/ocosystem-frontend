@@ -96,6 +96,18 @@ export const RecentPaymentsDrawer = ({
                         <span className="truncate">
                           {p.folio ? `Folio ${p.folio}` : "Sin folio"}
                         </span>
+                        {p.createdBy != null && (
+                          <>
+                            <span>·</span>
+                            <span>Registró #{p.createdBy}</span>
+                          </>
+                        )}
+                        {p.cancelledBy != null && (
+                          <>
+                            <span>·</span>
+                            <span>Canceló #{p.cancelledBy}</span>
+                          </>
+                        )}
                       </div>
                       <div className="mt-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                         {p.payerName ?? "—"}
