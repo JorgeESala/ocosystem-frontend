@@ -314,7 +314,7 @@ export const EggAccountsPage = () => {
     isError: accountsError,
     error: accountsErrorDetail,
     refetch: refetchAccounts,
-  } = useOpenAccounts(queryParams);
+  } = useOpenAccounts(queryParams, viewMode !== "COBRANZA");
 
   const paymentFirstPrimaryParams = receivable
     ? {
@@ -339,11 +339,11 @@ export const EggAccountsPage = () => {
   const {
     data: paymentFirstPrimary = [],
     isLoading: paymentFirstPrimaryLoading,
-  } = useOpenAccounts(paymentFirstPrimaryParams);
+  } = useOpenAccounts(paymentFirstPrimaryParams, viewMode !== "COBRANZA");
   const {
     data: paymentFirstSecondary = [],
     isLoading: paymentFirstSecondaryLoading,
-  } = useOpenAccounts(paymentFirstSecondaryParams);
+  } = useOpenAccounts(paymentFirstSecondaryParams, viewMode !== "COBRANZA");
 
   const filtered = useMemo(
     () =>
@@ -459,11 +459,17 @@ export const EggAccountsPage = () => {
             <HiClock className="mr-2 h-4 w-4" />
             Pagos recientes
           </Button>
-          <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
-            <HiPlus className="mr-2 h-4 w-4" />
-            Registrar pago
-          </Button>
-          <Button onClick={() => setOpenCreateModal(true)}>Crear Cuenta</Button>
+          {viewMode !== "COBRANZA" && (
+            <>
+              <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
+                <HiPlus className="mr-2 h-4 w-4" />
+                Registrar pago
+              </Button>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                Crear Cuenta
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

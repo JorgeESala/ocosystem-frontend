@@ -5,6 +5,10 @@ import {
   Button,
   Datepicker,
   Label,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Select,
   Spinner,
   TextInput,
@@ -72,6 +76,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ResultSummary | null>(null);
+  const [confirmTrip, setConfirmTrip] = useState<TripCollection | null>(null);
 
   const { data: routes = [] } = useRoutes();
   const isoDate = toLocalDateString(collectionDate);
@@ -84,7 +89,13 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
   } = useTripCollections(isoDate, isoDate, routeId);
   const createPayment = useCreateFifoPayment();
   const createBulkPayments = useCreateBulkFifoPayments();
-  const { data: availability } = useCollectionAvailability("EGG", isoDate);
+  const {
+    data: availability,
+    isError: availabilityError,
+    isLoading: availabilityLoading,
+    refetch: refetchAvailability,
+  } = useCollectionAvailability("EGG", isoDate);
+  const verificationBlocked = availabilityError || availabilityLoading;
 
   const totalRows = useMemo(
     () =>
@@ -116,9 +127,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
       key,
       cedisId,
       cedis,
-      amount:
-        existing?.amount ??
-        (client.saldoTotal > 0 ? String(client.saldoTotal) : ""),
+      amount: existing?.amount ?? "",
     };
   };
 
@@ -158,6 +167,25 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     );
   };
 
+  const fillTripDrafts = (trip: TripCollection) => {
+    const next = { ...drafts };
+    trip.clients
+      .filter(
+        (client) => client.accountingEntityId != null && client.saldoTotal > 0,
+      )
+      .forEach((client) => {
+        const draft = draftFor(trip, client);
+        if (draft.cedisId != null) {
+          next[draft.key] = {
+            amount: String(client.saldoTotal),
+            cedisId: draft.cedisId,
+          };
+        }
+      });
+    setDrafts(next);
+    setLastResult(null);
+  };
+
   const rowsToSave = (trip: TripCollection) =>
     trip.clients
       .filter((client) => client.accountingEntityId != null)
@@ -179,7 +207,18 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
 
   const handleBulkSave = (trip: TripCollection) => {
     const rows = rowsToSave(trip);
-    if (rows.length === 0) return;
+    if (rows.length === 0 || verificationBlocked) return;
+    setConfirmTrip(trip);
+  };
+
+  const confirmBulkSave = () => {
+    if (!confirmTrip) return;
+    const trip = confirmTrip;
+    const rows = rowsToSave(trip);
+    if (rows.length === 0 || verificationBlocked) {
+      setConfirmTrip(null);
+      return;
+    }
     setError(null);
     setLastResult(null);
     createBulkPayments.mutate(
@@ -197,10 +236,13 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
             `Se registraron ${summary.count} cobros por ${formatMXN(summary.total)} · aplicado ${formatMXN(summary.applied)} · saldo a favor ${formatMXN(summary.parked)}`,
           );
           clearTripDrafts(trip.tripId);
+          setConfirmTrip(null);
           refetch();
         },
-        onError: (mutationError) =>
-          setError(extractErrorMessage(mutationError)),
+        onError: (mutationError) => {
+          setError(extractErrorMessage(mutationError));
+          setConfirmTrip(null);
+        },
       },
     );
   };
@@ -210,7 +252,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     client: TripCollectionClient,
   ) => {
     const draft = draftFor(trip, client);
-    if (Number(draft.amount) <= 0) return;
+    if (Number(draft.amount) <= 0 || verificationBlocked) return;
     setError(null);
     setLastResult(null);
     createPayment.mutate(payloadFor(trip, client, draft), {
@@ -245,12 +287,12 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
       rows: trip.clients.map((client) => ({
         displayName: client.clientName,
         entityType: client.accountingEntityId ? "Cliente" : "CASH",
-        saldoRuta: client.saldoTotal,
-        saldoTotal: client.saleTotal,
+        saldoRuta: client.saleTotal,
+        saldoTotal: client.saldoTotal,
         phone: client.phone,
       })),
       totalRuta: trip.clients.reduce(
-        (sum, client) => sum + client.saldoTotal,
+        (sum, client) => sum + client.saleTotal,
         0,
       ),
     });
@@ -267,14 +309,26 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
         rows: trip.clients.map((client) => ({
           displayName: client.clientName,
           entityType: client.accountingEntityId ? "Cliente" : "CASH",
-          saldoRuta: client.saldoTotal,
-          saldoTotal: client.saleTotal,
+          saldoRuta: client.saleTotal,
+          saldoTotal: client.saldoTotal,
           phone: client.phone,
         })),
-        total: trip.clients.reduce((sum, client) => sum + client.saldoTotal, 0),
+        total: trip.clients.reduce((sum, client) => sum + client.saleTotal, 0),
       })),
     });
   };
+
+  const confirmRows = confirmTrip ? rowsToSave(confirmTrip) : [];
+  const confirmTotal = confirmRows.reduce(
+    (sum, row) => sum + Number(row.draft.amount),
+    0,
+  );
+  const confirmApplied = confirmRows.reduce(
+    (sum, row) =>
+      sum + Math.min(Number(row.draft.amount), row.draft.cedis?.balance ?? 0),
+    0,
+  );
+  const confirmParked = Math.max(0, confirmTotal - confirmApplied);
 
   return (
     <div className="space-y-4">
@@ -347,6 +401,24 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
         </p>
       </div>
 
+      {availabilityError && (
+        <Alert color="failure">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              No se pudo verificar el Flujo de efectivo. No se pueden guardar
+              cobros hasta confirmarlo.
+            </span>
+            <Button
+              size="xs"
+              color="gray"
+              onClick={() => refetchAvailability()}
+            >
+              Reintentar
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       {availability && !availability.writable && availability.message && (
         <Alert color="warning">{availability.message}</Alert>
       )}
@@ -395,7 +467,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
         const expanded = expandedTripId === trip.tripId;
         const rows = rowsToSave(trip);
         const isSavingTrip =
-          createBulkPayments.isPending || createPayment.isPending;
+          createBulkPayments.isPending ||
+          createPayment.isPending ||
+          verificationBlocked;
         return (
           <div
             key={trip.tripId}
@@ -602,12 +676,36 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
                       {rows.length} cobro{rows.length === 1 ? "" : "s"} listo
                       {rows.length === 1 ? "" : "s"} para registrar
                     </p>
-                    <Button
-                      disabled={rows.length === 0 || isSavingTrip}
-                      onClick={() => handleBulkSave(trip)}
-                    >
-                      Registrar cobros ({rows.length})
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="xs"
+                        color="gray"
+                        disabled={
+                          createBulkPayments.isPending ||
+                          createPayment.isPending
+                        }
+                        onClick={() => fillTripDrafts(trip)}
+                      >
+                        Usar saldos
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="gray"
+                        disabled={
+                          createBulkPayments.isPending ||
+                          createPayment.isPending
+                        }
+                        onClick={() => clearTripDrafts(trip.tripId)}
+                      >
+                        Limpiar
+                      </Button>
+                      <Button
+                        disabled={rows.length === 0 || isSavingTrip}
+                        onClick={() => handleBulkSave(trip)}
+                      >
+                        Registrar cobros ({rows.length})
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -615,6 +713,56 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           </div>
         );
       })}
+
+      <Modal
+        show={confirmTrip != null}
+        size="lg"
+        onClose={() => setConfirmTrip(null)}
+      >
+        <ModalHeader>Confirmar cobros</ModalHeader>
+        <ModalBody>
+          <p className="mb-4 text-sm text-gray-400">
+            Revisa los montos antes de registrar los cobros del despacho.
+          </p>
+          <div className="space-y-2">
+            {confirmRows.map(({ client, draft }) => {
+              const amount = Number(draft.amount);
+              const applied = Math.min(amount, draft.cedis?.balance ?? 0);
+              return (
+                <div
+                  key={draft.key}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-700 p-3 text-sm"
+                >
+                  <span className="font-medium text-white">
+                    {client.clientName}
+                  </span>
+                  <span className="text-gray-300">{formatMXN(amount)}</span>
+                  <span className="text-xs text-gray-500">
+                    Aplicado {formatMXN(applied)} · saldo a favor{" "}
+                    {formatMXN(Math.max(0, amount - applied))}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 rounded-lg bg-gray-800 p-3 text-sm text-gray-200">
+            Total: <strong>{formatMXN(confirmTotal)}</strong> · aplicado{" "}
+            <strong>{formatMXN(confirmApplied)}</strong> · saldo a favor{" "}
+            <strong>{formatMXN(confirmParked)}</strong>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="gray" onClick={() => setConfirmTrip(null)}>
+            Cancelar
+          </Button>
+          <Button
+            disabled={createBulkPayments.isPending || confirmRows.length === 0}
+            onClick={confirmBulkSave}
+          >
+            Confirmar cobros ({confirmRows.length})
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 };

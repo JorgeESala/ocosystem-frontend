@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   bulkMutate: vi.fn(),
   rowMutate: vi.fn(),
   bulkPayload: null as unknown,
+  useCollectionAvailability: vi.fn(),
 }));
 
 vi.mock("@/core/api/route/routes.queries", () => ({
@@ -23,9 +24,7 @@ vi.mock("../api/collections.queries", () => ({
 }));
 
 vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
-  useCollectionAvailability: () => ({
-    data: { writable: true, reason: "OK", message: null },
-  }),
+  useCollectionAvailability: mocks.useCollectionAvailability,
 }));
 
 vi.mock("../api/payments.queries", () => ({
@@ -108,6 +107,12 @@ describe("TripCollectionsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.bulkPayload = null;
+    mocks.useCollectionAvailability.mockReturnValue({
+      data: { writable: true, reason: "OK", message: null },
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
     mocks.useRoutes.mockReturnValue({ data: [{ id: 3, name: "Ruta Norte" }] });
     mocks.useTripCollections.mockReturnValue({
       data: [trip],
@@ -139,13 +144,23 @@ describe("TripCollectionsPanel", () => {
 
     expect(screen.getByText("Cliente Crédito")).toBeInTheDocument();
     expect(screen.getAllByText("Contado").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Monto")).toHaveValue(null);
+    expect(
+      screen.getByRole("button", { name: "Registrar cobros (0)" }),
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Usar saldos" }));
     expect(screen.getByLabelText("Monto")).toHaveValue(900);
     expect(
       screen.getByRole("button", { name: "Registrar cobros (1)" }),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Registrar cobros (1)" }),
+    );
+    expect(screen.getByText("Confirmar cobros")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar cobros (1)" }),
     );
 
     await waitFor(() => expect(mocks.bulkMutate).toHaveBeenCalledTimes(1));
@@ -165,15 +180,35 @@ describe("TripCollectionsPanel", () => {
     expect(screen.getByText(/Se registraron 1 cobros/)).toBeInTheDocument();
   });
 
-  it("changes the prefilled amount when another CEDIS is selected", () => {
+  it("keeps the entered amount when another CEDIS is selected", () => {
     renderPanel();
     fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+    fireEvent.click(screen.getByRole("button", { name: "Usar saldos" }));
 
     fireEvent.change(screen.getByLabelText("CEDIS"), {
       target: { value: "2" },
     });
 
     expect(screen.getByLabelText("Monto")).toHaveValue(900);
+  });
+
+  it("blocks bulk save when cash flow verification fails", () => {
+    mocks.useCollectionAvailability.mockReturnValue({
+      data: undefined,
+      isError: true,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    renderPanel();
+    fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+    fireEvent.click(screen.getByRole("button", { name: "Usar saldos" }));
+
+    expect(
+      screen.getByText(/No se pudo verificar el Flujo de efectivo/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Registrar cobros (1)" }),
+    ).toBeDisabled();
   });
 
   it("prints the trip collection sheet", () => {
@@ -185,19 +220,19 @@ describe("TripCollectionsPanel", () => {
       expect.objectContaining({
         routeName: "Ruta Norte · Chofer Uno",
         businessUnitName: "Huevo",
-        totalRuta: 900,
+        totalRuta: 800,
         rows: expect.arrayContaining([
           expect.objectContaining({
             displayName: "Cliente Crédito",
             entityType: "Cliente",
-            saldoRuta: 900,
-            saldoTotal: 500,
+            saldoRuta: 500,
+            saldoTotal: 900,
           }),
           expect.objectContaining({
             displayName: "Cliente Contado",
             entityType: "CASH",
-            saldoRuta: 0,
-            saldoTotal: 300,
+            saldoRuta: 300,
+            saldoTotal: 0,
           }),
         ]),
       }),
@@ -236,6 +271,9 @@ describe("TripCollectionsPanel", () => {
     );
     renderPanel();
     fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+    fireEvent.change(screen.getByLabelText("Monto"), {
+      target: { value: "900" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Cobrar" }));
 
     await waitFor(() => expect(mocks.rowMutate).toHaveBeenCalledTimes(1));
