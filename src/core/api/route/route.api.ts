@@ -42,6 +42,7 @@ export interface RouteDetailClient {
   isInternalBranch?: boolean;
   isInternalClient?: boolean;
   lastPurchaseDate?: string | null;
+  lastSalePricePerCarton?: number | null;
 }
 
 export interface RouteDetail {

@@ -39,6 +39,7 @@ const detail = {
       isInternalBranch: false,
       isInternalClient: false,
       lastPurchaseDate: "2030-01-20",
+      lastSalePricePerCarton: 60,
     },
   ],
 };
@@ -61,7 +62,10 @@ const performance = [
   },
 ];
 
-const renderDrawer = (overrides = {}) => {
+const renderDrawer = (
+  overrides = {},
+  unitType: "EGG" | "LIVE_CHICKEN" = "EGG",
+) => {
   const handlers = {
     onClose: vi.fn(),
     onEdit: vi.fn(),
@@ -71,7 +75,7 @@ const renderDrawer = (overrides = {}) => {
   render(
     <RouteDetailDrawer
       routeId={1}
-      unitType="EGG"
+      unitType={unitType}
       onClose={handlers.onClose}
       onEdit={handlers.onEdit}
       onAddClient={handlers.onAddClient}
@@ -114,6 +118,7 @@ describe("RouteDetailDrawer", () => {
     expect(
       within(table).getByText(formatHumanDate("2030-01-20", "short")),
     ).toBeInTheDocument();
+    expect(within(table).getByText("$60.00")).toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: /WhatsApp/ })).toHaveAttribute(
       "href",

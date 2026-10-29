@@ -94,6 +94,7 @@ export interface Client {
   address?: string | null;
   active?: boolean;
   lastPurchaseDate?: string | null;
+  lastSalePricePerCarton?: number | null;
 }
 
 export const isInternalClientAccount = (

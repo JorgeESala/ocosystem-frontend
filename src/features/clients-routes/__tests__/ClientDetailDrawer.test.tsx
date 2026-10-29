@@ -24,6 +24,7 @@ const client: Client = {
   isInternalClient: false,
   active: true,
   lastPurchaseDate: "2030-01-20",
+  lastSalePricePerCarton: 60,
 };
 
 const routes: Route[] = [
@@ -36,7 +37,10 @@ const routes: Route[] = [
   },
 ];
 
-const renderDrawer = (overrides = {}) => {
+const renderDrawer = (
+  overrides = {},
+  unitType: "EGG" | "LIVE_CHICKEN" = "EGG",
+) => {
   const handlers = {
     onClose: vi.fn(),
     onEdit: vi.fn(),
@@ -47,7 +51,7 @@ const renderDrawer = (overrides = {}) => {
     <ClientDetailDrawer
       client={client}
       routes={routes}
-      unitType="EGG"
+      unitType={unitType}
       onClose={handlers.onClose}
       onEdit={handlers.onEdit}
       onHistory={handlers.onHistory}
@@ -86,12 +90,23 @@ describe("ClientDetailDrawer", () => {
     expect(
       screen.getByText(formatHumanDate("2030-01-20", "short")),
     ).toBeInTheDocument();
+    expect(screen.getByText("Último precio (casillero):")).toBeInTheDocument();
+    expect(screen.getByText("$60.00")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /WhatsApp/ })).toHaveAttribute(
       "href",
       "https://wa.me/8111234567",
     );
     expect(screen.getByText("$1,500.00")).toBeInTheDocument();
     expect(screen.getByText("↑ 50.00%")).toBeInTheDocument();
+  });
+
+  it("oculta el precio por casillero en pollo vivo", () => {
+    renderDrawer({}, "LIVE_CHICKEN");
+
+    expect(
+      screen.queryByText("Último precio (casillero):"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("$60.00")).not.toBeInTheDocument();
   });
 
   it("dispara editar e historial", () => {

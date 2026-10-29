@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildClientsExportRows,
   CLIENT_EXPORT_HEADERS,
+  CLIENT_LAST_PRICE_HEADER,
 } from "../utils/exportClients";
 import {
   buildRoutePerformanceRows,
@@ -20,6 +21,7 @@ const client: Client = {
   isInternalClient: false,
   active: true,
   lastPurchaseDate: "2030-01-20",
+  lastSalePricePerCarton: 60,
   phone: "811-123-4567",
   address: "Calle 1",
 };
@@ -40,6 +42,16 @@ describe("exportClients", () => {
     expect(rows[0][5]).toBe("Activo");
     expect(rows[0][6]).toBe(formatHumanDate("2030-01-20", "short"));
     expect(rows[0][7]).toBe("811-123-4567");
+  });
+
+  it("incluye el último precio por casillero cuando se solicita", () => {
+    const rows = buildClientsExportRows([client], () => routes, true);
+
+    expect(CLIENT_LAST_PRICE_HEADER).toBe("Último precio (casillero)");
+    expect(rows[0]).toHaveLength(10);
+    expect(rows[0][7]).toBe("60.00");
+    expect(rows[0][8]).toBe("811-123-4567");
+    expect(rows[0][9]).toBe("Calle 1");
   });
 });
 
