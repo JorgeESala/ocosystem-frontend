@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "e2e": "npx playwright test",
-    "e2e:ui": "npx playwright test --ui"
+    "e2e:ui": "npx playwright test --ui",
+    "e2e:smoke": "npx playwright test --grep @smoke"
   },
   "dependencies": {
     "@microsoft/fetch-event-source": "^2.0.1",
