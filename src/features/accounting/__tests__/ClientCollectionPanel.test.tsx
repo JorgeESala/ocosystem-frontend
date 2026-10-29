@@ -150,6 +150,24 @@ describe("ClientCollectionPanel", () => {
     );
   });
 
+  it("blocks save when the duplicate check fails", async () => {
+    mocks.useSameDayPayments.mockReturnValue({
+      data: [],
+      isError: true,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    renderPanel();
+    selectCreditClient();
+
+    expect(
+      await screen.findByText(/No se pudo verificar si ya existe un cobro/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Registrar cobro" }),
+    ).toBeDisabled();
+  });
+
   it("prefills the client debt, cash and submits the payment", async () => {
     const { onSuccessToast } = renderPanel();
 

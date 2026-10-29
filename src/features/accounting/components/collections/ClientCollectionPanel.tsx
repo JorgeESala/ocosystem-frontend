@@ -85,14 +85,23 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     ? previewClientCollection(selectedCedis.balance, amountValue)
     : { appliedAmount: 0, parkedAmount: 0 };
 
-  const { data: pairPayments = [] } = useSameDayPayments(
-    selectedClient?.accountingEntityId,
-    isoDate,
-  );
+  const {
+    data: pairPayments = [],
+    isError: pairError,
+    isLoading: pairLoading,
+    refetch: refetchPair,
+  } = useSameDayPayments(selectedClient?.accountingEntityId, isoDate);
 
   const duplicate =
     validAmount && isDuplicatePayment(pairPayments, amountValue, isoDate);
-  const { data: availability } = useCollectionAvailability("EGG", isoDate);
+  const {
+    data: availability,
+    isError: availabilityError,
+    isLoading: availabilityLoading,
+    refetch: refetchAvailability,
+  } = useCollectionAvailability("EGG", isoDate);
+  const verificationPending = pairLoading || availabilityLoading;
+  const verificationError = pairError || availabilityError;
 
   useEffect(() => {
     if (!selectedClient) {
@@ -133,7 +142,13 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedClient?.accountingEntityId || !selectedCedis || !validAmount) {
+    if (
+      !selectedClient?.accountingEntityId ||
+      !selectedCedis ||
+      !validAmount ||
+      verificationError ||
+      verificationPending
+    ) {
       return;
     }
 
@@ -207,6 +222,38 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
               cliente.
             </p>
           )}
+        </Alert>
+      )}
+
+      {pairError && (
+        <Alert color="failure">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              No se pudo verificar si ya existe un cobro el mismo día. No se
+              puede guardar hasta confirmarlo.
+            </span>
+            <Button size="xs" color="gray" onClick={() => refetchPair()}>
+              Reintentar
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      {availabilityError && (
+        <Alert color="failure">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              No se pudo verificar el Flujo de efectivo. No se puede guardar
+              hasta confirmarlo.
+            </span>
+            <Button
+              size="xs"
+              color="gray"
+              onClick={() => refetchAvailability()}
+            >
+              Reintentar
+            </Button>
+          </div>
         </Alert>
       )}
 
@@ -375,7 +422,12 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                 </p>
                 <Button
                   type="submit"
-                  disabled={!validAmount || createPayment.isPending}
+                  disabled={
+                    !validAmount ||
+                    createPayment.isPending ||
+                    verificationError ||
+                    verificationPending
+                  }
                 >
                   {createPayment.isPending
                     ? "Registrando..."
