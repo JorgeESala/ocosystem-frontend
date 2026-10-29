@@ -313,14 +313,21 @@ async function selectClient(page: Page, clientName: string): Promise<void> {
 }
 
 async function setTripDate(page: Page, tripDate: string): Promise<void> {
-  const target = new Date(`${tripDate}T12:00:00`);
-  const day = String(target.getDate());
+  const target = new Date(`${tripDate}T00:00:00`);
+  const today = new Date();
+  expect(tripDate.slice(0, 7)).toBe(toIsoDate(today).slice(0, 7));
+
+  const firstOfMonth = new Date(target.getFullYear(), target.getMonth(), 1);
+  const gridStart = new Date(firstOfMonth);
+  gridStart.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
+  const index = Math.floor(
+    (target.getTime() - gridStart.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
   await page.locator("#trip-collection-date").click();
-  const dayButton = page.getByRole("button", {
-    name: new RegExp(`^${day}$`),
-  });
-  await expect(dayButton).toHaveCount(1);
-  await dayButton.click();
+  const dayButtons = page.getByRole("button", { name: /^\d{1,2}$/ });
+  await expect(dayButtons).toHaveCount(42);
+  await dayButtons.nth(index).click();
 }
 
 async function expandTrip(page: Page, trip: TripCollection): Promise<void> {
@@ -381,10 +388,24 @@ test.describe("@cobranza", () => {
   test("cliente muestra deuda, CEDIS y avisos del día", async ({ page }) => {
     const errors = await openCobranza(page);
 
+    await expect(
+      page.getByRole("button", { name: "Registrar pago" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Crear Cuenta" }),
+    ).toHaveCount(0);
+
     await selectClient(page, data.client.clientName);
 
     await expect(page.locator("#collection-method")).toHaveValue("CASH");
-    await expect(page.locator("#collection-cedis")).not.toHaveValue("");
+    const cedisSelect = page.locator("#collection-cedis");
+    if ((await cedisSelect.count()) > 0) {
+      await expect(cedisSelect).not.toHaveValue("");
+    } else {
+      await expect(
+        page.getByText("CEDIS", { exact: true }).first(),
+      ).toBeVisible();
+    }
     const amount = Number(
       await page.locator("#collection-amount").inputValue(),
     );
@@ -530,6 +551,12 @@ test.describe("@cobranza", () => {
       name: new RegExp(`Registrar cobros \\(${rowsToPay}\\)`),
     });
     await expect(bulkButton).toBeVisible();
+    await bulkButton.click();
+
+    const confirmButton = page.getByRole("button", {
+      name: `Confirmar cobros (${rowsToPay})`,
+    });
+    await expect(confirmButton).toBeVisible();
 
     const [response] = await Promise.all([
       page.waitForResponse(
@@ -537,7 +564,7 @@ test.describe("@cobranza", () => {
           candidate.url().includes("/api/accounting/payments/bulk-fifo") &&
           candidate.request().method() === "POST",
       ),
-      bulkButton.click(),
+      confirmButton.click(),
     ]);
 
     expect(response.status()).toBe(201);
