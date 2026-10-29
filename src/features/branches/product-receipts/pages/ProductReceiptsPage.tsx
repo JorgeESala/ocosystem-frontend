@@ -1,4 +1,18 @@
-import { Alert, Badge, Button, Checkbox, Datepicker, Label, Spinner, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
+import {
+  Alert,
+  Badge,
+  Button,
+  Checkbox,
+  Datepicker,
+  Label,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+} from "flowbite-react";
 import { useState } from "react";
 import BranchMultiSelect from "@/components/BranchMultiSelect";
 import { useBranches } from "@/features/branches/branch/branch.queries";
@@ -15,7 +29,7 @@ const toLocalIso = (date: Date) =>
 const defaultRange = () => {
   const to = new Date();
   const from = new Date();
-  from.setDate(to.getDate() - 6);
+  from.setDate(to.getDate() - 29);
   return { from, to };
 };
 
@@ -37,8 +51,11 @@ export default function ProductReceiptsPage() {
   const [to, setTo] = useState<Date | null>(() => defaultRange().to);
   const [pendingCostOnly, setPendingCostOnly] = useState(false);
   const [unresolvedOnly, setUnresolvedOnly] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<ReceiptFilters>(defaultFilters);
-  const [selectedReceiptId, setSelectedReceiptId] = useState<number | null>(null);
+  const [activeFilters, setActiveFilters] =
+    useState<ReceiptFilters>(defaultFilters);
+  const [selectedReceiptId, setSelectedReceiptId] = useState<number | null>(
+    null,
+  );
 
   const receiptsQuery = useProductReceipts(activeFilters);
   const receipts = receiptsQuery.data ?? [];
@@ -67,9 +84,12 @@ export default function ProductReceiptsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
       <header className="border-b border-slate-800 pb-4">
-        <h1 className="text-2xl font-semibold text-white">Recepción de productos</h1>
+        <h1 className="text-2xl font-semibold text-white">
+          Recepción de productos
+        </h1>
         <p className="text-sm text-slate-400">
-          Cantidades recibidas por sucursal y costo de compra capturado por línea.
+          Cantidades recibidas por sucursal y costo de compra capturado por
+          línea.
         </p>
       </header>
 
@@ -117,11 +137,23 @@ export default function ProductReceiptsPage() {
           <Spinner size="lg" />
         </div>
       ) : receiptsQuery.isError ? (
-        <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+        <Alert
+          color="failure"
+          className="border border-red-900/40 bg-red-950/40"
+        >
           No se pudieron cargar las recepciones.
         </Alert>
       ) : receipts.length === 0 ? (
-        <p className="text-sm text-slate-400">No hay recepciones en el rango seleccionado.</p>
+        <div className="space-y-2">
+          <p className="text-sm text-slate-400">
+            {activeFilters.from && activeFilters.to
+              ? `No hay recepciones entre el ${formatHumanDate(activeFilters.from, "long")} y el ${formatHumanDate(activeFilters.to, "long")}.`
+              : "No hay recepciones en el rango seleccionado."}
+          </p>
+          <Button color="light" size="sm" onClick={handleClear}>
+            Ver últimos 30 días
+          </Button>
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <Table>
@@ -142,17 +174,25 @@ export default function ProductReceiptsPage() {
                 >
                   <TableCell>#{receipt.id}</TableCell>
                   <TableCell>{receipt.branchName}</TableCell>
-                  <TableCell>{formatHumanDate(receipt.receivedAt.slice(0, 10))}</TableCell>
+                  <TableCell>
+                    {formatHumanDate(receipt.receivedAt.slice(0, 10))}
+                  </TableCell>
                   <TableCell>{receipt.recorderName}</TableCell>
                   <TableCell>{receipt.lineCount}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       {receipt.pendingCostCount > 0 && (
-                        <Badge color="gray">Sin costo ({receipt.pendingCostCount})</Badge>
+                        <Badge color="gray">
+                          Sin costo ({receipt.pendingCostCount})
+                        </Badge>
                       )}
-                      {receipt.pendingCostCount === 0 && <Badge color="success">Con costo</Badge>}
+                      {receipt.pendingCostCount === 0 && (
+                        <Badge color="success">Con costo</Badge>
+                      )}
                       {receipt.unresolvedCount > 0 && (
-                        <Badge color="warning">Sin resolver ({receipt.unresolvedCount})</Badge>
+                        <Badge color="warning">
+                          Sin resolver ({receipt.unresolvedCount})
+                        </Badge>
                       )}
                     </div>
                   </TableCell>

@@ -1,4 +1,16 @@
-import { Alert, Badge, Button, Checkbox, Label, Modal, ModalBody, ModalHeader, Select, TextInput, Tooltip } from "flowbite-react";
+import {
+  Alert,
+  Badge,
+  Button,
+  Checkbox,
+  Label,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  Select,
+  TextInput,
+  Tooltip,
+} from "flowbite-react";
 import { useState } from "react";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate } from "@/utils/date.utils";
@@ -14,10 +26,14 @@ import { useCategories } from "../../product/api/categories.queries";
 import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
 import {
   categoryOptions,
-  isEggPiezaCategory,
+  isEggQuantityCategory,
 } from "../../product/utils/categoryOptions";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
-import { lineDisplayName, normalizedLineCost, unitSingular } from "../utils/receipt-cost";
+import {
+  lineDisplayName,
+  normalizedLineCost,
+  unitSingular,
+} from "../utils/receipt-cost";
 
 interface CostForm {
   unitCost: string;
@@ -105,7 +121,9 @@ function CostFormFields({
             step="0.01"
             placeholder="0.00"
             value={form.unitCost}
-            onChange={(e) => setForm((prev) => ({ ...prev, unitCost: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, unitCost: e.target.value }))
+            }
           />
         </div>
         <span className="rounded bg-slate-700 px-2 py-2 text-sm text-slate-200">
@@ -124,7 +142,9 @@ function CostFormFields({
           <Label>
             ¿A cuántas unidades equivale el paquete?{" "}
             <Tooltip content={<CostEquivalenceHelp />}>
-              <span className="cursor-help text-slate-400 underline">¿Qué es esto?</span>
+              <span className="cursor-help text-slate-400 underline">
+                ¿Qué es esto?
+              </span>
             </Tooltip>
           </Label>
           <TextInput
@@ -133,7 +153,9 @@ function CostFormFields({
             step="0.000001"
             placeholder={`Ej: 1 caja = 12 ${line.unitName}, escribe 12`}
             value={form.factor}
-            onChange={(e) => setForm((prev) => ({ ...prev, factor: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, factor: e.target.value }))
+            }
           />
           <p className="text-xs text-slate-400">Recibido en {line.unitName}.</p>
         </div>
@@ -145,23 +167,38 @@ function CostFormFields({
         </p>
       )}
       {factorInvalid && (
-        <p className="text-xs text-red-400">La equivalencia debe ser mayor a cero.</p>
+        <p className="text-xs text-red-400">
+          La equivalencia debe ser mayor a cero.
+        </p>
       )}
       {recordCost.isError && (
         <p className="text-xs text-red-400">No se pudo guardar el costo.</p>
       )}
-      <Button size="xs" color="blue" disabled={!valid || recordCost.isPending} onClick={handleSave}>
+      <Button
+        size="xs"
+        color="blue"
+        disabled={!valid || recordCost.isPending}
+        onClick={handleSave}
+      >
         Guardar costo
       </Button>
     </div>
   );
 }
 
-function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: number }) {
+function ResolveForm({
+  line,
+  receiptId,
+}: {
+  line: ReceiptLineDTO;
+  receiptId: number;
+}) {
   const [query, setQuery] = useState("");
   const [selectedBarcode, setSelectedBarcode] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState(line.observedName ?? line.sourceBarcode ?? "");
+  const [name, setName] = useState(
+    line.observedName ?? line.sourceBarcode ?? "",
+  );
   const [barcode, setBarcode] = useState(line.sourceBarcode ?? "");
   const [categoryId, setCategoryId] = useState("");
   const [unitId, setUnitId] = useState("");
@@ -178,7 +215,9 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
       : products
           .filter(
             (product) =>
-              product.barcode.toLowerCase().includes(query.trim().toLowerCase()) ||
+              product.barcode
+                .toLowerCase()
+                .includes(query.trim().toLowerCase()) ||
               product.name.toLowerCase().includes(query.trim().toLowerCase()),
           )
           .slice(0, 20);
@@ -193,7 +232,10 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
   };
 
   const createValid =
-    name.trim() !== "" && barcode.trim() !== "" && categoryId !== "" && unitId !== "";
+    name.trim() !== "" &&
+    barcode.trim() !== "" &&
+    categoryId !== "" &&
+    unitId !== "";
 
   const handleCreate = () => {
     if (!createValid) return;
@@ -240,7 +282,9 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
       {query.trim() !== "" && (
         <div>
           {matches.length === 0 ? (
-            <p className="text-xs text-slate-400">Sin coincidencias en el catálogo.</p>
+            <p className="text-xs text-slate-400">
+              Sin coincidencias en el catálogo.
+            </p>
           ) : (
             <ul className="max-h-32 space-y-1 overflow-y-auto">
               {matches.map((product) => (
@@ -283,7 +327,10 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
           onClick={() =>
             resolve.mutate({
               lineId: line.id,
-              payload: { productBarcode: selectedBarcode, toProductUnitFactor: null },
+              payload: {
+                productBarcode: selectedBarcode,
+                toProductUnitFactor: null,
+              },
             })
           }
         >
@@ -295,15 +342,24 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Nombre</Label>
-              <TextInput value={name} onChange={(e) => setName(e.target.value)} />
+              <TextInput
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
             <div>
               <Label>Código de barras</Label>
-              <TextInput value={barcode} onChange={(e) => setBarcode(e.target.value)} />
+              <TextInput
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+              />
             </div>
             <div>
               <Label>Categoría</Label>
-              <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <Select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
                 <option value="">Selecciona…</option>
                 {categoryOptions(categories).map((category) => (
                   <option key={category.id} value={category.id}>
@@ -314,7 +370,10 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
             </div>
             <div>
               <Label>Unidad</Label>
-              <Select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+              <Select
+                value={unitId}
+                onChange={(e) => setUnitId(e.target.value)}
+              >
                 <option value="">Selecciona…</option>
                 {units.map((unit) => (
                   <option key={unit.id} value={unit.id}>
@@ -325,7 +384,9 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
             </div>
           </div>
           {resolveWithProduct.isError && (
-            <p className="text-xs text-red-400">No se pudo crear el producto.</p>
+            <p className="text-xs text-red-400">
+              No se pudo crear el producto.
+            </p>
           )}
           <Button
             size="xs"
@@ -338,7 +399,9 @@ function ResolveForm({ line, receiptId }: { line: ReceiptLineDTO; receiptId: num
         </div>
       )}
       {resolve.isError && (
-        <p className="text-xs text-red-400">No se pudo vincular. Verifica el código.</p>
+        <p className="text-xs text-red-400">
+          No se pudo vincular. Verifica el código.
+        </p>
       )}
       {notice && <p className="text-xs text-green-400">{notice}</p>}
     </div>
@@ -356,11 +419,13 @@ export default function ReceiptDetailModal({
   const { data: catalogProducts = [] } = useCatalogProducts();
   const { data: allCategories = [] } = useCategories();
 
-  const categoriesById = new Map(allCategories.map((category) => [category.id, category]));
+  const categoriesById = new Map(
+    allCategories.map((category) => [category.id, category]),
+  );
   const eggBarcodes = new Set(
     catalogProducts
       .filter((product) =>
-        isEggPiezaCategory(product.category?.id ?? null, categoriesById),
+        isEggQuantityCategory(product.category?.id ?? null, categoriesById),
       )
       .map((product) => product.barcode),
   );
@@ -369,9 +434,14 @@ export default function ReceiptDetailModal({
     <Modal show onClose={onClose} size="4xl">
       <ModalHeader>Recepción #{receiptId}</ModalHeader>
       <ModalBody>
-        {isLoading && <p className="text-sm text-slate-400">Cargando recepción...</p>}
+        {isLoading && (
+          <p className="text-sm text-slate-400">Cargando recepción...</p>
+        )}
         {isError && (
-          <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
+          <Alert
+            color="failure"
+            className="border border-red-900/40 bg-red-950/40"
+          >
             No se pudo cargar la recepción.
           </Alert>
         )}
@@ -400,15 +470,23 @@ export default function ReceiptDetailModal({
                 ? normalizedLineCost(line, line.latestCost)
                 : null;
               return (
-                <div key={line.id} className="rounded border border-slate-700 p-3">
+                <div
+                  key={line.id}
+                  className="rounded border border-slate-700 p-3"
+                >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-white">{lineDisplayName(line)}</span>
-                    {line.productBarcode === null && <Badge color="warning">Sin resolver</Badge>}
+                    <span className="font-medium text-white">
+                      {lineDisplayName(line)}
+                    </span>
+                    {line.productBarcode === null && (
+                      <Badge color="warning">Sin resolver</Badge>
+                    )}
                     {line.latestCost === null ? (
                       <Badge color="gray">Sin costo</Badge>
                     ) : (
                       <Badge color="success">
-                        {formatMXN(line.latestCost.unitCost)} por {line.latestCost.costUnit}
+                        {formatMXN(line.latestCost.unitCost)} por{" "}
+                        {line.latestCost.costUnit}
                       </Badge>
                     )}
                   </div>
@@ -429,7 +507,9 @@ export default function ReceiptDetailModal({
                       ` · Equivalencia: ${line.toProductUnitFactor}`}
                     {normalized &&
                       ` · Costo: ${formatMXN(normalized.amount)} por ${normalized.unit}`}
-                    {line.latestCost && !normalized && " · Costo sin equivalencia base"}
+                    {line.latestCost &&
+                      !normalized &&
+                      " · Costo sin equivalencia base"}
                   </div>
                   {line.productBarcode === null && (
                     <ResolveForm line={line} receiptId={receipt.id} />
@@ -441,7 +521,8 @@ export default function ReceiptDetailModal({
                       <ul className="list-disc pl-5">
                         {line.costHistory.map((cost) => (
                           <li key={cost.id}>
-                            {formatMXN(cost.unitCost)} por {cost.costUnit} · {cost.enteredBy} ·{" "}
+                            {formatMXN(cost.unitCost)} por {cost.costUnit} ·{" "}
+                            {cost.enteredBy} ·{" "}
                             {formatHumanDate(cost.enteredAt.slice(0, 10))}
                           </li>
                         ))}
