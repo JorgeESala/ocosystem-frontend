@@ -24,6 +24,7 @@ export interface CreateFifoPaymentRequest {
   driverId?: number;
   routeId?: number;
   tripId?: number;
+  clientRequestId?: string;
 }
 
 export interface CreatePaymentRequest {
@@ -67,6 +68,9 @@ export interface PaymentResponse {
   note?: string;
   status: PaymentStatus;
   createdAt: string; // ISO
+  createdBy?: number;
+  cancelledBy?: number;
+  cancelledAt?: string;
   payerName?: string;
   receiverName?: string;
   payerEntityId?: number;
