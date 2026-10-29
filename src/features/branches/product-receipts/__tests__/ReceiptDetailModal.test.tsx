@@ -71,34 +71,6 @@ const detail = {
       latestCost: null,
       costHistory: [],
     },
-    {
-      id: 105,
-      lineNumber: 5,
-      productBarcode: "1365",
-      productName: "Casillero de huevo miembro express",
-      sourceBarcode: "1365",
-      observedName: null,
-      quantity: 216,
-      unitName: "piezas",
-      unitId: 2,
-      toProductUnitFactor: 1,
-      latestCost: null,
-      costHistory: [],
-    },
-    {
-      id: 106,
-      lineNumber: 6,
-      productBarcode: "74",
-      productName: "Casillero huevo",
-      sourceBarcode: "74",
-      observedName: null,
-      quantity: 240,
-      unitName: "piezas",
-      unitId: 2,
-      toProductUnitFactor: 1,
-      latestCost: null,
-      costHistory: [],
-    },
   ],
 };
 
@@ -134,18 +106,6 @@ vi.mock("../api/product-receipts.queries", () => ({
         status: "ACTIVE",
         category: { id: 7, name: "Piezas de huevo", parentId: 9 },
       },
-      {
-        barcode: "1365",
-        name: "Casillero de huevo miembro express",
-        status: "ACTIVE",
-        category: { id: 8, name: "Casillero de huevo", parentId: 9 },
-      },
-      {
-        barcode: "74",
-        name: "Casillero huevo",
-        status: "ACTIVE",
-        category: { id: 8, name: "Casillero de huevo", parentId: 9 },
-      },
     ],
   })),
 }));
@@ -155,7 +115,6 @@ vi.mock("../../product/api/categories.queries", () => ({
     data: [
       { id: 10, name: "Verduras" },
       { id: 7, name: "Piezas de huevo", parentId: 9 },
-      { id: 8, name: "Casillero de huevo", parentId: 9 },
       { id: 9, name: "Huevo", parentId: null },
     ],
   })),
@@ -285,24 +244,14 @@ describe("ReceiptDetailModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("decomposes pieza and casillero egg quantities into cajas, casilleros and piezas", () => {
+  it("decomposes egg quantities into cajas, casilleros and piezas", () => {
     renderModal();
 
     expect(screen.getByTitle("Cajas")).toHaveTextContent("2");
-    expect(
-      screen.getAllByTitle("Casilleros").map((el) => el.textContent),
-    ).toEqual(expect.arrayContaining(["3", "7", "8"]));
-    expect(screen.getAllByTitle("Piezas").map((el) => el.textContent)).toEqual(
-      expect.arrayContaining(["5", "6"]),
-    );
+    expect(screen.getByTitle("Casilleros")).toHaveTextContent("3");
+    expect(screen.getByTitle("Piezas")).toHaveTextContent("5");
     expect(screen.getByText("Huevo piezas")).toBeInTheDocument();
-    expect(
-      screen.getByText("Casillero de huevo miembro express"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Casillero huevo")).toBeInTheDocument();
     expect(screen.queryByText("Recibido: 815 piezas")).not.toBeInTheDocument();
-    expect(screen.queryByText("Recibido: 216 piezas")).not.toBeInTheDocument();
-    expect(screen.queryByText("Recibido: 240 piezas")).not.toBeInTheDocument();
   });
 
   it("searches the catalog and links the selected product", () => {

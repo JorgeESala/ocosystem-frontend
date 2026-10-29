@@ -26,7 +26,7 @@ import { useCategories } from "../../product/api/categories.queries";
 import { useMeasurementUnits } from "../../product/api/measurementUnits.queries";
 import {
   categoryOptions,
-  isEggQuantityCategory,
+  isEggPiezaCategory,
 } from "../../product/utils/categoryOptions";
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import {
@@ -425,7 +425,7 @@ export default function ReceiptDetailModal({
   const eggBarcodes = new Set(
     catalogProducts
       .filter((product) =>
-        isEggQuantityCategory(product.category?.id ?? null, categoriesById),
+        isEggPiezaCategory(product.category?.id ?? null, categoriesById),
       )
       .map((product) => product.barcode),
   );
