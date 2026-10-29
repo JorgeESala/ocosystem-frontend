@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { categoryOptions, isEggPiezaCategory } from "../categoryOptions";
+import { categoryOptions, isEggQuantityCategory } from "../categoryOptions";
 
 describe("categoryOptions", () => {
   it("orders roots first with indented children and filters test rows", () => {
@@ -34,7 +34,7 @@ describe("categoryOptions", () => {
   });
 });
 
-describe("isEggPiezaCategory", () => {
+describe("isEggQuantityCategory", () => {
   const byId = new Map<number, { name: string; parentId?: number | null }>(
     [
       { id: 9, name: "Huevo", parentId: null },
@@ -44,20 +44,20 @@ describe("isEggPiezaCategory", () => {
     ].map((category) => [category.id, category]),
   );
 
-  it("walks the category chain up to the egg piezas branch", () => {
-    expect(isEggPiezaCategory(7, byId)).toBe(true);
-    expect(isEggPiezaCategory(8, byId)).toBe(false);
-    expect(isEggPiezaCategory(9, byId)).toBe(false);
-    expect(isEggPiezaCategory(2, byId)).toBe(false);
-    expect(isEggPiezaCategory(null, byId)).toBe(false);
+  it("walks the category chain up to the egg quantity branches", () => {
+    expect(isEggQuantityCategory(7, byId)).toBe(true);
+    expect(isEggQuantityCategory(8, byId)).toBe(true);
+    expect(isEggQuantityCategory(9, byId)).toBe(false);
+    expect(isEggQuantityCategory(2, byId)).toBe(false);
+    expect(isEggQuantityCategory(null, byId)).toBe(false);
   });
 
   it("handles unknown or cyclic categories safely", () => {
-    expect(isEggPiezaCategory(999, byId)).toBe(false);
+    expect(isEggQuantityCategory(999, byId)).toBe(false);
     const cyclic = new Map<number, { name: string; parentId?: number | null }>([
       [1, { name: "A", parentId: 2 }],
       [2, { name: "B", parentId: 1 }],
     ]);
-    expect(isEggPiezaCategory(1, cyclic)).toBe(false);
+    expect(isEggQuantityCategory(1, cyclic)).toBe(false);
   });
 });

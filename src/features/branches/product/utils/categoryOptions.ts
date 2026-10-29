@@ -5,9 +5,12 @@ export interface CatalogCategoryNode {
   parentId?: number | null;
 }
 
-export const EGG_PIEZA_CATEGORY_NAME = "piezas de huevo";
+export const EGG_QUANTITY_CATEGORY_NAMES = [
+  "piezas de huevo",
+  "casillero de huevo",
+];
 
-export function isEggPiezaCategory(
+export function isEggQuantityCategory(
   categoryId: number | null,
   categoriesById: Map<number, CatalogCategoryNode>,
 ): boolean {
@@ -17,7 +20,11 @@ export function isEggPiezaCategory(
     visited.add(currentId);
     const category = categoriesById.get(currentId);
     if (!category) return false;
-    if (category.name.trim().toLowerCase() === EGG_PIEZA_CATEGORY_NAME) return true;
+    if (
+      EGG_QUANTITY_CATEGORY_NAMES.includes(category.name.trim().toLowerCase())
+    ) {
+      return true;
+    }
     currentId = category.parentId ?? null;
   }
   return false;
