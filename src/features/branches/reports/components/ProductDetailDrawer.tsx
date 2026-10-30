@@ -90,6 +90,13 @@ export const ProductDetailDrawer = ({
     data?.branches.reduce((acc, branch) => acc + branch.quantity, 0) ?? 0;
   const totalSales =
     data?.branches.reduce((acc, branch) => acc + branch.sales, 0) ?? 0;
+  const totalReceived =
+    data?.branches.reduce(
+      (acc, branch) => acc + (branch.receivedQuantity ?? 0),
+      0,
+    ) ?? 0;
+  const branchesWithSales =
+    data?.branches.filter((branch) => branch.daily.length > 0) ?? [];
   const hasCancelledSales =
     data?.branches.some((branch) =>
       branch.daily.some((point) => point.cancelledSubtotal < 0),
@@ -122,6 +129,11 @@ export const ProductDetailDrawer = ({
               <Badge color="info">Unidad: {data.unitName}</Badge>
               <Badge color="success">Total: {formatUnits(totalQuantity)}</Badge>
               <Badge color="indigo">Venta: {formatMXN(totalSales)}</Badge>
+              {totalReceived > 0 && (
+                <Badge color="warning">
+                  Recibido: {formatUnits(totalReceived)}
+                </Badge>
+              )}
               {hasCancelledSales && (
                 <Badge color="failure">Incluye cancelaciones</Badge>
               )}
@@ -205,107 +217,119 @@ export const ProductDetailDrawer = ({
               </Alert>
             ) : (
               <>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#374151"
-                        vertical={false}
-                      />
-                      <XAxis
-                        dataKey="day"
-                        stroke="#9CA3AF"
-                        fontSize={11}
-                        minTickGap={16}
-                        tickFormatter={(value: string) =>
-                          formatWeekdayDayMonth(value)
-                        }
-                      />
-                      <YAxis
-                        stroke="#9CA3AF"
-                        fontSize={11}
-                        tickFormatter={(value: number) =>
-                          metric === "sales"
-                            ? `$${value / 1000}k`
-                            : formatUnits(value)
-                        }
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1F2937",
-                          border: "none",
-                          borderRadius: "8px",
-                        }}
-                        labelStyle={{ color: "#F3F4F6" }}
-                        labelFormatter={(value) => formatFullDate(value)}
-                        formatter={(value: number, name: string) => [
-                          formatMetric(value),
-                          name,
-                        ]}
-                      />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                      {data.branches.map((branch, index) => (
-                        <Line
-                          key={branch.branchId}
-                          type="monotone"
-                          dataKey={branch.branchName}
-                          stroke={COLORS[index % COLORS.length]}
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                {branchesWithSales.length === 0 && (
+                  <Alert color="info">
+                    Sin ventas de este producto en el periodo seleccionado.
+                  </Alert>
+                )}
 
-                <div>
-                  <h3 className="text-md mb-2 font-semibold text-gray-200">
-                    Promedio por día de la semana (unidades)
-                  </h3>
-                  <div className="h-48 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={weekdayRows}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#374151"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="label"
-                          stroke="#9CA3AF"
-                          fontSize={11}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          stroke="#9CA3AF"
-                          fontSize={11}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(value: number) => formatUnits(value)}
-                        />
-                        <Tooltip
-                          cursor={{ fill: "rgba(59, 130, 246, 0.12)" }}
-                          contentStyle={{
-                            backgroundColor: "#1F2937",
-                            border: "none",
-                            borderRadius: "8px",
-                          }}
-                          labelStyle={{ color: "#F3F4F6" }}
-                          formatter={(value: number) => [
-                            `${formatUnits(value)} u`,
-                            "Promedio",
-                          ]}
-                        />
-                        <Bar
-                          dataKey="avg"
-                          fill="#3B82F6"
-                          radius={[6, 6, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                {branchesWithSales.length > 0 && (
+                  <>
+                    <div className="h-64 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#374151"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="day"
+                            stroke="#9CA3AF"
+                            fontSize={11}
+                            minTickGap={16}
+                            tickFormatter={(value: string) =>
+                              formatWeekdayDayMonth(value)
+                            }
+                          />
+                          <YAxis
+                            stroke="#9CA3AF"
+                            fontSize={11}
+                            tickFormatter={(value: number) =>
+                              metric === "sales"
+                                ? `$${value / 1000}k`
+                                : formatUnits(value)
+                            }
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#1F2937",
+                              border: "none",
+                              borderRadius: "8px",
+                            }}
+                            labelStyle={{ color: "#F3F4F6" }}
+                            labelFormatter={(value) => formatFullDate(value)}
+                            formatter={(value: number, name: string) => [
+                              formatMetric(value),
+                              name,
+                            ]}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 12 }} />
+                          {branchesWithSales.map((branch, index) => (
+                            <Line
+                              key={branch.branchId}
+                              type="monotone"
+                              dataKey={branch.branchName}
+                              stroke={COLORS[index % COLORS.length]}
+                              strokeWidth={2}
+                              dot={false}
+                            />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div>
+                      <h3 className="text-md mb-2 font-semibold text-gray-200">
+                        Promedio por día de la semana (unidades)
+                      </h3>
+                      <div className="h-48 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={weekdayRows}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#374151"
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="label"
+                              stroke="#9CA3AF"
+                              fontSize={11}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              stroke="#9CA3AF"
+                              fontSize={11}
+                              tickLine={false}
+                              axisLine={false}
+                              tickFormatter={(value: number) =>
+                                formatUnits(value)
+                              }
+                            />
+                            <Tooltip
+                              cursor={{ fill: "rgba(59, 130, 246, 0.12)" }}
+                              contentStyle={{
+                                backgroundColor: "#1F2937",
+                                border: "none",
+                                borderRadius: "8px",
+                              }}
+                              labelStyle={{ color: "#F3F4F6" }}
+                              formatter={(value: number) => [
+                                `${formatUnits(value)} u`,
+                                "Promedio",
+                              ]}
+                            />
+                            <Bar
+                              dataKey="avg"
+                              fill="#3B82F6"
+                              radius={[6, 6, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -313,6 +337,7 @@ export const ProductDetailDrawer = ({
                       <tr className="border-b border-gray-700 text-left text-xs tracking-wider text-gray-400 uppercase">
                         <th className="py-2">Sucursal</th>
                         <th className="py-2 text-right">Cantidad</th>
+                        <th className="py-2 text-right">Recibido</th>
                         <th className="py-2 text-right">Venta real</th>
                         <th className="py-2 text-right">Días con venta</th>
                       </tr>
@@ -326,6 +351,11 @@ export const ProductDetailDrawer = ({
                           <td className="py-2 text-right text-white">
                             {formatUnits(branch.quantity)}
                           </td>
+                          <td className="py-2 text-right text-white">
+                            {branch.receivedQuantity > 0
+                              ? formatUnits(branch.receivedQuantity)
+                              : "—"}
+                          </td>
                           <td className="py-2 text-right text-green-400">
                             {formatMXN(branch.sales)}
                           </td>
@@ -338,6 +368,9 @@ export const ProductDetailDrawer = ({
                         <td className="py-2 text-white">Total</td>
                         <td className="py-2 text-right text-white">
                           {formatUnits(totalQuantity)}
+                        </td>
+                        <td className="py-2 text-right text-white">
+                          {totalReceived > 0 ? formatUnits(totalReceived) : "—"}
                         </td>
                         <td className="py-2 text-right text-green-400">
                           {formatMXN(totalSales)}
