@@ -297,6 +297,18 @@ async function openCobranza(page: Page): Promise<string[]> {
   return errors;
 }
 
+async function selectCollector(page: Page): Promise<void> {
+  const select = page.locator("#cobranza-collector");
+  if ((await select.count()) === 0) return;
+  const firstDriver = await select
+    .locator("option")
+    .nth(1)
+    .getAttribute("value");
+  if (firstDriver) {
+    await select.selectOption(firstDriver);
+  }
+}
+
 async function selectClient(page: Page, clientName: string): Promise<void> {
   const search = page.getByLabel("Buscar cliente");
   await search.fill(clientName);
@@ -387,6 +399,7 @@ test.describe("@cobranza", () => {
 
   test("cliente muestra deuda, CEDIS y avisos del día", async ({ page }) => {
     const errors = await openCobranza(page);
+    await selectCollector(page);
 
     await expect(
       page.getByRole("button", { name: "Registrar pago" }),
@@ -424,6 +437,7 @@ test.describe("@cobranza", () => {
   test("despacho muestra el viaje, contado e impresión", async ({ page }) => {
     const errors = await openCobranza(page);
 
+    await selectCollector(page);
     await page.getByRole("tab", { name: "Despacho" }).click();
     await setTripDate(page, data.tripDate);
     await expandTrip(page, data.trip);
@@ -531,6 +545,7 @@ test.describe("@cobranza", () => {
     test.skip(!ALLOW_WRITES, "E2E_ALLOW_WRITES no está activo");
     const errors = await openCobranza(page);
 
+    await selectCollector(page);
     await page.getByRole("tab", { name: "Despacho" }).click();
     await setTripDate(page, data.tripDate);
     await expandTrip(page, data.trip);
