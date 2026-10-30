@@ -10,6 +10,7 @@ const branch = {
   quantity: 12,
   sales: 120,
   daysWithSales: 1,
+  receivedQuantity: 12,
   daily: [
     {
       day: "2026-06-01",
@@ -112,6 +113,45 @@ describe("ProductDetailDrawer", () => {
     const cells = Array.from(totalRow?.querySelectorAll("td") ?? []).map(
       (cell) => cell.textContent,
     );
-    expect(cells).toEqual(["Total", "12", "$120.00", "—"]);
+    expect(cells).toEqual(["Total", "12", "12", "$120.00", "—"]);
+  }, 15000);
+
+  it("incluye sucursales que recibieron producto aunque no vendieran", () => {
+    detail.current = {
+      ...single,
+      branches: [
+        branch,
+        {
+          branchId: 2,
+          branchName: "Norte",
+          quantity: 0,
+          sales: 0,
+          daysWithSales: 0,
+          daily: [],
+          receivedQuantity: 5,
+        },
+      ],
+    };
+    render(<ProductDetailDrawer {...baseProps} />);
+
+    const row = screen.getByRole("cell", { name: "Norte" }).closest("tr");
+    const cells = Array.from(row?.querySelectorAll("td") ?? []).map(
+      (cell) => cell.textContent,
+    );
+    expect(cells).toEqual(["Norte", "0", "5", "$0.00", "0"]);
+  }, 15000);
+
+  it("muestra — cuando la sucursal no tiene recepciones", () => {
+    detail.current = {
+      ...single,
+      branches: [{ ...branch, receivedQuantity: 0 }],
+    };
+    render(<ProductDetailDrawer {...baseProps} />);
+
+    const row = screen.getByRole("cell", { name: "Centro" }).closest("tr");
+    const cells = Array.from(row?.querySelectorAll("td") ?? []).map(
+      (cell) => cell.textContent,
+    );
+    expect(cells).toEqual(["Centro", "12", "—", "$120.00", "1"]);
   }, 15000);
 });

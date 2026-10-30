@@ -51,6 +51,7 @@ export interface ProductBranchSeriesDTO {
   sales: number;
   daysWithSales: number;
   daily: ProductDailyPointDTO[];
+  receivedQuantity: number;
 }
 
 export interface ProductVariantDTO {
