@@ -102,7 +102,12 @@ const trip: TripCollection = {
 
 const renderPanel = () => {
   const toast = vi.fn();
-  render(<TripCollectionsPanel onSuccessToast={toast} />);
+  render(
+    <TripCollectionsPanel
+      collectorName="Chofer Cobrador"
+      onSuccessToast={toast}
+    />,
+  );
   return { toast };
 };
 
@@ -224,6 +229,7 @@ describe("TripCollectionsPanel", () => {
       expect.objectContaining({
         routeName: "Ruta Norte · Chofer Uno",
         businessUnitName: "Huevo",
+        collectorName: "Chofer Cobrador",
         totalRuta: 800,
         rows: expect.arrayContaining([
           expect.objectContaining({
