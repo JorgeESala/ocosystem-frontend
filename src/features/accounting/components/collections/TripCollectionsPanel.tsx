@@ -46,6 +46,7 @@ import { AgingBadge } from "../AgingBadge";
 import { newClientRequestId } from "../../utils/requestId";
 
 interface Props {
+  collectorName?: string;
   onSuccessToast?: (message: string) => void;
 }
 
@@ -73,7 +74,10 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
 const keyFor = (trip: TripCollection, client: TripCollectionClient) =>
   `${trip.tripId}:${client.clientId ?? client.clientName}`;
 
-export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
+export const TripCollectionsPanel = ({
+  collectorName = "",
+  onSuccessToast,
+}: Props) => {
   const [collectionDate, setCollectionDate] = useState<Date>(new Date());
   const [routeId, setRouteId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
@@ -261,7 +265,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           };
           setLastResult(summary);
           onSuccessToast?.(
-            `Se registraron ${summary.count} cobros por ${formatMXN(summary.total)} · aplicado ${formatMXN(summary.applied)} · saldo a favor ${formatMXN(summary.parked)}`,
+            summary.count === 0
+              ? "Estos cobros ya estaban registrados."
+              : `Se registraron ${summary.count} cobros por ${formatMXN(summary.total)} · aplicado ${formatMXN(summary.applied)} · saldo a favor ${formatMXN(summary.parked)}`,
           );
           clearTripDrafts(trip.tripId);
           setConfirmTrip(null);
@@ -312,6 +318,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
         `${trip.routeName ?? "Despacho"} · ${trip.driverName ?? ""}`.trim(),
       businessUnitName: "Huevo",
       dateLabel: formatHumanDate(trip.departureDate, "long"),
+      collectorName,
       rows: trip.clients.map((client) => ({
         displayName: client.clientName,
         entityType: client.accountingEntityId ? "Cliente" : "CASH",
@@ -330,6 +337,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     openDayCollectionsSheet({
       businessUnitName: "Huevo",
       dateLabel: formatHumanDate(isoDate, "long"),
+      collectorName,
       trips: trips.map((trip) => ({
         routeName: trip.routeName ?? "Despacho",
         driverName: trip.driverName,
@@ -448,7 +456,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
         <Button
           size="sm"
           color="gray"
-          disabled={trips.length === 0}
+          disabled={trips.length === 0 || !collectorName}
           onClick={handlePrintDay}
         >
           <HiDocumentDownload className="mr-2 h-4 w-4" />
@@ -458,6 +466,12 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
           {totalRows} cliente{totalRows === 1 ? "" : "s"} con cuenta por cobrar
         </p>
       </div>
+
+      {!collectorName && (
+        <Alert color="warning">
+          Selecciona un cobrador para imprimir las hojas de cobranza.
+        </Alert>
+      )}
 
       {availabilityError && (
         <Alert color="failure">
@@ -506,10 +520,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
       {lastResult && (
         <Alert color="success">
           <span className="font-medium">
-            Se registraron {lastResult.count} cobros por{" "}
-            {formatMXN(lastResult.total)} · aplicado{" "}
-            {formatMXN(lastResult.applied)} · saldo a favor{" "}
-            {formatMXN(lastResult.parked)}
+            {lastResult.count === 0
+              ? "Estos cobros ya estaban registrados."
+              : `Se registraron ${lastResult.count} cobros por ${formatMXN(lastResult.total)} · aplicado ${formatMXN(lastResult.applied)} · saldo a favor ${formatMXN(lastResult.parked)}`}
           </span>
         </Alert>
       )}
@@ -607,6 +620,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
                   <Button
                     size="xs"
                     color="gray"
+                    disabled={!collectorName}
                     onClick={() => handlePrint(trip)}
                   >
                     <HiDocumentDownload className="mr-1 h-3 w-3" />

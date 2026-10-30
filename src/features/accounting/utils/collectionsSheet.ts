@@ -10,6 +10,7 @@ export interface CollectionsSheetInput {
   routeName: string;
   businessUnitName: string;
   dateLabel: string;
+  collectorName?: string;
   rows: CollectionsSheetRow[];
   totalRuta: number;
 }
@@ -78,7 +79,7 @@ export const buildCollectionsSheetHtml = (
   </head>
   <body>
     <h1>Hoja de cobranza · ${escapeHtml(input.routeName)}</h1>
-    <p class="sub">${escapeHtml(input.businessUnitName)} · ${escapeHtml(input.dateLabel)} · ${input.rows.length} deudores</p>
+    <p class="sub">${escapeHtml(input.businessUnitName)} · ${escapeHtml(input.dateLabel)} · ${input.rows.length} deudores${input.collectorName ? ` · Cobrador: ${escapeHtml(input.collectorName)}` : ""}</p>
     <p class="total">Total a cobrar en la ruta: ${money(input.totalRuta)}</p>
     <p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
     <table>
@@ -131,6 +132,7 @@ export interface DayCollectionsSheetTrip {
 export interface DayCollectionsSheetInput {
   businessUnitName: string;
   dateLabel: string;
+  collectorName?: string;
   trips: DayCollectionsSheetTrip[];
 }
 
@@ -174,7 +176,7 @@ th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#f3f4f
 @media print{button{display:none}}
 </style></head><body>
 <h1>Hoja de cobranza · ${escapeHtml(input.dateLabel)}</h1>
-<p class="sub">${escapeHtml(input.businessUnitName)} · ${input.trips.length} despachos</p>
+<p class="sub">${escapeHtml(input.businessUnitName)} · ${input.trips.length} despachos${input.collectorName ? ` · Cobrador: ${escapeHtml(input.collectorName)}` : ""}</p>
 <p><button onclick="window.print()">Imprimir / Guardar PDF</button></p>
 ${sections}
 <p class="total">Total del día: ${money(grandTotal)}</p>

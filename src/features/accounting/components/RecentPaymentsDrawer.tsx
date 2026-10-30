@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from "flowbite-react";
 import { useState } from "react";
-import { HiArrowLeft, HiX } from "react-icons/hi";
+import { HiArrowLeft, HiPrinter, HiX } from "react-icons/hi";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/features/accounting/api/payments.queries";
 import type { PaymentResponse, PaymentMethod } from "../types/payment.types";
 import { hasUnappliedCredit } from "../utils/unappliedCredit";
+import { openPaymentReceipt } from "../utils/paymentReceipt";
 
 const methodLabels: Record<PaymentMethod, string> = {
   CASH: "Efectivo",
@@ -137,7 +138,34 @@ export const RecentPaymentsDrawer = ({
                         )}
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-start">
+                    <div className="flex shrink-0 items-start gap-1">
+                      <Tooltip content="Imprimir recibo">
+                        <Button
+                          size="xs"
+                          color="gray"
+                          onClick={() =>
+                            openPaymentReceipt({
+                              paymentId: p.id,
+                              clientName: p.payerName ?? "—",
+                              cedisName: p.receiverName ?? "—",
+                              dateLabel: formatHumanDate(p.paymentDate, "long"),
+                              amount: p.amount,
+                              appliedAmount:
+                                p.appliedAmount ??
+                                Math.max(
+                                  0,
+                                  p.amount - (p.remainingAmount ?? 0),
+                                ),
+                              parkedAmount: p.remainingAmount ?? 0,
+                              methodLabel: methodLabels[p.paymentMethod],
+                              folio: p.folio ?? null,
+                              collectorId: p.createdBy ?? null,
+                            })
+                          }
+                        >
+                          <HiPrinter className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
                       {isActive && !isConfirming && (
                         <Tooltip content="Cancelar pago">
                           <Button
