@@ -20,7 +20,10 @@ import {
   HiTruck,
 } from "react-icons/hi";
 import { useRoutes } from "@/core/api/route/routes.queries";
-import { useCollectionAvailability } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
+import {
+  useCashFlowSettings,
+  useCollectionAvailability,
+} from "@/features/egg-cash-flow/api/eggCashFlow.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { useTripCollections } from "../../api/collections.queries";
@@ -74,6 +77,8 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
   const [collectionDate, setCollectionDate] = useState<Date>(new Date());
   const [routeId, setRouteId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
+  const [folio, setFolio] = useState("");
+  const [note, setNote] = useState("");
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +103,12 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     refetch: refetchAvailability,
   } = useCollectionAvailability("EGG", isoDate);
   const verificationBlocked = availabilityError || availabilityLoading;
+  const { data: cashFlowSettings } = useCashFlowSettings("EGG");
+  const directDepositIds = new Set(
+    cashFlowSettings?.directDepositClientIds ?? [],
+  );
+  const requiresFolio = paymentMethod !== "CASH";
+  const validFolio = !requiresFolio || folio.trim().length > 0;
 
   const totalRows = useMemo(
     () =>
@@ -218,11 +229,13 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     paymentMethod,
     tripId: trip.tripId,
     clientRequestId: draft.requestId,
+    folio: folio.trim() || undefined,
+    note: note.trim() || undefined,
   });
 
   const handleBulkSave = (trip: TripCollection) => {
     const rows = rowsToSave(trip);
-    if (rows.length === 0 || verificationBlocked) return;
+    if (rows.length === 0 || verificationBlocked || !validFolio) return;
     setConfirmTrip(trip);
   };
 
@@ -267,7 +280,7 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     client: TripCollectionClient,
   ) => {
     const draft = draftFor(trip, client);
-    if (Number(draft.amount) <= 0 || verificationBlocked) return;
+    if (Number(draft.amount) <= 0 || verificationBlocked || !validFolio) return;
     setError(null);
     setLastResult(null);
     createPayment.mutate(payloadFor(trip, client, draft), {
@@ -333,6 +346,15 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
     });
   };
 
+  const methodConflictRows = trips
+    .flatMap((trip) => rowsToSave(trip))
+    .filter(({ client }) => {
+      const isDirectDeposit =
+        client.clientId != null && directDepositIds.has(client.clientId);
+      if (paymentMethod === "CASH") return isDirectDeposit;
+      if (paymentMethod === "OTHER") return false;
+      return !isDirectDeposit;
+    });
   const confirmRows = confirmTrip ? rowsToSave(confirmTrip) : [];
   const confirmTotal = confirmRows.reduce(
     (sum, row) => sum + Number(row.draft.amount),
@@ -403,6 +425,26 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
             ))}
           </Select>
         </div>
+        <div className="w-56">
+          <Label htmlFor="trip-collection-folio">
+            Referencia{requiresFolio ? " *" : " (opcional)"}
+          </Label>
+          <TextInput
+            id="trip-collection-folio"
+            value={folio}
+            placeholder="Folio, transferencia o cheque"
+            onChange={(event) => setFolio(event.target.value)}
+          />
+        </div>
+        <div className="w-56">
+          <Label htmlFor="trip-collection-note">Nota (opcional)</Label>
+          <TextInput
+            id="trip-collection-note"
+            value={note}
+            placeholder="Observaciones del cobro"
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </div>
         <Button
           size="sm"
           color="gray"
@@ -432,6 +474,21 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
               Reintentar
             </Button>
           </div>
+        </Alert>
+      )}
+
+      {requiresFolio && !validFolio && (
+        <Alert color="warning">
+          Captura la referencia para pagos que no son en efectivo.
+        </Alert>
+      )}
+
+      {methodConflictRows.length > 0 && (
+        <Alert color="warning">
+          Hay {methodConflictRows.length} cobro
+          {methodConflictRows.length === 1 ? "" : "s"} con una forma de pago
+          distinta a la configuración de depósito directo del cliente. El
+          movimiento se registrará según la forma de pago elegida.
         </Alert>
       )}
 
@@ -672,7 +729,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
                             <Button
                               size="xs"
                               color="gray"
-                              disabled={amount <= 0 || isSavingTrip}
+                              disabled={
+                                amount <= 0 || isSavingTrip || !validFolio
+                              }
                               onClick={() => handleRowSave(trip, client)}
                             >
                               Cobrar
@@ -716,7 +775,9 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
                         Limpiar
                       </Button>
                       <Button
-                        disabled={rows.length === 0 || isSavingTrip}
+                        disabled={
+                          rows.length === 0 || isSavingTrip || !validFolio
+                        }
                         onClick={() => handleBulkSave(trip)}
                       >
                         Registrar cobros ({rows.length})
@@ -772,7 +833,11 @@ export const TripCollectionsPanel = ({ onSuccessToast }: Props) => {
             Cancelar
           </Button>
           <Button
-            disabled={createBulkPayments.isPending || confirmRows.length === 0}
+            disabled={
+              createBulkPayments.isPending ||
+              confirmRows.length === 0 ||
+              !validFolio
+            }
             onClick={confirmBulkSave}
           >
             Confirmar cobros ({confirmRows.length})

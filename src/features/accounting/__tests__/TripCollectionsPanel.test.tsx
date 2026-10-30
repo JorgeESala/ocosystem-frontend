@@ -25,6 +25,9 @@ vi.mock("../api/collections.queries", () => ({
 
 vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
   useCollectionAvailability: mocks.useCollectionAvailability,
+  useCashFlowSettings: () => ({
+    data: { directDepositClientIds: [] },
+  }),
 }));
 
 vi.mock("../api/payments.queries", () => ({

@@ -12,8 +12,10 @@ import { useClients } from "@/core/client/api/client.queries";
 import type { Client } from "@/core/api/types";
 import { useOpenAccounts } from "../../api/accounts-payable.queries";
 import {
+  useApplyCreditsToAccount,
   useCreateFifoPayment,
   useSameDayPayments,
+  useUnappliedPayments,
 } from "../../api/payments.queries";
 import type { PaymentMethod } from "../../types/payment.types";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -24,20 +26,32 @@ import {
   previewClientCollection,
   summarizeClientDebts,
 } from "../../utils/clientCollections";
-import { useCollectionAvailability } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
+import {
+  useCashFlowSettings,
+  useCollectionAvailability,
+} from "@/features/egg-cash-flow/api/eggCashFlow.queries";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
 import { ClientAutocomplete } from "./ClientAutocomplete";
 import { newClientRequestId } from "../../utils/requestId";
+import { openPaymentReceipt } from "../../utils/paymentReceipt";
 
 interface Props {
   onSuccessToast?: (message: string) => void;
 }
 
 interface CollectionResult {
+  paymentId: number;
+  clientName: string;
+  cedisName: string;
+  dateLabel: string;
+  amount: number;
   appliedAmount: number;
   parkedAmount: number;
   duplicate: boolean;
+  methodLabel: string;
+  folio: string | null;
+  collectorId: number | null;
 }
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -54,12 +68,15 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [paymentDate, setPaymentDate] = useState<Date>(new Date());
+  const [folio, setFolio] = useState("");
+  const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<CollectionResult | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const requestIdRef = useRef<string | null>(null);
   const createPayment = useCreateFifoPayment();
+  const applyCredits = useApplyCreditsToAccount();
 
   const { data: clients = [] } = useClients();
   const {
@@ -104,6 +121,34 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   } = useCollectionAvailability("EGG", isoDate);
   const verificationPending = pairLoading || availabilityLoading;
   const verificationError = pairError || availabilityError;
+  const { data: credits = [], refetch: refetchCredits } = useUnappliedPayments(
+    selectedClient?.accountingEntityId,
+  );
+  const { data: cashFlowSettings } = useCashFlowSettings("EGG");
+  const creditAvailable = credits.reduce(
+    (sum, payment) => sum + Number(payment.remainingAmount ?? 0),
+    0,
+  );
+  const directDeposit =
+    selectedClient != null &&
+    (cashFlowSettings?.directDepositClientIds ?? []).includes(
+      selectedClient.id,
+    );
+  const methodConflict =
+    selectedClient != null &&
+    (directDeposit ? paymentMethod === "CASH" : paymentMethod !== "CASH");
+  const requiresFolio = paymentMethod !== "CASH";
+  const validFolio = !requiresFolio || folio.trim().length > 0;
+  const oldestSelectedDebt = useMemo(
+    () =>
+      debts
+        .filter(
+          (debt) =>
+            debt.creditorId === selectedCedisId && Number(debt.balance) > 0,
+        )
+        .sort((left, right) => left.date.localeCompare(right.date))[0] ?? null,
+    [debts, selectedCedisId],
+  );
 
   useEffect(() => {
     if (!selectedClient) {
@@ -134,6 +179,8 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     setAmount("");
     setPaymentMethod("CASH");
     setPaymentDate(new Date());
+    setFolio("");
+    setNote("");
     setError(null);
     setLastResult(null);
   };
@@ -144,12 +191,28 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     setLastResult(null);
   };
 
+  const handleApplyCredit = () => {
+    if (!oldestSelectedDebt) return;
+    setError(null);
+    applyCredits.mutate(oldestSelectedDebt.id, {
+      onSuccess: (result) => {
+        onSuccessToast?.(
+          `Saldo a favor aplicado: ${formatMXN(result.data.totalApplied)}`,
+        );
+        refetch();
+        refetchCredits();
+      },
+      onError: (mutationError) => setError(extractErrorMessage(mutationError)),
+    });
+  };
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (
       !selectedClient?.accountingEntityId ||
       !selectedCedis ||
       !validAmount ||
+      !validFolio ||
       verificationError ||
       verificationPending
     ) {
@@ -168,7 +231,10 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
         paymentDate: isoDate,
         paymentMethod,
         clientRequestId,
-        note: `Cobranza cliente ${selectedClient.name ?? selectedClient.businessName ?? ""}`.trim(),
+        folio: folio.trim() || undefined,
+        note:
+          note.trim() ||
+          `Cobranza cliente ${selectedClient.name ?? selectedClient.businessName ?? ""}`.trim(),
       },
       {
         onSuccess: (payment) => {
@@ -176,13 +242,28 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
           const parkedAmount = payment.remainingAmount ?? preview.parkedAmount;
           const message = `Cobro registrado · aplicado ${formatMXN(appliedAmount)} · saldo a favor ${formatMXN(parkedAmount)}`;
           onSuccessToast?.(message);
-          setLastResult({ appliedAmount, parkedAmount, duplicate });
+          setLastResult({
+            paymentId: payment.id,
+            clientName:
+              selectedClient.name ?? selectedClient.businessName ?? "Cliente",
+            cedisName: selectedCedis.creditorName,
+            dateLabel: formatHumanDate(isoDate, "long"),
+            amount: amountValue,
+            appliedAmount,
+            parkedAmount,
+            duplicate,
+            methodLabel: METHOD_LABELS[paymentMethod],
+            folio: folio.trim() || null,
+            collectorId: payment.createdBy ?? null,
+          });
           requestIdRef.current = null;
           setSelectedClient(null);
           setSelectedCedisId(null);
           setAmount("");
           setPaymentMethod("CASH");
           setPaymentDate(new Date());
+          setFolio("");
+          setNote("");
           setResetKey((key) => key + 1);
           window.setTimeout(() => searchRef.current?.focus(), 0);
         },
@@ -220,10 +301,32 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
 
       {lastResult && (
         <Alert color="success">
-          <span className="font-medium">
-            Cobro registrado · aplicado {formatMXN(lastResult.appliedAmount)} ·
-            saldo a favor {formatMXN(lastResult.parkedAmount)}
-          </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-medium">
+              Cobro registrado · aplicado {formatMXN(lastResult.appliedAmount)}{" "}
+              · saldo a favor {formatMXN(lastResult.parkedAmount)}
+            </span>
+            <Button
+              size="xs"
+              color="gray"
+              onClick={() =>
+                openPaymentReceipt({
+                  paymentId: lastResult.paymentId,
+                  clientName: lastResult.clientName,
+                  cedisName: lastResult.cedisName,
+                  dateLabel: lastResult.dateLabel,
+                  amount: lastResult.amount,
+                  appliedAmount: lastResult.appliedAmount,
+                  parkedAmount: lastResult.parkedAmount,
+                  methodLabel: lastResult.methodLabel,
+                  folio: lastResult.folio,
+                  collectorId: lastResult.collectorId,
+                })
+              }
+            >
+              Imprimir recibo
+            </Button>
+          </div>
           {lastResult.duplicate && (
             <p className="mt-1 text-xs">
               También había un cobro con el mismo monto ese día para este
@@ -295,7 +398,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
         !debtsError &&
         summary.cedis.length > 0 && (
           <>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
                 <p className="text-xs tracking-wider text-gray-400 uppercase">
                   Deuda total
@@ -326,6 +429,27 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                 <p className="mt-1 text-lg font-semibold text-white">
                   {summary.debtCount}
                 </p>
+              </div>
+              <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+                <p className="text-xs tracking-wider text-gray-400 uppercase">
+                  Saldo a favor
+                </p>
+                <p className="mt-1 text-lg font-semibold text-amber-300">
+                  {formatMXN(creditAvailable)}
+                </p>
+                {creditAvailable > 0 && (
+                  <Button
+                    size="xs"
+                    color="gray"
+                    className="mt-2"
+                    disabled={!oldestSelectedDebt || applyCredits.isPending}
+                    onClick={handleApplyCredit}
+                  >
+                    {applyCredits.isPending
+                      ? "Aplicando..."
+                      : "Aplicar a deuda más antigua"}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -422,6 +546,49 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                 </div>
               </div>
 
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div>
+                  <Label htmlFor="collection-folio">
+                    Referencia{requiresFolio ? " *" : " (opcional)"}
+                  </Label>
+                  <TextInput
+                    id="collection-folio"
+                    value={folio}
+                    placeholder="Folio, transferencia o cheque"
+                    onChange={(event) => {
+                      requestIdRef.current = null;
+                      setFolio(event.target.value);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="collection-note">Nota (opcional)</Label>
+                  <TextInput
+                    id="collection-note"
+                    value={note}
+                    placeholder="Observaciones del cobro"
+                    onChange={(event) => {
+                      requestIdRef.current = null;
+                      setNote(event.target.value);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {requiresFolio && !validFolio && (
+                <p className="text-xs text-red-400">
+                  Captura la referencia para pagos que no son en efectivo.
+                </p>
+              )}
+
+              {methodConflict && (
+                <Alert color="warning">
+                  {directDeposit
+                    ? "Este cliente está configurado para depósito directo. Si registras efectivo, el movimiento se reflejará en caja."
+                    : "Este cliente no está configurado para depósito directo. Si registras un pago bancario, el movimiento se reflejará en banco."}
+                </Alert>
+              )}
+
               {duplicate && (
                 <Alert color="warning">
                   Ya existe un cobro de {formatMXN(amountValue)} el mismo día
@@ -438,6 +605,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                   type="submit"
                   disabled={
                     !validAmount ||
+                    !validFolio ||
                     createPayment.isPending ||
                     verificationError ||
                     verificationPending
