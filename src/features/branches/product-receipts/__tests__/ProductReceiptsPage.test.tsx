@@ -72,10 +72,14 @@ const summaries = [
 describe("ProductReceiptsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useProductReceipts.mockReturnValue({ data: summaries, isLoading: false, isError: false });
+    useProductReceipts.mockReturnValue({
+      data: summaries,
+      isLoading: false,
+      isError: false,
+    });
   });
 
-  it("shows the last 7 days from all branches on load, without searching", () => {
+  it("shows the last 30 days from all branches on load, without searching", () => {
     renderPage();
 
     expect(screen.getByText("Recepción de productos")).toBeInTheDocument();
@@ -86,8 +90,9 @@ describe("ProductReceiptsPage", () => {
     expect(filters.pendingCostOnly).toBe(false);
     expect(filters.unresolvedOnly).toBe(false);
     const spanDays =
-      (new Date(filters.to!).getTime() - new Date(filters.from!).getTime()) / 86400000;
-    expect(spanDays).toBe(6);
+      (new Date(filters.to!).getTime() - new Date(filters.from!).getTime()) /
+      86400000;
+    expect(spanDays).toBe(29);
   });
 
   it("lists receipts with pending-cost and unresolved states", () => {
@@ -137,9 +142,50 @@ describe("ProductReceiptsPage", () => {
   });
 
   it("shows an error state when loading fails", () => {
-    useProductReceipts.mockReturnValue({ data: undefined, isLoading: false, isError: true });
+    useProductReceipts.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    });
     renderPage();
 
-    expect(screen.getByText("No se pudieron cargar las recepciones.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No se pudieron cargar las recepciones."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the queried dates when there are no receptions", () => {
+    useProductReceipts.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    renderPage();
+
+    expect(screen.getByText(/No hay recepciones entre el/)).toBeInTheDocument();
+  });
+
+  it("restores the 30-day view from the empty state", () => {
+    useProductReceipts.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    });
+    renderPage();
+
+    fireEvent.click(screen.getByText("Sin costo"));
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    expect(lastCallFilters().pendingCostOnly).toBe(true);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver últimos 30 días" }),
+    );
+
+    const filters = lastCallFilters();
+    expect(filters.pendingCostOnly).toBe(false);
+    const spanDays =
+      (new Date(filters.to!).getTime() - new Date(filters.from!).getTime()) /
+      86400000;
+    expect(spanDays).toBe(29);
   });
 });

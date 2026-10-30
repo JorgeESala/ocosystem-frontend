@@ -75,9 +75,21 @@ const detail = {
 };
 
 vi.mock("../api/product-receipts.queries", () => ({
-  useReceiptDetail: vi.fn(() => ({ data: detail, isLoading: false, isError: false })),
-  useRecordCost: vi.fn(() => ({ mutate: recordCost, isPending: false, isError: false })),
-  useResolveLine: vi.fn(() => ({ mutate: resolveLine, isPending: false, isError: false })),
+  useReceiptDetail: vi.fn(() => ({
+    data: detail,
+    isLoading: false,
+    isError: false,
+  })),
+  useRecordCost: vi.fn(() => ({
+    mutate: recordCost,
+    isPending: false,
+    isError: false,
+  })),
+  useResolveLine: vi.fn(() => ({
+    mutate: resolveLine,
+    isPending: false,
+    isError: false,
+  })),
   useResolveWithProduct: vi.fn(() => ({
     mutate: resolveWithProduct,
     isPending: false,
@@ -148,7 +160,9 @@ describe("ReceiptDetailModal", () => {
   it("saves a unit cost with only the amount", () => {
     renderModal();
 
-    const saveButtons = screen.getAllByRole("button", { name: "Guardar costo" });
+    const saveButtons = screen.getAllByRole("button", {
+      name: "Guardar costo",
+    });
     expect(saveButtons[0]).toBeDisabled();
 
     const amountInputs = screen.getAllByPlaceholderText("0.00");
@@ -171,7 +185,9 @@ describe("ReceiptDetailModal", () => {
     const amountInputs = screen.getAllByPlaceholderText("0.00");
     fireEvent.change(amountInputs[0], { target: { value: "-5" } });
 
-    expect(screen.getAllByRole("button", { name: "Guardar costo" })[0]).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Guardar costo" })[0],
+    ).toBeDisabled();
   });
 
   it("shows both prices live in package mode and saves the package cost", () => {
@@ -183,7 +199,9 @@ describe("ReceiptDetailModal", () => {
     const amountInputs = screen.getAllByPlaceholderText("0.00");
     fireEvent.change(amountInputs[0], { target: { value: "850" } });
 
-    expect(screen.getAllByRole("button", { name: "Guardar costo" })[0]).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Guardar costo" })[0],
+    ).toBeDisabled();
 
     fireEvent.change(
       screen.getAllByPlaceholderText(/1 caja = 12 Kilo, escribe 12/)[0],
@@ -193,7 +211,9 @@ describe("ReceiptDetailModal", () => {
     expect(screen.getByText(/\$850\.00 por paquete/)).toBeInTheDocument();
     expect(screen.getByText(/\$17\.00 por Kilo/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Guardar costo" })[0]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Guardar costo" })[0],
+    );
     expect(recordCost).toHaveBeenCalledWith(
       {
         lineId: 101,
@@ -237,7 +257,9 @@ describe("ReceiptDetailModal", () => {
   it("searches the catalog and links the selected product", () => {
     renderModal();
 
-    expect(screen.queryByPlaceholderText("A unidad del producto")).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("A unidad del producto"),
+    ).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText("Código o nombre"), {
       target: { value: "frijol" },
@@ -260,7 +282,9 @@ describe("ReceiptDetailModal", () => {
     fireEvent.change(screen.getByPlaceholderText("Código o nombre"), {
       target: { value: "azúcar" },
     });
-    expect(screen.getByText("Sin coincidencias en el catálogo.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Sin coincidencias en el catálogo."),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: "No es ninguno: crear producto" }),
@@ -286,6 +310,8 @@ describe("ReceiptDetailModal", () => {
       },
       expect.anything(),
     );
-    expect(screen.getByText("Producto creado y vinculado.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Producto creado y vinculado."),
+    ).toBeInTheDocument();
   });
 });

@@ -15,6 +15,7 @@ export type CashFlowCategory =
 export type CashFlowSourceType =
   | "TRIP"
   | "PAYMENT"
+  | "PAYMENT_REVERSAL"
   | "CLIENT"
   | "EXPENSE"
   | "ACCOUNTS_PAYABLE"
@@ -215,4 +216,10 @@ export interface AvailableExpense {
   categoryName: string | null;
   reason: string | null;
   linked: boolean;
+}
+
+export interface CashFlowCollectionAvailability {
+  writable: boolean;
+  reason: "OK" | "NO_SETTINGS" | "BEFORE_TRACKING" | "CLOSED_WEEK";
+  message: string | null;
 }

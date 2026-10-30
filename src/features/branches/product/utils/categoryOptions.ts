@@ -17,7 +17,9 @@ export function isEggPiezaCategory(
     visited.add(currentId);
     const category = categoriesById.get(currentId);
     if (!category) return false;
-    if (category.name.trim().toLowerCase() === EGG_PIEZA_CATEGORY_NAME) return true;
+    if (category.name.trim().toLowerCase() === EGG_PIEZA_CATEGORY_NAME) {
+      return true;
+    }
     currentId = category.parentId ?? null;
   }
   return false;

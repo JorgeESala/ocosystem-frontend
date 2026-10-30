@@ -17,7 +17,7 @@ import { useAccountingEntities } from "@/features/accounting/api/accounting-enti
 import { AccountDetailDrawer } from "@/features/accounting/components/AccountDetailDrawer";
 import { ClientReportDrawer } from "@/features/accounting/components/ClientReportDrawer";
 import { CreateAccountsPayableModal } from "@/features/accounting/components/CreateAccountsPayableModal";
-import { RouteCollectionsPanel } from "@/features/accounting/components/RouteCollectionsPanel";
+import { CobranzaWorkbench } from "@/features/accounting/components/collections/CobranzaWorkbench";
 import { PaidSummaryCard } from "@/features/accounting/components/PaidSummaryCard";
 import { ClientPaymentsDrawer } from "@/features/accounting/components/ClientPaymentsDrawer";
 import { useRoutes } from "@/core/api/route/routes.queries";
@@ -88,7 +88,9 @@ export const EggAccountsPage = () => {
 
   const initialMode = (searchParams.get("mode") as ViewMode) || "RECEIVABLE";
   const [viewMode, setViewMode] = useState<ViewMode>(
-    initialMode === "PAYABLE" || initialMode === "FINANCIAL"
+    initialMode === "PAYABLE" ||
+      initialMode === "FINANCIAL" ||
+      initialMode === "COBRANZA"
       ? initialMode
       : "RECEIVABLE",
   );
@@ -312,7 +314,7 @@ export const EggAccountsPage = () => {
     isError: accountsError,
     error: accountsErrorDetail,
     refetch: refetchAccounts,
-  } = useOpenAccounts(queryParams);
+  } = useOpenAccounts(queryParams, viewMode !== "COBRANZA");
 
   const paymentFirstPrimaryParams = receivable
     ? {
@@ -337,11 +339,11 @@ export const EggAccountsPage = () => {
   const {
     data: paymentFirstPrimary = [],
     isLoading: paymentFirstPrimaryLoading,
-  } = useOpenAccounts(paymentFirstPrimaryParams);
+  } = useOpenAccounts(paymentFirstPrimaryParams, viewMode !== "COBRANZA");
   const {
     data: paymentFirstSecondary = [],
     isLoading: paymentFirstSecondaryLoading,
-  } = useOpenAccounts(paymentFirstSecondaryParams);
+  } = useOpenAccounts(paymentFirstSecondaryParams, viewMode !== "COBRANZA");
 
   const filtered = useMemo(
     () =>
@@ -457,11 +459,17 @@ export const EggAccountsPage = () => {
             <HiClock className="mr-2 h-4 w-4" />
             Pagos recientes
           </Button>
-          <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
-            <HiPlus className="mr-2 h-4 w-4" />
-            Registrar pago
-          </Button>
-          <Button onClick={() => setOpenCreateModal(true)}>Crear Cuenta</Button>
+          {viewMode !== "COBRANZA" && (
+            <>
+              <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
+                <HiPlus className="mr-2 h-4 w-4" />
+                Registrar pago
+              </Button>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                Crear Cuenta
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -503,11 +511,7 @@ export const EggAccountsPage = () => {
       )}
 
       {viewMode === "COBRANZA" ? (
-        <RouteCollectionsPanel
-          creditorEntityType="EGGCEDIS"
-          businessUnitName="Huevo"
-          onSuccessToast={setToastMessage}
-        />
+        <CobranzaWorkbench onSuccessToast={setToastMessage} />
       ) : viewMode === "FINANCIAL" ? (
         <CedisFinancialSummary
           cedisIds={selectedCedis.length > 0 ? selectedCedis : undefined}

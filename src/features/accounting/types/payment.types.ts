@@ -21,6 +21,10 @@ export interface CreateFifoPaymentRequest {
 
   folio?: string;
   note?: string;
+  driverId?: number;
+  routeId?: number;
+  tripId?: number;
+  clientRequestId?: string;
 }
 
 export interface CreatePaymentRequest {
@@ -36,6 +40,7 @@ export interface CreatePaymentRequest {
   note?: string;
   driverId?: number;
   routeId?: number;
+  tripId?: number;
 }
 
 export interface CreateAdvancePaymentRequest {
@@ -63,10 +68,22 @@ export interface PaymentResponse {
   note?: string;
   status: PaymentStatus;
   createdAt: string; // ISO
+  createdBy?: number;
+  cancelledBy?: number;
+  cancelledAt?: string;
+  cashFlowStatus?: "PENDING" | "SYNCED" | "SKIPPED" | "FAILED";
   payerName?: string;
   receiverName?: string;
   payerEntityId?: number;
   receiverEntityId?: number;
+  tripId?: number;
+}
+
+export interface BulkPaymentResult {
+  created: number;
+  appliedTotal: number;
+  parkedTotal: number;
+  paymentIds: number[];
 }
 
 export interface FifoPaymentPreviewItem {

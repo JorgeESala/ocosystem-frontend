@@ -1,6 +1,7 @@
 import { http } from "@/shared/api/http";
 import type {
   AvailableExpense,
+  CashFlowCollectionAvailability,
   CashFlowCut,
   CashFlowMovement,
   CashFlowSettings,
@@ -44,6 +45,16 @@ export const eggCashFlowApi = {
     const { data } = await http.put<CashFlowSettings>(
       `${BASE_URL}/settings`,
       payload,
+    );
+    return data;
+  },
+
+  getCollectionAvailability: async (
+    date: string,
+  ): Promise<CashFlowCollectionAvailability> => {
+    const { data } = await http.get<CashFlowCollectionAvailability>(
+      `${BASE_URL}/collections/availability`,
+      { params: { date } },
     );
     return data;
   },

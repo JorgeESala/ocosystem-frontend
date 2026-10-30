@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from "flowbite-react";
 import { useState } from "react";
-import { HiArrowLeft, HiX } from "react-icons/hi";
+import { HiArrowLeft, HiPrinter, HiX } from "react-icons/hi";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/features/accounting/api/payments.queries";
 import type { PaymentResponse, PaymentMethod } from "../types/payment.types";
 import { hasUnappliedCredit } from "../utils/unappliedCredit";
+import { openPaymentReceipt } from "../utils/paymentReceipt";
 
 const methodLabels: Record<PaymentMethod, string> = {
   CASH: "Efectivo",
@@ -96,6 +97,18 @@ export const RecentPaymentsDrawer = ({
                         <span className="truncate">
                           {p.folio ? `Folio ${p.folio}` : "Sin folio"}
                         </span>
+                        {p.createdBy != null && (
+                          <>
+                            <span>·</span>
+                            <span>Registró #{p.createdBy}</span>
+                          </>
+                        )}
+                        {p.cancelledBy != null && (
+                          <>
+                            <span>·</span>
+                            <span>Canceló #{p.cancelledBy}</span>
+                          </>
+                        )}
                       </div>
                       <div className="mt-1 truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                         {p.payerName ?? "—"}
@@ -119,9 +132,40 @@ export const RecentPaymentsDrawer = ({
                             Saldo a favor {formatMXN(p.remainingAmount ?? 0)}
                           </Badge>
                         )}
+                        {(p.cashFlowStatus === "PENDING" ||
+                          p.cashFlowStatus === "FAILED") && (
+                          <Badge color="failure">Caja pendiente</Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-start">
+                    <div className="flex shrink-0 items-start gap-1">
+                      <Tooltip content="Imprimir recibo">
+                        <Button
+                          size="xs"
+                          color="gray"
+                          onClick={() =>
+                            openPaymentReceipt({
+                              paymentId: p.id,
+                              clientName: p.payerName ?? "—",
+                              cedisName: p.receiverName ?? "—",
+                              dateLabel: formatHumanDate(p.paymentDate, "long"),
+                              amount: p.amount,
+                              appliedAmount:
+                                p.appliedAmount ??
+                                Math.max(
+                                  0,
+                                  p.amount - (p.remainingAmount ?? 0),
+                                ),
+                              parkedAmount: p.remainingAmount ?? 0,
+                              methodLabel: methodLabels[p.paymentMethod],
+                              folio: p.folio ?? null,
+                              collectorId: p.createdBy ?? null,
+                            })
+                          }
+                        >
+                          <HiPrinter className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
                       {isActive && !isConfirming && (
                         <Tooltip content="Cancelar pago">
                           <Button

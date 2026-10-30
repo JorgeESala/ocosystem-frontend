@@ -5,6 +5,8 @@ export const eggCashFlowKeys = (unit: EggCashFlowUnit) => {
   return {
     all,
     settings: () => [...all, "settings"] as const,
+    collectionAvailability: (date: string) =>
+      [...all, "collection-availability", date] as const,
     summary: (from: string, to: string) =>
       [...all, "summary", { from, to }] as const,
     movements: (from: string, to: string) =>
