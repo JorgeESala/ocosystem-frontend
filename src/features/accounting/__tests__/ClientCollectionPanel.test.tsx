@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   useClients: vi.fn(),
   useOpenAccounts: vi.fn(),
   useSameDayPayments: vi.fn(),
+  useUnappliedPayments: vi.fn(),
+  applyCreditsMutate: vi.fn(),
   createPaymentMutate: vi.fn(),
   lastPayload: null as Record<string, unknown> | null,
 }));
@@ -25,6 +27,9 @@ vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
   useCollectionAvailability: () => ({
     data: { writable: true, reason: "OK", message: null },
   }),
+  useCashFlowSettings: () => ({
+    data: { directDepositClientIds: [] },
+  }),
 }));
 
 vi.mock("../api/payments.queries", () => ({
@@ -33,6 +38,11 @@ vi.mock("../api/payments.queries", () => ({
     isPending: false,
   }),
   useSameDayPayments: mocks.useSameDayPayments,
+  useUnappliedPayments: mocks.useUnappliedPayments,
+  useApplyCreditsToAccount: () => ({
+    mutate: mocks.applyCreditsMutate,
+    isPending: false,
+  }),
 }));
 
 const creditClient = {
@@ -128,6 +138,10 @@ describe("ClientCollectionPanel", () => {
       refetch: vi.fn(),
     });
     mocks.useSameDayPayments.mockReturnValue({ data: [] });
+    mocks.useUnappliedPayments.mockReturnValue({
+      data: [],
+      refetch: vi.fn(),
+    });
     mocks.createPaymentMutate.mockImplementation(
       (
         payload: Record<string, unknown>,
@@ -166,6 +180,45 @@ describe("ClientCollectionPanel", () => {
     expect(
       screen.getByRole("button", { name: "Registrar cobro" }),
     ).toBeDisabled();
+  });
+
+  it("shows available credit and applies it to the oldest debt", async () => {
+    mocks.useUnappliedPayments.mockReturnValue({
+      data: [{ id: 1, remainingAmount: 100 }],
+      refetch: vi.fn(),
+    });
+    renderPanel();
+    selectCreditClient();
+
+    expect(await screen.findByText("Saldo a favor")).toBeInTheDocument();
+    expect(screen.getByText("$100.00")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Aplicar a deuda más antigua" }),
+    );
+
+    expect(mocks.applyCreditsMutate).toHaveBeenCalledWith(
+      11,
+      expect.any(Object),
+    );
+  });
+
+  it("requires a reference for non-cash payments", async () => {
+    renderPanel();
+    selectCreditClient();
+
+    fireEvent.change(screen.getByLabelText("Método de pago"), {
+      target: { value: "BANK_TRANSFER" },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Registrar cobro" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Referencia/), {
+      target: { value: "TRANSFER-123" },
+    });
+    expect(
+      screen.getByRole("button", { name: "Registrar cobro" }),
+    ).toBeEnabled();
   });
 
   it("prefills the client debt, cash and submits the payment", async () => {
