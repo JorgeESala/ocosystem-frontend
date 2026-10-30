@@ -131,6 +131,10 @@ export const RecentPaymentsDrawer = ({
                             Saldo a favor {formatMXN(p.remainingAmount ?? 0)}
                           </Badge>
                         )}
+                        {(p.cashFlowStatus === "PENDING" ||
+                          p.cashFlowStatus === "FAILED") && (
+                          <Badge color="failure">Caja pendiente</Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-start">

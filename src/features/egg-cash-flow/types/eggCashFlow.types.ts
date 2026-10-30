@@ -15,6 +15,7 @@ export type CashFlowCategory =
 export type CashFlowSourceType =
   | "TRIP"
   | "PAYMENT"
+  | "PAYMENT_REVERSAL"
   | "CLIENT"
   | "EXPENSE"
   | "ACCOUNTS_PAYABLE"
