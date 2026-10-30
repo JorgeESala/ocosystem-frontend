@@ -71,6 +71,7 @@ export interface PaymentResponse {
   createdBy?: number;
   cancelledBy?: number;
   cancelledAt?: string;
+  cashFlowStatus?: "PENDING" | "SYNCED" | "SKIPPED" | "FAILED";
   payerName?: string;
   receiverName?: string;
   payerEntityId?: number;
