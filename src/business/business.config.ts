@@ -115,20 +115,66 @@ const LIVE_CHICKEN_MENU = [
   { to: "general-cash", label: "Caja general", icon: HiBanknotes },
 ];
 const EGG_MENU = [
-  { to: "reports", label: "Reportes", icon: FaFileAlt },
-  { to: "graphs", label: "Comparativas", icon: FaChartBar },
-  { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
-  { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
-  { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
-  { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
+  {
+    to: "salesAndBatches",
+    label: "Entradas y Ventas",
+    icon: FaBoxes,
+    group: "Operación",
+  },
+  {
+    to: "expenses",
+    label: "Registrar gasto",
+    icon: GiPayMoney,
+    group: "Operación",
+  },
+  {
+    to: "clients-routes",
+    label: "Clientes y Rutas",
+    icon: HiUserGroup,
+    group: "Operación",
+  },
+  {
+    to: "accounting",
+    label: "Contabilidad",
+    icon: GiReceiveMoney,
+    group: "Finanzas",
+  },
+  {
+    to: "cash-flow",
+    label: "Flujo de efectivo",
+    icon: FaUniversity,
+    group: "Finanzas",
+  },
+  {
+    to: "general-cash",
+    label: "Caja general",
+    icon: HiBanknotes,
+    group: "Finanzas",
+  },
+  {
+    to: "reports",
+    label: "Reportes",
+    icon: FaFileAlt,
+    group: "Análisis",
+  },
+  {
+    to: "graphs",
+    label: "Comparativas",
+    icon: FaChartBar,
+    group: "Análisis",
+  },
   {
     to: "income-statement",
     label: "Estado de resultados",
     icon: FaFileInvoiceDollar,
+    group: "Análisis",
   },
-  { to: "profit", label: "Ganancias", icon: GiReceiveMoney },
-  { to: "general-cash", label: "Caja general", icon: HiBanknotes },
-  { to: "cash-flow", label: "Flujo de efectivo", icon: FaUniversity },
+  {
+    to: "profit",
+    label: "Ganancias",
+    icon: GiReceiveMoney,
+    group: "Análisis",
+  },
 ];
 
 export const BUSINESSES: BusinessConfig[] = [

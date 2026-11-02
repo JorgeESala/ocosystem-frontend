@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
   batchId: number | null;
   highlightSaleId?: number | null;
+  highlightLabel?: string;
   unitType?: BusinessUnitType;
 }
 
@@ -28,6 +29,7 @@ export const BatchPreviewDrawer = ({
   onClose,
   batchId,
   highlightSaleId,
+  highlightLabel,
   unitType,
 }: Props) => {
   const { slug } = useParams<{ slug: string }>();
@@ -74,7 +76,7 @@ export const BatchPreviewDrawer = ({
       open={open}
       onClose={onClose}
       position="right"
-      className="w-[550px]"
+      className="dark w-[550px]"
     >
       <DrawerHeader title={batchId ? `Remesa #${batchId}` : "Remesa"}>
         {batchId && (
@@ -180,7 +182,7 @@ export const BatchPreviewDrawer = ({
             {highlightedMov && (
               <div>
                 <h4 className="mb-2 text-xs font-bold tracking-widest text-blue-400 uppercase">
-                  Venta que generó esta cuenta
+                  {highlightLabel ?? "Venta que generó esta cuenta"}
                 </h4>
                 <div
                   ref={highlightRef}

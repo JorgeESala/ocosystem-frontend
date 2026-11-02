@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   Alert,
   Badge,
@@ -17,6 +18,7 @@ import {
   HiChevronDown,
   HiChevronUp,
   HiDocumentDownload,
+  HiOutlineExternalLink,
   HiTruck,
 } from "react-icons/hi";
 import { useRoutes } from "@/core/api/route/routes.queries";
@@ -24,6 +26,10 @@ import {
   useCashFlowSettings,
   useCollectionAvailability,
 } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
+import { useTripSales } from "@/features/trips/api/trips.queries";
+import type { TripSaleDTO } from "@/features/trips/types/trip.types";
+import { BatchPreviewDrawer } from "@/features/batch/components/BatchPreviewDrawer";
+import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { useTripCollections } from "../../api/collections.queries";
@@ -43,6 +49,7 @@ import {
 } from "../../utils/collectionsSheet";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { newClientRequestId } from "../../utils/requestId";
 
 interface Props {
@@ -74,10 +81,22 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
 const keyFor = (trip: TripCollection, client: TripCollectionClient) =>
   `${trip.tripId}:${client.clientId ?? client.clientName}`;
 
+const normalizeCashName = (name: string | null | undefined) => {
+  const normalized = (name ?? "").trim().toLowerCase();
+  return normalized === "venta directa" ? "" : normalized;
+};
+
+const clientSalesKey = (
+  clientId: number | null,
+  clientName: string | null | undefined,
+) =>
+  clientId != null ? `id:${clientId}` : `cash:${normalizeCashName(clientName)}`;
+
 export const TripCollectionsPanel = ({
   collectorName = "",
   onSuccessToast,
 }: Props) => {
+  const { slug } = useParams();
   const [collectionDate, setCollectionDate] = useState<Date>(new Date());
   const [routeId, setRouteId] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
@@ -88,6 +107,21 @@ export const TripCollectionsPanel = ({
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ResultSummary | null>(null);
   const [confirmTrip, setConfirmTrip] = useState<TripCollection | null>(null);
+  const [confirmFillTrip, setConfirmFillTrip] = useState<TripCollection | null>(
+    null,
+  );
+  const [confirmFilterChange, setConfirmFilterChange] = useState<
+    | { type: "date"; value: Date }
+    | { type: "route"; value: number | null }
+    | null
+  >(null);
+  const [expandedClientKey, setExpandedClientKey] = useState<string | null>(
+    null,
+  );
+  const [previewSale, setPreviewSale] = useState<{
+    batchId: number;
+    saleId: number;
+  } | null>(null);
 
   const { data: routes = [] } = useRoutes();
   const isoDate = toLocalDateString(collectionDate);
@@ -108,6 +142,14 @@ export const TripCollectionsPanel = ({
   } = useCollectionAvailability("EGG", isoDate);
   const verificationBlocked = availabilityError || availabilityLoading;
   const { data: cashFlowSettings } = useCashFlowSettings("EGG");
+  const {
+    data: tripSales = [],
+    isLoading: tripSalesLoading,
+    isError: tripSalesError,
+    refetch: refetchTripSales,
+  } = useTripSales("EGG", expandedTripId, {
+    enabled: expandedTripId != null,
+  });
   const directDepositIds = new Set(
     cashFlowSettings?.directDepositClientIds ?? [],
   );
@@ -125,6 +167,53 @@ export const TripCollectionsPanel = ({
       ),
     [trips],
   );
+
+  const hasDrafts = useMemo(
+    () => Object.values(drafts).some((draft) => Number(draft.amount) > 0),
+    [drafts],
+  );
+
+  const salesByClient = useMemo(() => {
+    const map = new Map<string, TripSaleDTO[]>();
+    for (const sale of tripSales) {
+      const key = clientSalesKey(sale.clientId ?? null, sale.clientName);
+      const list = map.get(key) ?? [];
+      list.push(sale);
+      map.set(key, list);
+    }
+    return map;
+  }, [tripSales]);
+
+  const cashSales = useMemo(
+    () => tripSales.filter((sale) => sale.clientId == null),
+    [tripSales],
+  );
+
+  const salesForClient = (client: TripCollectionClient) => {
+    const exact = salesByClient.get(
+      clientSalesKey(client.clientId, client.clientName),
+    );
+    if (exact?.length) return exact;
+    return client.clientId == null ? cashSales : [];
+  };
+
+  const applyFilterChange = (
+    change:
+      | { type: "date"; value: Date }
+      | { type: "route"; value: number | null },
+  ) => {
+    if (change.type === "date") {
+      setCollectionDate(change.value);
+    } else {
+      setRouteId(change.value);
+    }
+    setExpandedTripId(null);
+    setExpandedClientKey(null);
+    setPreviewSale(null);
+    setDrafts({});
+    setLastResult(null);
+    setConfirmFilterChange(null);
+  };
 
   const draftFor = (trip: TripCollection, client: TripCollectionClient) => {
     const key = keyFor(trip, client);
@@ -213,6 +302,17 @@ export const TripCollectionsPanel = ({
       });
     setDrafts(next);
     setLastResult(null);
+  };
+
+  const handleFillTripDrafts = (trip: TripCollection) => {
+    const hasEnteredAmounts = trip.clients.some(
+      (client) => Number(draftFor(trip, client).amount) > 0,
+    );
+    if (hasEnteredAmounts) {
+      setConfirmFillTrip(trip);
+      return;
+    }
+    fillTripDrafts(trip);
   };
 
   const rowsToSave = (trip: TripCollection) =>
@@ -386,12 +486,12 @@ export const TripCollectionsPanel = ({
             maxDate={new Date()}
             value={collectionDate}
             onChange={(value) => {
-              if (value) {
-                setCollectionDate(value);
-                setExpandedTripId(null);
-                setDrafts({});
-                setLastResult(null);
+              if (!value) return;
+              if (hasDrafts) {
+                setConfirmFilterChange({ type: "date", value });
+                return;
               }
+              applyFilterChange({ type: "date", value });
             }}
           />
         </div>
@@ -401,12 +501,14 @@ export const TripCollectionsPanel = ({
             id="trip-collection-route"
             value={routeId ?? ""}
             onChange={(event) => {
-              setRouteId(
-                event.target.value ? Number(event.target.value) : null,
-              );
-              setExpandedTripId(null);
-              setDrafts({});
-              setLastResult(null);
+              const value = event.target.value
+                ? Number(event.target.value)
+                : null;
+              if (hasDrafts) {
+                setConfirmFilterChange({ type: "route", value });
+                return;
+              }
+              applyFilterChange({ type: "route", value });
             }}
           >
             <option value="">Todas las rutas</option>
@@ -467,7 +569,7 @@ export const TripCollectionsPanel = ({
         </p>
       </div>
 
-      {!collectorName && (
+      {!collectorName && trips.length > 0 && (
         <Alert color="warning">
           Selecciona un cobrador para imprimir las hojas de cobranza.
         </Alert>
@@ -564,7 +666,10 @@ export const TripCollectionsPanel = ({
             <button
               type="button"
               className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-gray-800/40"
-              onClick={() => setExpandedTripId(expanded ? null : trip.tripId)}
+              onClick={() => {
+                setExpandedTripId(expanded ? null : trip.tripId);
+                setExpandedClientKey(null);
+              }}
             >
               <div className="flex items-center gap-3">
                 <HiTruck className="h-5 w-5 text-blue-400" />
@@ -633,123 +738,291 @@ export const TripCollectionsPanel = ({
                     const draft = draftFor(trip, client);
                     const isCash = client.accountingEntityId == null;
                     const amount = Number(draft.amount);
+                    const clientKey = keyFor(trip, client);
+                    const clientSales = salesForClient(client);
+                    const totalPieces = clientSales.reduce(
+                      (sum, sale) => sum + Number(sale.quantity ?? 0),
+                      0,
+                    );
+                    const clientSalesTotal = clientSales.reduce(
+                      (sum, sale) => sum + Number(sale.saleTotal ?? 0),
+                      0,
+                    );
+                    const originOpen = expandedClientKey === clientKey;
                     return (
-                      <div
-                        key={keyFor(trip, client)}
-                        className="grid items-center gap-3 px-4 py-3 text-sm lg:grid-cols-12"
-                      >
-                        <div className="lg:col-span-3">
-                          <p className="font-medium text-white">
-                            {client.clientName}
-                            {isCash && (
-                              <Badge
-                                color="warning"
-                                className="ml-2 inline-block"
-                              >
-                                Contado
-                              </Badge>
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {client.phone ?? "Sin teléfono"}
-                          </p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-                            Venta
-                          </p>
-                          <p className="font-semibold text-white">
-                            {formatMXN(client.saleTotal)}
-                          </p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-                            Saldo abierto
-                          </p>
-                          <p className="font-semibold text-white">
-                            {isCash ? "—" : formatMXN(client.saldoTotal)}
-                          </p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-                            Antigüedad
-                          </p>
-                          {client.oldestDebtDate ? (
-                            <AgingBadge isoDate={client.oldestDebtDate} />
-                          ) : (
-                            <span className="text-xs text-gray-500">—</span>
-                          )}
-                        </div>
-                        {isCash ? (
-                          <div className="text-xs text-gray-500 lg:col-span-3">
-                            Su cobro se maneja en el flujo de efectivo.
+                      <div key={clientKey}>
+                        <div className="grid items-center gap-3 px-4 py-3 text-sm lg:grid-cols-12">
+                          <div className="lg:col-span-3">
+                            <p className="font-medium text-white">
+                              {client.clientName}
+                              {isCash && (
+                                <Badge
+                                  color="warning"
+                                  className="ml-2 inline-block"
+                                >
+                                  Contado
+                                </Badge>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {client.phone ?? "Sin teléfono"}
+                            </p>
+                            <button
+                              type="button"
+                              className="mt-1 inline-flex items-center gap-1 text-xs text-blue-400 hover:underline"
+                              aria-expanded={originOpen}
+                              aria-controls={`origen-${clientKey}`}
+                              aria-label={`${originOpen ? "Ocultar" : "Ver"} origen de ${client.clientName}`}
+                              onClick={() =>
+                                setExpandedClientKey(
+                                  originOpen ? null : clientKey,
+                                )
+                              }
+                            >
+                              {originOpen ? (
+                                <HiChevronUp className="h-3 w-3" />
+                              ) : (
+                                <HiChevronDown className="h-3 w-3" />
+                              )}
+                              {originOpen ? "Ocultar origen" : "Ver origen"}
+                            </button>
                           </div>
-                        ) : (
-                          <div className="flex flex-wrap items-end gap-2 lg:col-span-3">
-                            {client.cedisBalances.length > 1 && (
-                              <div className="w-32">
-                                <Label
-                                  htmlFor={`cedis-${keyFor(trip, client)}`}
-                                >
-                                  CEDIS
-                                </Label>
-                                <Select
-                                  id={`cedis-${keyFor(trip, client)}`}
-                                  sizing="sm"
-                                  value={draft.cedisId ?? ""}
-                                  onChange={(event) =>
-                                    setDraftCedis(
-                                      trip,
-                                      client,
-                                      Number(event.target.value),
-                                    )
-                                  }
-                                >
-                                  {client.cedisBalances.map((cedis) => (
-                                    <option
-                                      key={cedis.creditorId}
-                                      value={cedis.creditorId}
-                                    >
-                                      {cedis.creditorName} ·{" "}
-                                      {formatMXN(cedis.balance)}
-                                    </option>
-                                  ))}
-                                </Select>
+                          <div className="lg:col-span-2">
+                            <p className="text-[10px] tracking-wider text-gray-500 uppercase">
+                              Venta
+                            </p>
+                            <p className="font-semibold text-white">
+                              {formatMXN(client.saleTotal)}
+                            </p>
+                            {clientSales.length > 0 && (
+                              <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-500">
+                                <span>
+                                  {clientSales.length} venta
+                                  {clientSales.length === 1 ? "" : "s"}
+                                </span>
+                                <span aria-hidden>·</span>
+                                <EggQuantityDisplay totalPieces={totalPieces} />
                               </div>
                             )}
-                            <div className="w-28">
-                              <Label htmlFor={`amount-${keyFor(trip, client)}`}>
-                                Monto
-                              </Label>
-                              <TextInput
-                                id={`amount-${keyFor(trip, client)}`}
-                                type="number"
-                                sizing="sm"
-                                min={0}
-                                step="0.01"
-                                value={draft.amount}
-                                disabled={
-                                  !draft.cedis || draft.cedis.balance <= 0
-                                }
-                                onChange={(event) =>
-                                  setDraftAmount(
-                                    trip,
-                                    client,
-                                    event.target.value,
-                                  )
-                                }
-                              />
+                          </div>
+                          <div className="lg:col-span-2">
+                            <p className="text-[10px] tracking-wider text-gray-500 uppercase">
+                              Saldo abierto
+                            </p>
+                            <p className="font-semibold text-white">
+                              {isCash ? "—" : formatMXN(client.saldoTotal)}
+                            </p>
+                          </div>
+                          <div className="lg:col-span-2">
+                            <p className="text-[10px] tracking-wider text-gray-500 uppercase">
+                              Antigüedad
+                            </p>
+                            {client.oldestDebtDate ? (
+                              <AgingBadge isoDate={client.oldestDebtDate} />
+                            ) : (
+                              <span className="text-xs text-gray-500">—</span>
+                            )}
+                          </div>
+                          {isCash ? (
+                            <div className="text-xs lg:col-span-3">
+                              <Link
+                                to={`/business/${slug}/cash-flow`}
+                                className="text-blue-400 hover:underline"
+                              >
+                                Su cobro se maneja en el flujo de efectivo.
+                              </Link>
                             </div>
-                            <Button
-                              size="xs"
-                              color="gray"
-                              disabled={
-                                amount <= 0 || isSavingTrip || !validFolio
-                              }
-                              onClick={() => handleRowSave(trip, client)}
-                            >
-                              Cobrar
-                            </Button>
+                          ) : (
+                            <div className="flex flex-wrap items-end gap-2 lg:col-span-3">
+                              {client.cedisBalances.length > 1 && (
+                                <div className="w-32">
+                                  <Label
+                                    htmlFor={`cedis-${keyFor(trip, client)}`}
+                                  >
+                                    CEDIS
+                                  </Label>
+                                  <Select
+                                    id={`cedis-${keyFor(trip, client)}`}
+                                    sizing="sm"
+                                    value={draft.cedisId ?? ""}
+                                    onChange={(event) =>
+                                      setDraftCedis(
+                                        trip,
+                                        client,
+                                        Number(event.target.value),
+                                      )
+                                    }
+                                  >
+                                    {client.cedisBalances.map((cedis) => (
+                                      <option
+                                        key={cedis.creditorId}
+                                        value={cedis.creditorId}
+                                      >
+                                        {cedis.creditorName} ·{" "}
+                                        {formatMXN(cedis.balance)}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                </div>
+                              )}
+                              <div className="w-28">
+                                <Label
+                                  htmlFor={`amount-${keyFor(trip, client)}`}
+                                >
+                                  Monto
+                                </Label>
+                                <TextInput
+                                  id={`amount-${keyFor(trip, client)}`}
+                                  type="number"
+                                  sizing="sm"
+                                  min={0}
+                                  step="0.01"
+                                  value={draft.amount}
+                                  disabled={
+                                    !draft.cedis || draft.cedis.balance <= 0
+                                  }
+                                  onChange={(event) =>
+                                    setDraftAmount(
+                                      trip,
+                                      client,
+                                      event.target.value,
+                                    )
+                                  }
+                                />
+                              </div>
+                              <Button
+                                size="xs"
+                                color="gray"
+                                title="Registra solo el cobro de este cliente"
+                                disabled={
+                                  amount <= 0 || isSavingTrip || !validFolio
+                                }
+                                onClick={() => handleRowSave(trip, client)}
+                              >
+                                Guardar solo este
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        {originOpen && (
+                          <div
+                            id={`origen-${clientKey}`}
+                            className="border-t border-gray-800 bg-gray-950/30 px-4 py-3"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                                Ventas que forman este cobro
+                              </p>
+                              {clientSales.length > 0 && (
+                                <p className="text-xs text-gray-500">
+                                  {clientSales.length} venta
+                                  {clientSales.length === 1 ? "" : "s"} ·{" "}
+                                  {formatMXN(clientSalesTotal)}
+                                </p>
+                              )}
+                            </div>
+
+                            {tripSalesLoading ? (
+                              <div className="flex justify-center py-4">
+                                <Spinner size="sm" />
+                              </div>
+                            ) : tripSalesError ? (
+                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-red-400">
+                                <span>
+                                  No se pudo cargar el origen de las ventas.
+                                </span>
+                                <Button
+                                  size="xs"
+                                  color="gray"
+                                  onClick={() => refetchTripSales()}
+                                >
+                                  Reintentar
+                                </Button>
+                              </div>
+                            ) : clientSales.length === 0 ? (
+                              <p className="mt-2 text-xs text-gray-500">
+                                No encontramos el detalle de las ventas de este
+                                cliente en el despacho.
+                              </p>
+                            ) : (
+                              <>
+                                <div className="mt-3 hidden grid-cols-12 gap-2 px-3 text-[10px] font-semibold tracking-wider text-gray-500 uppercase sm:grid">
+                                  <span className="col-span-2">Fecha</span>
+                                  <span className="col-span-3">Remesa</span>
+                                  <span className="col-span-3 text-center">
+                                    Cantidad
+                                  </span>
+                                  <span className="col-span-2 text-right">
+                                    Total
+                                  </span>
+                                  <span className="col-span-2 text-right">
+                                    Referencia
+                                  </span>
+                                </div>
+                                <div className="mt-2 space-y-2">
+                                  {clientSales.map((sale) => (
+                                    <div
+                                      key={sale.id}
+                                      className="grid grid-cols-2 items-center gap-2 rounded-lg border border-gray-800 bg-gray-900/40 px-3 py-2 text-xs sm:grid-cols-12"
+                                    >
+                                      <div className="text-gray-300 sm:col-span-2">
+                                        {formatHumanDate(
+                                          sale.saleDate,
+                                          "short",
+                                        )}
+                                      </div>
+                                      <div className="sm:col-span-3">
+                                        {sale.batchId != null ? (
+                                          <button
+                                            type="button"
+                                            className="inline-flex items-center gap-1 text-blue-400 hover:underline"
+                                            onClick={() =>
+                                              setPreviewSale({
+                                                batchId: sale.batchId!,
+                                                saleId: sale.id,
+                                              })
+                                            }
+                                          >
+                                            Remesa #{sale.batchId}
+                                            <HiOutlineExternalLink className="h-3 w-3" />
+                                          </button>
+                                        ) : (
+                                          <span className="text-gray-400">
+                                            Remesa
+                                          </span>
+                                        )}
+                                        {sale.batchLabel && (
+                                          <p className="text-[10px] text-gray-500">
+                                            {sale.batchLabel}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="sm:col-span-3 sm:flex sm:justify-center">
+                                        <EggQuantityDisplay
+                                          totalPieces={Number(
+                                            sale.quantity ?? 0,
+                                          )}
+                                        />
+                                      </div>
+                                      <div className="text-right font-mono text-gray-300 sm:col-span-2">
+                                        {formatMXN(Number(sale.saleTotal ?? 0))}
+                                      </div>
+                                      <div className="text-right text-[10px] text-gray-500 sm:col-span-2">
+                                        Venta #{sale.id}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {Math.abs(clientSalesTotal - client.saleTotal) >
+                                  0.01 && (
+                                  <p className="mt-2 text-[11px] text-amber-400">
+                                    El detalle suma{" "}
+                                    {formatMXN(clientSalesTotal)} y la fila
+                                    muestra {formatMXN(client.saleTotal)}.
+                                  </p>
+                                )}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
@@ -773,7 +1046,7 @@ export const TripCollectionsPanel = ({
                           createBulkPayments.isPending ||
                           createPayment.isPending
                         }
-                        onClick={() => fillTripDrafts(trip)}
+                        onClick={() => handleFillTripDrafts(trip)}
                       >
                         Usar saldos
                       </Button>
@@ -804,6 +1077,31 @@ export const TripCollectionsPanel = ({
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={confirmFilterChange != null}
+        title="¿Cambiar de fecha o ruta?"
+        message="Los montos que ya capturaste se van a borrar. Si quieres conservarlos, registra los cobros antes de cambiar."
+        confirmLabel="Cambiar y borrar montos"
+        cancelLabel="Seguir capturando"
+        tone="danger"
+        onConfirm={() => {
+          if (confirmFilterChange) applyFilterChange(confirmFilterChange);
+        }}
+        onClose={() => setConfirmFilterChange(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmFillTrip != null}
+        title="¿Reemplazar los montos capturados?"
+        message="Se van a reemplazar los montos que ya escribiste por el saldo de cada cliente."
+        confirmLabel="Sí, usar saldos"
+        onConfirm={() => {
+          if (confirmFillTrip) fillTripDrafts(confirmFillTrip);
+          setConfirmFillTrip(null);
+        }}
+        onClose={() => setConfirmFillTrip(null)}
+      />
 
       <Modal
         show={confirmTrip != null}
@@ -858,6 +1156,15 @@ export const TripCollectionsPanel = ({
           </Button>
         </ModalFooter>
       </Modal>
+
+      <BatchPreviewDrawer
+        open={previewSale != null}
+        onClose={() => setPreviewSale(null)}
+        batchId={previewSale?.batchId ?? null}
+        highlightSaleId={previewSale?.saleId ?? null}
+        highlightLabel="Venta de este despacho"
+        unitType="EGG"
+      />
     </div>
   );
 };

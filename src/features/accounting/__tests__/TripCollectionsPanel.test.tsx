@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { TripCollectionsPanel } from "../components/collections/TripCollectionsPanel";
 import type { TripCollection } from "../types/collection.types";
 import type { BulkPaymentResult } from "../types/payment.types";
@@ -9,6 +10,7 @@ import { openCollectionsSheet } from "../utils/collectionsSheet";
 const mocks = vi.hoisted(() => ({
   useRoutes: vi.fn(),
   useTripCollections: vi.fn(),
+  useTripSales: vi.fn(),
   bulkMutate: vi.fn(),
   rowMutate: vi.fn(),
   bulkPayload: null as unknown,
@@ -21,6 +23,27 @@ vi.mock("@/core/api/route/routes.queries", () => ({
 
 vi.mock("../api/collections.queries", () => ({
   useTripCollections: mocks.useTripCollections,
+}));
+
+vi.mock("@/features/trips/api/trips.queries", () => ({
+  useTripSales: mocks.useTripSales,
+}));
+
+vi.mock("@/features/batch/components/BatchPreviewDrawer", () => ({
+  BatchPreviewDrawer: ({
+    open,
+    batchId,
+    highlightSaleId,
+  }: {
+    open: boolean;
+    batchId: number | null;
+    highlightSaleId: number | null;
+  }) =>
+    open ? (
+      <div data-testid="batch-preview">
+        {batchId}-{highlightSaleId}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/features/egg-cash-flow/api/eggCashFlow.queries", () => ({
@@ -103,10 +126,12 @@ const trip: TripCollection = {
 const renderPanel = () => {
   const toast = vi.fn();
   render(
-    <TripCollectionsPanel
-      collectorName="Chofer Cobrador"
-      onSuccessToast={toast}
-    />,
+    <MemoryRouter initialEntries={["/business/huevo/collections"]}>
+      <TripCollectionsPanel
+        collectorName="Chofer Cobrador"
+        onSuccessToast={toast}
+      />
+    </MemoryRouter>,
   );
   return { toast };
 };
@@ -127,6 +152,12 @@ describe("TripCollectionsPanel", () => {
       isLoading: false,
       isError: false,
       error: null,
+      refetch: vi.fn(),
+    });
+    mocks.useTripSales.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
       refetch: vi.fn(),
     });
     mocks.bulkMutate.mockImplementation(
@@ -189,6 +220,51 @@ describe("TripCollectionsPanel", () => {
     expect(screen.getByText(/Se registraron 1 cobros/)).toBeInTheDocument();
   });
 
+  it("shows the sale origin and opens the batch preview", () => {
+    mocks.useTripSales.mockReturnValue({
+      data: [
+        {
+          id: 9001,
+          tripId: 7,
+          batchId: 57,
+          batchLabel: "Remesa del 2026-10-20",
+          clientId: 10,
+          clientName: "Cliente Crédito",
+          saleDate: "2026-10-20",
+          quantity: 720,
+          saleTotal: 500,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    renderPanel();
+    fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+
+    expect(screen.getByText("1 venta")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Ver origen de Cliente Crédito",
+      }),
+    );
+
+    expect(
+      screen.getByText("Ventas que forman este cobro"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Remesa #57")).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByTitle("Cajas")
+        .every((element) => element.textContent?.includes("2")),
+    ).toBe(true);
+    expect(screen.getByText("Venta #9001")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Remesa #57/ }));
+
+    expect(screen.getByTestId("batch-preview")).toHaveTextContent("57-9001");
+  });
+
   it("keeps the entered amount when another CEDIS is selected", () => {
     renderPanel();
     fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
@@ -197,6 +273,47 @@ describe("TripCollectionsPanel", () => {
     fireEvent.change(screen.getByLabelText("CEDIS"), {
       target: { value: "2" },
     });
+
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
+  });
+
+  it("asks before changing the route when there are captured amounts", () => {
+    renderPanel();
+    fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+    fireEvent.change(screen.getByLabelText("Monto"), {
+      target: { value: "900" },
+    });
+
+    fireEvent.change(screen.getByLabelText("Ruta"), {
+      target: { value: "3" },
+    });
+
+    expect(screen.getByText("¿Cambiar de fecha o ruta?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
+
+    fireEvent.click(screen.getByRole("button", { name: "Seguir capturando" }));
+
+    expect(
+      screen.queryByText("¿Cambiar de fecha o ruta?"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Monto")).toHaveValue(900);
+  });
+
+  it("asks before replacing captured amounts with balances", () => {
+    renderPanel();
+    fireEvent.click(screen.getByText("Chofer: Chofer Uno"));
+    fireEvent.change(screen.getByLabelText("Monto"), {
+      target: { value: "100" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Usar saldos" }));
+
+    expect(
+      screen.getByText("¿Reemplazar los montos capturados?"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Monto")).toHaveValue(100);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sí, usar saldos" }));
 
     expect(screen.getByLabelText("Monto")).toHaveValue(900);
   });
@@ -284,7 +401,7 @@ describe("TripCollectionsPanel", () => {
     fireEvent.change(screen.getByLabelText("Monto"), {
       target: { value: "900" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Cobrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Guardar solo este" }));
 
     await waitFor(() => expect(mocks.rowMutate).toHaveBeenCalledTimes(1));
     expect(mocks.bulkPayload).toMatchObject({

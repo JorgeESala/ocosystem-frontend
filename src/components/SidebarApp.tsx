@@ -54,6 +54,12 @@ export default function SidebarApp() {
   const allowedBusinesses = BUSINESSES.filter((b) =>
     user?.allowedBusinesses.includes(b.key),
   );
+  const currentBusiness =
+    allowedBusinesses.find(
+      (business) =>
+        pathname === `/business/${business.slug}` ||
+        pathname.startsWith(`/business/${business.slug}/`),
+    ) ?? null;
 
   const handleLogout = () => {
     logout();
@@ -89,7 +95,8 @@ export default function SidebarApp() {
       ...ungrouped.map(renderItem),
       ...groupNames.map((group) => {
         const items = menu.filter((m) => m.group === group);
-        const open = items.some((m) => pathname.startsWith(base + m.to));
+        const active = items.some((m) => pathname.startsWith(base + m.to));
+        const open = isMobile ? active : true;
 
         return (
           <SidebarCollapse key={group} label={group} open={open}>
@@ -129,7 +136,7 @@ export default function SidebarApp() {
           <div className="flex shrink-0 items-center px-4 py-4">
             {/* Logo / Home */}
             <Link
-              to={logoTargetFor(user?.allowedBusinesses)}
+              to={logoTargetFor(user?.allowedBusinesses, currentBusiness?.slug)}
               onClick={() => setMobileOpen(false)}
               className="flex flex-shrink-0 items-center gap-2 overflow-hidden"
             >
@@ -171,49 +178,42 @@ export default function SidebarApp() {
           >
             <SidebarItems>
               <SidebarItemGroup>
-                {allowedBusinesses.length === 1
-                  ? (() => {
-                      const b = allowedBusinesses[0];
-                      const menu = visibleMenu(b.menu ?? BASE_MENU);
-
-                      if (effectiveCollapsed) {
-                        return (
-                          <SidebarItem
-                            key={b.slug}
-                            icon={b.icon}
-                            title={b.name}
-                            onClick={() => navigate(`/business/${b.slug}`)}
-                          />
-                        );
+                {currentBusiness ? (
+                  effectiveCollapsed ? (
+                    <SidebarItem
+                      icon={currentBusiness.icon}
+                      title={currentBusiness.name}
+                      onClick={() =>
+                        navigate(`/business/${currentBusiness.slug}`)
                       }
-
-                      return renderMenu(b.slug, menu);
-                    })()
-                  : allowedBusinesses.map((b) => {
-                      const menu = visibleMenu(b.menu ?? BASE_MENU);
-                      const Icon = b.icon;
-
-                      if (effectiveCollapsed) {
-                        return (
-                          <SidebarItem
-                            key={b.slug}
-                            icon={Icon}
-                            title={b.name}
-                            onClick={() => navigate(`/business/${b.slug}`)}
-                          />
-                        );
-                      }
-
-                      return (
-                        <SidebarCollapse
-                          key={b.slug}
-                          icon={Icon}
-                          label={b.name}
-                        >
-                          {renderMenu(b.slug, menu)}
-                        </SidebarCollapse>
-                      );
-                    })}
+                    />
+                  ) : (
+                    renderMenu(
+                      currentBusiness.slug,
+                      visibleMenu(currentBusiness.menu ?? BASE_MENU),
+                    )
+                  )
+                ) : (
+                  allowedBusinesses.map((business) =>
+                    effectiveCollapsed ? (
+                      <SidebarItem
+                        key={business.slug}
+                        icon={business.icon}
+                        title={business.name}
+                        onClick={() => navigate(`/business/${business.slug}`)}
+                      />
+                    ) : (
+                      <Link
+                        key={business.slug}
+                        to={`/business/${business.slug}`}
+                      >
+                        <SidebarItem icon={business.icon}>
+                          {business.name}
+                        </SidebarItem>
+                      </Link>
+                    ),
+                  )
+                )}
               </SidebarItemGroup>
             </SidebarItems>
           </Sidebar>

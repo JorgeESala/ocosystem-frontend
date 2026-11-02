@@ -9,6 +9,7 @@ interface Props {
   data: PaymentsSummary | undefined;
   isLoading: boolean;
   isError: boolean;
+  variant?: "default" | "slate";
   onShowByClient?: () => void;
   extraTooltips?: {
     cobrado?: ReactNode;
@@ -20,6 +21,7 @@ export const PaidSummaryCard = ({
   data,
   isLoading,
   isError,
+  variant = "default",
   onShowByClient,
   extraTooltips,
 }: Props) => {
@@ -29,7 +31,11 @@ export const PaidSummaryCard = ({
     onShowByClient !== undefined && (data?.payers.length ?? 0) > 0;
 
   return (
-    <div className="rounded-lg border border-emerald-800/50 bg-emerald-900/20 p-5 shadow-sm">
+    <div
+      className={`border border-emerald-800/50 bg-emerald-900/20 p-5 shadow-sm ${
+        variant === "slate" ? "rounded-3xl" : "rounded-lg"
+      }`}
+    >
       <div className="flex items-center gap-1 text-xs font-medium tracking-wider text-emerald-400 uppercase">
         Cobrado en el periodo
         <InfoTip title="Cobrado en el periodo">

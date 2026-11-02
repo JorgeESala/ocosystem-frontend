@@ -8,6 +8,7 @@ interface Props {
   filterLabel: string | null;
   countLabel?: string;
   extraCard?: ReactNode;
+  variant?: "default" | "slate";
   tooltips?: {
     total?: ReactNode;
     count?: ReactNode;
@@ -49,8 +50,13 @@ export const AccountingSummaryCards = ({
   filterLabel,
   countLabel,
   extraCard,
+  variant = "default",
   tooltips,
 }: Props) => {
+  const cardClass =
+    variant === "slate"
+      ? "rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5"
+      : "rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm";
   const totalDebt = useMemo(
     () => data.reduce((acc, curr) => acc + (curr.balance || 0), 0),
     [data],
@@ -73,11 +79,11 @@ export const AccountingSummaryCards = ({
     <div
       className={
         extraCard
-          ? "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+          ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
           : "grid grid-cols-1 gap-4 md:grid-cols-3"
       }
     >
-      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
+      <div className={cardClass}>
         <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
           Total Pendiente {filterLabel && `(${filterLabel})`}
           {tooltips?.total && (
@@ -91,7 +97,7 @@ export const AccountingSummaryCards = ({
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5 shadow-sm">
+      <div className={cardClass}>
         <p className="flex items-center gap-1 text-xs font-medium tracking-wider text-gray-500 uppercase">
           {countLabel ?? "Documentos Abiertos"}
           {tooltips?.count && (
@@ -109,7 +115,7 @@ export const AccountingSummaryCards = ({
       </div>
 
       <div
-        className={`rounded-lg border p-5 shadow-sm transition-colors duration-300 ${antiquityStyle.border} ${antiquityStyle.bg}`}
+        className={`${variant === "slate" ? "rounded-3xl" : "rounded-lg"} border p-5 shadow-sm transition-colors duration-300 ${antiquityStyle.border} ${antiquityStyle.bg}`}
       >
         <p
           className={`flex items-center gap-1 text-xs font-medium tracking-wider uppercase ${antiquityStyle.text}`}

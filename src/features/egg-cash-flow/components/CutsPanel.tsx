@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "flowbite-react";
+import { HiScissors } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatDate } from "../utils/cashFlow.utils";
 import type { CashFlowCut } from "../types/eggCashFlow.types";
@@ -7,30 +8,53 @@ import type { CashFlowCut } from "../types/eggCashFlow.types";
 interface Props {
   cuts: CashFlowCut[];
   onReopen?: (id: number) => void;
+  onCreateCut?: () => void;
 }
 
-export default function CutsPanel({ cuts, onReopen }: Props) {
+export default function CutsPanel({ cuts, onReopen, onCreateCut }: Props) {
   const [confirmReopen, setConfirmReopen] = useState<number | null>(null);
 
   if (cuts.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-        <h3 className="text-base font-semibold text-white">Cortes de semana</h3>
-        <p className="mt-1 text-sm text-slate-400">
-          No hay cortes registrados. Usa "Corte de semana" para cerrar una
-          semana que ya termino.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-white">
+              Cortes de semana
+            </h3>
+            <p className="mt-1 text-sm text-slate-400">
+              No hay cortes registrados. Cierra la semana para guardar los
+              saldos y bloquear los movimientos de ese periodo.
+            </p>
+          </div>
+          {onCreateCut && (
+            <Button color="yellow" size="sm" onClick={onCreateCut}>
+              <HiScissors className="mr-2 h-4 w-4" />
+              Cerrar semana
+            </Button>
+          )}
+        </div>
       </section>
     );
   }
 
   return (
     <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
-      <div className="border-b border-slate-800 px-5 py-4">
-        <h3 className="text-base font-semibold text-white">Cortes de semana</h3>
-        <p className="mt-1 text-sm text-slate-400">
-          Solo el ultimo corte se puede reabrir para corregir su semana.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-5 py-4">
+        <div>
+          <h3 className="text-base font-semibold text-white">
+            Cortes de semana
+          </h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Solo el último corte se puede reabrir para corregir su semana.
+          </p>
+        </div>
+        {onCreateCut && (
+          <Button color="yellow" size="sm" onClick={onCreateCut}>
+            <HiScissors className="mr-2 h-4 w-4" />
+            Cerrar semana
+          </Button>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse text-left">

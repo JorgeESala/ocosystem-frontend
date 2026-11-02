@@ -30,45 +30,56 @@ export const CobranzaWorkbench = ({ onSuccessToast }: Props) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-4">
-        <div
-          className="flex gap-2"
-          role="tablist"
-          aria-label="Modo de cobranza"
-        >
-          <Button
-            color={mode === "CLIENTE" ? "blue" : "gray"}
-            onClick={() => setMode("CLIENTE")}
-            role="tab"
-            aria-selected={mode === "CLIENTE"}
+        <div className="space-y-2">
+          <div
+            className="flex gap-2"
+            role="tablist"
+            aria-label="Modo de cobranza"
           >
-            <HiUserGroup className="mr-2 h-4 w-4" />
-            Cliente
-          </Button>
-          <Button
-            color={mode === "DESPACHO" ? "blue" : "gray"}
-            onClick={() => setMode("DESPACHO")}
-            role="tab"
-            aria-selected={mode === "DESPACHO"}
-          >
-            <HiTruck className="mr-2 h-4 w-4" />
-            Despacho
-          </Button>
+            <Button
+              color={mode === "CLIENTE" ? "blue" : "gray"}
+              onClick={() => setMode("CLIENTE")}
+              role="tab"
+              aria-selected={mode === "CLIENTE"}
+            >
+              <HiUserGroup className="mr-2 h-4 w-4" />
+              Cliente
+            </Button>
+            <Button
+              color={mode === "DESPACHO" ? "blue" : "gray"}
+              onClick={() => setMode("DESPACHO")}
+              role="tab"
+              aria-selected={mode === "DESPACHO"}
+            >
+              <HiTruck className="mr-2 h-4 w-4" />
+              Ruta (despacho)
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            {mode === "CLIENTE"
+              ? "Busca al cliente y registra su pago."
+              : "Elige la fecha y registra los cobros de la ruta."}
+          </p>
         </div>
-        <div className="w-56">
-          <Label htmlFor="cobranza-collector">Cobrador</Label>
-          <Select
-            id="cobranza-collector"
-            value={collectorId}
-            onChange={(event) => setCollectorId(event.target.value)}
-          >
-            <option value="">Seleccionar cobrador</option>
-            {drivers.map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                {driver.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+        {mode === "DESPACHO" && (
+          <div className="w-56">
+            <Label htmlFor="cobranza-collector">
+              Cobrador (para la hoja impresa)
+            </Label>
+            <Select
+              id="cobranza-collector"
+              value={collectorId}
+              onChange={(event) => setCollectorId(event.target.value)}
+            >
+              <option value="">Seleccionar cobrador</option>
+              {drivers.map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {driver.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
       </div>
 
       {mode === "CLIENTE" ? (

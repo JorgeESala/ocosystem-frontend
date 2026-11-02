@@ -26,9 +26,15 @@ export default function PendingCollectionsPanel({
   registerAllBusy,
 }: Props) {
   const [confirmAll, setConfirmAll] = useState(false);
+  const [showAllTrips, setShowAllTrips] = useState(false);
+  const [showAllCollections, setShowAllCollections] = useState(false);
   const pendingTrips = trips.filter((t) => t.pending > 0 && t.collected === 0);
   const pendingCollections = collections.filter((c) => c.pending > 0);
   const pendingTotal = pendingTrips.reduce((sum, t) => sum + t.pending, 0);
+  const visibleTrips = showAllTrips ? pendingTrips : pendingTrips.slice(0, 5);
+  const visibleCollections = showAllCollections
+    ? pendingCollections
+    : pendingCollections.slice(0, 5);
 
   if (pendingTrips.length === 0 && pendingCollections.length === 0) {
     return (
@@ -62,7 +68,7 @@ export default function PendingCollectionsPanel({
           </p>
         </div>
         {pendingTrips.length > 0 && onRegisterAllPending && (
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             {confirmAll ? (
               <>
                 <span className="text-xs text-slate-400">
@@ -77,7 +83,9 @@ export default function PendingCollectionsPanel({
                     onRegisterAllPending(pendingTrips);
                   }}
                 >
-                  {registerAllBusy ? "Registrando..." : "Si, al banco"}
+                  {registerAllBusy
+                    ? "Registrando..."
+                    : "Sí, registrar al banco"}
                 </Button>
                 <Button
                   size="xs"
@@ -85,13 +93,14 @@ export default function PendingCollectionsPanel({
                   disabled={registerAllBusy}
                   onClick={() => setConfirmAll(false)}
                 >
-                  No
+                  Cancelar
                 </Button>
               </>
             ) : (
               <Button
                 size="xs"
                 color="light"
+                className="whitespace-nowrap"
                 disabled={registerAllBusy}
                 onClick={() => setConfirmAll(true)}
               >
@@ -110,7 +119,7 @@ export default function PendingCollectionsPanel({
             Efectivo en ruta
           </h4>
           <div className="space-y-2">
-            {pendingTrips.map((t) => (
+            {visibleTrips.map((t) => (
               <div
                 key={t.tripId}
                 className="flex items-center justify-between rounded-lg bg-slate-800/60 px-4 py-3"
@@ -142,6 +151,18 @@ export default function PendingCollectionsPanel({
               </div>
             ))}
           </div>
+          {pendingTrips.length > 5 && (
+            <Button
+              size="xs"
+              color="light"
+              className="mt-2"
+              onClick={() => setShowAllTrips((value) => !value)}
+            >
+              {showAllTrips
+                ? "Ver menos"
+                : `Ver todos (${pendingTrips.length})`}
+            </Button>
+          )}
         </div>
       )}
 
@@ -151,7 +172,7 @@ export default function PendingCollectionsPanel({
             Cobros por registrar
           </h4>
           <div className="space-y-2">
-            {pendingCollections.map((c) => (
+            {visibleCollections.map((c) => (
               <div
                 key={c.paymentId}
                 className="flex items-center justify-between rounded-lg bg-slate-800/60 px-4 py-3"
@@ -177,6 +198,18 @@ export default function PendingCollectionsPanel({
               </div>
             ))}
           </div>
+          {pendingCollections.length > 5 && (
+            <Button
+              size="xs"
+              color="light"
+              className="mt-2"
+              onClick={() => setShowAllCollections((value) => !value)}
+            >
+              {showAllCollections
+                ? "Ver menos"
+                : `Ver todos (${pendingCollections.length})`}
+            </Button>
+          )}
         </div>
       )}
     </section>

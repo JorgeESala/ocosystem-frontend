@@ -8,8 +8,10 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
+import { HiChevronDown, HiChevronUp } from "react-icons/hi";
 import { useClients } from "@/core/client/api/client.queries";
 import type { Client } from "@/core/api/types";
+import { BatchPreviewDrawer } from "@/features/batch/components/BatchPreviewDrawer";
 import { useOpenAccounts } from "../../api/accounts-payable.queries";
 import {
   useApplyCreditsToAccount,
@@ -32,6 +34,7 @@ import {
 } from "@/features/egg-cash-flow/api/eggCashFlow.queries";
 import { AccountingErrorAlert } from "../AccountingErrorAlert";
 import { AgingBadge } from "../AgingBadge";
+import { SourceBadge } from "../SourceBadge";
 import { ClientAutocomplete } from "./ClientAutocomplete";
 import { newClientRequestId } from "../../utils/requestId";
 import { openPaymentReceipt } from "../../utils/paymentReceipt";
@@ -72,6 +75,11 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<CollectionResult | null>(null);
+  const [showDebts, setShowDebts] = useState(false);
+  const [previewDebt, setPreviewDebt] = useState<{
+    batchId: number;
+    saleId: number | null;
+  } | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const requestIdRef = useRef<string | null>(null);
@@ -168,7 +176,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     if (!currentIsValid) {
       const largest = summary.cedis[0];
       setSelectedCedisId(largest.creditorId);
-      setAmount(String(summary.totalDebt));
+      setAmount(String(largest.balance));
     }
   }, [selectedClient, debtsLoading, summary, selectedCedisId]);
 
@@ -183,11 +191,18 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     setNote("");
     setError(null);
     setLastResult(null);
+    setShowDebts(false);
+    setPreviewDebt(null);
   };
 
   const handleCedisChange = (value: string) => {
     requestIdRef.current = null;
-    setSelectedCedisId(Number(value));
+    const nextId = Number(value);
+    const nextCedis = summary.cedis.find(
+      (cedis) => cedis.creditorId === nextId,
+    );
+    setSelectedCedisId(nextId);
+    setAmount(nextCedis ? String(nextCedis.balance) : "");
     setLastResult(null);
   };
 
@@ -453,6 +468,69 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
               </div>
             </div>
 
+            <div className="rounded-lg border border-gray-800 bg-gray-900/50">
+              <button
+                type="button"
+                className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left"
+                aria-expanded={showDebts}
+                onClick={() => setShowDebts((value) => !value)}
+              >
+                <span className="text-sm font-medium text-white">
+                  Deudas abiertas del cliente ({summary.debtCount})
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-blue-400">
+                  {showDebts ? "Ocultar" : "Ver deudas"}
+                  {showDebts ? (
+                    <HiChevronUp className="h-3 w-3" />
+                  ) : (
+                    <HiChevronDown className="h-3 w-3" />
+                  )}
+                </span>
+              </button>
+              {showDebts && (
+                <div className="max-h-80 divide-y divide-gray-800 overflow-y-auto border-t border-gray-800">
+                  {debts.map((debt) => (
+                    <div
+                      key={debt.id}
+                      className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium text-white">
+                          {debt.creditorName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatHumanDate(debt.date, "short")} · Total{" "}
+                          {formatMXN(debt.totalAmount)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-white">
+                          {formatMXN(debt.balance)}
+                        </span>
+                        {debt.sourceType ? (
+                          <SourceBadge
+                            sourceType={debt.sourceType}
+                            sourceBatchId={debt.sourceBatchId}
+                            sourceId={debt.sourceId}
+                            onOpenSource={(batchId, saleId) =>
+                              setPreviewDebt({
+                                batchId,
+                                saleId: saleId ?? null,
+                              })
+                            }
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            Sin documento
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <form
               onSubmit={handleSubmit}
               className="space-y-4 rounded-lg border border-gray-700 bg-gray-900/50 p-4"
@@ -627,6 +705,15 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
           </p>
         </div>
       )}
+
+      <BatchPreviewDrawer
+        open={previewDebt != null}
+        onClose={() => setPreviewDebt(null)}
+        batchId={previewDebt?.batchId ?? null}
+        highlightSaleId={previewDebt?.saleId ?? null}
+        highlightLabel="Venta que generó esta deuda"
+        unitType="EGG"
+      />
     </div>
   );
 };
