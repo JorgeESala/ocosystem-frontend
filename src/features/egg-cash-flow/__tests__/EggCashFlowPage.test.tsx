@@ -182,6 +182,10 @@ describe("EggCashFlowPage", () => {
     expect(
       screen.queryByText(/Configura tu flujo de efectivo/),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ayuda" })).toHaveAttribute(
+      "href",
+      "/business/huevo/cash-flow/help",
+    );
   });
 
   it("shows the onboarding screen only when settings are absent without error", () => {
@@ -200,6 +204,14 @@ describe("EggCashFlowPage", () => {
     expect(
       screen.queryByText(/No se pudo cargar la configuración/),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ayuda" })).toHaveAttribute(
+      "href",
+      "/business/huevo/cash-flow/help",
+    );
+    expect(screen.getByRole("link", { name: "Ver ayuda" })).toHaveAttribute(
+      "href",
+      "/business/huevo/cash-flow/help",
+    );
   });
 
   it("shows an error alert instead of a false empty state when movements fail", () => {
@@ -304,7 +316,9 @@ describe("EggCashFlowPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Registrar todo al banco \(2\)/ }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /Si, al banco/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Sí, registrar al banco/ }),
+    );
 
     expect(
       await screen.findByText(/1 despacho registrado/),

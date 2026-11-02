@@ -5,15 +5,21 @@ import { HiArrowLeft } from "react-icons/hi";
 const INTRO = {
   title: "Qué es la Contabilidad de Huevo",
   content:
-    "La Contabilidad de Huevo muestra lo que los clientes internos le deben a cada CEDIS de huevo (Por cobrar), lo que cada CEDIS debe a sus proveedores (Por pagar) y el resumen financiero con deuda, por cobrar, inventario y balance neto.",
+    "La Contabilidad de Huevo reúne en una sola página lo que los clientes internos le deben a cada CEDIS de huevo (Por cobrar), lo que cada CEDIS debe a sus proveedores (Por pagar), los cobros del día (Cobrar) y el resumen financiero con deuda, por cobrar, inventario y balance neto.",
 };
 
 const MODES = [
   {
+    icon: "💵",
+    title: "Cobrar",
+    description:
+      "Pestaña para registrar lo que te pagan hoy. Usa Cobrar del día para un cliente con cuenta o una ruta completa (despacho); los cobros se aplican a las deudas más antiguas. Para una cuenta específica, usa Pago específico. En cada cobro, “Ver origen” muestra la venta y la remesa que lo forman.",
+  },
+  {
     icon: "📥",
     title: "Por cobrar",
     description:
-      "Deudas de los clientes internos con los CEDIS de huevo. Es la vista de cobranza: quién debe, cuánto y desde hace cuántos días.",
+      "Deudas de los clientes internos con los CEDIS de huevo: quién debe, cuánto y desde hace cuántos días.",
   },
   {
     icon: "📤",
@@ -154,8 +160,8 @@ export const EggAccountingHelpPage = () => {
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-white">Las tres vistas</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <h2 className="text-xl font-semibold text-white">Qué puedes hacer</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {MODES.map((mode) => (
             <div
               key={mode.title}

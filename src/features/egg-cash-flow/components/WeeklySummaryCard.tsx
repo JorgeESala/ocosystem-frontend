@@ -90,7 +90,7 @@ export default function WeeklySummaryCard({
           <Row label="± Ajustes" amount={summary.totalCashAdjustments} />
           <Row label="= Antes de depósito" amount={cashBeforeDeposit} bold />
           <Row
-            label="− Ingreso a cuenta"
+            label="− Ingreso a cuenta (a banco)"
             amount={summary.totalDeposits}
             color="text-blue-400"
           />
@@ -112,7 +112,7 @@ export default function WeeklySummaryCard({
             color="text-emerald-400"
           />
           <Row
-            label="+ Ingreso a cuenta"
+            label="+ Ingreso a cuenta (desde oficina)"
             amount={summary.totalDeposits}
             color="text-emerald-400"
           />

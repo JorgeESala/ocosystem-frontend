@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button, Select, TextInput, ToggleSwitch } from "flowbite-react";
-import { HiClock, HiPlus } from "react-icons/hi";
+import { HiCash, HiClock, HiPlus } from "react-icons/hi";
 import { HiDocumentDownload, HiQuestionMarkCircle } from "react-icons/hi";
 
 import { RegisterPaymentModal } from "@/features/accounting/components/RegisterPaymentModal";
@@ -50,10 +50,16 @@ import {
   TotalPendienteHelpContent,
 } from "../components/EggAccountingHelpContent";
 import { toEggCedisOptions } from "../utils/eggCedisOptions";
-
-type ViewMode = "RECEIVABLE" | "COBRANZA" | "PAYABLE" | "FINANCIAL";
+import { modeFromParam, type EggAccountingView } from "../utils/accountingMode";
 
 const PAGE_SIZE = 20;
+
+const VIEW_DESCRIPTIONS: Record<EggAccountingView, string> = {
+  RECEIVABLE: "Consulta quién te debe y desde cuándo.",
+  COLLECTIONS: "Registra los cobros del día, por cliente o por ruta.",
+  PAYABLE: "Consulta a quién le debes y qué está pendiente.",
+  FINANCIAL: "Foto financiera por CEDIS.",
+};
 
 const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
   OPEN: "Con saldo",
@@ -76,6 +82,7 @@ const parseIds = (value: string | null): number[] => {
 
 export const EggAccountsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { slug } = useParams();
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [selectedAccountForPay, setSelectedAccountForPay] =
     useState<AccountsPayableResponse | null>(null);
@@ -86,14 +93,8 @@ export const EggAccountsPage = () => {
     useState<AccountsPayableResponse | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const initialMode = (searchParams.get("mode") as ViewMode) || "RECEIVABLE";
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    initialMode === "PAYABLE" ||
-      initialMode === "FINANCIAL" ||
-      initialMode === "COBRANZA"
-      ? initialMode
-      : "RECEIVABLE",
-  );
+  const initialMode = modeFromParam(searchParams.get("mode"));
+  const [viewMode, setViewMode] = useState<EggAccountingView>(initialMode);
   const initialStatus = searchParams.get("status");
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(
     initialStatus === "SETTLED" || initialStatus === "ALL"
@@ -222,7 +223,11 @@ export const EggAccountsPage = () => {
 
   useEffect(() => {
     const next = new URLSearchParams();
-    next.set("mode", viewMode);
+    next.set("mode", viewMode === "COLLECTIONS" ? "COBRAR" : viewMode);
+    if (viewMode === "COLLECTIONS") {
+      setSearchParams(next, { replace: true });
+      return;
+    }
     if (selectedCedis.length > 0) next.set("cedis", selectedCedis.join(","));
     if (selectedClients.length > 0)
       next.set("client", selectedClients.join(","));
@@ -250,10 +255,12 @@ export const EggAccountsPage = () => {
   ]);
 
   const receivable = viewMode === "RECEIVABLE";
+  const payable = viewMode === "PAYABLE";
+  const isCollections = viewMode === "COLLECTIONS";
   const isFinancial = viewMode === "FINANCIAL";
   const [showFinancialDates, setShowFinancialDates] = useState(false);
 
-  const handleSetViewMode = (next: ViewMode) => {
+  const handleSetViewMode = (next: EggAccountingView) => {
     if (next === viewMode) return;
     setViewMode(next);
     setPage(0);
@@ -314,7 +321,7 @@ export const EggAccountsPage = () => {
     isError: accountsError,
     error: accountsErrorDetail,
     refetch: refetchAccounts,
-  } = useOpenAccounts(queryParams, viewMode !== "COBRANZA");
+  } = useOpenAccounts(queryParams, !isCollections);
 
   const paymentFirstPrimaryParams = receivable
     ? {
@@ -339,11 +346,11 @@ export const EggAccountsPage = () => {
   const {
     data: paymentFirstPrimary = [],
     isLoading: paymentFirstPrimaryLoading,
-  } = useOpenAccounts(paymentFirstPrimaryParams, viewMode !== "COBRANZA");
+  } = useOpenAccounts(paymentFirstPrimaryParams, !isCollections);
   const {
     data: paymentFirstSecondary = [],
     isLoading: paymentFirstSecondaryLoading,
-  } = useOpenAccounts(paymentFirstSecondaryParams, viewMode !== "COBRANZA");
+  } = useOpenAccounts(paymentFirstSecondaryParams, !isCollections);
 
   const filtered = useMemo(
     () =>
@@ -421,7 +428,7 @@ export const EggAccountsPage = () => {
     );
   };
 
-  const tabButton = (mode: ViewMode, label: string) => (
+  const tabButton = (mode: EggAccountingView, label: string) => (
     <Button
       key={mode}
       color={viewMode === mode ? "blue" : "gray"}
@@ -432,7 +439,7 @@ export const EggAccountsPage = () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <AccountingToast
         message={toastMessage}
         onDismiss={() => setToastMessage(null)}
@@ -443,33 +450,62 @@ export const EggAccountsPage = () => {
           <h1 className="text-2xl font-semibold text-white">
             Contabilidad de Huevo
           </h1>
-          <p className="text-sm text-gray-400">
-            Cuentas por cobrar y por pagar de los CEDIS de huevo
+          <p className="text-sm text-slate-400">
+            Cuentas por cobrar, cobros del día y pagos de los CEDIS de huevo
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {receivable && (
+            <Button onClick={() => handleSetViewMode("COLLECTIONS")}>
+              <HiCash className="mr-2 h-4 w-4" />
+              Cobrar del día
+            </Button>
+          )}
+
+          {isCollections && (
+            <>
+              <Button
+                color="gray"
+                onClick={() => handleSetViewMode("RECEIVABLE")}
+              >
+                Ver cuentas por cobrar
+              </Button>
+              <Link to={`/business/${slug}/cash-flow`}>
+                <Button color="gray">Ver flujo de efectivo</Button>
+              </Link>
+            </>
+          )}
+
+          {(receivable || payable) && (
+            <>
+              <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
+                <HiPlus className="mr-2 h-4 w-4" />
+                Pago específico
+              </Button>
+              <Button color="gray" onClick={() => setIsRecentOpen(true)}>
+                <HiClock className="mr-2 h-4 w-4" />
+                Pagos recientes
+              </Button>
+              <Button color="gray" onClick={() => setOpenCreateModal(true)}>
+                Crear cuenta
+              </Button>
+            </>
+          )}
+
+          {isFinancial && (
+            <Button color="gray" onClick={() => setIsRecentOpen(true)}>
+              <HiClock className="mr-2 h-4 w-4" />
+              Pagos recientes
+            </Button>
+          )}
+
           <Link to="help">
             <Button color="gray">
               <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
               Ayuda
             </Button>
           </Link>
-          <Button color="gray" onClick={() => setIsRecentOpen(true)}>
-            <HiClock className="mr-2 h-4 w-4" />
-            Pagos recientes
-          </Button>
-          {viewMode !== "COBRANZA" && (
-            <>
-              <Button color="gray" onClick={() => setIsPaymentFirstOpen(true)}>
-                <HiPlus className="mr-2 h-4 w-4" />
-                Registrar pago
-              </Button>
-              <Button onClick={() => setOpenCreateModal(true)}>
-                Crear Cuenta
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
@@ -479,13 +515,15 @@ export const EggAccountsPage = () => {
         className="flex gap-2 overflow-x-auto pb-1"
       >
         {tabButton("RECEIVABLE", "Por cobrar")}
-        {tabButton("COBRANZA", "Cobranza")}
+        {tabButton("COLLECTIONS", "Cobrar")}
         {tabButton("PAYABLE", "Por pagar")}
-        {tabButton("FINANCIAL", "Resumen financiero")}
+        {tabButton("FINANCIAL", "Resumen")}
       </div>
 
+      <p className="text-sm text-slate-400">{VIEW_DESCRIPTIONS[viewMode]}</p>
+
       {isFinancial && (
-        <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-center">
+        <div className="flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-4 lg:flex-row lg:flex-wrap lg:items-center">
           <div className="w-72">
             <EntityMultiSelect
               items={eggCedisOptions}
@@ -510,9 +548,9 @@ export const EggAccountsPage = () => {
         </div>
       )}
 
-      {viewMode === "COBRANZA" ? (
+      {isCollections ? (
         <CobranzaWorkbench onSuccessToast={setToastMessage} />
-      ) : viewMode === "FINANCIAL" ? (
+      ) : isFinancial ? (
         <CedisFinancialSummary
           cedisIds={selectedCedis.length > 0 ? selectedCedis : undefined}
           entityType="EGGCEDIS"
@@ -527,12 +565,14 @@ export const EggAccountsPage = () => {
             data={filtered}
             filterLabel={hasFilter ? "Filtrado" : "Consolidado"}
             countLabel={accountStatus === "OPEN" ? undefined : "Documentos"}
+            variant="slate"
             extraCard={
               receivable ? (
                 <PaidSummaryCard
                   data={paymentsSummary}
                   isLoading={paymentsSummaryLoading}
                   isError={paymentsSummaryError}
+                  variant="slate"
                   onShowByClient={() => setShowClientPayments(true)}
                 />
               ) : undefined
@@ -557,7 +597,7 @@ export const EggAccountsPage = () => {
             />
           )}
 
-          <div className="flex flex-col gap-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4 lg:flex-row lg:flex-wrap lg:items-end">
+          <div className="flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-4 lg:flex-row lg:flex-wrap lg:items-end">
             <div className="w-72">
               <EntityMultiSelect
                 items={eggCedisOptions}
@@ -572,7 +612,7 @@ export const EggAccountsPage = () => {
             </div>
             {receivable ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-300">
+                <span className="text-sm font-medium text-slate-300">
                   Clientes internos:
                 </span>
                 <div className="w-80">
@@ -586,7 +626,7 @@ export const EggAccountsPage = () => {
                   />
                 </div>
                 <div className="w-56">
-                  <label className="mb-1 block text-xs text-gray-400">
+                  <label className="mb-1 block text-xs text-slate-400">
                     Ruta
                   </label>
                   <Select
@@ -609,7 +649,7 @@ export const EggAccountsPage = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-300">
+                <span className="text-sm font-medium text-slate-300">
                   Proveedores:
                 </span>
                 <div className="w-80">
@@ -635,7 +675,7 @@ export const EggAccountsPage = () => {
             />
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+              <span className="text-xs font-medium tracking-wider text-slate-400 uppercase">
                 Estado
               </span>
               <div className="flex gap-1">
@@ -655,7 +695,7 @@ export const EggAccountsPage = () => {
             </div>
 
             <div className="flex w-64 flex-col gap-1">
-              <span className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+              <span className="text-xs font-medium tracking-wider text-slate-400 uppercase">
                 Buscar
               </span>
               <TextInput
@@ -668,7 +708,7 @@ export const EggAccountsPage = () => {
               />
             </div>
 
-            <p className="text-[11px] text-gray-500 italic">
+            <p className="text-[11px] text-slate-500 italic">
               Ordena con los encabezados de la tabla: Fecha, Total, Saldo.
             </p>
 
@@ -687,9 +727,9 @@ export const EggAccountsPage = () => {
             )}
           </div>
 
-          <div className="rounded-lg bg-gray-800 shadow">
+          <div className="rounded-3xl border border-slate-700/80 bg-slate-950/70">
             {isLoading ? (
-              <p className="p-6 text-sm text-gray-500">Cargando...</p>
+              <p className="p-6 text-sm text-slate-500">Cargando...</p>
             ) : accountsError ? (
               <div className="p-6">
                 <AccountingErrorAlert
@@ -699,7 +739,7 @@ export const EggAccountsPage = () => {
               </div>
             ) : filtered.length === 0 ? (
               <div className="space-y-3 p-6 text-center">
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-slate-400">
                   {hasFilter
                     ? accountStatus === "SETTLED"
                       ? `No hay cuentas liquidadas entre ${formatUiDate(dateRange.start, "short")} y ${formatUiDate(dateRange.end, "short")} para los filtros seleccionados.`
@@ -722,8 +762,8 @@ export const EggAccountsPage = () => {
             ) : (
               <>
                 {selectedRows.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-700 bg-gray-900/60 px-4 py-2 text-sm">
-                    <span className="text-gray-300">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-900/60 px-4 py-2 text-sm">
+                    <span className="text-slate-300">
                       {selectedRows.length} seleccionadas · saldo total{" "}
                       <strong className="text-white">
                         {formatMXN(selectedTotal)}
@@ -763,12 +803,15 @@ export const EggAccountsPage = () => {
                     selectable={accountStatus !== "SETTLED"}
                     selectedIds={selectedIds}
                     onSelectionChange={setSelectedIds}
+                    payLabel={
+                      receivable ? "Cobrar esta cuenta" : "Pagar esta cuenta"
+                    }
                     headerTooltips={{
                       balance: <SaldoColumnaHelpContent />,
                     }}
                   />
                 </div>
-                <div className="flex items-center justify-between border-t border-gray-700 px-4 py-3 text-xs text-gray-400">
+                <div className="flex items-center justify-between border-t border-slate-700 px-4 py-3 text-xs text-slate-400">
                   <span>
                     {filtered.length} cuentas · creadas entre{" "}
                     {formatUiDate(dateRange.start, "short")} y{" "}
