@@ -30,6 +30,7 @@ import {
   useCashFlowSettings,
   useCashFlowSummary,
   useCollectionSuggestions,
+  useConfirmTripSettlements,
   useCreateCashFlowAdjustment,
   useCreateCashFlowCut,
   useCreateCashFlowDeposit,
@@ -40,15 +41,15 @@ import {
   useDeleteCashFlowCut,
   useDeleteCashFlowMovement,
   useMoveCashFlowMovement,
-  useRegisterAllCashFlowIncome,
   useRemesas,
-  useTripSuggestions,
+  useTripSettlements,
   useUpdateCashFlowSettings,
 } from "../api/eggCashFlow.queries";
 import CashFlowBalanceCards from "../components/CashFlowBalanceCards";
 import CashFlowMovementsTable from "../components/CashFlowMovementsTable";
 import WeeklySummaryCard from "../components/WeeklySummaryCard";
 import PendingCollectionsPanel from "../components/PendingCollectionsPanel";
+import TripSettlementsPanel from "../components/TripSettlementsPanel";
 import RemesasPanel from "../components/RemesasPanel";
 import CutsPanel from "../components/CutsPanel";
 import IncomeModal from "../components/IncomeModal";
@@ -58,14 +59,10 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import {
-  currentWeekRange,
-  formatDate,
-  previousWeekRange,
-} from "../utils/cashFlow.utils";
+import { currentWeekRange, previousWeekRange } from "../utils/cashFlow.utils";
 import type {
+  ConfirmTripSettlementItemDTO,
   EggCashFlowUnit,
-  TripSuggestion,
 } from "../types/eggCashFlow.types";
 
 interface Props {
@@ -81,6 +78,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [accountFilter, setAccountFilter] = useState<"ALL" | "CASH" | "BANK">(
     "ALL",
   );
+  const [collectionView, setCollectionView] = useState<"ALL" | "CREDIT">("ALL");
 
   const [showSettings, setShowSettings] = useState(false);
   const [showIncome, setShowIncome] = useState(false);
@@ -92,15 +90,9 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
-    tripId?: number | null;
     paymentId?: number | null;
   } | null>(null);
   const [remesaPrefill, setRemesaPrefill] = useState<number | null>(null);
-  const [registerAllBusy, setRegisterAllBusy] = useState(false);
-  const [registerAllResult, setRegisterAllResult] = useState<{
-    registered: number;
-    failed: { label: string; reason: string }[];
-  } | null>(null);
   const [rangeTouched, setRangeTouched] = useState(false);
   const defaultRangeApplied = useRef(false);
 
@@ -110,7 +102,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const settingsQuery = useCashFlowSettings(unitType);
   const summaryQuery = useCashFlowSummary(unitType, from, to);
   const movementsQuery = useCashFlowMovements(unitType, from, to);
-  const tripsQuery = useTripSuggestions(unitType, from, to);
+  const settlementsQuery = useTripSettlements(unitType, from, to);
   const collectionsQuery = useCollectionSuggestions(unitType, from, to);
   const remesasQuery = useRemesas(unitType);
   const cutsQuery = useCashFlowCuts(unitType);
@@ -120,7 +112,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const createSettings = useCreateCashFlowSettings(unitType);
   const updateSettings = useUpdateCashFlowSettings(unitType);
   const createIncome = useCreateCashFlowIncome(unitType);
-  const registerAllIncome = useRegisterAllCashFlowIncome(unitType);
+  const confirmSettlements = useConfirmTripSettlements(unitType);
   const createDeposit = useCreateCashFlowDeposit(unitType);
   const createExpense = useCreateCashFlowExpense(unitType);
   const createRemesaPayment = useCreateCashFlowRemesaPayment(unitType);
@@ -205,27 +197,20 @@ export default function EggCashFlowPage({ unitType }: Props) {
     );
   };
 
-  const handleRegisterAllPending = async (trips: TripSuggestion[]) => {
-    setRegisterAllBusy(true);
-    setRegisterAllResult(null);
-
-    try {
-      const result = await registerAllIncome.mutateAsync(trips);
-      setRegisterAllResult({
-        registered: result.registered,
-        failed: result.failed.map(({ trip, error }) => ({
-          label: `${formatDate(trip.departureDate)} · ${trip.driverName ?? "Sin chofer"}`,
-          reason: extractErrorMessage(error),
-        })),
-      });
-    } catch (error) {
-      setRegisterAllResult({
-        registered: 0,
-        failed: [{ label: "Despachos", reason: extractErrorMessage(error) }],
-      });
-    } finally {
-      setRegisterAllBusy(false);
-    }
+  const handleConfirmSettlements = (items: ConfirmTripSettlementItemDTO[]) => {
+    confirmSettlements.mutate(
+      { items },
+      {
+        onSuccess: (settlements) => {
+          setToastMessage(
+            settlements.length === 1
+              ? "Cobranza de ruta confirmada."
+              : `${settlements.length} cobranzas de ruta confirmadas.`,
+          );
+        },
+        onError: handleActionError,
+      },
+    );
   };
 
   const helpLink = (
@@ -403,38 +388,6 @@ export default function EggCashFlowPage({ unitType }: Props) {
         </Alert>
       )}
 
-      {registerAllResult && (
-        <Alert
-          color={
-            registerAllResult.failed.length === 0
-              ? "success"
-              : registerAllResult.registered === 0
-                ? "failure"
-                : "warning"
-          }
-          onDismiss={() => setRegisterAllResult(null)}
-        >
-          <div className="text-sm font-medium">
-            {registerAllResult.registered === 0
-              ? "No se registró ningún despacho."
-              : `${registerAllResult.registered} ${
-                  registerAllResult.registered === 1
-                    ? "despacho registrado"
-                    : "despachos registrados"
-                }.`}
-          </div>
-          {registerAllResult.failed.length > 0 && (
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
-              {registerAllResult.failed.map((f) => (
-                <li key={`${f.label}-${f.reason}`}>
-                  {f.label}: {f.reason}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Alert>
-      )}
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-300">
@@ -475,31 +428,76 @@ export default function EggCashFlowPage({ unitType }: Props) {
         </div>
       </div>
 
-      {tripsQuery.isError || collectionsQuery.isError ? (
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Cobranza</h2>
+          <p className="text-sm text-slate-400">
+            Confirma el efectivo de ruta y registra los cobros a crédito
+            pendientes.
+          </p>
+        </div>
+        <div
+          className="flex flex-wrap gap-1"
+          role="group"
+          aria-label="Filtrar cobranza por tipo"
+        >
+          {(
+            [
+              ["ALL", "Todo"],
+              ["CREDIT", "Solo crédito"],
+            ] as const
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              size="xs"
+              color={collectionView === value ? "blue" : "gray"}
+              onClick={() => setCollectionView(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {settlementsQuery.isError || collectionsQuery.isError ? (
         <AccountingErrorAlert
-          error={tripsQuery.error ?? collectionsQuery.error}
+          error={settlementsQuery.error ?? collectionsQuery.error}
           title="No se pudo cargar el estado de cobranza"
           onRetry={() => {
-            if (tripsQuery.isError) tripsQuery.refetch();
+            if (settlementsQuery.isError) settlementsQuery.refetch();
             if (collectionsQuery.isError) collectionsQuery.refetch();
           }}
         />
       ) : (
-        <PendingCollectionsPanel
-          key={`${from}-${to}`}
-          trips={tripsQuery.data ?? []}
-          collections={collectionsQuery.data ?? []}
-          onCollectTrip={(t) => {
-            setIncomePrefill({ tripId: t.tripId });
-            setShowIncome(true);
-          }}
-          onCollectPayment={(c) => {
-            setIncomePrefill({ paymentId: c.paymentId });
-            setShowIncome(true);
-          }}
-          onRegisterAllPending={handleRegisterAllPending}
-          registerAllBusy={registerAllBusy}
-        />
+        <>
+          {collectionView === "ALL" &&
+            (settlementsQuery.isLoading ? (
+              <div className="flex justify-center py-6">
+                <Spinner size="lg" />
+              </div>
+            ) : (
+              <TripSettlementsPanel
+                key={`${from}-${to}`}
+                settlements={settlementsQuery.data ?? []}
+                onConfirm={handleConfirmSettlements}
+                isConfirming={confirmSettlements.isPending}
+              />
+            ))}
+          {collectionsQuery.isLoading ? (
+            <div className="flex justify-center py-6">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <PendingCollectionsPanel
+              key={`credit-${from}-${to}`}
+              collections={collectionsQuery.data ?? []}
+              onCollectPayment={(c) => {
+                setIncomePrefill({ paymentId: c.paymentId });
+                setShowIncome(true);
+              }}
+            />
+          )}
+        </>
       )}
 
       {summaryQuery.isError && (
@@ -561,6 +559,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
           onMove={handleMove}
           accountFilter={accountFilter}
           onAccountFilterChange={setAccountFilter}
+          collectionView={collectionView}
           isDeleting={deleteMovement.isPending}
         />
       )}
@@ -607,17 +606,14 @@ export default function EggCashFlowPage({ unitType }: Props) {
           setShowIncome(false);
           setIncomePrefill(null);
         }}
-        trips={tripsQuery.data ?? []}
         collections={collectionsQuery.data ?? []}
-        clients={clientsQuery.data ?? []}
-        initialTripId={incomePrefill?.tripId ?? null}
         initialPaymentId={incomePrefill?.paymentId ?? null}
         onSave={(p) =>
           createIncome.mutate(p, {
             onSuccess: () => {
               setShowIncome(false);
               setIncomePrefill(null);
-              setToastMessage("Cobranza registrada.");
+              setToastMessage("Ingreso registrado.");
             },
             onError: handleActionError,
           })

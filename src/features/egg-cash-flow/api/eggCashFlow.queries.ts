@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eggCashFlowApi } from "./eggCashFlow.api";
 import { eggCashFlowKeys } from "./eggCashFlow.keys";
 import type {
+  ConfirmTripSettlementsRequestDTO,
   CreateAdjustmentRequestDTO,
   CreateCashExpenseRequestDTO,
   CreateCashFlowCutDTO,
@@ -11,7 +12,6 @@ import type {
   CreateRemesaPaymentRequestDTO,
   EggCashFlowUnit,
   MoveCashFlowMovementRequestDTO,
-  TripSuggestion,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
 
@@ -78,6 +78,17 @@ export const useCollectionSuggestions = (
     staleTime: STALE_TIME,
   });
 
+export const useTripSettlements = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+) =>
+  useQuery({
+    queryKey: eggCashFlowKeys(unit).tripSettlements(from, to),
+    queryFn: () => eggCashFlowApi.getTripSettlements(from, to),
+    staleTime: STALE_TIME,
+  });
+
 export const useRemesas = (unit: EggCashFlowUnit) =>
   useQuery({
     queryKey: eggCashFlowKeys(unit).remesas(),
@@ -136,29 +147,11 @@ export const useCreateCashFlowIncome = (unit: EggCashFlowUnit) => {
   });
 };
 
-export const useRegisterAllCashFlowIncome = (unit: EggCashFlowUnit) => {
+export const useConfirmTripSettlements = (unit: EggCashFlowUnit) => {
   const invalidate = useInvalidate(unit);
   return useMutation({
-    mutationFn: async (trips: TripSuggestion[]) => {
-      let registered = 0;
-      const failed: { trip: TripSuggestion; error: unknown }[] = [];
-      for (const trip of trips) {
-        try {
-          await eggCashFlowApi.createIncome({
-            date: trip.departureDate,
-            amount: trip.pending,
-            officeAmount: 0,
-            account: "BANK",
-            tripId: trip.tripId,
-            description: `Despacho ${trip.departureDate} - ${trip.driverName ?? ""}`,
-          });
-          registered += 1;
-        } catch (error) {
-          failed.push({ trip, error });
-        }
-      }
-      return { registered, failed };
-    },
+    mutationFn: (payload: ConfirmTripSettlementsRequestDTO) =>
+      eggCashFlowApi.confirmTripSettlements(payload),
     onSuccess: invalidate,
   });
 };

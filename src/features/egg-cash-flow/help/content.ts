@@ -133,8 +133,7 @@ export const AUTOMATIC_ITEMS: string[] = [
 ];
 
 export const MANUAL_ITEMS: string[] = [
-  "Cobranza de ruta: el total que cobró el chofer y cuánto se quedó en la oficina.",
-  "Clientes en efectivo que no tienen cuenta por cobrar en el ERP.",
+  "Confirmar la cobranza de ruta y ajustar cuánto se quedó en la oficina.",
   "Depósitos del efectivo de la oficina al banco.",
   "Ajustes de cuenta: diferencias, correcciones o dinero que no viene de un documento.",
   "El corte de semana y los saldos reales.",
@@ -175,10 +174,11 @@ export const PAGE_SECTIONS: HelpSection[] = [
   },
   {
     id: "pending",
-    title: "Pendiente de ingresar",
+    title: "Cobranza de ruta y cobros por registrar",
     paragraphs: [
-      "Muestra el efectivo de ruta que el chofer aún no deposita ni entrega a la oficina, y los cobros registrados en Contabilidad que aún no tienen movimiento en el flujo. Las sucursales que compran a crédito están en Contabilidad → Por cobrar, no aquí.",
-      "“Registrar todo al banco” registra los despachos pendientes como depósito directo. Si un despacho dejó efectivo en la oficina, regístralo antes con el monto enviado a la oficina.",
+      "La cobranza de ruta se calcula sola con las ventas en efectivo del despacho. Ahí ves el total cobrado, cuánto se depositó al banco y cuánto se quedó en oficina. Los clientes en efectivo ya vienen incluidos; no se capturan a mano.",
+      "Confirma cada despacho con un clic. Si se quedó efectivo en la oficina, ajusta el monto antes de confirmar. “Confirmar todos” registra de una vez los despachos pendientes.",
+      "Abajo aparecen los cobros a crédito registrados en Contabilidad que aún no tienen movimiento en el flujo. Usa “Solo crédito” para ocultar la cobranza en efectivo y ver únicamente esos cobros.",
     ],
   },
 ];
@@ -316,7 +316,11 @@ export const FAQ: HelpFaq[] = [
   },
   {
     q: "¿Qué se registra automático y qué a mano?",
-    a: "Automático: cobros de sucursales y clientes con cuenta, clientes de depósito directo, gastos y pagos de remesa del módulo. A mano: cobranza de ruta, clientes en efectivo sin cuenta, depósitos, ajustes y corte.",
+    a: "Automático: cobros de sucursales y clientes con cuenta, clientes de depósito directo, gastos y pagos de remesa del módulo. La cobranza de ruta se calcula sola con las ventas del despacho; solo la confirmas y ajustas el efectivo en oficina. A mano: depósitos, ajustes y corte.",
+  },
+  {
+    q: "¿Todavía tengo que capturar a los clientes en efectivo?",
+    a: "No. Sus ventas ya vienen en la cobranza de ruta del despacho. Confirma el total y, si dejaron efectivo en oficina, ajusta ese monto antes de confirmar.",
   },
   {
     q: "¿Qué significa la etiqueta “Auto”?",
@@ -380,8 +384,9 @@ export const GLOSSARY: HelpGlossaryItem[] = [
     definition: "Movimiento creado por el sistema desde un documento.",
   },
   {
-    term: "Pendiente de ingresar",
-    definition: "Efectivo en ruta y cobros que aún no están en el flujo.",
+    term: "Cobranza de ruta",
+    definition:
+      "Ventas en efectivo del despacho que se confirman para separar banco y oficina.",
   },
   {
     term: "Saldo real",

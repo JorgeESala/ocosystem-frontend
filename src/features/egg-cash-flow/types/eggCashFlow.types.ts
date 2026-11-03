@@ -184,6 +184,38 @@ export interface TripSuggestion {
   pending: number;
 }
 
+export type TripSettlementStatus =
+  | "PENDING"
+  | "PARTIAL"
+  | "CONFIRMED"
+  | "CLOSED";
+
+export interface TripSettlement {
+  tripId: number;
+  departureDate: string;
+  driverId: number | null;
+  driverName: string | null;
+  routeId: number | null;
+  routeName: string | null;
+  total: number;
+  bankPosted: number;
+  officePosted: number;
+  officeAmount: number;
+  pending: number;
+  status: TripSettlementStatus;
+  editable: boolean;
+  weekClosed: boolean;
+}
+
+export interface ConfirmTripSettlementItemDTO {
+  tripId: number;
+  officeAmount: number;
+}
+
+export interface ConfirmTripSettlementsRequestDTO {
+  items: ConfirmTripSettlementItemDTO[];
+}
+
 export interface CollectionSuggestion {
   paymentId: number;
   paymentDate: string;
