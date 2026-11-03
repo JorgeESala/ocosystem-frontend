@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
-import type { CashFlowCut, TripSuggestion } from "../types/eggCashFlow.types";
+import type { CashFlowCut, TripSettlement } from "../types/eggCashFlow.types";
 
 vi.mock("@/core/client/api/client.queries", () => ({
   useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   useCashFlowSettings: vi.fn(),
   useCashFlowSummary: vi.fn(),
   useCashFlowMovements: vi.fn(),
-  useTripSuggestions: vi.fn(),
+  useTripSettlements: vi.fn(),
   useCollectionSuggestions: vi.fn(),
   useRemesas: vi.fn(),
   useAvailableExpenses: vi.fn(),
@@ -26,9 +26,8 @@ const mocks = vi.hoisted(() => ({
     isPending: false,
   })),
   useCreateCashFlowIncome: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  useRegisterAllCashFlowIncome: vi.fn(() => ({
+  useConfirmTripSettlements: vi.fn(() => ({
     mutate: vi.fn(),
-    mutateAsync: vi.fn(),
     isPending: false,
   })),
   useCreateCashFlowDeposit: vi.fn(() => ({
@@ -57,7 +56,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCashFlowSettings: mocks.useCashFlowSettings,
   useCashFlowSummary: mocks.useCashFlowSummary,
   useCashFlowMovements: mocks.useCashFlowMovements,
-  useTripSuggestions: mocks.useTripSuggestions,
+  useTripSettlements: mocks.useTripSettlements,
   useCollectionSuggestions: mocks.useCollectionSuggestions,
   useRemesas: mocks.useRemesas,
   useAvailableExpenses: mocks.useAvailableExpenses,
@@ -65,7 +64,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCreateCashFlowSettings: mocks.useCreateCashFlowSettings,
   useUpdateCashFlowSettings: mocks.useUpdateCashFlowSettings,
   useCreateCashFlowIncome: mocks.useCreateCashFlowIncome,
-  useRegisterAllCashFlowIncome: mocks.useRegisterAllCashFlowIncome,
+  useConfirmTripSettlements: mocks.useConfirmTripSettlements,
   useCreateCashFlowDeposit: mocks.useCreateCashFlowDeposit,
   useCreateCashFlowExpense: mocks.useCreateCashFlowExpense,
   useCreateCashFlowRemesaPayment: mocks.useCreateCashFlowRemesaPayment,
@@ -104,15 +103,23 @@ const settingsData = {
   updatedBy: null,
 };
 
-const trip = (overrides: Partial<TripSuggestion> = {}): TripSuggestion => ({
+const settlement = (
+  overrides: Partial<TripSettlement> = {},
+): TripSettlement => ({
   tripId: 1,
   departureDate: "2026-10-05",
   driverId: 1,
   driverName: "Chofer Uno",
   routeId: 1,
-  collectible: 1000,
-  collected: 0,
+  routeName: "Ruta Uno",
+  total: 1000,
+  bankPosted: 0,
+  officePosted: 0,
+  officeAmount: 0,
   pending: 1000,
+  status: "PENDING",
+  editable: true,
+  weekClosed: false,
   ...overrides,
 });
 
@@ -159,7 +166,7 @@ describe("EggCashFlowPage", () => {
     vi.clearAllMocks();
     mocks.useCashFlowSummary.mockReturnValue(emptyQuery());
     mocks.useCashFlowMovements.mockReturnValue(emptyQuery([]));
-    mocks.useTripSuggestions.mockReturnValue(emptyQuery([]));
+    mocks.useTripSettlements.mockReturnValue(emptyQuery([]));
     mocks.useCollectionSuggestions.mockReturnValue(emptyQuery([]));
     mocks.useRemesas.mockReturnValue(emptyQuery([]));
     mocks.useAvailableExpenses.mockReturnValue(emptyQuery([]));
@@ -247,20 +254,21 @@ describe("EggCashFlowPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("does not offer trips that already have a partial collection", () => {
+  it("shows the cash trip settlement calculated from sales", () => {
     mocks.useCashFlowSettings.mockReturnValue({
       ...mutationQuery,
       data: settingsData,
       isLoading: false,
     });
-    mocks.useTripSuggestions.mockReturnValue(
+    mocks.useTripSettlements.mockReturnValue(
       emptyQuery([
-        trip({ tripId: 1, driverName: "Chofer Pendiente" }),
-        trip({
+        settlement({ tripId: 1, driverName: "Chofer Pendiente" }),
+        settlement({
           tripId: 2,
           driverName: "Chofer Parcial",
-          collected: 400,
+          bankPosted: 400,
           pending: 600,
+          status: "PARTIAL",
         }),
       ]),
     );
@@ -268,69 +276,75 @@ describe("EggCashFlowPage", () => {
     renderPage();
 
     expect(screen.getByText(/Chofer Pendiente/)).toBeInTheDocument();
-    expect(screen.queryByText(/Chofer Parcial/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Chofer Parcial/)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Registrar todo al banco \(1\)/ }),
+      screen.getByRole("button", { name: /Confirmar todos \(2\)/ }),
     ).toBeInTheDocument();
   });
 
-  it("registers pending trips and summarizes failures", async () => {
+  it("confirms all pending settlements with the office amount", () => {
     mocks.useCashFlowSettings.mockReturnValue({
       ...mutationQuery,
       data: settingsData,
       isLoading: false,
     });
-    mocks.useTripSuggestions.mockReturnValue(
+    mocks.useTripSettlements.mockReturnValue(
       emptyQuery([
-        trip({ tripId: 1, driverName: "Chofer Uno" }),
-        trip({
+        settlement({ tripId: 1, driverName: "Chofer Uno" }),
+        settlement({
           tripId: 2,
           driverName: "Chofer Dos",
           departureDate: "2026-10-06",
           pending: 500,
+          total: 500,
         }),
       ]),
     );
-    const mutateAsync = vi.fn().mockResolvedValue({
-      registered: 1,
-      failed: [
-        {
-          trip: trip({
-            tripId: 2,
-            driverName: "Chofer Dos",
-            departureDate: "2026-10-06",
-            pending: 500,
-          }),
-          error: new Error("Esta fecha esta dentro de una semana cerrada."),
-        },
-      ],
-    });
-    mocks.useRegisterAllCashFlowIncome.mockReturnValue({
-      mutate: vi.fn(),
-      mutateAsync,
+    const mutate = vi.fn();
+    mocks.useConfirmTripSettlements.mockReturnValue({
+      mutate,
       isPending: false,
     });
 
     renderPage();
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Registrar todo al banco \(2\)/ }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: /Sí, registrar al banco/ }),
+      screen.getByRole("button", { name: /Confirmar todos \(2\)/ }),
     );
 
-    expect(
-      await screen.findByText(/1 despacho registrado/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/semana cerrada/)).toBeInTheDocument();
-    expect(mutateAsync).toHaveBeenCalledTimes(1);
-    expect(mutateAsync).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ tripId: 1 }),
-        expect.objectContaining({ tripId: 2 }),
-      ]),
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(mutate).toHaveBeenCalledWith(
+      {
+        items: [
+          { tripId: 1, officeAmount: 0 },
+          { tripId: 2, officeAmount: 0 },
+        ],
+      },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+        onError: expect.any(Function),
+      }),
     );
+  });
+
+  it("hides cash settlements when only credit is selected", () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSettlements.mockReturnValue(
+      emptyQuery([settlement({ driverName: "Chofer Efectivo" })]),
+    );
+
+    renderPage();
+
+    expect(screen.getByText("Cobranza de ruta")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Solo crédito" }));
+
+    expect(screen.queryByText("Cobranza de ruta")).not.toBeInTheDocument();
+    expect(screen.getByText("Cobros por registrar")).toBeInTheDocument();
   });
 
   it("opens on the latest cut week when cuts exist", async () => {

@@ -14,6 +14,7 @@ describe("eggCashFlowKeys", () => {
       keys.summary("2026-10-01", "2026-10-07"),
       keys.movements("2026-10-01", "2026-10-07"),
       keys.tripSuggestions("2026-10-01", "2026-10-07"),
+      keys.tripSettlements("2026-10-01", "2026-10-07"),
       keys.collectionSuggestions("2026-10-01", "2026-10-07"),
       keys.remesas(),
       keys.availableExpenses("2026-10-01", "2026-10-07"),

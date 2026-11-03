@@ -7,6 +7,7 @@ import type {
   CashFlowSettings,
   CashFlowSummary,
   CollectionSuggestion,
+  ConfirmTripSettlementsRequestDTO,
   CreateAdjustmentRequestDTO,
   CreateCashExpenseRequestDTO,
   CreateCashFlowCutDTO,
@@ -16,6 +17,7 @@ import type {
   CreateRemesaPaymentRequestDTO,
   MoveCashFlowMovementRequestDTO,
   Remesa,
+  TripSettlement,
   TripSuggestion,
   UpdateCashFlowSettingsDTO,
 } from "../types/eggCashFlow.types";
@@ -164,6 +166,27 @@ export const eggCashFlowApi = {
     const { data } = await http.get<CollectionSuggestion[]>(
       `${BASE_URL}/suggestions/collections`,
       { params: { from, to } },
+    );
+    return data;
+  },
+
+  getTripSettlements: async (
+    from: string,
+    to: string,
+  ): Promise<TripSettlement[]> => {
+    const { data } = await http.get<TripSettlement[]>(
+      `${BASE_URL}/settlements`,
+      { params: { from, to } },
+    );
+    return data;
+  },
+
+  confirmTripSettlements: async (
+    payload: ConfirmTripSettlementsRequestDTO,
+  ): Promise<TripSettlement[]> => {
+    const { data } = await http.post<TripSettlement[]>(
+      `${BASE_URL}/settlements/confirm`,
+      payload,
     );
     return data;
   },

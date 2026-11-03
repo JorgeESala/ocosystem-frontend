@@ -39,6 +39,7 @@ interface Props {
   onMove: (id: number, account: "CASH" | "BANK") => void;
   accountFilter: "ALL" | "CASH" | "BANK";
   onAccountFilterChange: (value: "ALL" | "CASH" | "BANK") => void;
+  collectionView?: "ALL" | "CREDIT";
   isDeleting?: boolean;
 }
 
@@ -54,12 +55,15 @@ export default function CashFlowMovementsTable({
   onMove,
   accountFilter,
   onAccountFilterChange,
+  collectionView = "ALL",
   isDeleting = false,
 }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const filtered = movements?.filter(
-    (m) => accountFilter === "ALL" || m.account === accountFilter,
+    (m) =>
+      (accountFilter === "ALL" || m.account === accountFilter) &&
+      (collectionView === "ALL" || m.category === "PAYMENT_COLLECTION"),
   );
 
   const handleDelete = (id: number) => {
@@ -125,7 +129,7 @@ export default function CashFlowMovementsTable({
                   colSpan={8}
                   className="px-5 py-10 text-center text-sm text-slate-400"
                 >
-                  No hay movimientos en esta bolsa.
+                  No hay movimientos con este filtro.
                 </td>
               </tr>
             ) : (
