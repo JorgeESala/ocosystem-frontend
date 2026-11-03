@@ -184,18 +184,8 @@ export const TripCollectionsPanel = ({
     return map;
   }, [tripSales]);
 
-  const cashSales = useMemo(
-    () => tripSales.filter((sale) => sale.clientId == null),
-    [tripSales],
-  );
-
-  const salesForClient = (client: TripCollectionClient) => {
-    const exact = salesByClient.get(
-      clientSalesKey(client.clientId, client.clientName),
-    );
-    if (exact?.length) return exact;
-    return client.clientId == null ? cashSales : [];
-  };
+  const salesForClient = (client: TripCollectionClient) =>
+    salesByClient.get(clientSalesKey(client.clientId, client.clientName)) ?? [];
 
   const applyFilterChange = (
     change:
@@ -669,6 +659,7 @@ export const TripCollectionsPanel = ({
               onClick={() => {
                 setExpandedTripId(expanded ? null : trip.tripId);
                 setExpandedClientKey(null);
+                setPreviewSale(null);
               }}
             >
               <div className="flex items-center gap-3">
@@ -739,6 +730,10 @@ export const TripCollectionsPanel = ({
                     const isCash = client.accountingEntityId == null;
                     const amount = Number(draft.amount);
                     const clientKey = keyFor(trip, client);
+                    const originId = `origen-${clientKey.replace(
+                      /[^a-zA-Z0-9_-]/g,
+                      "-",
+                    )}`;
                     const clientSales = salesForClient(client);
                     const totalPieces = clientSales.reduce(
                       (sum, sale) => sum + Number(sale.quantity ?? 0),
@@ -771,7 +766,7 @@ export const TripCollectionsPanel = ({
                               type="button"
                               className="mt-1 inline-flex items-center gap-1 text-xs text-blue-400 hover:underline"
                               aria-expanded={originOpen}
-                              aria-controls={`origen-${clientKey}`}
+                              aria-controls={originId}
                               aria-label={`${originOpen ? "Ocultar" : "Ver"} origen de ${client.clientName}`}
                               onClick={() =>
                                 setExpandedClientKey(
@@ -906,7 +901,7 @@ export const TripCollectionsPanel = ({
                         </div>
                         {originOpen && (
                           <div
-                            id={`origen-${clientKey}`}
+                            id={originId}
                             className="border-t border-gray-800 bg-gray-950/30 px-4 py-3"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">

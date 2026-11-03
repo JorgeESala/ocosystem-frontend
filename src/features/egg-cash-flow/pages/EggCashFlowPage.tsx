@@ -229,12 +229,15 @@ export default function EggCashFlowPage({ unitType }: Props) {
   };
 
   const helpLink = (
-    <Link to={`/business/${slug}/cash-flow/help`}>
-      <Button color="light" size="sm">
-        <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
-        Ayuda
-      </Button>
-    </Link>
+    <Button
+      as={Link}
+      to={`/business/${slug}/cash-flow/help`}
+      color="light"
+      size="sm"
+    >
+      <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
+      Ayuda
+    </Button>
   );
 
   if (settingsQuery.isLoading) {
@@ -296,9 +299,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
               <HiCog className="mr-2 h-4 w-4" />
               Configurar
             </Button>
-            <Link to={`/business/${slug}/cash-flow/help`}>
-              <Button color="light">Ver ayuda</Button>
-            </Link>
+            <Button
+              as={Link}
+              to={`/business/${slug}/cash-flow/help`}
+              color="light"
+            >
+              Ver ayuda
+            </Button>
           </div>
         </div>
         <SettingsModal
@@ -479,6 +486,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         />
       ) : (
         <PendingCollectionsPanel
+          key={`${from}-${to}`}
           trips={tripsQuery.data ?? []}
           collections={collectionsQuery.data ?? []}
           onCollectTrip={(t) => {
@@ -553,6 +561,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
           onMove={handleMove}
           accountFilter={accountFilter}
           onAccountFilterChange={setAccountFilter}
+          isDeleting={deleteMovement.isPending}
         />
       )}
 

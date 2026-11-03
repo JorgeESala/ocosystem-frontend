@@ -39,6 +39,7 @@ interface Props {
   onMove: (id: number, account: "CASH" | "BANK") => void;
   accountFilter: "ALL" | "CASH" | "BANK";
   onAccountFilterChange: (value: "ALL" | "CASH" | "BANK") => void;
+  isDeleting?: boolean;
 }
 
 const ACCOUNT_FILTER_LABELS: Record<"ALL" | "CASH" | "BANK", string> = {
@@ -53,6 +54,7 @@ export default function CashFlowMovementsTable({
   onMove,
   accountFilter,
   onAccountFilterChange,
+  isDeleting = false,
 }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
@@ -232,6 +234,7 @@ export default function CashFlowMovementsTable({
         confirmLabel="Sí, eliminar"
         cancelLabel="Cancelar"
         tone="danger"
+        isBusy={isDeleting}
         onConfirm={() => {
           if (confirmDelete != null) handleDelete(confirmDelete);
         }}

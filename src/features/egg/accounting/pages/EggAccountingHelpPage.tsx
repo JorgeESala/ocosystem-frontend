@@ -31,7 +31,7 @@ const MODES = [
     icon: "📊",
     title: "Resumen financiero",
     description:
-      "Foto por CEDIS: deuda total, por cobrar, valor en inventario y balance neto, con desglose por cliente y por remesa. Se puede exportar a PDF.",
+      "Foto por CEDIS: deuda total, por cobrar, valor en inventario y balance neto, con desglose por cliente y por remesa. Es una vista de solo lectura; para pagar o crear cuentas usa Por cobrar o Por pagar. Se puede exportar a PDF.",
   },
 ];
 

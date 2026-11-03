@@ -188,7 +188,7 @@ export default function EggCashFlowHelpPage() {
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-white">
-          Corte de semana paso a paso
+          Cerrar la semana paso a paso
         </h2>
         <div className="space-y-3">
           {CUT_STEPS.map((step) => (
