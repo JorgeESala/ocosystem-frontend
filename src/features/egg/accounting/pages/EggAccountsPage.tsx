@@ -58,7 +58,8 @@ const VIEW_DESCRIPTIONS: Record<EggAccountingView, string> = {
   RECEIVABLE: "Consulta quién te debe y desde cuándo.",
   COLLECTIONS: "Registra los cobros del día, por cliente o por ruta.",
   PAYABLE: "Consulta a quién le debes y qué está pendiente.",
-  FINANCIAL: "Foto financiera por CEDIS.",
+  FINANCIAL:
+    "Foto financiera por CEDIS. Es una vista de solo lectura; para pagar o crear cuentas usa Por cobrar o Por pagar.",
 };
 
 const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
@@ -224,10 +225,6 @@ export const EggAccountsPage = () => {
   useEffect(() => {
     const next = new URLSearchParams();
     next.set("mode", viewMode === "COLLECTIONS" ? "COBRAR" : viewMode);
-    if (viewMode === "COLLECTIONS") {
-      setSearchParams(next, { replace: true });
-      return;
-    }
     if (selectedCedis.length > 0) next.set("cedis", selectedCedis.join(","));
     if (selectedClients.length > 0)
       next.set("client", selectedClients.join(","));
@@ -471,9 +468,9 @@ export const EggAccountsPage = () => {
               >
                 Ver cuentas por cobrar
               </Button>
-              <Link to={`/business/${slug}/cash-flow`}>
-                <Button color="gray">Ver flujo de efectivo</Button>
-              </Link>
+              <Button as={Link} to={`/business/${slug}/cash-flow`} color="gray">
+                Ver flujo de efectivo
+              </Button>
             </>
           )}
 
@@ -500,12 +497,10 @@ export const EggAccountsPage = () => {
             </Button>
           )}
 
-          <Link to="help">
-            <Button color="gray">
-              <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
-              Ayuda
-            </Button>
-          </Link>
+          <Button as={Link} to="help" color="gray">
+            <HiQuestionMarkCircle className="mr-2 h-4 w-4" />
+            Ayuda
+          </Button>
         </div>
       </div>
 

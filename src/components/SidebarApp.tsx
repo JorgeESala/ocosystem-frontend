@@ -206,6 +206,7 @@ export default function SidebarApp() {
                       <Link
                         key={business.slug}
                         to={`/business/${business.slug}`}
+                        onClick={() => setMobileOpen(false)}
                       >
                         <SidebarItem icon={business.icon}>
                           {business.name}

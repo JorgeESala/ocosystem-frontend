@@ -279,6 +279,8 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
           setPaymentDate(new Date());
           setFolio("");
           setNote("");
+          setShowDebts(false);
+          setPreviewDebt(null);
           setResetKey((key) => key + 1);
           window.setTimeout(() => searchRef.current?.focus(), 0);
         },
