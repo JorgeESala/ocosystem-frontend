@@ -44,6 +44,7 @@ interface Props {
   selectable?: boolean;
   selectedIds?: number[];
   onSelectionChange?: (ids: number[]) => void;
+  payLabel?: string;
   headerTooltips?: {
     total?: ReactNode;
     balance?: ReactNode;
@@ -62,6 +63,7 @@ export const AccountsOpenTable = ({
   selectable = false,
   selectedIds = [],
   onSelectionChange,
+  payLabel = "Registrar pago",
   headerTooltips,
 }: Props) => {
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -339,10 +341,10 @@ export const AccountsOpenTable = ({
 
               <TableCell className="flex gap-2">
                 {row.balance > 0 && (
-                  <Tooltip content="Registrar pago">
+                  <Tooltip content={payLabel}>
                     <Button
                       size="xs"
-                      aria-label="Registrar pago"
+                      aria-label={payLabel}
                       onClick={(e) => {
                         e.stopPropagation();
                         onPay(row);

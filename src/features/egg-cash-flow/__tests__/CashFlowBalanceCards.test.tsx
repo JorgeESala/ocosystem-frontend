@@ -31,10 +31,14 @@ describe("CashFlowBalanceCards", () => {
   it("shows the period cash income next to the balances", () => {
     render(<CashFlowBalanceCards summary={summary} accountHolder="Titular" />);
 
-    expect(screen.getByText("Efectivo en oficina (saldo)")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo en oficina")).toBeInTheDocument();
     expect(screen.getByText("Cobranza del periodo")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo + banco")).toBeInTheDocument();
     expect(screen.getByText(formatMXN(139605))).toBeInTheDocument();
     expect(screen.getByText("Cuenta de Titular")).toBeInTheDocument();
+    expect(
+      screen.getByText(`Deuda con remesas: ${formatMXN(95720.88)}`),
+    ).toBeInTheDocument();
   });
 
   it("includes the adjustment in the period income", () => {

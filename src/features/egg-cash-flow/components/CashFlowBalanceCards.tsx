@@ -25,13 +25,13 @@ export default function CashFlowBalanceCards({
       <div className="rounded-xl bg-slate-800 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <HiCash className="h-4 w-4 text-amber-400" />
-          Efectivo en oficina (saldo)
+          Efectivo en oficina
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
           {formatMXN(summary.cashClosingBalance)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
-          Efectivo retenido para gastos y nómina
+          Lo que quedó en la oficina
         </div>
       </div>
 
@@ -57,19 +57,22 @@ export default function CashFlowBalanceCards({
           {formatMXN(periodIncome)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
-          Cobranza de ruta y clientes (incluye ajustes)
+          Cobranza + ajustes del periodo
         </div>
       </div>
 
       <div className="rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 p-5">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <HiOfficeBuilding className="h-4 w-4 text-emerald-400" />
-          Total
+          Efectivo + banco
         </div>
         <div className="mt-1 text-2xl font-bold text-white">
           {formatMXN(summary.totalBalance)}
         </div>
         <div className="mt-1 text-xs text-slate-500">
+          Suma de oficina y banco
+        </div>
+        <div className="mt-2 text-xs font-medium text-amber-300">
           Deuda con remesas: {formatMXN(summary.remesaDebtTotal)}
         </div>
       </div>

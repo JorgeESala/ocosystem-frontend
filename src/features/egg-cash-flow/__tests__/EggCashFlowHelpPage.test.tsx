@@ -24,6 +24,16 @@ describe("EggCashFlowHelpPage", () => {
     expect(screen.getByText("Preguntas frecuentes")).toBeInTheDocument();
     expect(screen.getByText("Glosario")).toBeInTheDocument();
     expect(
+      screen.getByText("Cerrar la semana paso a paso"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Efectivo en oficina es el efectivo que quedó/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Cerrar semana/).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(/Efectivo en oficina \(saldo\)/),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("link", { name: /Volver al flujo/ }),
     ).toHaveAttribute("href", "/business/huevo/cash-flow");
   });

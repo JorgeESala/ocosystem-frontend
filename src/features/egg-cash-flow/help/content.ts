@@ -88,7 +88,7 @@ export const FIRST_STEPS: HelpStep[] = [
   {
     title: "6. Cierra la semana",
     description:
-      "Elige el rango de la semana, revisa que no falte nada, captura el saldo real del banco y el efectivo real en oficina y usa “Corte de semana”. La semana queda bloqueada; si algo faltó, reabre el último corte, corrige y vuelve a cortar.",
+      "Elige el rango de la semana, revisa que no falte nada, captura el saldo real del banco y el efectivo real en oficina y usa “Cerrar semana”. La semana queda bloqueada; si algo faltó, reabre el último corte, corrige y vuelve a cortar.",
   },
 ];
 
@@ -145,8 +145,8 @@ export const PAGE_SECTIONS: HelpSection[] = [
     id: "cards",
     title: "Tarjetas de arriba",
     paragraphs: [
-      "Efectivo en oficina (saldo) es el efectivo que quedó en la oficina. Banco es el saldo calculado de la cuenta. Cobranza del periodo es la cobranza de ruta y clientes (incluye ajustes) y Total es la suma de efectivo en oficina y banco.",
-      "La deuda con remesas aparece en la tarjeta Total. Es el saldo de las cuentas por pagar de proveedores, no la deuda con el gerente.",
+      "Efectivo en oficina es el efectivo que quedó en la oficina. Banco es el saldo calculado de la cuenta. Cobranza del periodo es la cobranza de ruta y clientes (incluye ajustes) y Efectivo + banco es la suma de efectivo en oficina y banco.",
+      "La deuda con remesas aparece en la tarjeta Efectivo + banco. Es el saldo de las cuentas por pagar de proveedores, no la deuda con el gerente.",
     ],
   },
   {

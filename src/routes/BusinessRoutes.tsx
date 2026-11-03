@@ -57,6 +57,11 @@ function UploadReportsRedirect() {
   );
 }
 
+export function EggCollectionsRedirect() {
+  const { slug } = useParams();
+  return <Navigate replace to={`/business/${slug}/accounting?mode=COBRAR`} />;
+}
+
 export default function BusinessRoutes() {
   const { slug } = useParams();
 
@@ -188,6 +193,7 @@ export default function BusinessRoutes() {
         />
         <Route path="accounting" element={<EggAccountsPage />} />
         <Route path="accounting/help" element={<EggAccountingHelpPage />} />
+        <Route path="collections" element={<EggCollectionsRedirect />} />
         <Route
           path="income-statement"
           element={<IncomeStatementPage unitType="EGG" />}

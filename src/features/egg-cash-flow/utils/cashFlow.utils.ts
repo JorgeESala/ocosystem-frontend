@@ -14,6 +14,13 @@ export const currentWeekStart = (): Date => {
   return d;
 };
 
+export const currentWeekRange = (): { start: Date; end: Date } => {
+  const start = currentWeekStart();
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+};
+
 export const previousWeekRange = (): { start: Date; end: Date } => {
   const start = currentWeekStart();
   start.setDate(start.getDate() - 7);
