@@ -105,6 +105,7 @@ const LIVE_CHICKEN_MENU = [
   { to: "salesAndBatches", label: "Entradas y Ventas", icon: FaBoxes },
   { to: "expenses", label: "Registrar gasto", icon: GiPayMoney },
   { to: "clients-routes", label: "Clientes y Rutas", icon: HiUserGroup },
+  { to: "orders", label: "Pedidos", icon: FaClipboardList },
   { to: "accounting", label: "Contabilidad", icon: GiReceiveMoney },
   {
     to: "income-statement",
@@ -131,6 +132,12 @@ const EGG_MENU = [
     to: "clients-routes",
     label: "Clientes y Rutas",
     icon: HiUserGroup,
+    group: "Operación",
+  },
+  {
+    to: "orders",
+    label: "Pedidos",
+    icon: FaClipboardList,
     group: "Operación",
   },
   {
