@@ -229,10 +229,14 @@ export const buildDraft = (
   }
 
   return {
+    orderId: sheet.order?.id ?? null,
     routeId: sheet.route.id,
     orderDate: sheet.date,
+    driverId: sheet.order?.driverId ?? null,
     driverName: sheet.order?.driverName ?? "",
+    vehicleId: sheet.order?.vehicleId ?? null,
     vehicleName: sheet.order?.vehicleName ?? "",
+    tripId: sheet.order?.tripId ?? null,
     notes: sheet.order?.notes ?? "",
     rows: sortRows(rows),
   };
@@ -314,7 +318,9 @@ export const draftToSavePayload = (
   return {
     routeId: draft.routeId,
     orderDate: draft.orderDate,
+    driverId: draft.driverId,
     driverName: draft.driverName,
+    vehicleId: draft.vehicleId,
     vehicleName: draft.vehicleName,
     notes: draft.notes,
     lines,

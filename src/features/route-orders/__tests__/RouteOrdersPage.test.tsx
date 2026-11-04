@@ -66,6 +66,23 @@ vi.mock("../api/routeOrders.queries", () => ({
     isLoading: false,
     isError: false,
   }),
+  useCreateRouteOrderTrip: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useLinkRouteOrderTrip: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+  useUnlinkRouteOrderTrip: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
+}));
+
+vi.mock("@/features/trips/api/trips.queries", () => ({
+  useTripsByRouteDate: () => ({ data: [], isLoading: false }),
+  useTripSales: () => ({ data: [] }),
 }));
 
 vi.mock("@/core/client/api/client.queries", () => ({
@@ -134,6 +151,16 @@ describe("RouteOrdersPage", () => {
     expect(await screen.findByText("Cliente A")).toBeInTheDocument();
     expect(screen.getByText("Precio actual del huevo")).toBeInTheDocument();
     expect(screen.getAllByText("Total cajas").length).toBeGreaterThan(0);
+    expect(screen.getByText("Viaje / Despacho")).toBeInTheDocument();
+    expect(
+      screen.getByText("Este pedido todavía no está vinculado a un viaje."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Crear viaje desde pedido/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Excel ruta/i }),
+    ).toBeInTheDocument();
 
     const quantityInput = screen
       .getAllByRole("spinbutton")
