@@ -8,6 +8,8 @@ import {
   draftToSavePayload,
   pricePerBox,
   removeClientFromDraft,
+  roundUnitPrice,
+  rowHasOrderData,
 } from "../utils/routeOrderCalc";
 import type {
   RouteOrderDraft,
@@ -68,6 +70,40 @@ describe("routeOrderCalc", () => {
     expect(cartonsToBoxes(237)).toBe(19.75);
     expect(cartonsToBoxes(73)).toBe(6.083);
     expect(pricePerBox(65)).toBe(780);
+  });
+
+  it("redondea el precio unitario a cuatro decimales", () => {
+    expect(roundUnitPrice(800 / 12)).toBe(66.6667);
+    expect(roundUnitPrice(62.5)).toBe(62.5);
+  });
+
+  it("considera que hay pedido cuando hay cantidad o notas", () => {
+    const draft = buildDraft(sheet, "EGG", 65);
+    const base = draft.rows[0];
+
+    expect(
+      rowHasOrderData({
+        ...base,
+        quantity: "",
+        vegetables: "",
+        condiments: "",
+        groceries: "",
+        comments: "",
+      }),
+    ).toBe(false);
+    expect(
+      rowHasOrderData({ ...base, quantity: "", vegetables: "Tomate" }),
+    ).toBe(true);
+    expect(
+      rowHasOrderData({
+        ...base,
+        quantity: "6",
+        vegetables: "",
+        condiments: "",
+        groceries: "",
+        comments: "",
+      }),
+    ).toBe(true);
   });
 
   it("calcula totales de la hoja de huevo", () => {

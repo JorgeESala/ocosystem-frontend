@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
+  Checkbox,
   Datepicker,
   Label,
   Select,
@@ -10,8 +11,12 @@ import {
 } from "flowbite-react";
 import { HiPlus, HiPrinter, HiSave } from "react-icons/hi";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { SearchableSelect } from "@/components/SearchableSelect";
 import { useClients } from "@/core/client/api/client.queries";
-import type { Client } from "@/core/api/types";
+import { useVehicles } from "@/core/vehicle/api/vehicle.queries";
+import type { Client, VehicleResponseDTO } from "@/core/api/types";
+import { useDrivers } from "@/features/employee/api/employees.queries";
+import type { Employee } from "@/features/employee/types";
 import {
   formatHumanDate,
   getDayName,
@@ -35,9 +40,14 @@ import {
   computeTotals,
   draftToSavePayload,
   removeClientFromDraft,
+  rowHasOrderData,
   toNumber,
   updateDraftRow,
 } from "../utils/routeOrderCalc";
+import {
+  loadHideEmptyOnPrint,
+  saveHideEmptyOnPrint,
+} from "../utils/routeOrderPreferences";
 import { openRouteOrdersPrint } from "../utils/routeOrderSheet";
 import type {
   RouteOrderDraft,
@@ -71,6 +81,9 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const [routePrice, setRoutePrice] = useState("");
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [hideEmptyOnPrint, setHideEmptyOnPrint] = useState<boolean>(() =>
+    loadHideEmptyOnPrint(),
+  );
 
   const dateString = toLocalDateString(selectedDate);
   const {
@@ -86,6 +99,8 @@ export default function RouteOrdersPage({ unitType }: Props) {
     isFetching: isPriceFetching,
   } = useEggPriceReference(dateString, unitType === "EGG");
   const { data: allClients = [] } = useClients();
+  const { data: drivers = [], isLoading: isDriversLoading } = useDrivers();
+  const { data: vehicles = [], isLoading: isVehiclesLoading } = useVehicles();
   const saveMutation = useSaveRouteOrder();
 
   const selectedSheet =
@@ -159,6 +174,42 @@ export default function RouteOrdersPage({ unitType }: Props) {
       ),
     [allClients, draftClientIds],
   );
+
+  const driverItems = useMemo<Employee[]>(() => {
+    const activeDrivers = drivers.filter((driver) => driver.active !== false);
+    const currentName = draft?.driverName;
+    if (
+      currentName &&
+      !activeDrivers.some((driver) => driver.name === currentName)
+    ) {
+      return [
+        ...activeDrivers,
+        { id: -1, name: currentName, email: "", position: "", active: true },
+      ];
+    }
+    return activeDrivers;
+  }, [drivers, draft?.driverName]);
+
+  const vehicleItems = useMemo<VehicleResponseDTO[]>(() => {
+    const currentName = draft?.vehicleName;
+    if (
+      currentName &&
+      !vehicles.some((vehicle) => vehicle.name === currentName)
+    ) {
+      return [...vehicles, { id: -1, name: currentName, fuelType: "GASOLINE" }];
+    }
+    return vehicles;
+  }, [vehicles, draft?.vehicleName]);
+
+  const selectedDriver =
+    driverItems.find((driver) => driver.name === draft?.driverName) ?? null;
+  const selectedVehicle =
+    vehicleItems.find((vehicle) => vehicle.name === draft?.vehicleName) ?? null;
+
+  const handleHideEmptyOnPrintChange = (checked: boolean) => {
+    setHideEmptyOnPrint(checked);
+    saveHideEmptyOnPrint(checked);
+  };
 
   const updateRow = (clientId: number, patch: Partial<RouteOrderDraftRow>) => {
     if (!draft) return;
@@ -265,6 +316,16 @@ export default function RouteOrdersPage({ unitType }: Props) {
     const nextDraft = isDirty ? await persistDraft() : draft;
     setIsPrinting(false);
     if (!nextDraft) return;
+    if (
+      hideEmptyOnPrint &&
+      !nextDraft.rows.some((row) => rowHasOrderData(row))
+    ) {
+      setToast({
+        type: "warning",
+        text: "No hay clientes con pedido para imprimir en esta ruta.",
+      });
+      return;
+    }
 
     openRouteOrdersPrint([
       {
@@ -276,6 +337,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
         currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
         currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
         currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
+        hideEmptyRows: hideEmptyOnPrint,
         draft: nextDraft,
       },
     ]);
@@ -289,31 +351,38 @@ export default function RouteOrdersPage({ unitType }: Props) {
     if (isDirty && !currentDraft) return;
 
     const inputs = sheets
-      .filter(
-        (sheet) => sheet.clients.length > 0 || sheet.order.lines.length > 0,
-      )
       .map((sheet) => {
         const sheetDraft =
           currentDraft && sheet.route.id === currentDraft.routeId
             ? currentDraft
             : buildDraft(sheet, unitType, currentPrice?.pricePerCarton ?? null);
-        return {
-          unitType,
-          routeName: sheet.route.name,
-          date: dateString,
-          driverName: sheetDraft.driverName,
-          vehicleName: sheetDraft.vehicleName,
-          currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
-          currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
-          currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
-          draft: sheetDraft,
-        };
-      });
+        return { sheet, sheetDraft };
+      })
+      .filter(({ sheetDraft }) => sheetDraft.rows.length > 0)
+      .filter(
+        ({ sheetDraft }) =>
+          !hideEmptyOnPrint ||
+          sheetDraft.rows.some((row) => rowHasOrderData(row)),
+      )
+      .map(({ sheet, sheetDraft }) => ({
+        unitType,
+        routeName: sheet.route.name,
+        date: dateString,
+        driverName: sheetDraft.driverName,
+        vehicleName: sheetDraft.vehicleName,
+        currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
+        currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
+        currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
+        hideEmptyRows: hideEmptyOnPrint,
+        draft: sheetDraft,
+      }));
 
     if (inputs.length === 0) {
       setToast({
         type: "warning",
-        text: "No hay rutas con clientes para imprimir en este día.",
+        text: hideEmptyOnPrint
+          ? "No hay rutas con clientes con pedido para imprimir en este día."
+          : "No hay rutas con clientes para imprimir en este día.",
       });
       return;
     }
@@ -392,6 +461,15 @@ export default function RouteOrdersPage({ unitType }: Props) {
           {isDirty && (
             <span className="text-xs text-amber-300">Cambios sin guardar</span>
           )}
+          <label className="flex w-full items-center gap-2 text-xs text-slate-300">
+            <Checkbox
+              checked={hideEmptyOnPrint}
+              onChange={(event) =>
+                handleHideEmptyOnPrintChange(event.target.checked)
+              }
+            />
+            Ocultar clientes sin pedido al imprimir
+          </label>
         </div>
       </div>
 
@@ -459,32 +537,51 @@ export default function RouteOrdersPage({ unitType }: Props) {
           <div className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-3">
             <div>
               <Label htmlFor="order-driver">Chofer (opcional)</Label>
-              <TextInput
-                id="order-driver"
-                value={draft.driverName}
-                onChange={(event) => {
-                  const value = event.target.value;
+              <SearchableSelect
+                inputId="order-driver"
+                items={driverItems}
+                selected={selectedDriver}
+                onChange={(driver) => {
+                  const value = driver?.name ?? "";
                   setDraft((previous) =>
                     previous ? { ...previous, driverName: value } : previous,
                   );
                   setIsDirty(true);
                 }}
-                placeholder="Nombre del chofer"
+                getValue={(driver) => driver.id}
+                getLabel={(driver) => driver.name}
+                getSubtitle={(driver) => driver.email}
+                placeholder={
+                  isDriversLoading
+                    ? "Cargando choferes..."
+                    : "Sin chofer (opcional)"
+                }
+                emptyMessage="No se encontraron choferes"
+                disabled={isDriversLoading}
               />
             </div>
             <div>
               <Label htmlFor="order-vehicle">Vehículo (opcional)</Label>
-              <TextInput
-                id="order-vehicle"
-                value={draft.vehicleName}
-                onChange={(event) => {
-                  const value = event.target.value;
+              <SearchableSelect
+                inputId="order-vehicle"
+                items={vehicleItems}
+                selected={selectedVehicle}
+                onChange={(vehicle) => {
+                  const value = vehicle?.name ?? "";
                   setDraft((previous) =>
                     previous ? { ...previous, vehicleName: value } : previous,
                   );
                   setIsDirty(true);
                 }}
-                placeholder="Camión, placas o número"
+                getValue={(vehicle) => vehicle.id}
+                getLabel={(vehicle) => vehicle.name}
+                placeholder={
+                  isVehiclesLoading
+                    ? "Cargando vehículos..."
+                    : "Sin vehículo (opcional)"
+                }
+                emptyMessage="No se encontraron vehículos"
+                disabled={isVehiclesLoading}
               />
             </div>
             <div>
