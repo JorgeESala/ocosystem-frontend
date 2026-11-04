@@ -1,5 +1,6 @@
 import type { Cell, Workbook, Worksheet } from "exceljs";
 import { formatHumanDate, getDayName } from "@/utils/date.utils";
+import themeXml from "./routeOrderTheme.xml?raw";
 import {
   computeTotals,
   pricePerBox,
@@ -114,16 +115,15 @@ const buildRouteSheet = (
     `PEDIDO DE RUTA · ${input.routeName}`,
   );
   styleTitleCell(worksheet.getCell("C1"), YELLOW, dayLabel(input.date));
+  worksheet.mergeCells("D1:E1");
   styleTitleCell(
     worksheet.getCell("D1"),
     GREEN,
     `FECHA  ${formatHumanDate(input.date, "short")}`,
   );
-  styleTitleCell(
-    worksheet.getCell("E1"),
-    YELLOW,
-    formatHumanDate(input.date, "short"),
-  );
+  for (let col = 6; col <= lastCol; col += 1) {
+    worksheet.getCell(1, col).fill = fill(GREEN);
+  }
   worksheet.getRow(1).height = 33;
   worksheet.getRow(1).eachCell((cell) => {
     cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -177,7 +177,7 @@ const buildRouteSheet = (
         theme: "TableStyleMedium12",
         showRowStripes: true,
       },
-      columns: headers.map((header) => ({ name: header, filterButton: false })),
+      columns: headers.map((header) => ({ name: header, filterButton: true })),
       rows: tableRows,
     });
   } else {
@@ -187,7 +187,7 @@ const buildRouteSheet = (
     });
   }
 
-  worksheet.getRow(headerRow).height = 42;
+  worksheet.getRow(headerRow).height = 36;
   worksheet.getRow(headerRow).eachCell({ includeEmpty: true }, (cell) => {
     cell.font = { name: "Arial", size: 12 };
     cell.alignment = {
@@ -199,7 +199,7 @@ const buildRouteSheet = (
 
   for (let rowIndex = headerRow + 1; rowIndex <= lastDataRow; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
-    row.height = 30;
+    row.height = 28;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
       const notesColumn = col >= 6 && col <= 8;
       cell.font = {
@@ -208,16 +208,15 @@ const buildRouteSheet = (
         color: { argb: BLACK },
       };
       cell.alignment = {
-        horizontal: col >= 5 && col <= (egg ? 10 : 9) ? "center" : "left",
+        horizontal: "center",
         vertical: "middle",
         wrapText: true,
       };
     });
-    worksheet.getCell(rowIndex, 5).numFmt = "0.###";
-    worksheet.getCell(rowIndex, egg ? 9 : 9).numFmt =
-      "$#,##0.0000;[Red]-$#,##0.0000";
+    worksheet.getCell(rowIndex, 5).numFmt = egg ? "0" : "0.###";
+    worksheet.getCell(rowIndex, 9).numFmt = "$#,##0.00;[Red]-$#,##0.00";
     if (egg) {
-      worksheet.getCell(rowIndex, 10).numFmt = "$#,##0.00;[Red]-$#,##0.00";
+      worksheet.getCell(rowIndex, 10).numFmt = "#,##0.00;[Red]-#,##0.00";
     }
   }
 
@@ -372,11 +371,11 @@ const buildSummarySheet = (
       theme: "TableStyleMedium12",
       showRowStripes: true,
     },
-    columns: headers.map((header) => ({ name: header, filterButton: false })),
+    columns: headers.map((header) => ({ name: header, filterButton: true })),
     rows,
   });
 
-  worksheet.getRow(headerRow).height = 42;
+  worksheet.getRow(headerRow).height = 36;
   worksheet.getRow(headerRow).eachCell({ includeEmpty: true }, (cell) => {
     cell.font = { name: "Arial", size: 12 };
     cell.alignment = {
@@ -425,6 +424,9 @@ export const buildRouteOrderWorkbook = async (
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Ocosur";
   workbook.created = new Date();
+  (workbook as unknown as { _themes?: Record<string, string> })._themes = {
+    theme1: themeXml,
+  };
 
   buildSummarySheet(workbook, inputs);
 

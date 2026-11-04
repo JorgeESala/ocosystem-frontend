@@ -76,6 +76,17 @@ describe("routeOrderExcel", () => {
 
     const sheet = workbook.getWorksheet("Ruta Centro");
     expect(sheet?.getCell("A1").value).toContain("PEDIDO DE RUTA");
+    expect(sheet?.getCell("D1").value).toContain("FECHA");
+    expect(sheet?.getCell("E5").numFmt).toBe("0");
+    expect(sheet?.getCell("I5").numFmt).toContain("$");
+    expect(sheet?.getCell("J5").numFmt).not.toContain("$");
+    expect(
+      (
+        workbook as unknown as {
+          _themes?: Record<string, string>;
+        }
+      )._themes?.theme1,
+    ).toContain("6AAC90");
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
