@@ -558,10 +558,17 @@ export default function RouteOrdersPage({ unitType }: Props) {
       });
       return;
     }
-    downloadRouteOrdersExcel(
-      [buildPrintInput(selectedSheet, nextDraft)],
-      `pedido-${slug ?? "ruta"}-${dateString}.xlsx`,
-    );
+    try {
+      await downloadRouteOrdersExcel(
+        [buildPrintInput(selectedSheet, nextDraft)],
+        `pedido-${slug ?? "ruta"}-${dateString}.xlsx`,
+      );
+    } catch {
+      setToast({
+        type: "failure",
+        text: "No se pudo generar el Excel. Intenta de nuevo.",
+      });
+    }
   };
 
   const handleExportAll = async () => {
@@ -578,10 +585,17 @@ export default function RouteOrdersPage({ unitType }: Props) {
       });
       return;
     }
-    downloadRouteOrdersExcel(
-      inputs,
-      `pedidos-${slug ?? "rutas"}-${dateString}.xlsx`,
-    );
+    try {
+      await downloadRouteOrdersExcel(
+        inputs,
+        `pedidos-${slug ?? "rutas"}-${dateString}.xlsx`,
+      );
+    } catch {
+      setToast({
+        type: "failure",
+        text: "No se pudo generar el Excel. Intenta de nuevo.",
+      });
+    }
   };
 
   const dayName = getDayName(dateString);
