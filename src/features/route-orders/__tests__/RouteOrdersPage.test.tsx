@@ -72,6 +72,28 @@ vi.mock("@/core/client/api/client.queries", () => ({
   useClients: () => ({ data: [] }),
 }));
 
+vi.mock("@/features/employee/api/employees.queries", () => ({
+  useDrivers: () => ({
+    data: [
+      {
+        id: 1,
+        name: "Chofer Uno",
+        email: "chofer@test.com",
+        position: "DRIVER",
+        active: true,
+      },
+    ],
+    isLoading: false,
+  }),
+}));
+
+vi.mock("@/core/vehicle/api/vehicle.queries", () => ({
+  useVehicles: () => ({
+    data: [{ id: 1, name: "Camión Uno" }],
+    isLoading: false,
+  }),
+}));
+
 vi.mock("flowbite-react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("flowbite-react")>();
   return {
@@ -138,6 +160,29 @@ describe("RouteOrdersPage", () => {
           unitPrice: 65,
         }),
       ],
+    });
+  });
+
+  it("permite elegir chofer y vehículo del catálogo y los guarda", async () => {
+    render(<RouteOrdersPage unitType="EGG" />);
+
+    expect(await screen.findByText("Cliente A")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Ocultar clientes sin pedido al imprimir"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Sin chofer (opcional)"));
+    fireEvent.click(screen.getByText("Chofer Uno"));
+
+    fireEvent.click(screen.getByText("Sin vehículo (opcional)"));
+    fireEvent.click(screen.getByText("Camión Uno"));
+
+    fireEvent.click(screen.getByRole("button", { name: /Guardar/i }));
+
+    await waitFor(() => expect(mocks.saveMutateAsync).toHaveBeenCalled());
+    expect(mocks.saveMutateAsync.mock.calls[0][0]).toMatchObject({
+      driverName: "Chofer Uno",
+      vehicleName: "Camión Uno",
     });
   });
 });

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { RouteOrderTable } from "../components/RouteOrderTable";
@@ -38,6 +39,21 @@ const rows: RouteOrderDraftRow[] = [
   },
 ];
 
+function PriceSyncHarness() {
+  const [row, setRow] = useState(rows[0]);
+  return (
+    <RouteOrderTable
+      unitType="EGG"
+      rows={[row]}
+      currentEggPricePerCarton={65}
+      onChange={(_clientId, patch) =>
+        setRow((previous) => ({ ...previous, ...patch }))
+      }
+      onRemove={vi.fn()}
+    />
+  );
+}
+
 describe("RouteOrderTable", () => {
   it("muestra precios, totales y permite editar la cantidad", () => {
     const onChange = vi.fn();
@@ -72,6 +88,27 @@ describe("RouteOrderTable", () => {
     });
 
     expect(onChange).toHaveBeenCalledWith(1, { quantity: "24" });
+  });
+
+  it("sincroniza el precio por casillero y por caja en ambos sentidos", () => {
+    render(<PriceSyncHarness />);
+
+    fireEvent.change(screen.getByTestId("unit-price-1"), {
+      target: { value: "70" },
+    });
+    expect((screen.getByTestId("box-price-1") as HTMLInputElement).value).toBe(
+      "840",
+    );
+
+    fireEvent.change(screen.getByTestId("box-price-1"), {
+      target: { value: "800" },
+    });
+    expect((screen.getByTestId("unit-price-1") as HTMLInputElement).value).toBe(
+      "66.6667",
+    );
+    expect((screen.getByTestId("box-price-1") as HTMLInputElement).value).toBe(
+      "800",
+    );
   });
 
   it("permite quitar clientes agregados de otra ruta", () => {

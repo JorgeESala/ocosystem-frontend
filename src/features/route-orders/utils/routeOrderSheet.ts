@@ -3,6 +3,7 @@ import { formatMXN } from "@/utils/moneyNumbers";
 import {
   computeTotals,
   pricePerBox,
+  rowHasOrderData,
   rowTotal,
   toNumber,
 } from "./routeOrderCalc";
@@ -20,6 +21,7 @@ export interface RouteOrderPrintInput {
   currentEggPricePerCarton?: number | null;
   currentEggPricePerBox?: number | null;
   currentEggPriceEffectiveFrom?: string | null;
+  hideEmptyRows?: boolean;
   draft: RouteOrderDraft;
 }
 
@@ -119,10 +121,15 @@ const buildHeader = (input: RouteOrderPrintInput): string => {
     ${priceReference}`;
 };
 
+const printableRows = (input: RouteOrderPrintInput) =>
+  input.hideEmptyRows
+    ? input.draft.rows.filter(rowHasOrderData)
+    : input.draft.rows;
+
 const buildTable = (input: RouteOrderPrintInput): string => {
   const { unitType } = input;
   const egg = unitType === "EGG";
-  const rows = input.draft.rows
+  const rows = printableRows(input)
     .map((row) => {
       const quantity = toNumber(row.quantity);
       const unitPrice = toNumber(row.unitPrice);
@@ -174,7 +181,7 @@ const buildTable = (input: RouteOrderPrintInput): string => {
 };
 
 const buildTotals = (input: RouteOrderPrintInput): string => {
-  const totals = computeTotals(input.draft.rows, input.unitType);
+  const totals = computeTotals(printableRows(input), input.unitType);
   const quantityTotals =
     input.unitType === "EGG"
       ? `<span><strong>Total casilleros:</strong> ${totals.totalQuantity}</span>

@@ -4,7 +4,7 @@ import { formatMXN } from "@/utils/moneyNumbers";
 import {
   CARTONS_PER_BOX,
   pricePerBox,
-  roundMoney,
+  roundUnitPrice,
   rowTotal,
   toNumber,
 } from "../utils/routeOrderCalc";
@@ -97,6 +97,7 @@ export const RouteOrderTable: React.FC<Props> = ({
                     min="0"
                     step="0.001"
                     value={row.quantity}
+                    data-testid={`quantity-${row.clientId}`}
                     onChange={(event) =>
                       onChange(row.clientId, { quantity: event.target.value })
                     }
@@ -119,8 +120,9 @@ export const RouteOrderTable: React.FC<Props> = ({
                     type="number"
                     sizing="sm"
                     min="0"
-                    step="0.01"
+                    step="0.0001"
                     value={row.unitPrice}
+                    data-testid={`unit-price-${row.clientId}`}
                     onChange={(event) =>
                       onChange(row.clientId, {
                         unitPrice: event.target.value,
@@ -139,12 +141,15 @@ export const RouteOrderTable: React.FC<Props> = ({
                       value={
                         unitPrice > 0 ? String(pricePerBox(unitPrice)) : ""
                       }
+                      data-testid={`box-price-${row.clientId}`}
                       onChange={(event) => {
                         const boxPrice = toNumber(event.target.value);
                         onChange(row.clientId, {
                           unitPrice:
                             boxPrice > 0
-                              ? String(roundMoney(boxPrice / CARTONS_PER_BOX))
+                              ? String(
+                                  roundUnitPrice(boxPrice / CARTONS_PER_BOX),
+                                )
                               : "",
                         });
                       }}

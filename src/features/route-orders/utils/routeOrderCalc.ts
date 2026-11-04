@@ -24,6 +24,9 @@ export const roundMoney = (value: number): number =>
 export const roundQuantity = (value: number): number =>
   Math.round((value + Number.EPSILON) * 1000) / 1000;
 
+export const roundUnitPrice = (value: number): number =>
+  Math.round((value + Number.EPSILON) * 10000) / 10000;
+
 export const cartonsToBoxes = (cartons: number): number =>
   roundQuantity(cartons / CARTONS_PER_BOX);
 
@@ -34,6 +37,12 @@ export const rowTotal = (row: {
   quantity: string;
   unitPrice: string;
 }): number => roundMoney(toNumber(row.quantity) * toNumber(row.unitPrice));
+
+export const rowHasOrderData = (row: RouteOrderDraftRow): boolean =>
+  toNumber(row.quantity) > 0 ||
+  [row.vegetables, row.condiments, row.groceries, row.comments].some(
+    (value) => (value ?? "").trim().length > 0,
+  );
 
 export interface RouteOrderTotals {
   clientCount: number;
@@ -55,7 +64,7 @@ export const computeTotals = (
     const quantity = toNumber(row.quantity);
     totalQuantity += quantity;
     totalAmount += quantity * toNumber(row.unitPrice);
-    if (quantity > 0) {
+    if (rowHasOrderData(row)) {
       clientsWithOrder += 1;
     }
   }
@@ -294,7 +303,7 @@ export const draftToSavePayload = (
     .map((row, index) => ({
       clientId: row.clientId,
       quantity: roundQuantity(toNumber(row.quantity)),
-      unitPrice: roundMoney(toNumber(row.unitPrice)),
+      unitPrice: roundUnitPrice(toNumber(row.unitPrice)),
       vegetables: row.vegetables,
       condiments: row.condiments,
       groceries: row.groceries,
