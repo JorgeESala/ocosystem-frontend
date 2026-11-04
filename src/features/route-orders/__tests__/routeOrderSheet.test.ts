@@ -4,10 +4,14 @@ import type { RouteOrderPrintInput } from "../utils/routeOrderSheet";
 import type { RouteOrderDraft } from "../types/routeOrder.types";
 
 const draft: RouteOrderDraft = {
+  orderId: 1,
   routeId: 1,
   orderDate: "2030-01-07",
+  driverId: 1,
   driverName: "Juan",
+  vehicleId: 1,
   vehicleName: "Camión 1",
+  tripId: null,
   notes: "Salir temprano",
   rows: [
     {

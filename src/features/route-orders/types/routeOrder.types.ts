@@ -3,6 +3,7 @@ import type {
   RouteDetailClient,
   RouteDetailLocality,
 } from "@/core/api/route/route.api";
+import type { TripSummaryDTO } from "@/features/trips/types/trip.types";
 
 export type RouteOrderUnitType = "EGG" | "LIVE_CHICKEN";
 
@@ -25,8 +26,12 @@ export interface RouteOrderDTO {
   id: number | null;
   routeId: number;
   orderDate: string;
+  driverId?: number | null;
   driverName?: string | null;
+  vehicleId?: number | null;
   vehicleName?: string | null;
+  tripId?: number | null;
+  trip?: TripSummaryDTO | null;
   notes?: string | null;
   createdBy?: number | null;
   createdAt?: string | null;
@@ -56,7 +61,9 @@ export interface RouteOrderLineSaveDTO {
 export interface RouteOrderSaveDTO {
   routeId: number;
   orderDate: string;
+  driverId?: number | null;
   driverName?: string | null;
+  vehicleId?: number | null;
   vehicleName?: string | null;
   notes?: string | null;
   lines: RouteOrderLineSaveDTO[];
@@ -98,10 +105,14 @@ export interface RouteOrderDraftRow {
 }
 
 export interface RouteOrderDraft {
+  orderId: number | null;
   routeId: number;
   orderDate: string;
+  driverId: number | null;
   driverName: string;
+  vehicleId: number | null;
   vehicleName: string;
+  tripId: number | null;
   notes: string;
   rows: RouteOrderDraftRow[];
 }

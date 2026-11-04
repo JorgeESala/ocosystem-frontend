@@ -19,6 +19,21 @@ export const useTripsForBatch = (
     enabled: Boolean(batchId),
   });
 
+export const useTripsByRouteDate = (
+  unitType: TripsUnitType,
+  routeId: number | null,
+  date: string | null,
+  options?: { enabled?: boolean },
+) =>
+  useQuery<TripSummaryDTO[]>({
+    queryKey:
+      routeId != null && date
+        ? tripKeys(unitType).byRouteDate(routeId, date)
+        : [],
+    queryFn: () => tripApi.getByRouteDate(routeId!, date!),
+    enabled: (options?.enabled ?? true) && routeId != null && date != null,
+  });
+
 export const useTripSales = (
   unitType: TripsUnitType,
   tripId: number | null,

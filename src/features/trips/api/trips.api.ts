@@ -22,6 +22,17 @@ export const tripApi = {
     return data;
   },
 
+  getByRouteDate: async (
+    routeId: number,
+    date: string,
+  ): Promise<TripSummaryDTO[]> => {
+    const { data } = await http.get<TripSummaryDTO[]>(
+      `${BASE_URL}/by-route-date`,
+      { params: { routeId, date } },
+    );
+    return data;
+  },
+
   getSalesForTrip: async (tripId: number): Promise<TripSaleDTO[]> => {
     const { data } = await http.get<TripSaleDTO[]>(
       `${BASE_URL}/${tripId}/sales`,

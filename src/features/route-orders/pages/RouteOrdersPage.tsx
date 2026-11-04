@@ -1,31 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   Alert,
   Button,
   Checkbox,
   Datepicker,
   Label,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Select,
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiPlus, HiPrinter, HiSave } from "react-icons/hi";
+import {
+  HiDownload,
+  HiLink,
+  HiPlus,
+  HiPrinter,
+  HiSave,
+  HiTrash,
+} from "react-icons/hi";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { useClients } from "@/core/client/api/client.queries";
 import { useVehicles } from "@/core/vehicle/api/vehicle.queries";
 import type { Client, VehicleResponseDTO } from "@/core/api/types";
+import { formatMXN } from "@/utils/moneyNumbers";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import type { Employee } from "@/features/employee/types";
+import {
+  useTripsByRouteDate,
+  useTripSales,
+} from "@/features/trips/api/trips.queries";
+import type { TripSummaryDTO } from "@/features/trips/types/trip.types";
 import {
   formatHumanDate,
   getDayName,
   toLocalDateString,
 } from "@/utils/date.utils";
 import {
+  useCreateRouteOrderTrip,
   useEggPriceReference,
+  useLinkRouteOrderTrip,
   useRouteOrdersDay,
   useSaveRouteOrder,
+  useUnlinkRouteOrderTrip,
 } from "../api/routeOrders.queries";
 import { AddClientModal } from "../components/AddClientModal";
 import { EggPriceHistoryModal } from "../components/EggPriceHistoryModal";
@@ -40,18 +61,26 @@ import {
   computeTotals,
   draftToSavePayload,
   removeClientFromDraft,
+  roundMoney,
+  roundQuantity,
   rowHasOrderData,
   toNumber,
   updateDraftRow,
 } from "../utils/routeOrderCalc";
+import { downloadRouteOrdersExcel } from "../utils/routeOrderExcel";
 import {
   loadHideEmptyOnPrint,
   saveHideEmptyOnPrint,
 } from "../utils/routeOrderPreferences";
-import { openRouteOrdersPrint } from "../utils/routeOrderSheet";
+import {
+  openRouteOrdersPrint,
+  type RouteOrderPrintInput,
+} from "../utils/routeOrderSheet";
 import type {
+  RouteOrderDTO,
   RouteOrderDraft,
   RouteOrderDraftRow,
+  RouteOrderSheetDTO,
   RouteOrderUnitType,
 } from "../types/routeOrder.types";
 
@@ -84,7 +113,11 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const [hideEmptyOnPrint, setHideEmptyOnPrint] = useState<boolean>(() =>
     loadHideEmptyOnPrint(),
   );
+  const [showLinkTripModal, setShowLinkTripModal] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState("");
+  const [linkedTrip, setLinkedTrip] = useState<TripSummaryDTO | null>(null);
 
+  const { slug } = useParams<{ slug: string }>();
   const dateString = toLocalDateString(selectedDate);
   const {
     data: sheets = [],
@@ -92,6 +125,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     isFetching: isDayFetching,
     isError,
     error,
+    refetch: refetchDay,
   } = useRouteOrdersDay(dateString);
   const {
     data: currentPrice,
@@ -101,10 +135,25 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const { data: allClients = [] } = useClients();
   const { data: drivers = [], isLoading: isDriversLoading } = useDrivers();
   const { data: vehicles = [], isLoading: isVehiclesLoading } = useVehicles();
+  const { data: availableTrips = [], isLoading: isTripsLoading } =
+    useTripsByRouteDate(unitType, selectedRouteId, dateString, {
+      enabled: showLinkTripModal && selectedRouteId != null,
+    });
   const saveMutation = useSaveRouteOrder();
+  const createTripMutation = useCreateRouteOrderTrip();
+  const linkTripMutation = useLinkRouteOrderTrip();
+  const unlinkTripMutation = useUnlinkRouteOrderTrip();
 
   const selectedSheet =
     sheets.find((sheet) => sheet.route.id === selectedRouteId) ?? null;
+  const linkedTripId = linkedTrip?.id ?? draft?.tripId ?? null;
+  const { data: tripSales = [] } = useTripSales(unitType, linkedTripId, {
+    enabled: linkedTripId != null,
+  });
+
+  useEffect(() => {
+    setLinkedTrip(selectedSheet?.order.trip ?? null);
+  }, [selectedSheet?.order.trip]);
 
   useEffect(() => {
     if (sheets.length === 0) {
@@ -162,6 +211,22 @@ export default function RouteOrdersPage({ unitType }: Props) {
     [draft, unitType],
   );
 
+  const actualTripTotals = useMemo(() => {
+    let quantity = 0;
+    let amount = 0;
+    for (const sale of tripSales) {
+      amount += toNumber(sale.saleTotal);
+      quantity +=
+        unitType === "EGG"
+          ? toNumber(sale.quantity) / 30
+          : toNumber(sale.kgSent ?? sale.weight ?? 0);
+    }
+    return {
+      quantity: roundQuantity(quantity),
+      amount: roundMoney(amount),
+    };
+  }, [tripSales, unitType]);
+
   const draftClientIds = useMemo(
     () => new Set((draft?.rows ?? []).map((row) => row.clientId)),
     [draft],
@@ -202,9 +267,17 @@ export default function RouteOrdersPage({ unitType }: Props) {
   }, [vehicles, draft?.vehicleName]);
 
   const selectedDriver =
-    driverItems.find((driver) => driver.name === draft?.driverName) ?? null;
+    driverItems.find(
+      (driver) =>
+        (draft?.driverId != null && driver.id === draft.driverId) ||
+        driver.name === draft?.driverName,
+    ) ?? null;
   const selectedVehicle =
-    vehicleItems.find((vehicle) => vehicle.name === draft?.vehicleName) ?? null;
+    vehicleItems.find(
+      (vehicle) =>
+        (draft?.vehicleId != null && vehicle.id === draft.vehicleId) ||
+        vehicle.name === draft?.vehicleName,
+    ) ?? null;
 
   const handleHideEmptyOnPrintChange = (checked: boolean) => {
     setHideEmptyOnPrint(checked);
@@ -310,6 +383,127 @@ export default function RouteOrdersPage({ unitType }: Props) {
     await persistDraft();
   };
 
+  const ensureSavedOrder = async (): Promise<RouteOrderDraft | null> => {
+    if (!draft) return null;
+    if (draft.orderId != null && !isDirty) return draft;
+    return persistDraft();
+  };
+
+  const applyTripResponse = (updated: RouteOrderDTO) => {
+    setLinkedTrip(updated.trip ?? null);
+    setDraft((previous) =>
+      previous
+        ? {
+            ...previous,
+            tripId: updated.tripId ?? null,
+            driverId: updated.driverId ?? previous.driverId,
+            driverName: updated.driverName ?? previous.driverName,
+            vehicleId: updated.vehicleId ?? previous.vehicleId,
+            vehicleName: updated.vehicleName ?? previous.vehicleName,
+          }
+        : previous,
+    );
+  };
+
+  const handleCreateTrip = async () => {
+    const current = await ensureSavedOrder();
+    if (!current?.orderId) return;
+    if (current.driverId == null) {
+      setToast({
+        type: "warning",
+        text: "Selecciona un chofer registrado antes de crear el viaje.",
+      });
+      return;
+    }
+    try {
+      const updated = await createTripMutation.mutateAsync(current.orderId);
+      applyTripResponse(updated);
+      setToast({
+        type: "success",
+        text: "Viaje creado y vinculado al pedido.",
+      });
+      await refetchDay();
+    } catch {
+      setToast({
+        type: "failure",
+        text: "No se pudo crear el viaje. Intenta de nuevo.",
+      });
+    }
+  };
+
+  const handleLinkTrip = async () => {
+    if (!selectedTripId) return;
+    const current = await ensureSavedOrder();
+    if (!current?.orderId) return;
+    try {
+      const updated = await linkTripMutation.mutateAsync({
+        orderId: current.orderId,
+        tripId: Number(selectedTripId),
+      });
+      applyTripResponse(updated);
+      setShowLinkTripModal(false);
+      setSelectedTripId("");
+      setToast({ type: "success", text: "Viaje vinculado al pedido." });
+      await refetchDay();
+    } catch {
+      setToast({
+        type: "failure",
+        text: "No se pudo vincular el viaje. Intenta de nuevo.",
+      });
+    }
+  };
+
+  const handleUnlinkTrip = async () => {
+    if (!draft?.orderId) return;
+    try {
+      const updated = await unlinkTripMutation.mutateAsync(draft.orderId);
+      applyTripResponse(updated);
+      setToast({ type: "success", text: "Viaje desvinculado del pedido." });
+      await refetchDay();
+    } catch {
+      setToast({
+        type: "failure",
+        text: "No se pudo desvincular el viaje. Intenta de nuevo.",
+      });
+    }
+  };
+
+  const buildPrintInput = (
+    sheet: RouteOrderSheetDTO,
+    sheetDraft: RouteOrderDraft,
+  ): RouteOrderPrintInput => ({
+    unitType,
+    routeName: sheet.route.name,
+    date: dateString,
+    driverName: sheetDraft.driverName,
+    vehicleName: sheetDraft.vehicleName,
+    currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
+    currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
+    currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
+    hideEmptyRows: hideEmptyOnPrint,
+    tripId: sheetDraft.tripId ?? null,
+    draft: sheetDraft,
+  });
+
+  const buildDayInputs = (
+    currentDraft: RouteOrderDraft | null,
+  ): RouteOrderPrintInput[] =>
+    sheets
+      .map((sheet) => {
+        const sheetDraft =
+          currentDraft && sheet.route.id === currentDraft.routeId
+            ? currentDraft
+            : buildDraft(sheet, unitType, currentPrice?.pricePerCarton ?? null);
+        return { sheet, sheetDraft };
+      })
+      .filter(({ sheetDraft }) => sheetDraft.rows.length > 0)
+      .filter(
+        ({ sheetDraft }) =>
+          !hideEmptyOnPrint ||
+          sheetDraft.rows.some((row) => rowHasOrderData(row)),
+      )
+      .map(({ sheet, sheetDraft }) => buildPrintInput(sheet, sheetDraft));
+
   const handlePrintRoute = async () => {
     if (!draft || !selectedSheet) return;
     setIsPrinting(true);
@@ -327,20 +521,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
       return;
     }
 
-    openRouteOrdersPrint([
-      {
-        unitType,
-        routeName: selectedSheet.route.name,
-        date: dateString,
-        driverName: nextDraft.driverName,
-        vehicleName: nextDraft.vehicleName,
-        currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
-        currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
-        currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
-        hideEmptyRows: hideEmptyOnPrint,
-        draft: nextDraft,
-      },
-    ]);
+    openRouteOrdersPrint([buildPrintInput(selectedSheet, nextDraft)]);
   };
 
   const handlePrintAll = async () => {
@@ -350,33 +531,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     setIsPrinting(false);
     if (isDirty && !currentDraft) return;
 
-    const inputs = sheets
-      .map((sheet) => {
-        const sheetDraft =
-          currentDraft && sheet.route.id === currentDraft.routeId
-            ? currentDraft
-            : buildDraft(sheet, unitType, currentPrice?.pricePerCarton ?? null);
-        return { sheet, sheetDraft };
-      })
-      .filter(({ sheetDraft }) => sheetDraft.rows.length > 0)
-      .filter(
-        ({ sheetDraft }) =>
-          !hideEmptyOnPrint ||
-          sheetDraft.rows.some((row) => rowHasOrderData(row)),
-      )
-      .map(({ sheet, sheetDraft }) => ({
-        unitType,
-        routeName: sheet.route.name,
-        date: dateString,
-        driverName: sheetDraft.driverName,
-        vehicleName: sheetDraft.vehicleName,
-        currentEggPricePerCarton: currentPrice?.pricePerCarton ?? null,
-        currentEggPricePerBox: currentPrice?.pricePerBox ?? null,
-        currentEggPriceEffectiveFrom: currentPrice?.effectiveFrom ?? null,
-        hideEmptyRows: hideEmptyOnPrint,
-        draft: sheetDraft,
-      }));
-
+    const inputs = buildDayInputs(currentDraft);
     if (inputs.length === 0) {
       setToast({
         type: "warning",
@@ -387,6 +542,46 @@ export default function RouteOrdersPage({ unitType }: Props) {
       return;
     }
     openRouteOrdersPrint(inputs);
+  };
+
+  const handleExportRoute = async () => {
+    if (!draft || !selectedSheet) return;
+    const nextDraft = isDirty ? await persistDraft() : draft;
+    if (!nextDraft) return;
+    if (
+      hideEmptyOnPrint &&
+      !nextDraft.rows.some((row) => rowHasOrderData(row))
+    ) {
+      setToast({
+        type: "warning",
+        text: "No hay clientes con pedido para exportar en esta ruta.",
+      });
+      return;
+    }
+    downloadRouteOrdersExcel(
+      [buildPrintInput(selectedSheet, nextDraft)],
+      `pedido-${slug ?? "ruta"}-${dateString}.xlsx`,
+    );
+  };
+
+  const handleExportAll = async () => {
+    if (sheets.length === 0) return;
+    const currentDraft = isDirty && draft ? await persistDraft() : draft;
+    if (isDirty && !currentDraft) return;
+    const inputs = buildDayInputs(currentDraft);
+    if (inputs.length === 0) {
+      setToast({
+        type: "warning",
+        text: hideEmptyOnPrint
+          ? "No hay rutas con clientes con pedido para exportar en este día."
+          : "No hay rutas con clientes para exportar en este día.",
+      });
+      return;
+    }
+    downloadRouteOrdersExcel(
+      inputs,
+      `pedidos-${slug ?? "rutas"}-${dateString}.xlsx`,
+    );
   };
 
   const dayName = getDayName(dateString);
@@ -409,6 +604,14 @@ export default function RouteOrdersPage({ unitType }: Props) {
           >
             <HiPrinter className="mr-2 h-4 w-4" />
             Imprimir todas las rutas del día
+          </Button>
+          <Button
+            color="light"
+            onClick={handleExportAll}
+            disabled={sheets.length === 0}
+          >
+            <HiDownload className="mr-2 h-4 w-4" />
+            Excel todas las rutas
           </Button>
         </div>
       </header>
@@ -457,6 +660,10 @@ export default function RouteOrdersPage({ unitType }: Props) {
           >
             <HiPrinter className="mr-2 h-4 w-4" />
             Imprimir ruta
+          </Button>
+          <Button color="light" onClick={handleExportRoute} disabled={!draft}>
+            <HiDownload className="mr-2 h-4 w-4" />
+            Excel ruta
           </Button>
           {isDirty && (
             <span className="text-xs text-amber-300">Cambios sin guardar</span>
@@ -542,9 +749,12 @@ export default function RouteOrdersPage({ unitType }: Props) {
                 items={driverItems}
                 selected={selectedDriver}
                 onChange={(driver) => {
-                  const value = driver?.name ?? "";
+                  const name = driver?.name ?? "";
+                  const id = driver && driver.id > 0 ? driver.id : null;
                   setDraft((previous) =>
-                    previous ? { ...previous, driverName: value } : previous,
+                    previous
+                      ? { ...previous, driverId: id, driverName: name }
+                      : previous,
                   );
                   setIsDirty(true);
                 }}
@@ -557,7 +767,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
                     : "Sin chofer (opcional)"
                 }
                 emptyMessage="No se encontraron choferes"
-                disabled={isDriversLoading}
+                disabled={isDriversLoading || draft.tripId != null}
               />
             </div>
             <div>
@@ -567,9 +777,12 @@ export default function RouteOrdersPage({ unitType }: Props) {
                 items={vehicleItems}
                 selected={selectedVehicle}
                 onChange={(vehicle) => {
-                  const value = vehicle?.name ?? "";
+                  const name = vehicle?.name ?? "";
+                  const id = vehicle && vehicle.id > 0 ? vehicle.id : null;
                   setDraft((previous) =>
-                    previous ? { ...previous, vehicleName: value } : previous,
+                    previous
+                      ? { ...previous, vehicleId: id, vehicleName: name }
+                      : previous,
                   );
                   setIsDirty(true);
                 }}
@@ -581,7 +794,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
                     : "Sin vehículo (opcional)"
                 }
                 emptyMessage="No se encontraron vehículos"
-                disabled={isVehiclesLoading}
+                disabled={isVehiclesLoading || draft.tripId != null}
               />
             </div>
             <div>
@@ -599,6 +812,125 @@ export default function RouteOrdersPage({ unitType }: Props) {
                 placeholder="Indicaciones generales de la ruta"
               />
             </div>
+          </div>
+
+          {draft.tripId != null && (
+            <p className="text-xs text-amber-300">
+              Este pedido está vinculado a un viaje. Desvincula el viaje para
+              cambiar chofer o vehículo.
+            </p>
+          )}
+
+          <div className="rounded-2xl border border-slate-700 bg-slate-900/40 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium tracking-wide text-slate-400 uppercase">
+                  Viaje / Despacho
+                </p>
+                {linkedTrip ? (
+                  <>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      Viaje #{linkedTrip.id} ·{" "}
+                      {linkedTrip.driverName ?? "Sin chofer"} ·{" "}
+                      {linkedTrip.vehicleName ?? "Sin vehículo"}
+                    </p>
+                    <span className="mt-1 inline-block rounded bg-blue-900/40 px-2 py-0.5 text-[11px] text-blue-200">
+                      {Number(linkedTrip.salesCount) > 0
+                        ? "Con ventas"
+                        : "Planificado"}
+                    </span>
+                  </>
+                ) : (
+                  <p className="mt-1 text-sm text-slate-300">
+                    Este pedido todavía no está vinculado a un viaje.
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {linkedTrip ? (
+                  <Button
+                    size="xs"
+                    color="light"
+                    onClick={handleUnlinkTrip}
+                    disabled={unlinkTripMutation.isPending}
+                  >
+                    <HiTrash className="mr-1 h-4 w-4" />
+                    Desvincular
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      size="xs"
+                      color="blue"
+                      onClick={handleCreateTrip}
+                      disabled={
+                        createTripMutation.isPending || draft.driverId == null
+                      }
+                    >
+                      <HiLink className="mr-1 h-4 w-4" />
+                      Crear viaje desde pedido
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="light"
+                      onClick={() => {
+                        setSelectedTripId("");
+                        setShowLinkTripModal(true);
+                      }}
+                    >
+                      Vincular viaje existente
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {linkedTrip && totals && (
+              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-800 pt-3 md:grid-cols-4">
+                <div>
+                  <p className="text-[11px] text-slate-400">Pedido</p>
+                  <p className="text-sm text-white">
+                    {totals.totalQuantity}{" "}
+                    {unitType === "EGG" ? "casilleros" : "kg"} ·{" "}
+                    {formatMXN(totals.totalAmount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">Ventas</p>
+                  <p className="text-sm text-white">
+                    {actualTripTotals.quantity}{" "}
+                    {unitType === "EGG" ? "casilleros" : "kg"} ·{" "}
+                    {formatMXN(actualTripTotals.amount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">Diferencia</p>
+                  <p
+                    className={`text-sm ${
+                      actualTripTotals.amount - totals.totalAmount < 0
+                        ? "text-red-300"
+                        : "text-emerald-300"
+                    }`}
+                  >
+                    {formatMXN(actualTripTotals.amount - totals.totalAmount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">Estado</p>
+                  <p className="text-sm text-white">
+                    {Number(linkedTrip.salesCount) > 0
+                      ? "Con ventas"
+                      : "Planificado"}
+                  </p>
+                </div>
+              </div>
+            )}
+            {linkedTrip && (
+              <p className="mt-2 text-[11px] text-slate-500">
+                Las ventas se administran en Entradas y Ventas. Este pedido
+                queda como referencia de lo planificado.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -658,6 +990,59 @@ export default function RouteOrdersPage({ unitType }: Props) {
         open={showHistory}
         onClose={() => setShowHistory(false)}
       />
+
+      <Modal
+        show={showLinkTripModal}
+        size="md"
+        onClose={() => setShowLinkTripModal(false)}
+      >
+        <ModalHeader>Vincular viaje existente</ModalHeader>
+        <ModalBody>
+          <p className="mb-3 text-sm text-slate-300">
+            Selecciona un viaje de la misma ruta y fecha para este pedido.
+          </p>
+          {isTripsLoading ? (
+            <div className="flex justify-center py-4">
+              <Spinner />
+            </div>
+          ) : availableTrips.length === 0 ? (
+            <Alert color="warning">
+              No hay viajes registrados para esta ruta y fecha. Puedes crear uno
+              desde el pedido.
+            </Alert>
+          ) : (
+            <Select
+              value={selectedTripId}
+              onChange={(event) => setSelectedTripId(event.target.value)}
+            >
+              <option value="">Selecciona un viaje</option>
+              {availableTrips.map((trip) => (
+                <option key={trip.id} value={trip.id}>
+                  Viaje #{trip.id} · {trip.driverName ?? "Sin chofer"} ·{" "}
+                  {trip.vehicleName ?? "Sin vehículo"} ·{" "}
+                  {Number(trip.salesCount) > 0 ? "Con ventas" : "Planificado"}
+                </option>
+              ))}
+            </Select>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            color="gray"
+            onClick={() => setShowLinkTripModal(false)}
+            disabled={linkTripMutation.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="blue"
+            onClick={handleLinkTrip}
+            disabled={!selectedTripId || linkTripMutation.isPending}
+          >
+            {linkTripMutation.isPending ? "Vinculando..." : "Vincular viaje"}
+          </Button>
+        </ModalFooter>
+      </Modal>
 
       <ConfirmDialog
         open={pendingRouteId != null || pendingDate != null}
