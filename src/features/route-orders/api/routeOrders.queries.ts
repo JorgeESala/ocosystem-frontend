@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { getRouteOrdersDay, saveRouteOrder } from "./routeOrders.api";
+import {
+  createRouteOrderTrip,
+  getRouteOrdersDay,
+  linkRouteOrderTrip,
+  saveRouteOrder,
+  unlinkRouteOrderTrip,
+} from "./routeOrders.api";
 import { routeOrderKeys } from "./routeOrders.keys";
 import {
   getCurrentEggPriceReference,
@@ -32,6 +38,40 @@ export const useSaveRouteOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: routeOrderKeys.all });
     },
+  });
+};
+
+const invalidateRouteOrders = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) => {
+  queryClient.invalidateQueries({ queryKey: routeOrderKeys.all });
+};
+
+export const useCreateRouteOrderTrip = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderId: number) => createRouteOrderTrip(orderId),
+    onSuccess: () => invalidateRouteOrders(queryClient),
+  });
+};
+
+export const useLinkRouteOrderTrip = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ orderId, tripId }: { orderId: number; tripId: number }) =>
+      linkRouteOrderTrip(orderId, tripId),
+    onSuccess: () => invalidateRouteOrders(queryClient),
+  });
+};
+
+export const useUnlinkRouteOrderTrip = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderId: number) => unlinkRouteOrderTrip(orderId),
+    onSuccess: () => invalidateRouteOrders(queryClient),
   });
 };
 

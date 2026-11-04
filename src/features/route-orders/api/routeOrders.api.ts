@@ -32,3 +32,32 @@ export const saveRouteOrder = async (
   const { data } = await http.put<RouteOrderDTO>(BASE_URL, payload);
   return data;
 };
+
+export const createRouteOrderTrip = async (
+  orderId: number,
+): Promise<RouteOrderDTO> => {
+  const { data } = await http.post<RouteOrderDTO>(
+    `${BASE_URL}/${orderId}/trip`,
+  );
+  return data;
+};
+
+export const linkRouteOrderTrip = async (
+  orderId: number,
+  tripId: number,
+): Promise<RouteOrderDTO> => {
+  const { data } = await http.post<RouteOrderDTO>(
+    `${BASE_URL}/${orderId}/link-trip`,
+    { tripId },
+  );
+  return data;
+};
+
+export const unlinkRouteOrderTrip = async (
+  orderId: number,
+): Promise<RouteOrderDTO> => {
+  const { data } = await http.delete<RouteOrderDTO>(
+    `${BASE_URL}/${orderId}/trip`,
+  );
+  return data;
+};

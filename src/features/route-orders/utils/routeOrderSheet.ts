@@ -22,6 +22,7 @@ export interface RouteOrderPrintInput {
   currentEggPricePerBox?: number | null;
   currentEggPriceEffectiveFrom?: string | null;
   hideEmptyRows?: boolean;
+  tripId?: number | null;
   draft: RouteOrderDraft;
 }
 
@@ -117,7 +118,7 @@ const buildHeader = (input: RouteOrderPrintInput): string => {
       input.driverName || "________________",
     )} &nbsp;&nbsp;&nbsp; Vehículo: ${escapeHtml(
       input.vehicleName || "________________",
-    )}</p>
+    )}${input.tripId != null ? ` &nbsp;&nbsp;&nbsp; Viaje #${input.tripId}` : ""}</p>
     ${priceReference}`;
 };
 
