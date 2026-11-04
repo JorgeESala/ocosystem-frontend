@@ -76,6 +76,97 @@ describe("routeOrderSheet", () => {
     expect(html).not.toContain("Precio actual del huevo");
   });
 
+  it("oculta clientes sin pedido y conserva los que solo tienen notas", () => {
+    const draftWithEmptyRows: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        ...draft.rows,
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente B",
+          quantity: "",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+        {
+          ...draft.rows[0],
+          key: "client-12",
+          clientId: 12,
+          clientName: "Cliente C",
+          quantity: "",
+          vegetables: "Solo nota",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+      ],
+    };
+
+    const html = buildRouteOrdersPrintHtml([
+      { ...eggInput, draft: draftWithEmptyRows, hideEmptyRows: true },
+    ]);
+
+    expect(html).toContain("Cliente A");
+    expect(html).toContain("Cliente C");
+    expect(html).not.toContain("Cliente B");
+    expect(html).toContain("<strong>Clientes:</strong> 2");
+  });
+
+  it("mantiene todos los clientes cuando no se ocultan los vacíos", () => {
+    const draftWithEmptyRow: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        ...draft.rows,
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente B",
+          quantity: "",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+      ],
+    };
+
+    const html = buildRouteOrdersPrintHtml([
+      { ...eggInput, draft: draftWithEmptyRow },
+    ]);
+
+    expect(html).toContain("Cliente B");
+  });
+
+  it("usa el precio por casillero de cuatro decimales para totales exactos", () => {
+    const preciseDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          quantity: "18",
+          unitPrice: "66.6667",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+      ],
+    };
+
+    const html = buildRouteOrdersPrintHtml([
+      { ...eggInput, draft: preciseDraft },
+    ]);
+
+    expect(html).toContain("$66.6667");
+    expect(html).toContain("$800.00");
+    expect(html).toContain("$1,200.00");
+  });
+
   it("separa varias rutas en páginas distintas", () => {
     const html = buildRouteOrdersPrintHtml([
       eggInput,

@@ -3,6 +3,7 @@ export interface Employee {
   name: string;
   email: string;
   position: string;
+  active?: boolean;
 }
 export enum JobPosition {
   DRIVER = "DRIVER",
