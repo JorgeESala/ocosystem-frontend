@@ -43,6 +43,7 @@ export interface RouteDetailClient {
   isInternalClient?: boolean;
   lastPurchaseDate?: string | null;
   lastSalePricePerCarton?: number | null;
+  lastSalePricePerKg?: number | null;
 }
 
 export interface RouteDetail {
