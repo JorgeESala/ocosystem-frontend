@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import { describe, expect, it } from "vitest";
 import { buildRouteOrderWorkbook } from "../utils/routeOrderExcel";
 import type { RouteOrderPrintInput } from "../utils/routeOrderSheet";
@@ -64,26 +63,25 @@ const input: RouteOrderPrintInput = {
 };
 
 describe("routeOrderExcel", () => {
-  it("genera un resumen y una hoja por ruta, ocultando clientes sin pedido", () => {
-    const workbook = buildRouteOrderWorkbook([input]);
+  it("genera un resumen y una hoja por ruta con el formato de la hoja", async () => {
+    const workbook = await buildRouteOrderWorkbook([input]);
 
-    expect(workbook.SheetNames).toContain("Resumen");
-    expect(workbook.SheetNames).toContain("Ruta Centro");
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toContain("Resumen");
+    expect(workbook.worksheets.map((sheet) => sheet.name)).toContain(
+      "Ruta Centro",
+    );
 
-    const summary = XLSX.utils.sheet_to_json(workbook.Sheets.Resumen, {
-      header: 1,
-      raw: true,
-      defval: "",
+    const summary = workbook.getWorksheet("Resumen");
+    expect(summary?.getCell("A1").value).toContain("RESUMEN DE PEDIDOS");
+
+    const sheet = workbook.getWorksheet("Ruta Centro");
+    expect(sheet?.getCell("A1").value).toContain("PEDIDO DE RUTA");
+
+    const values: unknown[] = [];
+    sheet?.eachRow((row) => {
+      values.push(row.values);
     });
-    expect(JSON.stringify(summary)).toContain("Ruta Centro");
-    expect(JSON.stringify(summary)).toContain("1170");
-
-    const sheet = XLSX.utils.sheet_to_json(workbook.Sheets["Ruta Centro"], {
-      header: 1,
-      raw: true,
-      defval: "",
-    });
-    const content = JSON.stringify(sheet);
+    const content = JSON.stringify(values);
     expect(content).toContain("Cliente A");
     expect(content).not.toContain("Cliente B");
     expect(content).toContain("1170");
