@@ -232,6 +232,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
 
   const actualTripTotals = useMemo(() => {
     let quantity = 0;
+    let heads = 0;
     let amount = 0;
     for (const sale of tripSales) {
       amount += toNumber(sale.saleTotal);
@@ -239,9 +240,13 @@ export default function RouteOrdersPage({ unitType }: Props) {
         unitType === "EGG"
           ? toNumber(sale.quantity) / 30
           : toNumber(sale.kgSent ?? sale.weight ?? 0);
+      if (unitType === "LIVE_CHICKEN") {
+        heads += toNumber(sale.quantity);
+      }
     }
     return {
       quantity: roundQuantity(quantity),
+      heads: roundQuantity(heads),
       amount: roundMoney(amount),
     };
   }, [tripSales, unitType]);
@@ -924,8 +929,10 @@ export default function RouteOrdersPage({ unitType }: Props) {
                   <p className="text-[11px] text-slate-400">Pedido</p>
                   <p className="text-sm text-white">
                     {totals.totalQuantity}{" "}
-                    {unitType === "EGG" ? "casilleros" : "kg"} ·{" "}
-                    {formatMXN(totals.totalAmount)}
+                    {unitType === "EGG" ? "casilleros" : "cabezas"}
+                    {unitType === "EGG"
+                      ? ` · ${formatMXN(totals.totalAmount)}`
+                      : ""}
                   </p>
                 </div>
                 <div>
@@ -937,15 +944,21 @@ export default function RouteOrdersPage({ unitType }: Props) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-400">Diferencia</p>
+                  <p className="text-[11px] text-slate-400">
+                    {unitType === "EGG" ? "Diferencia" : "Cabezas vendidas"}
+                  </p>
                   <p
                     className={`text-sm ${
-                      actualTripTotals.amount - totals.totalAmount < 0
-                        ? "text-red-300"
-                        : "text-emerald-300"
+                      unitType === "EGG"
+                        ? actualTripTotals.amount - totals.totalAmount < 0
+                          ? "text-red-300"
+                          : "text-emerald-300"
+                        : "text-white"
                     }`}
                   >
-                    {formatMXN(actualTripTotals.amount - totals.totalAmount)}
+                    {unitType === "EGG"
+                      ? formatMXN(actualTripTotals.amount - totals.totalAmount)
+                      : actualTripTotals.heads}
                   </p>
                 </div>
                 <div>

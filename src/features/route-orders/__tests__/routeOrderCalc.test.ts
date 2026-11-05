@@ -59,6 +59,7 @@ const sheet: RouteOrderSheetDTO = {
         localityName: "Centro",
         isInternalBranch: false,
         isInternalClient: false,
+        headCount: 0,
         quantity: 18,
         unitPrice: 62,
         vegetables: "Tomate",
@@ -127,6 +128,32 @@ describe("routeOrderCalc", () => {
     expect(totals.totalQuantity).toBe(30);
     expect(totals.totalBoxes).toBe(2.5);
     expect(totals.totalAmount).toBe(1890);
+  });
+
+  it("suma cabezas en pollo vivo sin calcular total monetario", () => {
+    const base = buildDraft(sheet, "EGG", 65);
+    const rows = [
+      {
+        ...base.rows[0],
+        quantity: "",
+        headCount: "10",
+        unitPrice: "35",
+      },
+      {
+        ...base.rows[1],
+        quantity: "",
+        headCount: "20",
+        unitPrice: "35",
+      },
+    ];
+
+    const totals = computeTotals(rows, "LIVE_CHICKEN");
+
+    expect(totals.clientCount).toBe(2);
+    expect(totals.clientsWithOrder).toBe(2);
+    expect(totals.totalQuantity).toBe(30);
+    expect(totals.totalAmount).toBe(0);
+    expect(rowHasOrderData(rows[0])).toBe(true);
   });
 
   it("arma el borrador con último precio, precio actual y líneas guardadas", () => {

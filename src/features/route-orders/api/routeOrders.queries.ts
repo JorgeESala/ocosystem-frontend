@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import {
   createRouteOrderTrip,
+  generateRouteOrderSales,
+  getRouteOrderSaleCandidates,
+  getRouteOrderSheet,
   getRouteOrdersDay,
   linkRouteOrderTrip,
   saveRouteOrder,
@@ -16,6 +19,7 @@ import {
 import { eggPriceReferenceKeys } from "./eggPriceReference.keys";
 import type {
   EggPriceReferenceSaveDTO,
+  GenerateRouteOrderSalesDTO,
   RouteOrderSaveDTO,
 } from "../types/routeOrder.types";
 
@@ -27,6 +31,54 @@ export const useRouteOrdersDay = (date: string) => {
     queryFn: () => getRouteOrdersDay(date),
     enabled: !!slug && !!date,
     staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useRouteOrderSheet = (
+  routeId: number | null,
+  date: string | null,
+  enabled = true,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey:
+      routeId != null && date
+        ? routeOrderKeys.sheet(slug ?? "", routeId, date)
+        : [],
+    queryFn: () => getRouteOrderSheet(routeId!, date!),
+    enabled: enabled && !!slug && routeId != null && !!date,
+    staleTime: 1000 * 60,
+  });
+};
+
+export const useRouteOrderSaleCandidates = (
+  date: string | null,
+  enabled = true,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey: date
+      ? routeOrderKeys.saleCandidatesByDate(slug ?? "", date)
+      : routeOrderKeys.saleCandidates(),
+    queryFn: () => getRouteOrderSaleCandidates(date!),
+    enabled: enabled && !!slug && !!date,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useGenerateRouteOrderSales = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: GenerateRouteOrderSalesDTO) =>
+      generateRouteOrderSales(payload),
+    onSuccess: () => {
+      invalidateRouteOrders(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+    },
   });
 };
 
