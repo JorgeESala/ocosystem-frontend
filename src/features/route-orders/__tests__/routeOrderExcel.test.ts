@@ -22,6 +22,7 @@ const draft: RouteOrderDraft = {
       localityName: "Centro",
       isInternalBranch: false,
       isInternalClient: false,
+      headCount: "",
       quantity: "18",
       unitPrice: "65",
       lastSalePricePerCarton: null,
@@ -40,6 +41,7 @@ const draft: RouteOrderDraft = {
       localityName: "Centro",
       isInternalBranch: false,
       isInternalClient: false,
+      headCount: "",
       quantity: "",
       unitPrice: "65",
       lastSalePricePerCarton: null,
@@ -111,6 +113,47 @@ describe("routeOrderExcel", () => {
     const summaryContent = JSON.stringify(summaryValues);
     expect(summaryContent).toContain("Externos");
     expect(summaryContent).toContain("Total");
+  });
+
+  it("genera la hoja de pollo vivo solo con cabezas y sin total monetario", async () => {
+    const chickenDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          headCount: "50",
+          quantity: "",
+          unitPrice: "35",
+        },
+      ],
+    };
+    const workbook = await buildRouteOrderWorkbook([
+      {
+        ...input,
+        unitType: "LIVE_CHICKEN",
+        draft: chickenDraft,
+        currentEggPricePerCarton: null,
+        currentEggPricePerBox: null,
+        currentEggPriceEffectiveFrom: null,
+      },
+    ]);
+
+    const sheet = workbook.getWorksheet("Ruta Centro");
+    expect(sheet?.getCell("D5").value).toBe("Cabezas");
+    expect(sheet?.getCell("I5").value).toBe("Comentarios");
+
+    const values: unknown[] = [];
+    sheet?.eachRow((row) => {
+      values.push(row.values);
+    });
+    const content = JSON.stringify(values);
+    expect(content).toContain("50");
+    expect(content).toContain("TOTAL DE CABEZAS");
+    expect(content).not.toContain("TOTAL DEL PEDIDO");
+
+    const summary = workbook.getWorksheet("Resumen");
+    expect(summary?.getCell("I3").value).toBe("Cabezas");
+    expect(summary?.getCell("J3").value ?? null).toBeNull();
   });
 
   it("separa clientes internos y externos y no repite la columna Ruta", async () => {

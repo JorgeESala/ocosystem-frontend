@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BatchMovementModal } from "../components/BatchMovementModal";
+import type { RouteOrderSheetDTO } from "@/features/route-orders/types/routeOrder.types";
 import type { Batch } from "../types.batch";
 
 const { employeesData } = vi.hoisted(() => ({
@@ -22,6 +23,14 @@ const clientMocks = vi.hoisted(() => ({
   useClients: vi.fn(),
   useCreateClient: vi.fn(),
   useCreateInternalClient: vi.fn(),
+}));
+
+const orderMocks = vi.hoisted(() => ({
+  sheet: null as RouteOrderSheetDTO | null,
+}));
+
+vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
+  useRouteOrderSheet: () => ({ data: orderMocks.sheet }),
 }));
 
 vi.mock("@/features/employee/api/employees.queries", () => ({
@@ -76,6 +85,7 @@ beforeEach(() => {
     mutate: vi.fn(),
     isPending: false,
   });
+  orderMocks.sheet = null;
 });
 
 const eggBatch: Batch = {
@@ -339,6 +349,123 @@ describe("BatchMovementModal - Ruta", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("BatchMovementModal - Pedido", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    routeMocks.useRoutes.mockReturnValue({
+      data: [{ id: 1, name: "Ruta Nueva" }],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  function selectRouteAndClient(clientName: string) {
+    fireEvent.focus(
+      screen.getByPlaceholderText("Buscar o seleccionar ruta..."),
+    );
+    fireEvent.click(screen.getByText("Ruta Nueva"));
+    fireEvent.focus(
+      screen.getByPlaceholderText("Escribe para buscar cliente..."),
+    );
+    fireEvent.click(screen.getByText(clientName));
+  }
+
+  it("prellena casilleros y total de huevo desde el pedido", () => {
+    clientMocks.useClients.mockReturnValue({
+      data: [{ id: 10, name: "Cliente Pedido" }],
+    });
+    orderMocks.sheet = {
+      date: "2030-01-07",
+      route: { id: 1, name: "Ruta Nueva" },
+      localities: [],
+      clients: [],
+      order: {
+        id: 1,
+        routeId: 1,
+        orderDate: "2030-01-07",
+        driverId: 1,
+        driverName: "Juan Perez",
+        vehicleId: null,
+        vehicleName: "",
+        tripId: null,
+        trip: null,
+        notes: "",
+        createdBy: null,
+        createdAt: null,
+        updatedAt: null,
+        lines: [
+          {
+            id: 1,
+            clientId: 10,
+            clientName: "Cliente Pedido",
+            headCount: 0,
+            quantity: 18,
+            unitPrice: 65,
+            sortOrder: 0,
+          },
+        ],
+      },
+    };
+
+    renderModal(eggBatch);
+    selectRouteAndClient("Cliente Pedido");
+
+    expect(
+      screen.getByText("Pedido aplicado: 18 casilleros."),
+    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1170.00")).toBeInTheDocument();
+  });
+
+  it("prellena cabezas y deja los kilos para capturarlos en la venta", () => {
+    clientMocks.useClients.mockReturnValue({
+      data: [{ id: 10, name: "Cliente Pedido" }],
+    });
+    orderMocks.sheet = {
+      date: "2030-01-07",
+      route: { id: 1, name: "Ruta Nueva" },
+      localities: [],
+      clients: [],
+      order: {
+        id: 1,
+        routeId: 1,
+        orderDate: "2030-01-07",
+        driverId: 1,
+        driverName: "Juan Perez",
+        vehicleId: null,
+        vehicleName: "",
+        tripId: null,
+        trip: null,
+        notes: "",
+        createdBy: null,
+        createdAt: null,
+        updatedAt: null,
+        lines: [
+          {
+            id: 1,
+            clientId: 10,
+            clientName: "Cliente Pedido",
+            headCount: 50,
+            quantity: 0,
+            unitPrice: 35,
+            sortOrder: 0,
+          },
+        ],
+      },
+    };
+
+    renderModal(chickenBatch);
+    selectRouteAndClient("Cliente Pedido");
+
+    expect(
+      screen.getByText(
+        "Pedido aplicado: 50 cabezas. Captura los kilos vendidos y enviados.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue("50")).toBeInTheDocument();
   });
 });
 

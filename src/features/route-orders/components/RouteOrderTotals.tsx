@@ -27,26 +27,18 @@ export const RouteOrderTotals: React.FC<Props> = ({ unitType, totals }) => (
       hint={`${totals.clientsWithOrder} con pedido`}
     />
     <Card
-      label={unitType === "EGG" ? "Total casilleros" : "Total kilos"}
+      label={unitType === "EGG" ? "Total casilleros" : "Total cabezas"}
       value={totals.totalQuantity.toLocaleString("es-MX")}
     />
     {unitType === "EGG" ? (
-      <Card
-        label="Total cajas"
-        value={totals.totalBoxes.toLocaleString("es-MX")}
-        hint="12 casilleros = 1 caja"
-      />
-    ) : (
-      <Card
-        label="Precio promedio"
-        value={
-          totals.totalQuantity > 0
-            ? formatMXN(totals.totalAmount / totals.totalQuantity)
-            : "—"
-        }
-        hint="por kilo"
-      />
-    )}
-    <Card label="Total monetario" value={formatMXN(totals.totalAmount)} />
+      <>
+        <Card
+          label="Total cajas"
+          value={totals.totalBoxes.toLocaleString("es-MX")}
+          hint="12 casilleros = 1 caja"
+        />
+        <Card label="Total monetario" value={formatMXN(totals.totalAmount)} />
+      </>
+    ) : null}
   </div>
 );

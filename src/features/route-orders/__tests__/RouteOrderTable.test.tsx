@@ -13,6 +13,7 @@ const rows: RouteOrderDraftRow[] = [
     localityName: "Centro",
     isInternalBranch: false,
     isInternalClient: false,
+    headCount: "",
     quantity: "18",
     unitPrice: "65",
     lastSalePricePerCarton: 60,
@@ -31,6 +32,7 @@ const rows: RouteOrderDraftRow[] = [
     localityName: "Centro",
     isInternalBranch: false,
     isInternalClient: false,
+    headCount: "",
     quantity: "",
     unitPrice: "65",
     lastSalePricePerCarton: null,
@@ -112,6 +114,28 @@ describe("RouteOrderTable", () => {
     );
     expect((screen.getByTestId("box-price-1") as HTMLInputElement).value).toBe(
       "800",
+    );
+  });
+
+  it("captura cabezas en pollo vivo y no muestra total monetario", () => {
+    render(
+      <RouteOrderTable
+        unitType="LIVE_CHICKEN"
+        rows={rows.map((row) => ({
+          ...row,
+          quantity: "",
+          headCount: "25",
+        }))}
+        currentEggPricePerCarton={65}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Cabezas")).toBeInTheDocument();
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+    expect((screen.getByTestId("quantity-1") as HTMLInputElement).value).toBe(
+      "25",
     );
   });
 

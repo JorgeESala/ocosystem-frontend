@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   Modal,
@@ -26,6 +26,7 @@ import {
   useUpdateBatchAdjustment,
 } from "../api/batch.adjustments.queries";
 import { useEmployees } from "@/features/employee/api/employees.queries";
+import { useRouteOrderSheet } from "@/features/route-orders/api/routeOrders.queries";
 import {
   useClients,
   useCreateClient,
@@ -59,6 +60,7 @@ export const BatchMovementModal: React.FC<{
   const [isAddingLocality, setIsAddingLocality] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [prefillMessage, setPrefillMessage] = useState<string | null>(null);
   const [isNewClientInternal, setIsNewClientInternal] = useState(false);
   const { mutate: createClient, isPending: isCreatingClient } =
     useCreateClient();
@@ -119,6 +121,13 @@ export const BatchMovementModal: React.FC<{
   const watchWeight = watch("weight");
   const watchPrice = watch("pricePerKg");
   const watchIsPickup = watch("isPickup") === true;
+  const watchRouteId = watch("routeId");
+  const watchSaleDate = watch("saleDate");
+  const { data: orderSheet } = useRouteOrderSheet(
+    Number(watchRouteId) || null,
+    watchSaleDate || null,
+    !isEditing && watchMovementType === "SALE",
+  );
 
   // Lógica de cálculo automático (Opcional, pero muy Senior)
   useEffect(() => {
@@ -162,6 +171,81 @@ export const BatchMovementModal: React.FC<{
     selectedClient?.isInternalClient === true &&
     !selectedClient?.isInternalBranch;
   const showPickupOption = supportsPickup && selectedIsInternalClient;
+  const lastPrefillRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      isEditing ||
+      watchMovementType !== "SALE" ||
+      watchIsPickup ||
+      selectedClientId == null ||
+      selectedClientId === "" ||
+      !orderSheet?.order ||
+      orderSheet.order.id == null ||
+      (orderSheet.order.lines ?? []).length === 0
+    ) {
+      lastPrefillRef.current = null;
+      setPrefillMessage(null);
+      return;
+    }
+
+    const line = orderSheet.order.lines.find(
+      (candidate) => candidate.clientId === Number(selectedClientId),
+    );
+    if (!line) {
+      lastPrefillRef.current = null;
+      setPrefillMessage("Este cliente no tiene pedido para esta fecha.");
+      return;
+    }
+
+    const key = `${orderSheet.order.id ?? "new"}-${line.id ?? line.clientId}`;
+    if (lastPrefillRef.current === key) return;
+
+    const hasQuantity =
+      batch.type === "EGG"
+        ? Number(line.quantity || 0) > 0
+        : Number(line.headCount || 0) > 0;
+    if (!hasQuantity) {
+      lastPrefillRef.current = key;
+      setPrefillMessage("El pedido de este cliente no tiene cantidad.");
+      return;
+    }
+
+    if (batch.type === "EGG") {
+      const casilleros = Number(line.quantity || 0);
+      const { boxes, cartons, pieces } = calculateEggUnits(casilleros * 30);
+      setValue("boxes", boxes);
+      setValue("cartons", cartons);
+      setValue("quantity", pieces);
+      setValue(
+        "saleTotal",
+        (casilleros * Number(line.unitPrice || 0)).toFixed(2),
+      );
+      setPrefillMessage(`Pedido aplicado: ${casilleros} casilleros.`);
+    } else {
+      const heads = Number(line.headCount || 0);
+      setValue("quantity", heads);
+      setValue("pricePerKg", Number(line.unitPrice || 0));
+      setValue("weight", "");
+      setValue("kgSent", "");
+      setValue("saleTotal", "");
+      setPrefillMessage(
+        `Pedido aplicado: ${heads} cabezas. Captura los kilos vendidos y enviados.`,
+      );
+    }
+
+    if (orderSheet.order.driverId) {
+      setValue("employeeId", orderSheet.order.driverId);
+    }
+    lastPrefillRef.current = key;
+  }, [
+    batch.type,
+    isEditing,
+    orderSheet,
+    selectedClientId,
+    setValue,
+    watchIsPickup,
+    watchMovementType,
+  ]);
   useEffect(() => {
     if (!selectedIsInternalClient && watchIsPickup) {
       setValue("isPickup", false);
@@ -857,6 +941,12 @@ export const BatchMovementModal: React.FC<{
           )}
 
           <hr className="col-span-2 my-2 border-gray-700" />
+
+          {watchMovementType === "SALE" && prefillMessage && (
+            <div className="col-span-2 rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-3 py-2 text-xs text-emerald-200">
+              {prefillMessage}
+            </div>
+          )}
 
           {/* 5. CAMPOS DINÁMICOS (Aquí se inyecta EggMovementFields o ChickenMovementFields) */}
           <div className="col-span-2 grid grid-cols-2 gap-4">

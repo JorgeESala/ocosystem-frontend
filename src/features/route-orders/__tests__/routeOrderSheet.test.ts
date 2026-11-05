@@ -22,6 +22,7 @@ const draft: RouteOrderDraft = {
       localityName: "Centro",
       isInternalBranch: false,
       isInternalClient: false,
+      headCount: "",
       quantity: "18",
       unitPrice: "65",
       lastSalePricePerCarton: 60,
@@ -67,20 +68,36 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("1,170.00");
   });
 
-  it("genera la hoja de pollo vivo con kilos y precio por kilo", () => {
+  it("genera la hoja de pollo vivo solo con cabezas y precio por kilo", () => {
+    const chickenDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          headCount: "50",
+          quantity: "",
+          unitPrice: "35",
+        },
+      ],
+    };
     const html = buildRouteOrdersPrintHtml([
       {
         ...eggInput,
         unitType: "LIVE_CHICKEN",
+        draft: chickenDraft,
         currentEggPricePerCarton: null,
         currentEggPricePerBox: null,
         currentEggPriceEffectiveFrom: null,
       },
     ]);
 
-    expect(html).toContain("Kilos");
+    expect(html).toContain("Cabezas");
+    expect(html).toContain("Total cabezas:");
+    expect(html).toContain("50");
     expect(html).toContain("Precio/kg");
+    expect(html).not.toContain("Kilos");
     expect(html).not.toContain("Precio/caja");
+    expect(html).not.toContain("TOTAL DEL PEDIDO");
     expect(html).not.toContain("Precio actual del huevo");
   });
 
