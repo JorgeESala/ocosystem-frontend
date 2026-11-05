@@ -20,6 +20,8 @@ const draft: RouteOrderDraft = {
       clientName: "Cliente A",
       businessName: "Abarrotes A",
       localityName: "Centro",
+      isInternalBranch: false,
+      isInternalClient: false,
       quantity: "18",
       unitPrice: "65",
       lastSalePricePerCarton: 60,
@@ -55,7 +57,9 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Huevo (casilleros)");
     expect(html).toContain("Precio/casillero");
     expect(html).toContain("Precio/caja");
-    expect(html).toContain("Total cajas");
+    expect(html).toContain("Clientes externos");
+    expect(html).toContain("Subtotal clientes externos");
+    expect(html).toContain("TOTAL DEL PEDIDO");
     expect(html).toContain("1.5");
     expect(html).toContain("Tomate 8 kilos");
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
@@ -118,6 +122,41 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Cliente C");
     expect(html).not.toContain("Cliente B");
     expect(html).toContain("<strong>Clientes:</strong> 2");
+  });
+
+  it("separa clientes internos y externos con sus subtotales", () => {
+    const mixedDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          isInternalBranch: true,
+          clientName: "Sucursal Centro",
+          quantity: "12",
+          comments: "",
+        },
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente Externo",
+          quantity: "6",
+          comments: "",
+        },
+      ],
+    };
+
+    const html = buildRouteOrdersPrintHtml([
+      { ...eggInput, draft: mixedDraft },
+    ]);
+
+    expect(html.indexOf("Clientes internos")).toBeLessThan(
+      html.indexOf("Clientes externos"),
+    );
+    expect(html).toContain("Subtotal clientes internos");
+    expect(html).toContain("Subtotal clientes externos");
+    expect(html).toContain("Sucursal Centro");
+    expect(html).toContain("Cliente Externo");
   });
 
   it("mantiene todos los clientes cuando no se ocultan los vacíos", () => {
