@@ -13,6 +13,8 @@ export interface RouteOrderLineDTO {
   clientName: string;
   businessName?: string | null;
   localityName?: string | null;
+  isInternalBranch?: boolean | null;
+  isInternalClient?: boolean | null;
   quantity: number;
   unitPrice: number;
   vegetables?: string | null;
@@ -93,6 +95,8 @@ export interface RouteOrderDraftRow {
   clientName: string;
   businessName: string;
   localityName: string;
+  isInternalBranch: boolean;
+  isInternalClient: boolean;
   quantity: string;
   unitPrice: string;
   lastSalePricePerCarton?: number | null;
