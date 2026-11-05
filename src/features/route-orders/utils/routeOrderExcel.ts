@@ -351,19 +351,21 @@ const buildRouteSheet = (
 
   let rowCursor = 4;
   sections.forEach((section, sectionIndex) => {
-    worksheet.mergeCells(`A${rowCursor}:${lastColLetter}${rowCursor}`);
-    const heading = worksheet.getCell(`A${rowCursor}`);
-    heading.value = section.title.toUpperCase();
-    heading.fill = fill(GREEN);
-    heading.font = {
-      name: "Arial",
-      size: 12,
-      bold: true,
-      color: { argb: WHITE },
-    };
-    heading.alignment = { horizontal: "left", vertical: "middle" };
-    worksheet.getRow(rowCursor).height = 24;
-    rowCursor += 1;
+    if (section.title) {
+      worksheet.mergeCells(`A${rowCursor}:${lastColLetter}${rowCursor}`);
+      const heading = worksheet.getCell(`A${rowCursor}`);
+      heading.value = section.title.toUpperCase();
+      heading.fill = fill(GREEN);
+      heading.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: WHITE },
+      };
+      heading.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.getRow(rowCursor).height = 24;
+      rowCursor += 1;
+    }
 
     const headerRow = rowCursor;
     const dataRows = section.rows.map((row) => routeRowValues(row, input));
@@ -389,14 +391,18 @@ const buildRouteSheet = (
     }
 
     styleHeaderAndData(worksheet, headerRow, lastDataRow, lastCol, egg);
-    rowCursor = writeSectionTotals(
-      worksheet,
-      lastDataRow + 1,
-      section.rows,
-      input,
-      section.title,
-    );
-    rowCursor += 1;
+    if (section.title) {
+      rowCursor = writeSectionTotals(
+        worksheet,
+        lastDataRow + 1,
+        section.rows,
+        input,
+        section.title,
+      );
+      rowCursor += 1;
+    } else {
+      rowCursor = lastDataRow + 1;
+    }
   });
 
   rowCursor = writeOverallTotals(worksheet, rowCursor + 1, allRows, input);
@@ -495,15 +501,17 @@ const buildSummarySheet = (
       input.vehicleName || "",
       input.tripId != null ? `#${input.tripId}` : "",
     ];
-    for (const section of sections) {
-      const totals = computeTotals(section.rows, input.unitType);
-      rows.push([
-        ...base,
-        section.title === "Clientes internos" ? "Internos" : "Externos",
-        totals.clientCount,
-        totals.totalQuantity,
-        ...(egg ? [totals.totalBoxes, totals.totalAmount] : []),
-      ]);
+    if (sections.length > 1) {
+      for (const section of sections) {
+        const totals = computeTotals(section.rows, input.unitType);
+        rows.push([
+          ...base,
+          section.title === "Clientes internos" ? "Internos" : "Externos",
+          totals.clientCount,
+          totals.totalQuantity,
+          ...(egg ? [totals.totalBoxes, totals.totalAmount] : []),
+        ]);
+      }
     }
     const totals = computeTotals(allRows, input.unitType);
     rows.push([
