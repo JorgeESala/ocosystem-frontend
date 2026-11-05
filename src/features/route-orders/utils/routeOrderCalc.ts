@@ -50,16 +50,22 @@ export const buildOrderSections = (
   rows: RouteOrderDraftRow[],
   hideEmptyRows = false,
 ): RouteOrderSection[] => {
+  const internal = rows.filter(isInternalRow);
+  const external = rows.filter((row) => !isInternalRow(row));
+  const internalHasOrder = internal.some(rowHasOrderData);
+  const externalHasOrder = external.some(rowHasOrderData);
   const applyFilter = (sectionRows: RouteOrderDraftRow[]) =>
     hideEmptyRows ? sectionRows.filter(rowHasOrderData) : sectionRows;
 
-  const internal = applyFilter(rows.filter(isInternalRow));
-  const external = applyFilter(rows.filter((row) => !isInternalRow(row)));
+  if (internalHasOrder && externalHasOrder) {
+    return [
+      { title: "Clientes internos", rows: applyFilter(internal) },
+      { title: "Clientes externos", rows: applyFilter(external) },
+    ];
+  }
 
-  return [
-    internal.length > 0 ? { title: "Clientes internos", rows: internal } : null,
-    external.length > 0 ? { title: "Clientes externos", rows: external } : null,
-  ].filter((section): section is RouteOrderSection => section !== null);
+  const allRows = applyFilter(rows);
+  return allRows.length > 0 ? [{ title: "", rows: allRows }] : [];
 };
 
 export const rowHasOrderData = (row: RouteOrderDraftRow): boolean =>

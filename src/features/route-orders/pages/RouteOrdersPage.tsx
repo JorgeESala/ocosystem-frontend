@@ -59,6 +59,7 @@ import {
   addClientToDraft,
   applyUnitPriceToDraft,
   buildDraft,
+  buildOrderSections,
   computeTotals,
   draftToSavePayload,
   isInternalRow,
@@ -229,6 +230,11 @@ export default function RouteOrdersPage({ unitType }: Props) {
     () => computeTotals(externalRows, unitType),
     [externalRows, unitType],
   );
+  const orderSections = useMemo(
+    () => (draft ? buildOrderSections(draft.rows) : []),
+    [draft],
+  );
+  const isDivided = orderSections.length > 1;
 
   const actualTripTotals = useMemo(() => {
     let quantity = 0;
@@ -1000,41 +1006,44 @@ export default function RouteOrdersPage({ unitType }: Props) {
             </Button>
           </div>
 
-          <RouteOrderSectionSummary
-            unitType={unitType}
-            internal={internalTotals}
-            external={externalTotals}
-          />
-
-          {internalRows.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-base font-semibold text-white">
-                Clientes internos
-              </h3>
-              <RouteOrderTable
-                unitType={unitType}
-                rows={internalRows}
-                currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
-                onChange={updateRow}
-                onRemove={handleRemoveClient}
-              />
-              <RouteOrderTotals unitType={unitType} totals={internalTotals} />
-            </div>
+          {isDivided && (
+            <RouteOrderSectionSummary
+              unitType={unitType}
+              internal={internalTotals}
+              external={externalTotals}
+            />
           )}
 
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-white">
-              Clientes externos
-            </h3>
+          {isDivided ? (
+            orderSections.map((section) => (
+              <div key={section.title} className="space-y-3">
+                <h3 className="text-base font-semibold text-white">
+                  {section.title}
+                </h3>
+                <RouteOrderTable
+                  unitType={unitType}
+                  rows={section.rows}
+                  currentEggPricePerCarton={
+                    currentPrice?.pricePerCarton ?? null
+                  }
+                  onChange={updateRow}
+                  onRemove={handleRemoveClient}
+                />
+                <RouteOrderTotals
+                  unitType={unitType}
+                  totals={computeTotals(section.rows, unitType)}
+                />
+              </div>
+            ))
+          ) : (
             <RouteOrderTable
               unitType={unitType}
-              rows={externalRows}
+              rows={draft.rows}
               currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
               onChange={updateRow}
               onRemove={handleRemoveClient}
             />
-            <RouteOrderTotals unitType={unitType} totals={externalTotals} />
-          </div>
+          )}
         </div>
       ) : (
         <Alert color="warning">

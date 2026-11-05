@@ -3,6 +3,7 @@ import {
   addClientToDraft,
   applyUnitPriceToDraft,
   buildDraft,
+  buildOrderSections,
   cartonsToBoxes,
   computeTotals,
   draftToSavePayload,
@@ -128,6 +129,64 @@ describe("routeOrderCalc", () => {
     expect(totals.totalQuantity).toBe(30);
     expect(totals.totalBoxes).toBe(2.5);
     expect(totals.totalAmount).toBe(1890);
+  });
+
+  it("divide la hoja solo cuando ambos grupos tienen pedido", () => {
+    const base = buildDraft(sheet, "EGG", 65);
+    const internal = {
+      ...base.rows[0],
+      isInternalBranch: true,
+      isInternalClient: false,
+      quantity: "5",
+    };
+    const external = {
+      ...base.rows[1],
+      isInternalBranch: false,
+      isInternalClient: false,
+      quantity: "6",
+    };
+
+    const both = buildOrderSections([internal, external], true);
+    expect(both.map((section) => section.title)).toEqual([
+      "Clientes internos",
+      "Clientes externos",
+    ]);
+
+    const onlyInternal = buildOrderSections(
+      [
+        internal,
+        {
+          ...external,
+          quantity: "",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+      ],
+      true,
+    );
+    expect(onlyInternal).toHaveLength(1);
+    expect(onlyInternal[0].title).toBe("");
+    expect(onlyInternal[0].rows).toEqual([internal]);
+
+    const onlyExternal = buildOrderSections(
+      [
+        {
+          ...internal,
+          quantity: "",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+        external,
+      ],
+      true,
+    );
+    expect(onlyExternal).toHaveLength(1);
+    expect(onlyExternal[0].title).toBe("");
+    expect(onlyExternal[0].rows).toEqual([external]);
   });
 
   it("suma cabezas en pollo vivo sin calcular total monetario", () => {

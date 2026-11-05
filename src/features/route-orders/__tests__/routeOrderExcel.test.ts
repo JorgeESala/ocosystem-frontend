@@ -83,9 +83,9 @@ describe("routeOrderExcel", () => {
     const sheet = workbook.getWorksheet("Ruta Centro");
     expect(sheet?.getCell("A1").value).toContain("PEDIDO DE RUTA");
     expect(sheet?.getCell("D1").value).toContain("FECHA");
-    expect(sheet?.getCell("D6").numFmt).toBe("0");
-    expect(sheet?.getCell("H6").numFmt).toContain("$");
-    expect(sheet?.getCell("I6").numFmt).not.toContain("$");
+    expect(sheet?.getCell("D5").numFmt).toBe("0");
+    expect(sheet?.getCell("H5").numFmt).toContain("$");
+    expect(sheet?.getCell("I5").numFmt).not.toContain("$");
     expect(
       (
         workbook as unknown as {
@@ -99,7 +99,7 @@ describe("routeOrderExcel", () => {
       values.push(row.values);
     });
     const content = JSON.stringify(values);
-    expect(content).toContain("CLIENTES EXTERNOS");
+    expect(content).not.toContain("CLIENTES EXTERNOS");
     expect(content).toContain("TOTAL DEL PEDIDO");
     expect(content).toContain("Cliente A");
     expect(content).not.toContain("Cliente B");
@@ -111,7 +111,7 @@ describe("routeOrderExcel", () => {
       summaryValues.push(row.values);
     });
     const summaryContent = JSON.stringify(summaryValues);
-    expect(summaryContent).toContain("Externos");
+    expect(summaryContent).not.toContain("Externos");
     expect(summaryContent).toContain("Total");
   });
 
@@ -139,8 +139,8 @@ describe("routeOrderExcel", () => {
     ]);
 
     const sheet = workbook.getWorksheet("Ruta Centro");
-    expect(sheet?.getCell("D5").value).toBe("Cabezas");
-    expect(sheet?.getCell("I5").value).toBe("Comentarios");
+    expect(sheet?.getCell("D4").value).toBe("Cabezas");
+    expect(sheet?.getCell("I4").value).toBe("Comentarios");
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
