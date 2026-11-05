@@ -15,6 +15,7 @@ export interface RouteOrderLineDTO {
   localityName?: string | null;
   isInternalBranch?: boolean | null;
   isInternalClient?: boolean | null;
+  headCount?: number | null;
   quantity: number;
   unitPrice: number;
   vegetables?: string | null;
@@ -52,6 +53,7 @@ export interface RouteOrderSheetDTO {
 export interface RouteOrderLineSaveDTO {
   clientId: number;
   quantity: number;
+  headCount?: number;
   unitPrice: number;
   vegetables?: string | null;
   condiments?: string | null;
@@ -97,6 +99,7 @@ export interface RouteOrderDraftRow {
   localityName: string;
   isInternalBranch: boolean;
   isInternalClient: boolean;
+  headCount: string;
   quantity: string;
   unitPrice: string;
   lastSalePricePerCarton?: number | null;
@@ -119,4 +122,53 @@ export interface RouteOrderDraft {
   tripId: number | null;
   notes: string;
   rows: RouteOrderDraftRow[];
+}
+
+export interface RouteOrderSaleCandidateDTO {
+  orderId: number;
+  lineId: number;
+  unitType: "EGG" | "LIVE_CHICKEN";
+  routeId: number;
+  routeName: string;
+  driverId: number | null;
+  driverName: string | null;
+  tripId: number | null;
+  clientId: number;
+  clientName: string;
+  businessName?: string | null;
+  localityName?: string | null;
+  isInternalBranch?: boolean | null;
+  isInternalClient?: boolean | null;
+  headCount?: number | null;
+  quantity?: number | null;
+  unitPrice: number;
+  alreadySold: boolean;
+}
+
+export interface GenerateRouteOrderSaleLineDTO {
+  orderId: number;
+  lineId: number;
+  driverId?: number | null;
+  force?: boolean;
+  headCount?: number;
+  quantity?: number;
+  weight?: number;
+  kgSent?: number;
+  unitPrice?: number;
+  saleTotal?: number;
+}
+
+export interface GenerateRouteOrderSalesDTO {
+  batchId: number;
+  date: string;
+  lines: GenerateRouteOrderSaleLineDTO[];
+}
+
+export interface GenerateRouteOrderSalesResultDTO {
+  createdCount: number;
+  skippedCount: number;
+  totalAmount: number;
+  createdSaleIds: number[];
+  skippedLineIds: number[];
+  tripIds: number[];
 }

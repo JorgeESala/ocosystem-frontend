@@ -64,6 +64,7 @@ export const buildOrderSections = (
 
 export const rowHasOrderData = (row: RouteOrderDraftRow): boolean =>
   toNumber(row.quantity) > 0 ||
+  toNumber(row.headCount) > 0 ||
   [row.vegetables, row.condiments, row.groceries, row.comments].some(
     (value) => (value ?? "").trim().length > 0,
   );
@@ -85,9 +86,12 @@ export const computeTotals = (
   let clientsWithOrder = 0;
 
   for (const row of rows) {
-    const quantity = toNumber(row.quantity);
+    const quantity =
+      unitType === "EGG" ? toNumber(row.quantity) : toNumber(row.headCount);
     totalQuantity += quantity;
-    totalAmount += quantity * toNumber(row.unitPrice);
+    if (unitType === "EGG") {
+      totalAmount += quantity * toNumber(row.unitPrice);
+    }
     if (rowHasOrderData(row)) {
       clientsWithOrder += 1;
     }
@@ -98,7 +102,7 @@ export const computeTotals = (
     clientsWithOrder,
     totalQuantity: roundQuantity(totalQuantity),
     totalBoxes: unitType === "EGG" ? cartonsToBoxes(totalQuantity) : 0,
-    totalAmount: roundMoney(totalAmount),
+    totalAmount: unitType === "EGG" ? roundMoney(totalAmount) : 0,
   };
 };
 
@@ -162,6 +166,7 @@ const emptyRow = (
   localityName: client.localityName ?? "",
   isInternalBranch: Boolean(client.isInternalBranch),
   isInternalClient: Boolean(client.isInternalClient),
+  headCount: "",
   quantity: "",
   unitPrice: String(
     defaultUnitPrice(client, unitType, currentEggPricePerCarton),
@@ -189,6 +194,10 @@ const rowFromSavedLine = (
     localityName: line.localityName ?? "",
     isInternalBranch: Boolean(line.isInternalBranch),
     isInternalClient: Boolean(line.isInternalClient),
+    headCount:
+      line.headCount != null && Number(line.headCount) !== 0
+        ? String(line.headCount)
+        : "",
     quantity:
       line.quantity != null && Number(line.quantity) !== 0
         ? String(line.quantity)
@@ -240,6 +249,10 @@ export const buildDraft = (
         saved.isInternalBranch ?? Boolean(client.isInternalBranch),
       isInternalClient:
         saved.isInternalClient ?? Boolean(client.isInternalClient),
+      headCount:
+        saved.headCount != null && Number(saved.headCount) !== 0
+          ? String(saved.headCount)
+          : "",
       quantity: Number(saved.quantity) !== 0 ? String(saved.quantity) : "",
       unitPrice: String(
         saved.unitPrice ??
@@ -329,7 +342,8 @@ export const draftToSavePayload = (
 ): RouteOrderSaveDTO => {
   const lines = draft.rows
     .filter((row) => {
-      const hasQuantity = toNumber(row.quantity) > 0;
+      const hasQuantity =
+        toNumber(row.quantity) > 0 || toNumber(row.headCount) > 0;
       const hasNotes = [
         row.vegetables,
         row.condiments,
@@ -341,6 +355,7 @@ export const draftToSavePayload = (
     .map((row, index) => ({
       clientId: row.clientId,
       quantity: roundQuantity(toNumber(row.quantity)),
+      headCount: roundQuantity(toNumber(row.headCount)),
       unitPrice: roundUnitPrice(toNumber(row.unitPrice)),
       vegetables: row.vegetables,
       condiments: row.condiments,

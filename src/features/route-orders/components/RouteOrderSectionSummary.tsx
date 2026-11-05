@@ -14,7 +14,7 @@ const quantityText = (
 ): string =>
   unitType === "EGG"
     ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
-    : `${totals.totalQuantity} kg`;
+    : `${totals.totalQuantity} cabezas`;
 
 const SummaryCard: React.FC<{
   title: string;
@@ -38,7 +38,8 @@ const SummaryCard: React.FC<{
       </span>
     </div>
     <p className="mt-1 text-sm text-white">
-      {quantityText(totals, unitType)} · {formatMXN(totals.totalAmount)}
+      {quantityText(totals, unitType)}
+      {unitType === "EGG" ? ` · ${formatMXN(totals.totalAmount)}` : ""}
     </p>
   </div>
 );

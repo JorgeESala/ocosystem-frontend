@@ -49,7 +49,7 @@ const unitLabel = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Huevo" : "Pollo vivo";
 
 const quantityLabel = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Kilos";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
 
 const priceLabel = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
@@ -80,12 +80,11 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
     <col style="width:18%" />
     <col style="width:12%" />
     <col style="width:9%" />
-    <col style="width:9%" />
     <col style="width:10%" />
-    <col style="width:10%" />
+    <col style="width:12%" />
+    <col style="width:11%" />
     <col style="width:6%" />
-    <col style="width:5%" />
-    <col style="width:5%" />
+    <col style="width:6%" />
   </colgroup>`;
 };
 
@@ -130,7 +129,8 @@ const buildTable = (
   const egg = unitType === "EGG";
   const rows = sectionRows
     .map((row) => {
-      const quantity = toNumber(row.quantity);
+      const quantity = egg ? toNumber(row.quantity) : toNumber(row.headCount);
+      const quantityText = egg ? row.quantity : row.headCount;
       const unitPrice = toNumber(row.unitPrice);
       const showPrices = quantity > 0 || unitPrice > 0;
       const total = rowTotal(row);
@@ -139,16 +139,16 @@ const buildTable = (
           <td>${escapeHtml(row.clientName)}</td>
           <td>${escapeHtml(row.businessName)}</td>
           <td>${escapeHtml(row.localityName)}</td>
-          <td class="num">${row.quantity ? escapeHtml(row.quantity) : ""}</td>
+          <td class="num">${quantityText ? escapeHtml(quantityText) : ""}</td>
           <td class="num">${showPrices ? formatMXN(unitPrice) : ""}</td>
           ${
             egg
               ? `<td class="num">${
                   showPrices ? formatMXN(pricePerBox(unitPrice)) : ""
-                }</td>`
+                }</td>
+                 <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>`
               : ""
           }
-          <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>
           <td>${escapeMultiline(row.vegetables)}</td>
           <td>${escapeMultiline(row.condiments)}</td>
           <td>${escapeMultiline(row.groceries)}</td>
@@ -167,8 +167,11 @@ const buildTable = (
           <th>Localidad</th>
           <th class="num">${quantityLabel(unitType)}</th>
           <th class="num">${priceLabel(unitType)}</th>
-          ${egg ? '<th class="num">Precio/caja</th>' : ""}
-          <th class="num">Total</th>
+          ${
+            egg
+              ? '<th class="num">Precio/caja</th><th class="num">Total</th>'
+              : ""
+          }
           <th>Verduras</th>
           <th>Condimentos</th>
           <th>Abarrotes</th>
@@ -188,12 +191,13 @@ const buildSectionTotals = (
   const quantityTotals =
     input.unitType === "EGG"
       ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
-      : `${totals.totalQuantity} kg`;
+      : `${totals.totalQuantity} cabezas`;
 
   return `<div class="section-totals">
     <strong>Subtotal ${escapeHtml(title.toLowerCase())}:</strong>
-    ${totals.clientsWithOrder} con pedido · ${quantityTotals} ·
-    ${formatMXN(totals.totalAmount)}
+    ${totals.clientsWithOrder} con pedido · ${quantityTotals}${
+      input.unitType === "EGG" ? ` · ${formatMXN(totals.totalAmount)}` : ""
+    }
   </div>`;
 };
 
@@ -205,14 +209,14 @@ const buildOverallTotals = (
   const quantityTotals =
     input.unitType === "EGG"
       ? `<span><strong>Total casilleros:</strong> ${totals.totalQuantity}</span>
-         <span><strong>Total cajas:</strong> ${totals.totalBoxes}</span>`
-      : `<span><strong>Total kilos:</strong> ${totals.totalQuantity}</span>`;
+         <span><strong>Total cajas:</strong> ${totals.totalBoxes}</span>
+         <span><strong>TOTAL DEL PEDIDO:</strong> ${formatMXN(totals.totalAmount)}</span>`
+      : `<span><strong>Total cabezas:</strong> ${totals.totalQuantity}</span>`;
 
   return `
     <div class="totals">
       <span><strong>Clientes:</strong> ${totals.clientCount} (${totals.clientsWithOrder} con pedido)</span>
       ${quantityTotals}
-      <span><strong>TOTAL DEL PEDIDO:</strong> ${formatMXN(totals.totalAmount)}</span>
     </div>
     ${
       input.draft.notes.trim()

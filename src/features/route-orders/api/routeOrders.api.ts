@@ -1,6 +1,9 @@
 import { http } from "@/shared/api/http";
 import type {
+  GenerateRouteOrderSalesDTO,
+  GenerateRouteOrderSalesResultDTO,
   RouteOrderDTO,
+  RouteOrderSaleCandidateDTO,
   RouteOrderSaveDTO,
   RouteOrderSheetDTO,
 } from "../types/routeOrder.types";
@@ -30,6 +33,26 @@ export const saveRouteOrder = async (
   payload: RouteOrderSaveDTO,
 ): Promise<RouteOrderDTO> => {
   const { data } = await http.put<RouteOrderDTO>(BASE_URL, payload);
+  return data;
+};
+
+export const getRouteOrderSaleCandidates = async (
+  date: string,
+): Promise<RouteOrderSaleCandidateDTO[]> => {
+  const { data } = await http.get<RouteOrderSaleCandidateDTO[]>(
+    `${BASE_URL}/sale-candidates`,
+    { params: { date } },
+  );
+  return data;
+};
+
+export const generateRouteOrderSales = async (
+  payload: GenerateRouteOrderSalesDTO,
+): Promise<GenerateRouteOrderSalesResultDTO> => {
+  const { data } = await http.post<GenerateRouteOrderSalesResultDTO>(
+    `${BASE_URL}/sales`,
+    payload,
+  );
   return data;
 };
 

@@ -26,7 +26,7 @@ const THIN_BORDER = {
 };
 
 const quantityHeader = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Kilos";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
 
 const priceHeader = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Precio por casillero" : "Precio por kilo";
@@ -78,7 +78,7 @@ const routeRowValues = (
     row.clientName,
     row.businessName,
     row.localityName,
-    toNumber(row.quantity),
+    egg ? toNumber(row.quantity) : toNumber(row.headCount),
     row.vegetables,
     row.condiments,
     row.groceries,
@@ -169,22 +169,22 @@ const writeSectionTotals = (
   row = writeTotalLine(
     worksheet,
     row,
-    `TOTAL DE ${egg ? "CAJAS" : "KILOS"} · ${sectionTitle.toUpperCase()}`,
+    `TOTAL DE ${egg ? "CAJAS" : "CABEZAS"} · ${sectionTitle.toUpperCase()}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,
     4,
   );
-  row = writeTotalLine(
-    worksheet,
-    row,
-    `SUBTOTAL ${sectionTitle.toUpperCase()}`,
-    totals.totalAmount,
-    MONEY_GREEN,
-    true,
-    4,
-  );
   if (egg) {
+    row = writeTotalLine(
+      worksheet,
+      row,
+      `SUBTOTAL ${sectionTitle.toUpperCase()}`,
+      totals.totalAmount,
+      MONEY_GREEN,
+      true,
+      4,
+    );
     row = writeTotalLine(
       worksheet,
       row,
@@ -216,19 +216,21 @@ const writeOverallTotals = (
   const totals = computeTotals(rows, input.unitType);
   const egg = input.unitType === "EGG";
   let row = startRow;
+  if (egg) {
+    row = writeTotalLine(
+      worksheet,
+      row,
+      "TOTAL DEL PEDIDO",
+      totals.totalAmount,
+      MONEY_GREEN,
+      true,
+      4,
+    );
+  }
   row = writeTotalLine(
     worksheet,
     row,
-    "TOTAL DEL PEDIDO",
-    totals.totalAmount,
-    MONEY_GREEN,
-    true,
-    4,
-  );
-  row = writeTotalLine(
-    worksheet,
-    row,
-    `TOTAL DE ${egg ? "CAJAS" : "KILOS"}`,
+    `TOTAL DE ${egg ? "CAJAS" : "CABEZAS"}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,
@@ -446,6 +448,8 @@ const buildSummarySheet = (
     views: [{ showGridLines: false }],
     properties: { tabColor: { argb: MONEY_GREEN } },
   });
+  const unitType = inputs[0]?.unitType ?? "EGG";
+  const egg = unitType === "EGG";
   const headers = [
     "Ruta",
     "Día",
@@ -455,9 +459,8 @@ const buildSummarySheet = (
     "Viaje",
     "Tipo",
     "Clientes",
-    "Casilleros/Kilos",
-    "Cajas",
-    "Total",
+    egg ? "Casilleros/Kilos" : "Cabezas",
+    ...(egg ? ["Cajas", "Total"] : []),
   ];
   worksheet.columns = [
     { width: 28 },
@@ -469,11 +472,11 @@ const buildSummarySheet = (
     { width: 12 },
     { width: 9 },
     { width: 14 },
-    { width: 9 },
-    { width: 14 },
+    ...(egg ? [{ width: 9 }, { width: 14 }] : []),
   ];
+  const lastColLetter = worksheet.getColumn(headers.length).letter;
 
-  worksheet.mergeCells("A1:K1");
+  worksheet.mergeCells(`A1:${lastColLetter}1`);
   styleTitleCell(worksheet.getCell("A1"), GREEN, "RESUMEN DE PEDIDOS");
   worksheet.getRow(1).height = 33;
 
@@ -499,8 +502,7 @@ const buildSummarySheet = (
         section.title === "Clientes internos" ? "Internos" : "Externos",
         totals.clientCount,
         totals.totalQuantity,
-        input.unitType === "EGG" ? totals.totalBoxes : "",
-        totals.totalAmount,
+        ...(egg ? [totals.totalBoxes, totals.totalAmount] : []),
       ]);
     }
     const totals = computeTotals(allRows, input.unitType);
@@ -509,8 +511,7 @@ const buildSummarySheet = (
       "Total",
       totals.clientCount,
       totals.totalQuantity,
-      input.unitType === "EGG" ? totals.totalBoxes : "",
-      totals.totalAmount,
+      ...(egg ? [totals.totalBoxes, totals.totalAmount] : []),
     ]);
   }
 
@@ -518,7 +519,7 @@ const buildSummarySheet = (
   const lastDataRow = headerRow + rows.length;
   worksheet.addTable({
     name: `ResumenPedidos${worksheet.id}`,
-    ref: `A${headerRow}:K${lastDataRow}`,
+    ref: `A${headerRow}:${lastColLetter}${lastDataRow}`,
     style: {
       theme: "TableStyleMedium12",
       showRowStripes: true,
@@ -550,7 +551,10 @@ const buildSummarySheet = (
         wrapText: true,
       };
     });
-    worksheet.getCell(rowIndex, 11).numFmt = "$#,##0.00;[Red]-$#,##0.00";
+    if (egg) {
+      worksheet.getCell(rowIndex, headers.length).numFmt =
+        "$#,##0.00;[Red]-$#,##0.00";
+    }
   }
 
   worksheet.pageSetup = {
@@ -559,7 +563,7 @@ const buildSummarySheet = (
     fitToWidth: 1,
     fitToHeight: 0,
     horizontalCentered: true,
-    printArea: `A1:K${lastDataRow}`,
+    printArea: `A1:${lastColLetter}${lastDataRow}`,
     margins: {
       left: 0.3,
       right: 0.3,

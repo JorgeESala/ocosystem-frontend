@@ -28,7 +28,7 @@ const lastPrice = (row: RouteOrderDraftRow, unitType: RouteOrderUnitType) => {
 };
 
 const quantityHeader = (unitType: RouteOrderUnitType) =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Kilos";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
 
 const priceHeader = (unitType: RouteOrderUnitType) =>
   unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
@@ -66,7 +66,9 @@ export const RouteOrderTable: React.FC<Props> = ({
             {unitType === "EGG" && (
               <th className="px-3 py-3 text-right">Precio/caja</th>
             )}
-            <th className="px-3 py-3 text-right">Total</th>
+            {unitType === "EGG" && (
+              <th className="px-3 py-3 text-right">Total</th>
+            )}
             <th className="px-3 py-3">Verduras</th>
             <th className="px-3 py-3">Condimentos</th>
             <th className="px-3 py-3">Abarrotes</th>
@@ -76,7 +78,10 @@ export const RouteOrderTable: React.FC<Props> = ({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const quantity = toNumber(row.quantity);
+            const quantity =
+              unitType === "EGG"
+                ? toNumber(row.quantity)
+                : toNumber(row.headCount);
             const unitPrice = toNumber(row.unitPrice);
             return (
               <tr key={row.key} className="border-t border-gray-800 align-top">
@@ -95,11 +100,16 @@ export const RouteOrderTable: React.FC<Props> = ({
                     type="number"
                     sizing="sm"
                     min="0"
-                    step="0.001"
-                    value={row.quantity}
+                    step={unitType === "EGG" ? "0.001" : "1"}
+                    value={unitType === "EGG" ? row.quantity : row.headCount}
                     data-testid={`quantity-${row.clientId}`}
                     onChange={(event) =>
-                      onChange(row.clientId, { quantity: event.target.value })
+                      onChange(
+                        row.clientId,
+                        unitType === "EGG"
+                          ? { quantity: event.target.value }
+                          : { headCount: event.target.value },
+                      )
                     }
                     className="w-24"
                   />
@@ -157,9 +167,11 @@ export const RouteOrderTable: React.FC<Props> = ({
                     />
                   </td>
                 )}
-                <td className="px-3 py-2 text-right font-medium whitespace-nowrap text-white">
-                  {quantity > 0 ? formatMXN(rowTotal(row)) : "—"}
-                </td>
+                {unitType === "EGG" && (
+                  <td className="px-3 py-2 text-right font-medium whitespace-nowrap text-white">
+                    {quantity > 0 ? formatMXN(rowTotal(row)) : "—"}
+                  </td>
+                )}
                 <td className="px-3 py-2">
                   <Textarea
                     rows={2}
