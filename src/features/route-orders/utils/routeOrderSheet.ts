@@ -236,9 +236,17 @@ const buildSheetBody = (input: RouteOrderPrintInput): string => {
   const sectionsHtml = sections
     .map(
       (section) => `
-        <h2 class="section-title">${escapeHtml(section.title)}</h2>
+        ${
+          section.title
+            ? `<h2 class="section-title">${escapeHtml(section.title)}</h2>`
+            : ""
+        }
         ${buildTable(input, section.rows)}
-        ${buildSectionTotals(input, section.title, section.rows)}`,
+        ${
+          section.title
+            ? buildSectionTotals(input, section.title, section.rows)
+            : ""
+        }`,
     )
     .join("");
 

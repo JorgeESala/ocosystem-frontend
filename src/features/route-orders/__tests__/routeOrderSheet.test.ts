@@ -58,8 +58,8 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Huevo (casilleros)");
     expect(html).toContain("Precio/casillero");
     expect(html).toContain("Precio/caja");
-    expect(html).toContain("Clientes externos");
-    expect(html).toContain("Subtotal clientes externos");
+    expect(html).not.toContain("Clientes externos");
+    expect(html).not.toContain("Subtotal clientes externos");
     expect(html).toContain("TOTAL DEL PEDIDO");
     expect(html).toContain("1.5");
     expect(html).toContain("Tomate 8 kilos");

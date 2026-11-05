@@ -149,6 +149,7 @@ describe("RouteOrdersPage", () => {
     render(<RouteOrdersPage unitType="EGG" />);
 
     expect(await screen.findByText("Cliente A")).toBeInTheDocument();
+    expect(screen.queryByText("Clientes externos")).not.toBeInTheDocument();
     expect(screen.getByText("Precio actual del huevo")).toBeInTheDocument();
     expect(screen.getAllByText("Total cajas").length).toBeGreaterThan(0);
     expect(screen.getByText("Viaje / Despacho")).toBeInTheDocument();
