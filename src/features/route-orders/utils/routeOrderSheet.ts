@@ -1,9 +1,9 @@
 import { formatHumanDate, getDayName } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {
+  buildOrderSections,
   computeTotals,
   pricePerBox,
-  rowHasOrderData,
   rowTotal,
   toNumber,
 } from "./routeOrderCalc";
@@ -122,15 +122,13 @@ const buildHeader = (input: RouteOrderPrintInput): string => {
     ${priceReference}`;
 };
 
-const printableRows = (input: RouteOrderPrintInput) =>
-  input.hideEmptyRows
-    ? input.draft.rows.filter(rowHasOrderData)
-    : input.draft.rows;
-
-const buildTable = (input: RouteOrderPrintInput): string => {
+const buildTable = (
+  input: RouteOrderPrintInput,
+  sectionRows: RouteOrderPrintInput["draft"]["rows"],
+): string => {
   const { unitType } = input;
   const egg = unitType === "EGG";
-  const rows = printableRows(input)
+  const rows = sectionRows
     .map((row) => {
       const quantity = toNumber(row.quantity);
       const unitPrice = toNumber(row.unitPrice);
@@ -181,8 +179,29 @@ const buildTable = (input: RouteOrderPrintInput): string => {
     </table>`;
 };
 
-const buildTotals = (input: RouteOrderPrintInput): string => {
-  const totals = computeTotals(printableRows(input), input.unitType);
+const buildSectionTotals = (
+  input: RouteOrderPrintInput,
+  title: string,
+  rows: RouteOrderPrintInput["draft"]["rows"],
+): string => {
+  const totals = computeTotals(rows, input.unitType);
+  const quantityTotals =
+    input.unitType === "EGG"
+      ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
+      : `${totals.totalQuantity} kg`;
+
+  return `<div class="section-totals">
+    <strong>Subtotal ${escapeHtml(title.toLowerCase())}:</strong>
+    ${totals.clientsWithOrder} con pedido · ${quantityTotals} ·
+    ${formatMXN(totals.totalAmount)}
+  </div>`;
+};
+
+const buildOverallTotals = (
+  input: RouteOrderPrintInput,
+  rows: RouteOrderPrintInput["draft"]["rows"],
+): string => {
+  const totals = computeTotals(rows, input.unitType);
   const quantityTotals =
     input.unitType === "EGG"
       ? `<span><strong>Total casilleros:</strong> ${totals.totalQuantity}</span>
@@ -193,7 +212,7 @@ const buildTotals = (input: RouteOrderPrintInput): string => {
     <div class="totals">
       <span><strong>Clientes:</strong> ${totals.clientCount} (${totals.clientsWithOrder} con pedido)</span>
       ${quantityTotals}
-      <span><strong>Total monetario:</strong> ${formatMXN(totals.totalAmount)}</span>
+      <span><strong>TOTAL DEL PEDIDO:</strong> ${formatMXN(totals.totalAmount)}</span>
     </div>
     ${
       input.draft.notes.trim()
@@ -204,8 +223,23 @@ const buildTotals = (input: RouteOrderPrintInput): string => {
     }`;
 };
 
-const buildSheetBody = (input: RouteOrderPrintInput): string =>
-  `${buildHeader(input)}${buildTable(input)}${buildTotals(input)}`;
+const buildSheetBody = (input: RouteOrderPrintInput): string => {
+  const sections = buildOrderSections(
+    input.draft.rows,
+    Boolean(input.hideEmptyRows),
+  );
+  const allRows = sections.flatMap((section) => section.rows);
+  const sectionsHtml = sections
+    .map(
+      (section) => `
+        <h2 class="section-title">${escapeHtml(section.title)}</h2>
+        ${buildTable(input, section.rows)}
+        ${buildSectionTotals(input, section.title, section.rows)}`,
+    )
+    .join("");
+
+  return `${buildHeader(input)}${sectionsHtml}${buildOverallTotals(input, allRows)}`;
+};
 
 export const buildRouteOrdersPrintHtml = (
   inputs: RouteOrderPrintInput[],
@@ -232,6 +266,8 @@ export const buildRouteOrdersPrintHtml = (
       thead { display: table-header-group; }
       tr { page-break-inside: avoid; }
       .num { text-align:right; white-space:nowrap; }
+      h2.section-title { font-size:12px; margin:12px 0 4px; text-transform:uppercase; background:#e5e7eb; padding:4px 6px; border:1px solid #999; }
+      .section-totals { margin:4px 0 10px; font-size:10px; }
       .totals { display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; font-size:11px; }
       .notes { margin-top:6px; font-size:10px; }
       .sheet { page-break-after: always; }

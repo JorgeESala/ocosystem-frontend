@@ -38,6 +38,30 @@ export const rowTotal = (row: {
   unitPrice: string;
 }): number => roundMoney(toNumber(row.quantity) * toNumber(row.unitPrice));
 
+export const isInternalRow = (row: RouteOrderDraftRow): boolean =>
+  row.isInternalBranch || row.isInternalClient;
+
+export interface RouteOrderSection {
+  title: string;
+  rows: RouteOrderDraftRow[];
+}
+
+export const buildOrderSections = (
+  rows: RouteOrderDraftRow[],
+  hideEmptyRows = false,
+): RouteOrderSection[] => {
+  const applyFilter = (sectionRows: RouteOrderDraftRow[]) =>
+    hideEmptyRows ? sectionRows.filter(rowHasOrderData) : sectionRows;
+
+  const internal = applyFilter(rows.filter(isInternalRow));
+  const external = applyFilter(rows.filter((row) => !isInternalRow(row)));
+
+  return [
+    internal.length > 0 ? { title: "Clientes internos", rows: internal } : null,
+    external.length > 0 ? { title: "Clientes externos", rows: external } : null,
+  ].filter((section): section is RouteOrderSection => section !== null);
+};
+
 export const rowHasOrderData = (row: RouteOrderDraftRow): boolean =>
   toNumber(row.quantity) > 0 ||
   [row.vegetables, row.condiments, row.groceries, row.comments].some(
@@ -83,6 +107,8 @@ interface ClientLike {
   name: string;
   businessName?: string | null;
   localityName?: string | null;
+  isInternalBranch?: boolean | null;
+  isInternalClient?: boolean | null;
   lastSalePricePerCarton?: number | null;
   lastSalePricePerKg?: number | null;
 }
@@ -134,6 +160,8 @@ const emptyRow = (
   clientName: client.name,
   businessName: client.businessName ?? "",
   localityName: client.localityName ?? "",
+  isInternalBranch: Boolean(client.isInternalBranch),
+  isInternalClient: Boolean(client.isInternalClient),
   quantity: "",
   unitPrice: String(
     defaultUnitPrice(client, unitType, currentEggPricePerCarton),
@@ -159,6 +187,8 @@ const rowFromSavedLine = (
     clientName: line.clientName,
     businessName: line.businessName ?? "",
     localityName: line.localityName ?? "",
+    isInternalBranch: Boolean(line.isInternalBranch),
+    isInternalClient: Boolean(line.isInternalClient),
     quantity:
       line.quantity != null && Number(line.quantity) !== 0
         ? String(line.quantity)
@@ -206,6 +236,10 @@ export const buildDraft = (
       clientName: client.name,
       businessName: client.businessName ?? "",
       localityName: client.localityName ?? "",
+      isInternalBranch:
+        saved.isInternalBranch ?? Boolean(client.isInternalBranch),
+      isInternalClient:
+        saved.isInternalClient ?? Boolean(client.isInternalClient),
       quantity: Number(saved.quantity) !== 0 ? String(saved.quantity) : "",
       unitPrice: String(
         saved.unitPrice ??

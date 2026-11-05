@@ -52,6 +52,7 @@ import { AddClientModal } from "../components/AddClientModal";
 import { EggPriceHistoryModal } from "../components/EggPriceHistoryModal";
 import { EggPriceModal } from "../components/EggPriceModal";
 import { EggPriceReferenceCard } from "../components/EggPriceReferenceCard";
+import { RouteOrderSectionSummary } from "../components/RouteOrderSectionSummary";
 import { RouteOrderTable } from "../components/RouteOrderTable";
 import { RouteOrderTotals } from "../components/RouteOrderTotals";
 import {
@@ -60,6 +61,7 @@ import {
   buildDraft,
   computeTotals,
   draftToSavePayload,
+  isInternalRow,
   removeClientFromDraft,
   roundMoney,
   roundQuantity,
@@ -209,6 +211,23 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const totals = useMemo(
     () => (draft ? computeTotals(draft.rows, unitType) : null),
     [draft, unitType],
+  );
+
+  const internalRows = useMemo(
+    () => (draft ? draft.rows.filter(isInternalRow) : []),
+    [draft],
+  );
+  const externalRows = useMemo(
+    () => (draft ? draft.rows.filter((row) => !isInternalRow(row)) : []),
+    [draft],
+  );
+  const internalTotals = useMemo(
+    () => computeTotals(internalRows, unitType),
+    [internalRows, unitType],
+  );
+  const externalTotals = useMemo(
+    () => computeTotals(externalRows, unitType),
+    [externalRows, unitType],
   );
 
   const actualTripTotals = useMemo(() => {
@@ -968,15 +987,41 @@ export default function RouteOrdersPage({ unitType }: Props) {
             </Button>
           </div>
 
-          <RouteOrderTable
+          <RouteOrderSectionSummary
             unitType={unitType}
-            rows={draft.rows}
-            currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
-            onChange={updateRow}
-            onRemove={handleRemoveClient}
+            internal={internalTotals}
+            external={externalTotals}
           />
 
-          <RouteOrderTotals unitType={unitType} totals={totals} />
+          {internalRows.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-base font-semibold text-white">
+                Clientes internos
+              </h3>
+              <RouteOrderTable
+                unitType={unitType}
+                rows={internalRows}
+                currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
+                onChange={updateRow}
+                onRemove={handleRemoveClient}
+              />
+              <RouteOrderTotals unitType={unitType} totals={internalTotals} />
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <h3 className="text-base font-semibold text-white">
+              Clientes externos
+            </h3>
+            <RouteOrderTable
+              unitType={unitType}
+              rows={externalRows}
+              currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
+              onChange={updateRow}
+              onRemove={handleRemoveClient}
+            />
+            <RouteOrderTotals unitType={unitType} totals={externalTotals} />
+          </div>
         </div>
       ) : (
         <Alert color="warning">
