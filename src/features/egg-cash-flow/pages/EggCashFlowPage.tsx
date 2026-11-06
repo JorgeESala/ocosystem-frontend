@@ -92,6 +92,10 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [showAdjustment, setShowAdjustment] = useState(false);
   const [showCut, setShowCut] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [settlementError, setSettlementError] = useState<{
+    message: string;
+    tripId?: number;
+  } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
     paymentId?: number | null;
@@ -202,17 +206,24 @@ export default function EggCashFlowPage({ unitType }: Props) {
   };
 
   const handleConfirmSettlements = (items: ConfirmTripSettlementItemDTO[]) => {
+    setSettlementError(null);
     confirmSettlements.mutate(
       { items },
       {
         onSuccess: (settlements) => {
+          setSettlementError(null);
           setToastMessage(
             settlements.length === 1
               ? "Cobranza de ruta confirmada."
               : `${settlements.length} cobranzas de ruta confirmadas.`,
           );
         },
-        onError: handleActionError,
+        onError: (error) => {
+          setSettlementError({
+            message: extractErrorMessage(error),
+            tripId: items.length === 1 ? items[0].tripId : undefined,
+          });
+        },
       },
     );
   };
@@ -487,6 +498,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
                 onConfirm={handleConfirmSettlements}
                 isConfirming={confirmSettlements.isPending}
                 accountHolder={accountHolder}
+                error={settlementError}
+                onDismissError={() => setSettlementError(null)}
               />
             ))}
           {collectionsQuery.isLoading ? (

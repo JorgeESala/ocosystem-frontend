@@ -27,12 +27,16 @@ const renderPanel = (
   settlements: TripSettlement[],
   onConfirm = vi.fn(),
   isConfirming = false,
+  error: { message: string; tripId?: number } | null = null,
+  onDismissError = vi.fn(),
 ) =>
   render(
     <TripSettlementsPanel
       settlements={settlements}
       onConfirm={onConfirm}
       isConfirming={isConfirming}
+      error={error}
+      onDismissError={onDismissError}
     />,
   );
 
@@ -85,6 +89,50 @@ describe("TripSettlementsPanel", () => {
     );
 
     expect(onConfirm).toHaveBeenCalledWith([{ tripId: 2, officeAmount: 0 }]);
+  });
+
+  it("shows a backend error under the affected trip", () => {
+    const message =
+      "La fecha del despacho es anterior al inicio de Flujo de efectivo.";
+    renderPanel(
+      [settlement({ tripId: 1 }), settlement({ tripId: 2 })],
+      vi.fn(),
+      false,
+      { message, tripId: 1 },
+    );
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(
+      screen.getByText("No se pudo confirmar la cobranza"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a bulk backend error at the top of the panel", () => {
+    const message = "Esta fecha esta dentro de una semana cerrada.";
+    renderPanel(
+      [settlement({ tripId: 1 })],
+      vi.fn(),
+      false,
+      { message },
+      vi.fn(),
+    );
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it("dismisses the backend error", () => {
+    const onDismissError = vi.fn();
+    renderPanel(
+      [settlement({ tripId: 1 })],
+      vi.fn(),
+      false,
+      { message: "Error de prueba", tripId: 1 },
+      onDismissError,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
+
+    expect(onDismissError).toHaveBeenCalled();
   });
 
   it("does not allow editing a closed week", () => {
