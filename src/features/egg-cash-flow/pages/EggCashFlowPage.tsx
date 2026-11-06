@@ -96,8 +96,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [settlementError, setSettlementError] = useState<{
     message: string;
     tripId?: number;
-    tripLabel?: string;
   } | null>(null);
+  const [settlementToast, setSettlementToast] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
     paymentId?: number | null;
@@ -209,11 +209,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
 
   const handleConfirmSettlements = (items: ConfirmTripSettlementItemDTO[]) => {
     setSettlementError(null);
+    setSettlementToast(null);
     confirmSettlements.mutate(
       { items },
       {
         onSuccess: (settlements) => {
           setSettlementError(null);
+          setSettlementToast(null);
           setToastMessage(
             settlements.length === 1
               ? "Cobranza de ruta confirmada."
@@ -228,26 +230,19 @@ export default function EggCashFlowPage({ unitType }: Props) {
               : settlementsQuery.data?.find(
                   (settlement) => settlement.tripId === tripId,
                 );
+          const tripLabel = trip
+            ? `${formatDate(trip.departureDate)} · ${
+                trip.driverName ?? "Sin chofer"
+              }`
+            : undefined;
+          const message = extractErrorMessage(error);
           setToastMessage(null);
-          setSettlementError({
-            message: extractErrorMessage(error),
-            tripId,
-            tripLabel: trip
-              ? `${formatDate(trip.departureDate)} · ${
-                  trip.driverName ?? "Sin chofer"
-                }`
-              : undefined,
-          });
+          setSettlementError({ message, tripId });
+          setSettlementToast(`${tripLabel ? `${tripLabel}: ` : ""}${message}`);
         },
       },
     );
   };
-
-  const settlementErrorMessage = settlementError
-    ? `${settlementError.tripLabel ? `${settlementError.tripLabel}: ` : ""}${
-        settlementError.message
-      }`
-    : null;
 
   const helpLink = (
     <Button
@@ -356,8 +351,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
         onDismiss={() => setToastMessage(null)}
       />
       <AccountingToast
-        message={settlementErrorMessage}
-        onDismiss={() => setSettlementError(null)}
+        message={settlementToast}
+        onDismiss={() => setSettlementToast(null)}
         variant="failure"
         title="No se pudo confirmar la cobranza"
         autoDismissMs={8000}
