@@ -62,6 +62,7 @@ import SettingsModal from "../components/SettingsModal";
 import {
   accountLabel,
   currentWeekRange,
+  formatDate,
   previousWeekRange,
 } from "../utils/cashFlow.utils";
 import type {
@@ -95,6 +96,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [settlementError, setSettlementError] = useState<{
     message: string;
     tripId?: number;
+    tripLabel?: string;
   } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
@@ -219,14 +221,33 @@ export default function EggCashFlowPage({ unitType }: Props) {
           );
         },
         onError: (error) => {
+          const tripId = items.length === 1 ? items[0].tripId : undefined;
+          const trip =
+            tripId == null
+              ? null
+              : settlementsQuery.data?.find(
+                  (settlement) => settlement.tripId === tripId,
+                );
+          setToastMessage(null);
           setSettlementError({
             message: extractErrorMessage(error),
-            tripId: items.length === 1 ? items[0].tripId : undefined,
+            tripId,
+            tripLabel: trip
+              ? `${formatDate(trip.departureDate)} · ${
+                  trip.driverName ?? "Sin chofer"
+                }`
+              : undefined,
           });
         },
       },
     );
   };
+
+  const settlementErrorMessage = settlementError
+    ? `${settlementError.tripLabel ? `${settlementError.tripLabel}: ` : ""}${
+        settlementError.message
+      }`
+    : null;
 
   const helpLink = (
     <Button
@@ -333,6 +354,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
       <AccountingToast
         message={toastMessage}
         onDismiss={() => setToastMessage(null)}
+      />
+      <AccountingToast
+        message={settlementErrorMessage}
+        onDismiss={() => setSettlementError(null)}
+        variant="failure"
+        title="No se pudo confirmar la cobranza"
+        autoDismissMs={8000}
       />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
