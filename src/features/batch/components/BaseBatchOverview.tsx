@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { useBatchFullDetail } from "../api/batch.queries";
 import type { BatchResponseDTO } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
-import { HiChevronDown, HiChevronUp } from "react-icons/hi";
+import { HiChevronDown, HiChevronUp, HiClipboardList } from "react-icons/hi";
 import { Spinner, Badge } from "flowbite-react";
 import { BatchMovementModal } from "./BatchMovementModal";
+import { RouteOrderSalesModal } from "./RouteOrderSalesModal";
 import { UNIT_CONFIG } from "../config/unitConfig";
 import { BatchEntryForm } from "./BatchEntryForm";
 export const BaseBatchOverview: React.FC<{
@@ -15,6 +16,7 @@ export const BaseBatchOverview: React.FC<{
   tripId?: number | null;
 }> = ({ batch, statsComponent, footerComponent, autoExpandId, tripId }) => {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
+  const [isOrderSalesOpen, setIsOrderSalesOpen] = useState(false);
   const [isEditBatchOpen, setIsEditBatchOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
@@ -103,6 +105,19 @@ export const BaseBatchOverview: React.FC<{
           >
             + Salida
           </button>
+          {(batch.type === "EGG" || batch.type === "LIVE_CHICKEN") && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOrderSalesOpen(true);
+              }}
+              className="flex items-center gap-1 rounded-lg bg-emerald-600/10 px-3 py-1 text-sm font-medium text-emerald-400 hover:bg-emerald-600 hover:text-white"
+              title="Generar ventas desde el pedido"
+            >
+              <HiClipboardList className="h-4 w-4" />
+              Pedido
+            </button>
+          )}
           <div className="text-gray-500">
             {isOpen ? <HiChevronUp size={24} /> : <HiChevronDown size={24} />}
           </div>
@@ -146,6 +161,12 @@ export const BaseBatchOverview: React.FC<{
             setIsSaleModalOpen(false);
             setSelectedMovement(null);
           }}
+        />
+      )}
+      {isOrderSalesOpen && (
+        <RouteOrderSalesModal
+          batch={batch}
+          onClose={() => setIsOrderSalesOpen(false)}
         />
       )}
       {isEditBatchOpen && (

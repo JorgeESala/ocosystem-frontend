@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, TextInput } from "flowbite-react";
+import { Alert, Badge, Button, TextInput } from "flowbite-react";
 import { HiCheck, HiCash } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { accountLabel, formatDate } from "../utils/cashFlow.utils";
@@ -14,6 +14,8 @@ interface Props {
   onConfirm: (items: ConfirmTripSettlementItemDTO[]) => void;
   isConfirming: boolean;
   accountHolder?: string;
+  error?: { message: string; tripId?: number } | null;
+  onDismissError?: () => void;
 }
 
 const STATUS_LABELS: Record<TripSettlementStatus, string> = {
@@ -51,6 +53,8 @@ export default function TripSettlementsPanel({
   onConfirm,
   isConfirming,
   accountHolder,
+  error,
+  onDismissError,
 }: Props) {
   const [officeValues, setOfficeValues] = useState<Record<number, string>>({});
 
@@ -121,6 +125,15 @@ export default function TripSettlementsPanel({
           </Button>
         )}
       </div>
+
+      {error && error.tripId == null && (
+        <Alert color="failure" className="mb-4" onDismiss={onDismissError}>
+          <div className="text-sm font-medium">
+            No se pudo confirmar la cobranza
+          </div>
+          <p className="mt-1 text-sm">{error.message}</p>
+        </Alert>
+      )}
 
       <div className="space-y-3">
         {settlements.map((settlement) => {
@@ -235,6 +248,18 @@ export default function TripSettlementsPanel({
                   La semana ya está cerrada. Reabre el último corte para
                   corregir esta cobranza.
                 </p>
+              )}
+              {error?.tripId === settlement.tripId && (
+                <Alert
+                  color="failure"
+                  className="mt-3"
+                  onDismiss={onDismissError}
+                >
+                  <div className="text-sm font-medium">
+                    No se pudo confirmar la cobranza
+                  </div>
+                  <p className="mt-1 text-sm">{error.message}</p>
+                </Alert>
               )}
             </div>
           );

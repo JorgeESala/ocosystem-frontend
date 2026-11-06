@@ -327,6 +327,39 @@ describe("EggCashFlowPage", () => {
     );
   });
 
+  it("shows the backend error when confirming settlements fails", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSettlements.mockReturnValue(
+      emptyQuery([
+        settlement({ tripId: 1, driverName: "Chofer Uno" }),
+        settlement({ tripId: 2, driverName: "Chofer Dos" }),
+      ]),
+    );
+    const message =
+      "La fecha del despacho es anterior al inicio de Flujo de efectivo.";
+    const mutate = vi.fn(
+      (_payload: unknown, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.(new Error(message));
+      },
+    );
+    mocks.useConfirmTripSettlements.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Confirmar todos \(2\)/ }),
+    );
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
   it("hides cash settlements when only credit is selected", () => {
     mocks.useCashFlowSettings.mockReturnValue({
       ...mutationQuery,
