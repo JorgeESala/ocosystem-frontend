@@ -60,8 +60,8 @@ export default function DepositModal({
               {formatMXN(cashBalance)}
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              Deposita el efectivo que está en la oficina. Si el chofer deposita
-              directo, regístralo como ingreso al banco en el despacho.
+              Deposita el efectivo que está en la oficina. Si el chofer depositó
+              directo, ya quedó registrado al confirmar la cobranza de ruta.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function DepositModal({
               id="depositFolio"
               value={folio}
               onChange={(e) => setFolio(e.target.value)}
-              placeholder="Ej: depósito bancomer..."
+              placeholder="Ej: depósito o transferencia..."
             />
           </div>
 

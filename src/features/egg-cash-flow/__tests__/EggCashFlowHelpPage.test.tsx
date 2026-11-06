@@ -1,7 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowHelpPage from "../pages/EggCashFlowHelpPage";
+
+vi.mock("../api/eggCashFlow.queries", () => ({
+  useCashFlowSettings: () => ({
+    data: { accountHolder: "Enrique" },
+    isLoading: false,
+    isError: false,
+  }),
+}));
 
 describe("EggCashFlowHelpPage", () => {
   it("renders the guide content and the back link", () => {
@@ -33,6 +41,9 @@ describe("EggCashFlowHelpPage", () => {
     expect(
       screen.queryByText(/Efectivo en oficina \(saldo\)/),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/“la cuenta del titular” es la cuenta de Enrique/),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Volver al flujo/ }),
     ).toHaveAttribute("href", "/business/huevo/cash-flow");

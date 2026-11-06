@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountLabel,
+  accountLabelShort,
   currentWeekStart,
   formatDate,
   previousWeekRange,
@@ -27,5 +29,19 @@ describe("previousWeekRange", () => {
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
     expect(Math.round(diff)).toBe(6);
     expect(start.getTime()).toBeLessThan(currentWeekStart().getTime());
+  });
+});
+
+describe("accountLabel", () => {
+  it("uses the configured account holder name", () => {
+    expect(accountLabel("Enrique")).toBe("la cuenta de Enrique");
+    expect(accountLabelShort("Enrique")).toBe("Cuenta de Enrique");
+  });
+
+  it("falls back to the generic account label", () => {
+    expect(accountLabel("Titular")).toBe("la cuenta del titular");
+    expect(accountLabel("")).toBe("la cuenta del titular");
+    expect(accountLabel(null)).toBe("la cuenta del titular");
+    expect(accountLabelShort(undefined)).toBe("Cuenta del titular");
   });
 });

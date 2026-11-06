@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, TextInput } from "flowbite-react";
 import { HiCheck, HiCash } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { formatDate } from "../utils/cashFlow.utils";
+import { accountLabel, formatDate } from "../utils/cashFlow.utils";
 import type {
   ConfirmTripSettlementItemDTO,
   TripSettlement,
@@ -13,6 +13,7 @@ interface Props {
   settlements: TripSettlement[];
   onConfirm: (items: ConfirmTripSettlementItemDTO[]) => void;
   isConfirming: boolean;
+  accountHolder?: string;
 }
 
 const STATUS_LABELS: Record<TripSettlementStatus, string> = {
@@ -49,6 +50,7 @@ export default function TripSettlementsPanel({
   settlements,
   onConfirm,
   isConfirming,
+  accountHolder,
 }: Props) {
   const [officeValues, setOfficeValues] = useState<Record<number, string>>({});
 
@@ -101,7 +103,8 @@ export default function TripSettlementsPanel({
           </h3>
           <p className="text-sm text-slate-400">
             Se calcula con las ventas en efectivo del despacho. Confirma lo que
-            se depositó al banco y ajusta lo que se quedó en oficina.
+            se depositó en {accountLabel(accountHolder)} y ajusta lo que se
+            quedó en oficina.
           </p>
         </div>
         {confirmable.length > 0 && (
@@ -199,7 +202,9 @@ export default function TripSettlementsPanel({
                   </div>
 
                   <div>
-                    <div className="mb-1 text-xs text-slate-400">Al banco</div>
+                    <div className="mb-1 text-xs text-slate-400">
+                      A la cuenta
+                    </div>
                     <div className="font-mono text-sm font-semibold text-emerald-400">
                       {formatMXN(bank)}
                     </div>

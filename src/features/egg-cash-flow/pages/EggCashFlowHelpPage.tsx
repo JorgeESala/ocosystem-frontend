@@ -17,10 +17,15 @@ import {
   PAGE_SECTIONS,
   REMESA_NOTES,
 } from "../help/content";
+import { useCashFlowSettings } from "../api/eggCashFlow.queries";
+import { accountLabel } from "../utils/cashFlow.utils";
 
 export default function EggCashFlowHelpPage() {
   const { slug } = useParams();
   const base = `/business/${slug}/cash-flow`;
+  const { data: settings } = useCashFlowSettings("EGG");
+  const accountHolder = settings?.accountHolder ?? "Titular";
+  const accountName = accountLabel(accountHolder);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-6">
@@ -49,6 +54,11 @@ export default function EggCashFlowHelpPage() {
         <p className="text-sm leading-relaxed text-blue-300">
           {CASH_FLOW_INTRO}
         </p>
+        {accountName !== "la cuenta del titular" && (
+          <p className="mt-2 text-sm font-medium text-blue-200">
+            En esta guía, “la cuenta del titular” es {accountName}.
+          </p>
+        )}
       </div>
 
       <section className="space-y-4">
