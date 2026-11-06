@@ -29,7 +29,7 @@ export interface HelpGlossaryItem {
 }
 
 export const CASH_FLOW_INTRO =
-  "El Flujo de efectivo de huevo responde una sola pregunta: dónde está el dinero. El chofer cobra en la ruta; al terminar, deposita al banco lo cobrado, salvo lo que la oficina retiene para gastos y nómina. El módulo separa dos bolsas: efectivo en oficina (lo que se quedó en la oficina) y banco (la cuenta del titular). La fila CAJA CHICA de tu hoja es la cobranza de las rutas; el cierre de caja chica es el efectivo que quedó en la oficina. No reemplaza la caja general del sistema anterior ni el Estado de resultados: esas vistas muestran el efectivo registrado; este módulo muestra el efectivo físico por bolsa y lo cierra cada semana.";
+  "El Flujo de efectivo de huevo responde una sola pregunta: dónde está el dinero. El chofer cobra en la ruta; al terminar, deposita en la cuenta del titular lo cobrado, salvo lo que la oficina retiene para gastos y nómina. El módulo separa dos bolsas: efectivo en oficina (lo que se quedó en la oficina) y la cuenta del titular. La fila CAJA CHICA de tu hoja es la cobranza de las rutas; el cierre de caja chica es el efectivo que quedó en la oficina. No reemplaza la caja general del sistema anterior ni el Estado de resultados: esas vistas muestran el efectivo registrado; este módulo muestra el efectivo físico por bolsa y lo cierra cada semana.";
 
 export const MONEY_FLOW: HelpStep[] = [
   {
@@ -45,17 +45,17 @@ export const MONEY_FLOW: HelpStep[] = [
   {
     title: "3. Termina la ruta",
     description:
-      "El chofer deposita al banco lo que cobró. Si la oficina necesita efectivo para gastos o nómina, deja esa parte en la oficina.",
+      "El chofer deposita en la cuenta del titular lo que cobró. Si la oficina necesita efectivo para gastos o nómina, deja esa parte en la oficina.",
   },
   {
     title: "4. La oficina usa el efectivo",
     description:
-      "Ese efectivo en oficina paga gastos y nómina. Lo que no se usa se deposita al banco.",
+      "Ese efectivo en oficina paga gastos y nómina. Lo que no se usa se deposita en la cuenta del titular.",
   },
   {
     title: "5. Las sucursales pagan después",
     description:
-      "La mayoría deposita a la cuenta y entra al banco. Si pagan directo al proveedor, se registra en Contabilidad y no mueve efectivo de la empresa.",
+      "La mayoría deposita a la cuenta del titular y entra a la cuenta. Si pagan directo al proveedor, se registra en Contabilidad y no mueve efectivo de la empresa.",
   },
 ];
 
@@ -63,32 +63,32 @@ export const FIRST_STEPS: HelpStep[] = [
   {
     title: "1. Configura tus saldos iniciales",
     description:
-      "Abre Configurar y captura el efectivo inicial en oficina, el saldo inicial del banco, el titular de la cuenta y la fecha desde la que quieres llevar el flujo. Ahí mismo marcas a los clientes que depositan directo al banco.",
+      "Abre Configurar y captura el efectivo inicial en oficina, el saldo inicial de la cuenta del titular, el nombre de la cuenta y la fecha desde la que quieres llevar el flujo. Ahí mismo marcas a los clientes con cuenta que normalmente depositan en la cuenta del titular.",
   },
   {
     title: "2. Revisa lo que ya entró solo",
     description:
-      "Los cobros de sucursales y clientes con cuenta, los gastos de Gastos y los pagos de remesa hechos desde este módulo entran automáticamente. En “Pendiente de ingresar” ves lo que el ERP todavía no tiene registrado en el flujo.",
+      "Los cobros de sucursales y clientes con cuenta, los gastos de Gastos y los pagos de remesa hechos desde este módulo entran automáticamente. En “Cobranza de ruta” ves los despachos por confirmar y en “Cobros por registrar” lo que el ERP todavía no tiene registrado en el flujo.",
   },
   {
     title: "3. Registra la cobranza de la ruta",
     description:
-      "Cuando el chofer termina, usa “Ingreso” con la fuente Despacho. Captura el total cobrado y, si dejó efectivo en la oficina, cuánto envió a la oficina. El resto se registra como depósito directo al banco.",
+      "En “Cobranza de ruta” revisa el total calculado del despacho. Si el chofer dejó efectivo en oficina, ajusta “Se quedó en oficina”; el resto entra a la cuenta del titular. Confirma cada despacho o usa “Confirmar todos”.",
   },
   {
     title: "4. Registra el depósito de la oficina",
     description:
-      "Cuando la oficina lleve su efectivo al banco, usa “Depósito”. Si el chofer depositó directo, ya quedó en el ingreso del despacho.",
+      "Cuando la oficina lleve su efectivo a la cuenta del titular, usa “Depósito”. Si el chofer depositó directo, ya quedó registrado al confirmar la cobranza de ruta.",
   },
   {
     title: "5. Paga las remesas",
     description:
-      "En “Remesas por pagar” elige la deuda y registra el pago desde banco (o efectivo en oficina). El pago queda aplicado en Contabilidad y baja la deuda.",
+      "En “Remesas por pagar” elige la deuda y registra el pago desde la cuenta del titular (o efectivo en oficina). El pago queda aplicado en Contabilidad y baja la deuda.",
   },
   {
     title: "6. Cierra la semana",
     description:
-      "Elige el rango de la semana, revisa que no falte nada, captura el saldo real del banco y el efectivo real en oficina y usa “Cerrar semana”. La semana queda bloqueada; si algo faltó, reabre el último corte, corrige y vuelve a cortar.",
+      "Elige el rango de la semana, revisa que no falte nada, captura el saldo real de la cuenta del titular y el efectivo real en oficina y usa “Cerrar semana”. La semana queda bloqueada; si algo faltó, reabre el último corte, corrige y vuelve a cortar.",
   },
 ];
 
@@ -106,26 +106,30 @@ export const BAGS: HelpBag[] = [
     leaves: [
       "Gastos en efectivo.",
       "Pagos de remesa desde la oficina.",
-      "Depósitos al banco.",
+      "Depósitos a la cuenta del titular.",
     ],
   },
   {
     id: "bank",
-    title: "Banco",
+    title: "Cuenta del titular",
     description: "La cuenta del titular. En tu hoja es la “Caja general”.",
     enters: [
-      "Cobranza de ruta que el chofer deposita directo.",
-      "Cobros de sucursales y clientes que pagan al banco.",
+      "Cobranza de ruta que el chofer deposita directo a la cuenta del titular.",
+      "Cobros de sucursales y clientes que pagan a la cuenta del titular.",
       "Depósitos del efectivo de la oficina.",
     ],
-    leaves: ["Pagos de remesa desde el banco.", "Ajustes de salida."],
+    leaves: [
+      "Pagos de remesa desde la cuenta del titular.",
+      "Ajustes de salida.",
+    ],
   },
 ];
 
 export const AUTOMATIC_ITEMS: string[] = [
-  "Cobros de sucursales: entran al banco por defecto.",
-  "Cobros de clientes marcados como depósito directo: entran al banco.",
-  "Cobros de clientes sin marca de depósito directo: entran a efectivo en oficina.",
+  "Cobros de sucursales: entran a la cuenta del titular por defecto.",
+  "Cobros de clientes con cuenta marcados como depósito directo: entran a la cuenta del titular.",
+  "Cobros de clientes con cuenta: si la forma de pago es efectivo, entran a efectivo en oficina; si es transferencia, depósito, cheque o SPEI, entran a la cuenta del titular.",
+  "La marca de depósito directo solo cambia el destino por defecto cuando la forma de pago es “Otro”.",
   "Gastos registrados en Gastos: gasolina, nómina, compras, llantas, recargas.",
   "Pagos de remesa hechos desde este módulo.",
   "Las sucursales que pagan directo al proveedor no entran al flujo; se registran en Contabilidad.",
@@ -134,7 +138,7 @@ export const AUTOMATIC_ITEMS: string[] = [
 
 export const MANUAL_ITEMS: string[] = [
   "Confirmar la cobranza de ruta y ajustar cuánto se quedó en la oficina.",
-  "Depósitos del efectivo de la oficina al banco.",
+  "Depósitos del efectivo de la oficina a la cuenta del titular.",
   "Ajustes de cuenta: diferencias, correcciones o dinero que no viene de un documento.",
   "El corte de semana y los saldos reales.",
 ];
@@ -144,8 +148,8 @@ export const PAGE_SECTIONS: HelpSection[] = [
     id: "cards",
     title: "Tarjetas de arriba",
     paragraphs: [
-      "Efectivo en oficina es el efectivo que quedó en la oficina. Banco es el saldo calculado de la cuenta. Cobranza del periodo es la cobranza de ruta y clientes (incluye ajustes) y Efectivo + banco es la suma de efectivo en oficina y banco.",
-      "La deuda con remesas aparece en la tarjeta Efectivo + banco. Es el saldo de las cuentas por pagar de proveedores, no la deuda con el gerente.",
+      "Efectivo en oficina es el efectivo que quedó en la oficina. La cuenta del titular es el saldo calculado. Cobranza del periodo es la cobranza de ruta y clientes (incluye ajustes) y Efectivo + cuenta es la suma de efectivo en oficina y la cuenta del titular.",
+      "La deuda con remesas aparece en la tarjeta Efectivo + cuenta. Es el saldo de las cuentas por pagar de proveedores, no la deuda con el gerente.",
     ],
   },
   {
@@ -153,7 +157,7 @@ export const PAGE_SECTIONS: HelpSection[] = [
     title: "Resumen semanal",
     paragraphs: [
       "Efectivo en oficina: apertura + cobranza en efectivo − gastos − pagos de remesa ± ajustes − depósitos = cierre.",
-      "Banco: corte anterior + cobranza directa al banco + depósitos − pagos de remesa ± ajustes = corte de la semana. Abajo ves la deuda con remesas, el saldo real y la diferencia.",
+      "Cuenta del titular: corte anterior + cobranza directa a la cuenta + depósitos − pagos de remesa ± ajustes = corte de la semana. Abajo ves la deuda con remesas, el saldo real y la diferencia.",
     ],
   },
   {
@@ -161,24 +165,24 @@ export const PAGE_SECTIONS: HelpSection[] = [
     title: "Movimientos",
     paragraphs: [
       "Cada fila trae fecha, bolsa, dirección, categoría, monto, origen y nota. La etiqueta “Auto” indica que lo creó el sistema; si no la tiene, se capturó a mano.",
-      "Puedes filtrar por Todas, Efectivo en oficina o Banco.",
+      "Puedes filtrar por Todas, Efectivo en oficina o Cuenta del titular.",
     ],
   },
   {
     id: "cuts",
     title: "Cortes de semana",
     paragraphs: [
-      "“Caja chica (ingreso)” es la cobranza de la semana (la fila CAJA CHICA de tu hoja, incluye ajustes). “Efectivo en oficina (cierre)” es lo que quedó en la oficina después de depositar. “Banco” es el corte final de la cuenta.",
-      "“Saldo real banco” y “Diferencia banco” comparan la cuenta; “Efectivo real” y “Diferencia efectivo” comparan la oficina.",
+      "“Caja chica (ingreso)” es la cobranza de la semana (la fila CAJA CHICA de tu hoja, incluye ajustes). “Efectivo en oficina (cierre)” es lo que quedó en la oficina después de depositar. “Cuenta del titular” es el corte final de la cuenta.",
+      "“Saldo real cuenta” y “Diferencia cuenta” comparan la cuenta del titular; “Efectivo real” y “Diferencia efectivo” comparan la oficina.",
     ],
   },
   {
     id: "pending",
     title: "Cobranza de ruta y cobros por registrar",
     paragraphs: [
-      "La cobranza de ruta se calcula sola con las ventas en efectivo del despacho. Ahí ves el total cobrado, cuánto se depositó al banco y cuánto se quedó en oficina. Los clientes en efectivo ya vienen incluidos; no se capturan a mano.",
+      "La cobranza de ruta se calcula sola con las ventas en efectivo del despacho. Ahí ves el total cobrado, cuánto se depositó en la cuenta del titular y cuánto se quedó en oficina. Los clientes en efectivo ya vienen incluidos; no se capturan a mano.",
       "Confirma cada despacho con un clic. Si se quedó efectivo en la oficina, ajusta el monto antes de confirmar. “Confirmar todos” registra de una vez los despachos pendientes.",
-      "Abajo aparecen los cobros a crédito registrados en Contabilidad que aún no tienen movimiento en el flujo. Usa “Solo crédito” para ocultar la cobranza en efectivo y ver únicamente esos cobros.",
+      "Abajo aparecen los cobros a crédito registrados en Contabilidad que aún no tienen movimiento en el flujo. Si el cobro se registra como efectivo, entra a efectivo en oficina; si es transferencia, depósito, cheque o SPEI, entra a la cuenta del titular. Usa “Solo crédito” para ocultar la cobranza en efectivo y ver únicamente esos cobros.",
     ],
   },
 ];
@@ -218,9 +222,9 @@ export const CUT_STEPS: HelpStep[] = [
 
 export const FIX_ITEMS: string[] = [
   "Movimiento equivocado: elimínalo desde la tabla (si la semana está abierta).",
-  "Depósito equivocado: elimínalo; se borran las dos partes (efectivo en oficina y banco) y lo vuelves a registrar.",
+  "Depósito equivocado: elimínalo; se borran las dos partes (efectivo en oficina y cuenta del titular) y lo vuelves a registrar.",
   "Cobro en la bolsa equivocada: usa el botón de cambiar cuenta en la fila. Los depósitos no se mueven así: se eliminan y se re-registran.",
-  "Despacho con la parte de banco u oficina equivocada: elimina el movimiento equivocado y vuelve a registrar el despacho con el monto correcto.",
+  "Despacho con la parte de la cuenta u oficina equivocada: elimina el movimiento equivocado y vuelve a registrar el despacho con el monto correcto.",
   "Dinero que no viene de un documento: usa “Ajuste” con la cuenta, dirección, fecha, monto y motivo.",
   "Semana cerrada: reabre el último corte, corrige y vuelve a cortar.",
   "Pago de remesa: no se puede eliminar desde el flujo porque está aplicado en Contabilidad. Cancélalo en Contabilidad y el flujo se revierte.",
@@ -228,7 +232,7 @@ export const FIX_ITEMS: string[] = [
 
 export const REMESA_NOTES: string[] = [
   "La deuda con remesas del módulo es el saldo de las cuentas por pagar de proveedores (BATCH).",
-  "El pago de remesa se registra desde este módulo, se aplica a la deuda y baja el saldo. Desde banco crea una salida de banco; desde efectivo en oficina, una salida de efectivo.",
+  "El pago de remesa se registra desde este módulo, se aplica a la deuda y baja el saldo. Desde la cuenta del titular crea una salida de la cuenta; desde efectivo en oficina, una salida de efectivo.",
   "La “deuda con Enrique” de tu hoja es otra deuda (con el gerente) y no se administra en este módulo. Por eso el número puede no coincidir.",
   "Si la deuda ya está pagada en Contabilidad, el módulo no permite pagarla otra vez.",
 ];
@@ -241,12 +245,12 @@ export const EXCEL_COMPARISON: HelpSection = {
   ],
   items: [
     "Fila CAJA CHICA de tu hoja = columna “Caja chica (ingreso)” del corte y tarjeta “Cobranza del periodo”. Es la cobranza de ruta y clientes, no el saldo de la oficina.",
-    "Columna CORTE FINAL / saldo de la cuenta = columna “Banco” del corte.",
+    "Columna CORTE FINAL / saldo de la cuenta = columna “Cuenta del titular” del corte.",
     "Columna “Cierre caja chica” = columna “Efectivo en oficina (cierre)”. Es el efectivo que quedó en la oficina después de depositar (puede ser 0).",
-    "INGRESO A CUENTA de tu hoja = depósito del efectivo de la oficina al banco y la cobranza que el chofer deposita directo.",
-    "La “Caja general” de tu hoja es la cuenta del banco; aquí la llamamos “Banco”. La “Caja general” del sistema anterior es otra vista (el efectivo registrado).",
+    "INGRESO A CUENTA de tu hoja = depósito del efectivo de la oficina a la cuenta del titular y la cobranza que el chofer deposita directo.",
+    "La “Caja general” de tu hoja es la cuenta del titular; aquí la llamamos “Cuenta del titular”. La “Caja general” del sistema anterior es otra vista (el efectivo registrado).",
     "Deuda con Enrique de tu hoja ≠ “Deuda remesas (proveedores)” del módulo.",
-    "Si tu hoja no incluye un documento que sí está en el ERP, aparecerá como pendiente en “Pendiente de ingresar” hasta que lo registres o lo dejes fuera del flujo.",
+    "Si tu hoja no incluye un documento que sí está en el ERP, aparecerá como pendiente en “Cobros por registrar” hasta que lo registres o lo dejes fuera del flujo.",
   ],
 };
 
@@ -260,27 +264,31 @@ export const LEDGER_DIFFERENCES: string[] = [
 export const FAQ: HelpFaq[] = [
   {
     q: "¿Por qué el efectivo en oficina aparece en $0?",
-    a: "Porque al final de la semana se depositó todo el efectivo en el banco. La cobranza de la semana no desaparece: está en “Cobranza del periodo” y en “Caja chica (ingreso)” del corte. El $0 es el efectivo que quedó en la oficina.",
+    a: "Porque al final de la semana se depositó todo el efectivo en la cuenta del titular. La cobranza de la semana no desaparece: está en “Cobranza del periodo” y en “Caja chica (ingreso)” del corte. El $0 es el efectivo que quedó en la oficina.",
   },
   {
     q: "¿Por qué “Caja chica (ingreso)” no es el saldo de la oficina?",
     a: "Porque “Caja chica (ingreso)” es la cobranza de la semana (la fila CAJA CHICA de tu hoja). El saldo de la oficina es “Efectivo en oficina (cierre)”, lo que quedó después de depositar y pagar gastos.",
   },
   {
-    q: "¿Por qué “Pendiente de ingresar” muestra despachos?",
-    a: "Son los despachos cuyo efectivo el chofer todavía no deposita ni entrega a la oficina. Las sucursales que compran a crédito no aparecen aquí: están en Contabilidad → Por cobrar.",
+    q: "¿Por qué “Cobranza de ruta” muestra despachos?",
+    a: "Son los despachos con ventas en efectivo que aún no se confirman en el flujo. Las sucursales que compran a crédito no aparecen aquí: están en Contabilidad → Por cobrar.",
   },
   {
     q: "¿Cómo registro el efectivo que se quedó en la oficina?",
-    a: "En el ingreso del despacho captura el “Total cobrado” y, en “Enviado a la oficina”, la parte que se quedó. El resto se registra como depósito directo al banco.",
+    a: "En “Cobranza de ruta” ajusta “Se quedó en oficina” antes de confirmar el despacho. El resto entra a la cuenta del titular.",
   },
   {
     q: "¿Cómo registro el depósito del chofer?",
-    a: "Ya queda en el ingreso del despacho: la parte que no se envió a la oficina entra al banco. “Depósito” es para cuando la oficina lleva su propio efectivo al banco.",
+    a: "La parte que no se quedó en oficina entra a la cuenta del titular al confirmar la cobranza de ruta. “Depósito” es para cuando la oficina lleva su propio efectivo a la cuenta del titular.",
+  },
+  {
+    q: "¿A dónde entra un cobro en efectivo?",
+    a: "Entra a efectivo en oficina. Si el cobro es transferencia, depósito, cheque o SPEI, entra a la cuenta del titular.",
   },
   {
     q: "¿Por qué una sucursal no aparece en el flujo?",
-    a: "Si pagó directo al proveedor, no hubo efectivo para la empresa: se registra en Contabilidad y no entra a este flujo. Si pagó a la cuenta, entra al banco automáticamente.",
+    a: "Si pagó directo al proveedor, no hubo efectivo para la empresa: se registra en Contabilidad y no entra a este flujo. Si pagó a la cuenta, entra a la cuenta del titular automáticamente.",
   },
   {
     q: "¿Por qué no puedo registrar un movimiento con cierta fecha?",
@@ -292,7 +300,7 @@ export const FAQ: HelpFaq[] = [
   },
   {
     q: "¿Cómo corrijo un depósito?",
-    a: "Elimínalo: se borran las dos partes (efectivo en oficina y banco). Luego regístralo de nuevo con el monto correcto.",
+    a: "Elimínalo: se borran las dos partes (efectivo en oficina y cuenta del titular). Luego regístralo de nuevo con el monto correcto.",
   },
   {
     q: "¿Por qué la diferencia con el saldo real no es cero?",
@@ -327,7 +335,7 @@ export const FAQ: HelpFaq[] = [
     a: "Que el movimiento lo creó el sistema a partir de un documento. Si no la tiene, se capturó a mano.",
   },
   {
-    q: "¿Puedo cambiar un cobro de efectivo en oficina a banco?",
+    q: "¿Puedo cambiar un cobro de efectivo en oficina a la cuenta del titular?",
     a: "Sí, con el botón de cambiar cuenta. Los depósitos no: se eliminan y se re-registran porque mueven las dos bolsas.",
   },
   {
@@ -346,7 +354,7 @@ export const GLOSSARY: HelpGlossaryItem[] = [
     definition: "La cobranza de las rutas; la fila CAJA CHICA de tu hoja.",
   },
   {
-    term: "Banco",
+    term: "Cuenta del titular",
     definition: "La cuenta del titular; en tu hoja es la “Caja general”.",
   },
   {
@@ -369,7 +377,7 @@ export const GLOSSARY: HelpGlossaryItem[] = [
   },
   {
     term: "Ingreso a cuenta",
-    definition: "Depósito del efectivo de la oficina al banco.",
+    definition: "Depósito del efectivo de la oficina a la cuenta del titular.",
   },
   {
     term: "Ajuste",
@@ -386,11 +394,11 @@ export const GLOSSARY: HelpGlossaryItem[] = [
   {
     term: "Cobranza de ruta",
     definition:
-      "Ventas en efectivo del despacho que se confirman para separar banco y oficina.",
+      "Ventas en efectivo del despacho que se confirman para separar cuenta del titular y oficina.",
   },
   {
     term: "Saldo real",
     definition:
-      "Lo que realmente hay en el banco o en la oficina, capturado al cortar.",
+      "Lo que realmente hay en la cuenta del titular o en la oficina, capturado al cortar.",
   },
 ];

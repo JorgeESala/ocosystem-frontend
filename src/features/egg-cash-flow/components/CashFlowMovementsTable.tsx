@@ -30,7 +30,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const ACCOUNT_LABELS: Record<string, string> = {
   CASH: "Efectivo en oficina",
-  BANK: "Banco",
+  BANK: "Cuenta del titular",
 };
 
 interface Props {
@@ -46,7 +46,7 @@ interface Props {
 const ACCOUNT_FILTER_LABELS: Record<"ALL" | "CASH" | "BANK", string> = {
   ALL: "Todas",
   CASH: "Efectivo en oficina",
-  BANK: "Banco",
+  BANK: "Cuenta del titular",
 };
 
 export default function CashFlowMovementsTable({
@@ -196,7 +196,7 @@ export default function CashFlowMovementsTable({
                           <Tooltip
                             content={
                               m.account === "CASH"
-                                ? "Mover al banco"
+                                ? "Mover a la cuenta del titular"
                                 : "Mover a efectivo en oficina"
                             }
                           >

@@ -12,6 +12,7 @@ import {
 import { toLocalDateString } from "@/utils/date.utils";
 import type { Client } from "@/core/api/types";
 import type { CashFlowSettings } from "../types/eggCashFlow.types";
+import { accountLabel } from "../utils/cashFlow.utils";
 
 interface Props {
   open: boolean;
@@ -95,7 +96,7 @@ export default function SettingsModal({
 
           <div>
             <Label htmlFor="settingsBankOpening">
-              Saldo inicial banco (MXN)
+              Saldo inicial de {accountLabel(accountHolder)} (MXN)
             </Label>
             <TextInput
               id="settingsBankOpening"
@@ -112,7 +113,7 @@ export default function SettingsModal({
               id="settingsAccountHolder"
               value={accountHolder}
               onChange={(e) => setAccountHolder(e.target.value)}
-              placeholder="Ej: Titular de la cuenta"
+              placeholder="Ej: Enrique"
             />
           </div>
 
@@ -129,11 +130,23 @@ export default function SettingsModal({
           </div>
 
           <div>
-            <Label>Clientes que depositan directo a la cuenta</Label>
+            <Label>
+              Clientes con cuenta que normalmente depositan en{" "}
+              {accountLabel(accountHolder)}
+            </Label>
             <p className="mb-2 text-xs text-slate-500">
-              Su cobranza entra al banco; la de los demás clientes entra a
-              efectivo en oficina. Las sucursales pagan directo al banco por
-              defecto; si pagan al proveedor, no entra a este flujo.
+              Marca a los clientes que normalmente depositan en{" "}
+              {accountLabel(accountHolder)}. El destino real depende de la forma
+              de pago: efectivo entra a efectivo en oficina; transferencia,
+              depósito, cheque o SPEI entran a {accountLabel(accountHolder)}. La
+              marca solo define el comportamiento por defecto cuando la forma de
+              pago es “Otro”. Las sucursales pagan directo a{" "}
+              {accountLabel(accountHolder)} por defecto; si pagan al proveedor,
+              no entra a este flujo.
+            </p>
+            <p className="mb-2 text-xs text-slate-500">
+              El efectivo en oficina se calcula automáticamente. El saldo real
+              se captura al cerrar la semana.
             </p>
             <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/50 p-3">
               {paymentClients.length === 0 ? (

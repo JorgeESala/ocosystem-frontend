@@ -73,7 +73,7 @@ export default function CutModal({
               </div>
               <div className="rounded-lg bg-slate-700/50 px-4 py-3">
                 <div className="text-xs text-slate-400">
-                  Cierre banco (esperado)
+                  Cierre de la cuenta (esperado)
                 </div>
                 <div className="text-lg font-bold text-white">
                   {formatMXN(summary.bankClosingBalance)}
@@ -108,7 +108,7 @@ export default function CutModal({
               step="0.01"
               value={realBankBalance}
               onChange={(e) => setRealBankBalance(e.target.value)}
-              placeholder="Lo que muestra el banco real"
+              placeholder="Lo que muestra la cuenta real"
             />
           </div>
 

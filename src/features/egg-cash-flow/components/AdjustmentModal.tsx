@@ -62,7 +62,7 @@ export default function AdjustmentModal({
               value={account}
               onChange={(e) => setAccount(e.target.value as "CASH" | "BANK")}
             >
-              <option value="BANK">Banco (cuenta)</option>
+              <option value="BANK">Cuenta del titular</option>
               <option value="CASH">Efectivo en oficina</option>
             </Select>
           </div>

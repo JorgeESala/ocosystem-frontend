@@ -33,12 +33,19 @@ describe("CashFlowBalanceCards", () => {
 
     expect(screen.getByText("Efectivo en oficina")).toBeInTheDocument();
     expect(screen.getByText("Cobranza del periodo")).toBeInTheDocument();
-    expect(screen.getByText("Efectivo + banco")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo + cuenta")).toBeInTheDocument();
     expect(screen.getByText(formatMXN(139605))).toBeInTheDocument();
-    expect(screen.getByText("Cuenta de Titular")).toBeInTheDocument();
+    expect(screen.getByText("Cuenta del titular")).toBeInTheDocument();
     expect(
       screen.getByText(`Deuda con remesas: ${formatMXN(95720.88)}`),
     ).toBeInTheDocument();
+  });
+
+  it("uses the configured account holder name", () => {
+    render(<CashFlowBalanceCards summary={summary} accountHolder="Enrique" />);
+
+    expect(screen.getByText("Cuenta de Enrique")).toBeInTheDocument();
+    expect(screen.getByText("Saldo de la cuenta")).toBeInTheDocument();
   });
 
   it("includes the adjustment in the period income", () => {

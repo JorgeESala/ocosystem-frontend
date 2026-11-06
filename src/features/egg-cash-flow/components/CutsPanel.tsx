@@ -67,15 +67,17 @@ export default function CutsPanel({ cuts, onReopen, onCreateCut }: Props) {
               <th className="px-5 py-3 text-right font-semibold">
                 Efectivo en oficina (cierre)
               </th>
-              <th className="px-5 py-3 text-right font-semibold">Banco</th>
+              <th className="px-5 py-3 text-right font-semibold">
+                Cuenta del titular
+              </th>
               <th className="px-5 py-3 text-right font-semibold">
                 Deuda remesas (proveedores)
               </th>
               <th className="px-5 py-3 text-right font-semibold">
-                Saldo real banco
+                Saldo real cuenta
               </th>
               <th className="px-5 py-3 text-right font-semibold">
-                Diferencia banco
+                Diferencia cuenta
               </th>
               <th className="px-5 py-3 text-right font-semibold">
                 Efectivo real

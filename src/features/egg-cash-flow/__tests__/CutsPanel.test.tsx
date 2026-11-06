@@ -31,14 +31,15 @@ const cut = (overrides: Partial<CashFlowCut> = {}): CashFlowCut => ({
 });
 
 describe("CutsPanel", () => {
-  it("shows the weekly caja chica income and closing next to the bank", () => {
+  it("shows the weekly caja chica income and closing next to the account", () => {
     render(<CutsPanel cuts={[cut()]} />);
 
     expect(screen.getByText("Caja chica (ingreso)")).toBeInTheDocument();
     expect(
       screen.getByText("Efectivo en oficina (cierre)"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Saldo real banco")).toBeInTheDocument();
+    expect(screen.getByText("Cuenta del titular")).toBeInTheDocument();
+    expect(screen.getByText("Saldo real cuenta")).toBeInTheDocument();
     expect(screen.getByText("Efectivo real")).toBeInTheDocument();
     expect(screen.getByText(formatMXN(139605))).toBeInTheDocument();
     expect(screen.getAllByText(formatMXN(0)).length).toBeGreaterThan(0);

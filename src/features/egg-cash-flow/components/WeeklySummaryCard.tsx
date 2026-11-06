@@ -1,5 +1,6 @@
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { CashFlowSummary } from "../types/eggCashFlow.types";
+import { accountLabelShort } from "../utils/cashFlow.utils";
 
 interface Props {
   summary: CashFlowSummary | undefined;
@@ -90,7 +91,7 @@ export default function WeeklySummaryCard({
           <Row label="± Ajustes" amount={summary.totalCashAdjustments} />
           <Row label="= Antes de depósito" amount={cashBeforeDeposit} bold />
           <Row
-            label="− Ingreso a cuenta (a banco)"
+            label="− Ingreso a cuenta (a la cuenta)"
             amount={summary.totalDeposits}
             color="text-blue-400"
           />
@@ -103,11 +104,11 @@ export default function WeeklySummaryCard({
 
         <div>
           <h3 className="mb-2 text-sm font-semibold text-blue-400">
-            Banco · cuenta de {accountHolder}
+            {accountLabelShort(accountHolder)}
           </h3>
           <Row label="Corte anterior" amount={summary.bankOpeningBalance} />
           <Row
-            label="+ Cobranza directa al banco"
+            label="+ Cobranza directa a la cuenta"
             amount={summary.totalBankIncome}
             color="text-emerald-400"
           />

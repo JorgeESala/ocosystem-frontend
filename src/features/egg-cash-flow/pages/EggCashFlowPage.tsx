@@ -59,7 +59,11 @@ import RemesaPaymentModal from "../components/RemesaPaymentModal";
 import AdjustmentModal from "../components/AdjustmentModal";
 import CutModal from "../components/CutModal";
 import SettingsModal from "../components/SettingsModal";
-import { currentWeekRange, previousWeekRange } from "../utils/cashFlow.utils";
+import {
+  accountLabel,
+  currentWeekRange,
+  previousWeekRange,
+} from "../utils/cashFlow.utils";
 import type {
   ConfirmTripSettlementItemDTO,
   EggCashFlowUnit,
@@ -275,9 +279,9 @@ export default function EggCashFlowPage({ unitType }: Props) {
             Configura tu flujo de efectivo
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-            Define los saldos iniciales de efectivo en oficina y banco, y el
-            titular de la cuenta, para empezar a registrar ingresos, depósitos y
-            gastos.
+            Define los saldos iniciales de efectivo en oficina y de la cuenta
+            del titular, y el nombre de la cuenta, para empezar a registrar
+            ingresos, depósitos y gastos.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button onClick={() => setShowSettings(true)}>
@@ -326,7 +330,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
             Flujo de efectivo
           </h1>
           <p className="text-sm text-slate-400">
-            Dónde está el efectivo físico: en oficina y en banco.
+            Dónde está el efectivo físico: en oficina y en{" "}
+            {accountLabel(accountHolder)}.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -481,6 +486,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
                 settlements={settlementsQuery.data ?? []}
                 onConfirm={handleConfirmSettlements}
                 isConfirming={confirmSettlements.isPending}
+                accountHolder={accountHolder}
               />
             ))}
           {collectionsQuery.isLoading ? (

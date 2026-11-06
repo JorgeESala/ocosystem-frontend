@@ -28,3 +28,27 @@ export const previousWeekRange = (): { start: Date; end: Date } => {
   end.setDate(start.getDate() + 6);
   return { start, end };
 };
+
+const holderName = (
+  accountHolder: string | null | undefined,
+): string | null => {
+  const name = accountHolder?.trim();
+  if (!name || name.toLowerCase() === "titular") {
+    return null;
+  }
+  return name;
+};
+
+export const accountLabel = (
+  accountHolder: string | null | undefined,
+): string => {
+  const name = holderName(accountHolder);
+  return name ? `la cuenta de ${name}` : "la cuenta del titular";
+};
+
+export const accountLabelShort = (
+  accountHolder: string | null | undefined,
+): string => {
+  const name = holderName(accountHolder);
+  return name ? `Cuenta de ${name}` : "Cuenta del titular";
+};
