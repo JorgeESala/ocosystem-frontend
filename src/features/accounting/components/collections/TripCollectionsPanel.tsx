@@ -32,6 +32,7 @@ import { BatchPreviewDrawer } from "@/features/batch/components/BatchPreviewDraw
 import { EggQuantityDisplay } from "@/features/batch/components/egg/EggQuantityDisplay";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
+import { accountLabel } from "@/features/egg-cash-flow/utils/cashFlow.utils";
 import { useTripCollections } from "../../api/collections.queries";
 import {
   useCreateBulkFifoPayments,
@@ -142,6 +143,7 @@ export const TripCollectionsPanel = ({
   } = useCollectionAvailability("EGG", isoDate);
   const verificationBlocked = availabilityError || availabilityLoading;
   const { data: cashFlowSettings } = useCashFlowSettings("EGG");
+  const accountHolder = cashFlowSettings?.accountHolder ?? "Titular";
   const {
     data: tripSales = [],
     isLoading: tripSalesLoading,
@@ -524,6 +526,10 @@ export const TripCollectionsPanel = ({
               </option>
             ))}
           </Select>
+          <p className="mt-1 text-xs text-gray-500">
+            Efectivo entra a efectivo en oficina. Transferencia, depósito,
+            cheque o SPEI entran a {accountLabel(accountHolder)}.
+          </p>
         </div>
         <div className="w-56">
           <Label htmlFor="trip-collection-folio">

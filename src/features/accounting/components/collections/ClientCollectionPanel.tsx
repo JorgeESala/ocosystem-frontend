@@ -22,6 +22,7 @@ import {
 import type { PaymentMethod } from "../../types/payment.types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
+import { accountLabel } from "@/features/egg-cash-flow/utils/cashFlow.utils";
 import { extractErrorMessage } from "../../utils/errorMessage";
 import {
   isDuplicatePayment,
@@ -133,6 +134,7 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
     selectedClient?.accountingEntityId,
   );
   const { data: cashFlowSettings } = useCashFlowSettings("EGG");
+  const accountHolder = cashFlowSettings?.accountHolder ?? "Titular";
   const creditAvailable = credits.reduce(
     (sum, payment) => sum + Number(payment.remainingAmount ?? 0),
     0,
@@ -611,6 +613,11 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
                       ),
                     )}
                   </Select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Efectivo entra a efectivo en oficina. Transferencia,
+                    depósito, cheque o SPEI entran a{" "}
+                    {accountLabel(accountHolder)}.
+                  </p>
                 </div>
                 <div className="flex items-end lg:col-span-2">
                   <p className="text-sm text-gray-300">
@@ -664,8 +671,8 @@ export const ClientCollectionPanel = ({ onSuccessToast }: Props) => {
               {methodConflict && (
                 <Alert color="warning">
                   {directDeposit
-                    ? "Este cliente está configurado para depósito directo. Si registras efectivo, el movimiento se reflejará en caja."
-                    : "Este cliente no está configurado para depósito directo. Si registras un pago bancario, el movimiento se reflejará en banco."}
+                    ? "Este cliente está configurado para depósito directo. Si registras efectivo, el movimiento se reflejará en efectivo en oficina."
+                    : `Este cliente no está configurado para depósito directo. Si registras un pago bancario, el movimiento se reflejará en ${accountLabel(accountHolder)}.`}
                 </Alert>
               )}
 

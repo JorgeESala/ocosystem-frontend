@@ -163,7 +163,7 @@ export default function IncomeModal({
               value={account}
               onChange={(e) => setAccount(e.target.value as CashFlowAccount)}
             >
-              <option value="BANK">Banco</option>
+              <option value="BANK">Cuenta del titular</option>
               <option value="CASH">Efectivo en oficina</option>
             </Select>
           </div>
