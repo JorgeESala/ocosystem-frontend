@@ -62,6 +62,7 @@ import SettingsModal from "../components/SettingsModal";
 import {
   accountLabel,
   currentWeekRange,
+  formatDate,
   previousWeekRange,
 } from "../utils/cashFlow.utils";
 import type {
@@ -92,6 +93,11 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const [showAdjustment, setShowAdjustment] = useState(false);
   const [showCut, setShowCut] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [settlementError, setSettlementError] = useState<{
+    message: string;
+    tripId?: number;
+  } | null>(null);
+  const [settlementToast, setSettlementToast] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [incomePrefill, setIncomePrefill] = useState<{
     paymentId?: number | null;
@@ -202,17 +208,38 @@ export default function EggCashFlowPage({ unitType }: Props) {
   };
 
   const handleConfirmSettlements = (items: ConfirmTripSettlementItemDTO[]) => {
+    setSettlementError(null);
+    setSettlementToast(null);
     confirmSettlements.mutate(
       { items },
       {
         onSuccess: (settlements) => {
+          setSettlementError(null);
+          setSettlementToast(null);
           setToastMessage(
             settlements.length === 1
               ? "Cobranza de ruta confirmada."
               : `${settlements.length} cobranzas de ruta confirmadas.`,
           );
         },
-        onError: handleActionError,
+        onError: (error) => {
+          const tripId = items.length === 1 ? items[0].tripId : undefined;
+          const trip =
+            tripId == null
+              ? null
+              : settlementsQuery.data?.find(
+                  (settlement) => settlement.tripId === tripId,
+                );
+          const tripLabel = trip
+            ? `${formatDate(trip.departureDate)} · ${
+                trip.driverName ?? "Sin chofer"
+              }`
+            : undefined;
+          const message = extractErrorMessage(error);
+          setToastMessage(null);
+          setSettlementError({ message, tripId });
+          setSettlementToast(`${tripLabel ? `${tripLabel}: ` : ""}${message}`);
+        },
       },
     );
   };
@@ -322,6 +349,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
       <AccountingToast
         message={toastMessage}
         onDismiss={() => setToastMessage(null)}
+      />
+      <AccountingToast
+        message={settlementToast}
+        onDismiss={() => setSettlementToast(null)}
+        variant="failure"
+        title="No se pudo confirmar la cobranza"
+        autoDismissMs={8000}
       />
 
       <header className="flex flex-col gap-3 border-b border-slate-800 pb-4 md:flex-row md:items-end md:justify-between">
@@ -487,6 +521,8 @@ export default function EggCashFlowPage({ unitType }: Props) {
                 onConfirm={handleConfirmSettlements}
                 isConfirming={confirmSettlements.isPending}
                 accountHolder={accountHolder}
+                error={settlementError}
+                onDismissError={() => setSettlementError(null)}
               />
             ))}
           {collectionsQuery.isLoading ? (

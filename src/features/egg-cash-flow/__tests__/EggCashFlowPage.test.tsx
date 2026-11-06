@@ -327,6 +327,71 @@ describe("EggCashFlowPage", () => {
     );
   });
 
+  it("shows the backend error when confirming settlements fails", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSettlements.mockReturnValue(
+      emptyQuery([
+        settlement({ tripId: 1, driverName: "Chofer Uno" }),
+        settlement({ tripId: 2, driverName: "Chofer Dos" }),
+      ]),
+    );
+    const message =
+      "La fecha del despacho es anterior al inicio de Flujo de efectivo.";
+    const mutate = vi.fn(
+      (_payload: unknown, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.(new Error(message));
+      },
+    );
+    mocks.useConfirmTripSettlements.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Confirmar todos \(2\)/ }),
+    );
+
+    expect((await screen.findAllByText(message)).length).toBeGreaterThanOrEqual(
+      1,
+    );
+  });
+
+  it("includes the trip context in the fixed error toast", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSettlements.mockReturnValue(
+      emptyQuery([settlement({ tripId: 1, driverName: "Chofer Uno" })]),
+    );
+    const message =
+      "La fecha del despacho es anterior al inicio de Flujo de efectivo.";
+    const mutate = vi.fn(
+      (_payload: unknown, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.(new Error(message));
+      },
+    );
+    mocks.useConfirmTripSettlements.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    expect(
+      await screen.findByText(/Chofer Uno: La fecha del despacho/),
+    ).toBeInTheDocument();
+  });
+
   it("hides cash settlements when only credit is selected", () => {
     mocks.useCashFlowSettings.mockReturnValue({
       ...mutationQuery,
