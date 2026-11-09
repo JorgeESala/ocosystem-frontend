@@ -73,7 +73,7 @@ export const FIRST_STEPS: HelpStep[] = [
   {
     title: "3. Cierra el efectivo del viernes",
     description:
-      "En “Cierre de efectivo del viernes” elige el despacho que conservará efectivo. Revisa la nómina registrada, el efectivo objetivo y el depósito; después confirma el cierre. Los demás despachos del periodo se depositan completos.",
+      "En “Cierre de efectivo del viernes” elige el despacho que conservará efectivo. Revisa los gastos registrados, la nómina, el efectivo objetivo y el depósito; después confirma el cierre. Los demás despachos pendientes se confirman y su cobranza se deposita; el efectivo que ya estaba en oficina se conserva.",
   },
   {
     title: "4. Registra depósitos y gastos",
@@ -181,7 +181,7 @@ export const PAGE_SECTIONS: HelpSection[] = [
     title: "Cierre de viernes, cobranza de ruta y cobros por registrar",
     paragraphs: [
       "La cobranza de ruta se calcula sola con las ventas en efectivo del despacho. Ahí ves el total cobrado, cuánto se depositó en la cuenta del titular y cuánto se quedó en oficina. Los clientes en efectivo ya vienen incluidos; no se capturan a mano.",
-      "El “Cierre de efectivo del viernes” elige un despacho para conservar efectivo. Calcula lo que falta para llegar al efectivo objetivo, descuenta la nómina ya registrada y deposita el sobrante anterior. Los demás despachos pendientes se confirman completos a la cuenta.",
+      "El “Cierre de efectivo del viernes” elige un despacho para conservar efectivo. Calcula lo que falta para llegar al efectivo objetivo, descuenta los gastos y la nómina ya registrados y deposita el sobrante anterior. Los demás despachos pendientes se confirman y su cobranza se deposita; el efectivo que ya estaba en oficina se conserva.",
       "Confirma cada despacho con un clic cuando necesites una corrección manual. Si se quedó efectivo en la oficina, ajusta el monto antes de confirmar. “Confirmar todos” registra de una vez los despachos pendientes.",
       "Abajo aparecen los cobros a crédito registrados en Contabilidad que aún no tienen movimiento en el flujo. Si el cobro se registra como efectivo, entra a efectivo en oficina; si es transferencia, depósito, cheque o SPEI, entra a la cuenta del titular. Usa “Solo crédito” para ocultar la cobranza en efectivo y ver únicamente esos cobros.",
     ],

@@ -87,9 +87,10 @@ export default function FridayCashClosePanel({
           </div>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
             Elige el despacho que conservará efectivo para la nómina y los gastos
-            de la semana. Los demás despachos se depositan completos a{" "}
-            {accountLabel(accountHolder)}. La oficina queda con el efectivo
-            objetivo y el sobrante anterior también se deposita.
+            de la semana. Los demás despachos pendientes se confirman y su
+            cobranza se deposita en {accountLabel(accountHolder)}; el efectivo
+            que ya estaba en oficina se conserva. La oficina queda con el
+            efectivo objetivo y el sobrante anterior también se deposita.
           </p>
         </div>
         {selected && (
@@ -169,8 +170,12 @@ export default function FridayCashClosePanel({
               amount={preview.routeCashTotal}
             />
             <Metric
-              label="Efectivo en oficina antes del cierre"
+              label="Efectivo en oficina actual"
               amount={preview.currentOfficeCash}
+            />
+            <Metric
+              label="Gastos registrados"
+              amount={preview.expensesTotal}
             />
             <Metric
               label="Nómina registrada"
@@ -211,8 +216,8 @@ export default function FridayCashClosePanel({
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              La nómina se toma de los gastos con categoría Nómina registrados en
-              Gastos. No se captura dos veces aquí.
+              Los gastos y la nómina se toman de lo registrado en Gastos. No se
+              capturan dos veces aquí.
             </p>
             <Button
               color="success"

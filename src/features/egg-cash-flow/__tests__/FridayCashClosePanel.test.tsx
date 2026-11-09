@@ -47,6 +47,7 @@ const preview = (
   shortfall: 0,
   priorExcessDeposit: 0,
   projectedOfficeCash: 1000,
+  expensesTotal: 3000,
   payrollTotal: 2500,
   hasPayroll: true,
   recorded: false,
@@ -85,7 +86,9 @@ describe("FridayCashClosePanel", () => {
     expect(
       screen.getByText("Cierre de efectivo del viernes"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Gastos registrados")).toBeInTheDocument();
     expect(screen.getByText("Nómina registrada")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo en oficina actual")).toBeInTheDocument();
     expect(screen.getByText("Efectivo objetivo en oficina")).toBeInTheDocument();
     expect(screen.getByText("Queda en oficina")).toBeInTheDocument();
     expect(screen.queryByText(/No hay nómina registrada/)).not.toBeInTheDocument();
