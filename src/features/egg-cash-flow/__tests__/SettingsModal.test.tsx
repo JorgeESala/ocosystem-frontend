@@ -68,4 +68,27 @@ describe("SettingsModal", () => {
       expect.objectContaining({ weeklyCashTarget: 1200 }),
     );
   });
+
+  it("rejects an empty or zero office cash target", () => {
+    renderModal();
+
+    const targetInput = screen.getByLabelText(
+      "Efectivo objetivo en oficina cada viernes (MXN)",
+    );
+    const saveButton = screen.getByRole("button", {
+      name: "Crear configuración",
+    });
+
+    fireEvent.change(targetInput, { target: { value: "" } });
+    expect(
+      screen.getByText("Captura un efectivo objetivo mayor que cero."),
+    ).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(targetInput, { target: { value: "0" } });
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(targetInput, { target: { value: "1000" } });
+    expect(saveButton).toBeEnabled();
+  });
 });

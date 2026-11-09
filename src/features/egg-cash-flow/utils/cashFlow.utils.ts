@@ -1,3 +1,5 @@
+export const DEFAULT_WEEKLY_CASH_TARGET = 1000;
+
 export const formatDate = (iso: string): string => {
   return new Date(iso + "T00:00:00").toLocaleDateString("es-MX", {
     day: "2-digit",

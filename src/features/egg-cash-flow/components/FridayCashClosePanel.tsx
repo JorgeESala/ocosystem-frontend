@@ -11,7 +11,7 @@ interface Props {
   preview: WeeklyClosePreview | undefined;
   settlements: TripSettlement[];
   selectedTripId: number | null;
-  onSelectTrip: (tripId: number) => void;
+  onSelectTrip: (tripId: number | null) => void;
   onConfirm: () => void;
   isConfirming: boolean;
   isLoading: boolean;
@@ -53,15 +53,19 @@ export default function FridayCashClosePanel({
   isLoading,
   accountHolder,
 }: Props) {
-  if (settlements.length === 0) {
+  const selectableSettlements = settlements.filter(
+    (settlement) => settlement.editable && !settlement.weekClosed,
+  );
+
+  if (selectableSettlements.length === 0) {
     return (
       <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
         <h3 className="text-base font-semibold text-white">
           Cierre de efectivo del viernes
         </h3>
         <p className="mt-1 text-sm text-slate-400">
-          No hay cobranza de ruta pendiente en este periodo para conservar
-          efectivo en oficina.
+          No hay despachos editables en este periodo para conservar efectivo en
+          oficina.
         </p>
       </section>
     );
@@ -113,10 +117,14 @@ export default function FridayCashClosePanel({
         <Select
           id="friday-retention-trip"
           value={selectedTripId ?? ""}
-          onChange={(event) => onSelectTrip(Number(event.target.value))}
+          onChange={(event) =>
+            onSelectTrip(
+              event.target.value === "" ? null : Number(event.target.value),
+            )
+          }
         >
           <option value="">Seleccionar despacho...</option>
-          {settlements.map((settlement) => (
+          {selectableSettlements.map((settlement) => (
             <option key={settlement.tripId} value={settlement.tripId}>
               {formatDate(settlement.departureDate)} ·{" "}
               {settlement.driverName ?? "Sin chofer"} ·{" "}

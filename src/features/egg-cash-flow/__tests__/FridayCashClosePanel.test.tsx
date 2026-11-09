@@ -59,7 +59,7 @@ const renderPanel = (
     previewData?: WeeklyClosePreview;
     settlements?: TripSettlement[];
     selectedTripId?: number | null;
-    onSelectTrip?: (tripId: number) => void;
+    onSelectTrip?: (tripId: number | null) => void;
     onConfirm?: () => void;
   } = {},
 ) =>
@@ -118,6 +118,58 @@ describe("FridayCashClosePanel", () => {
       screen.getByText(/El despacho elegido no alcanza/),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$500.00").length).toBeGreaterThan(0);
+  });
+
+  it("maps the placeholder selection to null", () => {
+    const onSelectTrip = vi.fn();
+    renderPanel({ onSelectTrip });
+
+    fireEvent.change(screen.getByLabelText("Despacho que conserva efectivo"), {
+      target: { value: "" },
+    });
+
+    expect(onSelectTrip).toHaveBeenCalledWith(null);
+  });
+
+  it("does not list closed or non-editable trips", () => {
+    renderPanel({
+      settlements: [
+        settlement({ tripId: 1, driverName: "Chofer Abierto" }),
+        settlement({
+          tripId: 2,
+          driverName: "Chofer Cerrado",
+          editable: false,
+          weekClosed: true,
+        }),
+      ],
+    });
+
+    expect(
+      screen.getByRole("option", { name: /Chofer Abierto/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Chofer Cerrado/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a message when there are no editable trips", () => {
+    renderPanel({
+      settlements: [
+        settlement({
+          tripId: 2,
+          driverName: "Chofer Cerrado",
+          editable: false,
+          weekClosed: true,
+        }),
+      ],
+    });
+
+    expect(
+      screen.getByText(/No hay despachos editables en este periodo/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cerrar viernes" }),
+    ).not.toBeInTheDocument();
   });
 
   it("selects a trip and confirms the close", () => {

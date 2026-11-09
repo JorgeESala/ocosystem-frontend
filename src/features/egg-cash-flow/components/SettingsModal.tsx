@@ -12,7 +12,10 @@ import {
 import { toLocalDateString } from "@/utils/date.utils";
 import type { Client } from "@/core/api/types";
 import type { CashFlowSettings } from "../types/eggCashFlow.types";
-import { accountLabel } from "../utils/cashFlow.utils";
+import {
+  accountLabel,
+  DEFAULT_WEEKLY_CASH_TARGET,
+} from "../utils/cashFlow.utils";
 
 interface Props {
   open: boolean;
@@ -43,7 +46,9 @@ export default function SettingsModal({
   const [bankOpening, setBankOpening] = useState("0");
   const [accountHolder, setAccountHolder] = useState("Titular");
   const [trackingStart, setTrackingStart] = useState<Date>(new Date());
-  const [weeklyCashTarget, setWeeklyCashTarget] = useState("1000");
+  const [weeklyCashTarget, setWeeklyCashTarget] = useState(
+    String(DEFAULT_WEEKLY_CASH_TARGET),
+  );
   const [directDeposit, setDirectDeposit] = useState<number[]>([]);
 
   useEffect(() => {
@@ -53,20 +58,27 @@ export default function SettingsModal({
         setBankOpening(String(settings.bankOpeningBalance));
         setAccountHolder(settings.accountHolder);
         setTrackingStart(new Date(settings.trackingStartDate + "T00:00:00"));
-        setWeeklyCashTarget(String(settings.weeklyCashTarget ?? 1000));
+        setWeeklyCashTarget(
+          String(settings.weeklyCashTarget ?? DEFAULT_WEEKLY_CASH_TARGET),
+        );
         setDirectDeposit(settings.directDepositClientIds ?? []);
       } else {
         setCashOpening("0");
         setBankOpening("0");
         setAccountHolder("Titular");
         setTrackingStart(new Date());
-        setWeeklyCashTarget("1000");
+        setWeeklyCashTarget(String(DEFAULT_WEEKLY_CASH_TARGET));
         setDirectDeposit([]);
       }
     }
   }, [open, settings]);
 
   const paymentClients = clients.filter((c) => c.accountingEntityId != null);
+  const parsedWeeklyCashTarget = Number(weeklyCashTarget);
+  const weeklyCashTargetValid =
+    weeklyCashTarget.trim() !== "" &&
+    Number.isFinite(parsedWeeklyCashTarget) &&
+    parsedWeeklyCashTarget > 0;
 
   const toggleDirectDeposit = (clientId: number) => {
     setDirectDeposit((current) =>
@@ -143,8 +155,14 @@ export default function SettingsModal({
               step="0.01"
               min="0"
               value={weeklyCashTarget}
+              aria-invalid={!weeklyCashTargetValid}
               onChange={(e) => setWeeklyCashTarget(e.target.value)}
             />
+            {!weeklyCashTargetValid && (
+              <p className="mt-1 text-xs text-red-400">
+                Captura un efectivo objetivo mayor que cero.
+              </p>
+            )}
             <p className="mt-1 text-xs text-slate-500">
               Después del cierre de viernes, la oficina debe quedar con este
               efectivo. Si ya había sobrante, solo se retiene la diferencia; si
@@ -204,11 +222,11 @@ export default function SettingsModal({
                   bankOpeningBalance: parseFloat(bankOpening) || 0,
                   accountHolder: accountHolder.trim() || "Titular",
                   trackingStartDate: toLocalDateString(trackingStart),
-                  weeklyCashTarget: parseFloat(weeklyCashTarget) || 0,
+                  weeklyCashTarget: parsedWeeklyCashTarget,
                   directDepositClientIds: directDeposit,
                 })
               }
-              disabled={isSaving}
+              disabled={isSaving || !weeklyCashTargetValid}
             >
               {isSaving
                 ? "Guardando..."
