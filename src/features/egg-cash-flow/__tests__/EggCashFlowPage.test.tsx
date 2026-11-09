@@ -156,6 +156,7 @@ const weeklyPreview = (
   shortfall: 0,
   priorExcessDeposit: 0,
   projectedOfficeCash: 1000,
+  expensesTotal: 2500,
   payrollTotal: 2000,
   hasPayroll: true,
   recorded: false,

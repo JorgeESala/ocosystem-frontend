@@ -238,6 +238,7 @@ export interface WeeklyClosePreview {
   shortfall: number;
   priorExcessDeposit: number;
   projectedOfficeCash: number;
+  expensesTotal: number;
   payrollTotal: number;
   hasPayroll: boolean;
   recorded: boolean;
