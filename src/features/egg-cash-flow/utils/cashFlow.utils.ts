@@ -29,6 +29,18 @@ export const previousWeekRange = (): { start: Date; end: Date } => {
   return { start, end };
 };
 
+export const latestFridayWeekRange = (
+  reference: Date = new Date(),
+): { start: Date; end: Date } => {
+  const end = new Date(reference);
+  end.setHours(0, 0, 0, 0);
+  const daysSinceFriday = (end.getDay() - 5 + 7) % 7;
+  end.setDate(end.getDate() - daysSinceFriday);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
+  return { start, end };
+};
+
 const holderName = (
   accountHolder: string | null | undefined,
 ): string | null => {

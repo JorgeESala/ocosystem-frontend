@@ -27,6 +27,7 @@ export interface CashFlowSettings {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  weeklyCashTarget: number;
   directDepositClientIds: number[];
   createdAt: string;
   updatedAt: string | null;
@@ -38,6 +39,7 @@ export interface CreateCashFlowSettingsDTO {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  weeklyCashTarget?: number;
   directDepositClientIds?: number[];
 }
 
@@ -46,6 +48,7 @@ export interface UpdateCashFlowSettingsDTO {
   bankOpeningBalance: number;
   accountHolder: string;
   trackingStartDate: string;
+  weeklyCashTarget?: number;
   directDepositClientIds?: number[];
 }
 
@@ -214,6 +217,37 @@ export interface ConfirmTripSettlementItemDTO {
 
 export interface ConfirmTripSettlementsRequestDTO {
   items: ConfirmTripSettlementItemDTO[];
+}
+
+export interface WeeklyClosePreview {
+  settlementId: number | null;
+  from: string;
+  to: string;
+  selectedTripId: number | null;
+  selectedTripDate: string | null;
+  selectedTripDriverName: string | null;
+  selectedTripRouteName: string | null;
+  selectedTripTotal: number;
+  selectedTripOfficePosted: number;
+  routeCashTotal: number;
+  targetOfficeCash: number;
+  currentOfficeCash: number;
+  baseOfficeCash: number;
+  requiredRetention: number;
+  retainedAmount: number;
+  shortfall: number;
+  priorExcessDeposit: number;
+  projectedOfficeCash: number;
+  payrollTotal: number;
+  hasPayroll: boolean;
+  recorded: boolean;
+  depositTransferGroup: string | null;
+}
+
+export interface WeeklyCloseRequestDTO {
+  from: string;
+  to: string;
+  retentionTripId: number;
 }
 
 export interface CollectionSuggestion {

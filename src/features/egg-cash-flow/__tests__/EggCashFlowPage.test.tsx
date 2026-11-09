@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import EggCashFlowPage from "../pages/EggCashFlowPage";
-import type { CashFlowCut, TripSettlement } from "../types/eggCashFlow.types";
+import type {
+  CashFlowCut,
+  TripSettlement,
+  WeeklyClosePreview,
+} from "../types/eggCashFlow.types";
 
 vi.mock("@/core/client/api/client.queries", () => ({
   useClients: vi.fn(() => ({ data: [], isLoading: false, isError: false })),
@@ -13,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   useCashFlowSummary: vi.fn(),
   useCashFlowMovements: vi.fn(),
   useTripSettlements: vi.fn(),
+  useWeeklyClose: vi.fn(),
   useCollectionSuggestions: vi.fn(),
   useRemesas: vi.fn(),
   useAvailableExpenses: vi.fn(),
@@ -27,6 +32,10 @@ const mocks = vi.hoisted(() => ({
   })),
   useCreateCashFlowIncome: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   useConfirmTripSettlements: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
+  useConfirmWeeklyClose: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: false,
   })),
@@ -57,6 +66,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useCashFlowSummary: mocks.useCashFlowSummary,
   useCashFlowMovements: mocks.useCashFlowMovements,
   useTripSettlements: mocks.useTripSettlements,
+  useWeeklyClose: mocks.useWeeklyClose,
   useCollectionSuggestions: mocks.useCollectionSuggestions,
   useRemesas: mocks.useRemesas,
   useAvailableExpenses: mocks.useAvailableExpenses,
@@ -65,6 +75,7 @@ vi.mock("../api/eggCashFlow.queries", () => ({
   useUpdateCashFlowSettings: mocks.useUpdateCashFlowSettings,
   useCreateCashFlowIncome: mocks.useCreateCashFlowIncome,
   useConfirmTripSettlements: mocks.useConfirmTripSettlements,
+  useConfirmWeeklyClose: mocks.useConfirmWeeklyClose,
   useCreateCashFlowDeposit: mocks.useCreateCashFlowDeposit,
   useCreateCashFlowExpense: mocks.useCreateCashFlowExpense,
   useCreateCashFlowRemesaPayment: mocks.useCreateCashFlowRemesaPayment,
@@ -97,6 +108,7 @@ const settingsData = {
   bankOpeningBalance: 0,
   accountHolder: "Titular",
   trackingStartDate: "2026-10-01",
+  weeklyCashTarget: 1000,
   directDepositClientIds: [],
   createdAt: "2026-10-01T00:00:00",
   updatedAt: null,
@@ -120,6 +132,34 @@ const settlement = (
   status: "PENDING",
   editable: true,
   weekClosed: false,
+  ...overrides,
+});
+
+const weeklyPreview = (
+  overrides: Partial<WeeklyClosePreview> = {},
+): WeeklyClosePreview => ({
+  settlementId: null,
+  from: "2026-10-31",
+  to: "2026-11-06",
+  selectedTripId: 1,
+  selectedTripDate: "2026-11-06",
+  selectedTripDriverName: "Chofer Uno",
+  selectedTripRouteName: "Ruta Uno",
+  selectedTripTotal: 4000,
+  selectedTripOfficePosted: 0,
+  routeCashTotal: 4000,
+  targetOfficeCash: 1000,
+  currentOfficeCash: 300,
+  baseOfficeCash: 300,
+  requiredRetention: 700,
+  retainedAmount: 700,
+  shortfall: 0,
+  priorExcessDeposit: 0,
+  projectedOfficeCash: 1000,
+  payrollTotal: 2000,
+  hasPayroll: true,
+  recorded: false,
+  depositTransferGroup: null,
   ...overrides,
 });
 
@@ -167,6 +207,7 @@ describe("EggCashFlowPage", () => {
     mocks.useCashFlowSummary.mockReturnValue(emptyQuery());
     mocks.useCashFlowMovements.mockReturnValue(emptyQuery([]));
     mocks.useTripSettlements.mockReturnValue(emptyQuery([]));
+    mocks.useWeeklyClose.mockReturnValue(emptyQuery());
     mocks.useCollectionSuggestions.mockReturnValue(emptyQuery([]));
     mocks.useRemesas.mockReturnValue(emptyQuery([]));
     mocks.useAvailableExpenses.mockReturnValue(emptyQuery([]));
@@ -230,6 +271,7 @@ describe("EggCashFlowPage", () => {
         bankOpeningBalance: 0,
         accountHolder: "Titular",
         trackingStartDate: "2026-10-01",
+        weeklyCashTarget: 1000,
         createdAt: "2026-10-01T00:00:00",
         updatedAt: null,
         updatedBy: null,
@@ -275,8 +317,8 @@ describe("EggCashFlowPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/Chofer Pendiente/)).toBeInTheDocument();
-    expect(screen.getByText(/Chofer Parcial/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Chofer Pendiente/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Chofer Parcial/).length).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /Confirmar todos \(2\)/ }),
     ).toBeInTheDocument();
@@ -390,6 +432,41 @@ describe("EggCashFlowPage", () => {
     expect(
       await screen.findByText(/Chofer Uno: La fecha del despacho/),
     ).toBeInTheDocument();
+  });
+
+  it("confirms the Friday close with the selected trip", async () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+    mocks.useTripSettlements.mockReturnValue(
+      emptyQuery([settlement({ tripId: 1 })]),
+    );
+    mocks.useWeeklyClose.mockReturnValue(emptyQuery(weeklyPreview()));
+    const mutate = vi.fn();
+    mocks.useConfirmWeeklyClose.mockReturnValue({
+      mutate,
+      isPending: false,
+    });
+
+    renderPage();
+
+    const button = screen.getByRole("button", { name: "Cerrar viernes" });
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+
+    expect(mutate).toHaveBeenCalledWith(
+      {
+        from: expect.any(String),
+        to: expect.any(String),
+        retentionTripId: 1,
+      },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+        onError: expect.any(Function),
+      }),
+    );
   });
 
   it("hides cash settlements when only credit is selected", () => {

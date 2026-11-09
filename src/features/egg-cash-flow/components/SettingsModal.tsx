@@ -24,6 +24,7 @@ interface Props {
     bankOpeningBalance: number;
     accountHolder: string;
     trackingStartDate: string;
+    weeklyCashTarget: number;
     directDepositClientIds: number[];
   }) => void;
   isSaving: boolean;
@@ -42,6 +43,7 @@ export default function SettingsModal({
   const [bankOpening, setBankOpening] = useState("0");
   const [accountHolder, setAccountHolder] = useState("Titular");
   const [trackingStart, setTrackingStart] = useState<Date>(new Date());
+  const [weeklyCashTarget, setWeeklyCashTarget] = useState("1000");
   const [directDeposit, setDirectDeposit] = useState<number[]>([]);
 
   useEffect(() => {
@@ -51,12 +53,14 @@ export default function SettingsModal({
         setBankOpening(String(settings.bankOpeningBalance));
         setAccountHolder(settings.accountHolder);
         setTrackingStart(new Date(settings.trackingStartDate + "T00:00:00"));
+        setWeeklyCashTarget(String(settings.weeklyCashTarget ?? 1000));
         setDirectDeposit(settings.directDepositClientIds ?? []);
       } else {
         setCashOpening("0");
         setBankOpening("0");
         setAccountHolder("Titular");
         setTrackingStart(new Date());
+        setWeeklyCashTarget("1000");
         setDirectDeposit([]);
       }
     }
@@ -130,6 +134,25 @@ export default function SettingsModal({
           </div>
 
           <div>
+            <Label htmlFor="settingsWeeklyCashTarget">
+              Efectivo objetivo en oficina cada viernes (MXN)
+            </Label>
+            <TextInput
+              id="settingsWeeklyCashTarget"
+              type="number"
+              step="0.01"
+              min="0"
+              value={weeklyCashTarget}
+              onChange={(e) => setWeeklyCashTarget(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Después del cierre de viernes, la oficina debe quedar con este
+              efectivo. Si ya había sobrante, solo se retiene la diferencia; si
+              sobra más, se deposita a la cuenta.
+            </p>
+          </div>
+
+          <div>
             <Label>
               Clientes con cuenta que normalmente depositan en{" "}
               {accountLabel(accountHolder)}
@@ -181,6 +204,7 @@ export default function SettingsModal({
                   bankOpeningBalance: parseFloat(bankOpening) || 0,
                   accountHolder: accountHolder.trim() || "Titular",
                   trackingStartDate: toLocalDateString(trackingStart),
+                  weeklyCashTarget: parseFloat(weeklyCashTarget) || 0,
                   directDepositClientIds: directDeposit,
                 })
               }
