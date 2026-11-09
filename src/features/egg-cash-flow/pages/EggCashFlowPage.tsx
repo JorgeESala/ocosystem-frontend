@@ -119,11 +119,14 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const summaryQuery = useCashFlowSummary(unitType, from, to);
   const movementsQuery = useCashFlowMovements(unitType, from, to);
   const settlementsQuery = useTripSettlements(unitType, from, to);
+  const weeklyCloseEnabled =
+    Boolean(settingsQuery.data) && collectionView === "ALL";
   const weeklyCloseQuery = useWeeklyClose(
     unitType,
     from,
     to,
     retentionTripId,
+    weeklyCloseEnabled,
   );
   const collectionsQuery = useCollectionSuggestions(unitType, from, to);
   const remesasQuery = useRemesas(unitType);
@@ -149,6 +152,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const summary = summaryQuery.data;
   const accountHolder = settings?.accountHolder ?? "Titular";
   const cuts = useMemo(() => cutsQuery.data ?? [], [cutsQuery.data]);
+  const selectableTrips = useMemo(
+    () =>
+      (settlementsQuery.data ?? []).filter(
+        (settlement) => settlement.editable && !settlement.weekClosed,
+      ),
+    [settlementsQuery.data],
+  );
 
   useEffect(() => {
     if (defaultRangeApplied.current || rangeTouched || cuts.length === 0) {
@@ -165,11 +175,28 @@ export default function EggCashFlowPage({ unitType }: Props) {
   }, [from, to]);
 
   useEffect(() => {
+    if (
+      retentionTripId != null &&
+      !selectableTrips.some(
+        (settlement) => settlement.tripId === retentionTripId,
+      )
+    ) {
+      setRetentionTripId(null);
+    }
+  }, [retentionTripId, selectableTrips]);
+
+  useEffect(() => {
     const suggested = weeklyCloseQuery.data?.selectedTripId;
-    if (retentionTripId == null && suggested != null) {
+    if (
+      retentionTripId == null &&
+      suggested != null &&
+      selectableTrips.some(
+        (settlement) => settlement.tripId === suggested,
+      )
+    ) {
       setRetentionTripId(suggested);
     }
-  }, [retentionTripId, weeklyCloseQuery.data?.selectedTripId]);
+  }, [retentionTripId, weeklyCloseQuery.data?.selectedTripId, selectableTrips]);
 
   const handleRangeStart = (date: Date) => {
     setRangeStart(date);
@@ -561,7 +588,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
         />
       ) : (
         <>
-          {collectionView === "ALL" &&
+          {weeklyCloseEnabled &&
             (weeklyCloseQuery.isError ? (
               <AccountingErrorAlert
                 error={weeklyCloseQuery.error}
@@ -570,7 +597,9 @@ export default function EggCashFlowPage({ unitType }: Props) {
               />
             ) : (
               <FridayCashClosePanel
-                preview={weeklyCloseQuery.data}
+                preview={
+                  retentionTripId != null ? weeklyCloseQuery.data : undefined
+                }
                 settlements={settlementsQuery.data ?? []}
                 selectedTripId={retentionTripId}
                 onSelectTrip={setRetentionTripId}

@@ -260,6 +260,13 @@ describe("EggCashFlowPage", () => {
       "href",
       "/business/huevo/cash-flow/help",
     );
+    expect(mocks.useWeeklyClose).toHaveBeenLastCalledWith(
+      "EGG",
+      expect.any(String),
+      expect.any(String),
+      null,
+      false,
+    );
   });
 
   it("shows an error alert instead of a false empty state when movements fail", () => {
@@ -466,6 +473,34 @@ describe("EggCashFlowPage", () => {
         onSuccess: expect.any(Function),
         onError: expect.any(Function),
       }),
+    );
+  });
+
+  it("gates the weekly close request to settings and the cash view", () => {
+    mocks.useCashFlowSettings.mockReturnValue({
+      ...mutationQuery,
+      data: settingsData,
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(mocks.useWeeklyClose).toHaveBeenLastCalledWith(
+      "EGG",
+      expect.any(String),
+      expect.any(String),
+      null,
+      true,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Solo crédito" }));
+
+    expect(mocks.useWeeklyClose).toHaveBeenLastCalledWith(
+      "EGG",
+      expect.any(String),
+      expect.any(String),
+      null,
+      false,
     );
   });
 

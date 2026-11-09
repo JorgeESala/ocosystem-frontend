@@ -95,12 +95,14 @@ export const useWeeklyClose = (
   from: string,
   to: string,
   retentionTripId: number | null,
+  enabled = true,
 ) =>
   useQuery({
     queryKey: eggCashFlowKeys(unit).weeklyClose(from, to, retentionTripId),
     queryFn: () =>
       eggCashFlowApi.getWeeklyClose(from, to, retentionTripId),
     staleTime: STALE_TIME,
+    enabled,
   });
 
 export const useRemesas = (unit: EggCashFlowUnit) =>
