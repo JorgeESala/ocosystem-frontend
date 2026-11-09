@@ -15,6 +15,12 @@ export const eggCashFlowKeys = (unit: EggCashFlowUnit) => {
       [...all, "trip-suggestions", { from, to }] as const,
     tripSettlements: (from: string, to: string) =>
       [...all, "trip-settlements", { from, to }] as const,
+    weeklyClose: (from: string, to: string, retentionTripId: number | null) =>
+      [
+        ...all,
+        "weekly-close",
+        { from, to, retentionTripId },
+      ] as const,
     collectionSuggestions: (from: string, to: string) =>
       [...all, "collection-suggestions", { from, to }] as const,
     remesas: () => [...all, "remesas"] as const,
