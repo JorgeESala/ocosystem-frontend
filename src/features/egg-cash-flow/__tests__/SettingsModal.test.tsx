@@ -44,4 +44,51 @@ describe("SettingsModal", () => {
       screen.getByText(/El efectivo en oficina se calcula automáticamente/),
     ).toBeInTheDocument();
   });
+
+  it("captures the weekly office cash target", () => {
+    const onSave = vi.fn();
+    render(
+      <SettingsModal
+        open
+        onClose={vi.fn()}
+        settings={null}
+        clients={[]}
+        onSave={onSave}
+        isSaving={false}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Efectivo objetivo en oficina cada viernes (MXN)"),
+      { target: { value: "1200" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Crear configuración" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ weeklyCashTarget: 1200 }),
+    );
+  });
+
+  it("rejects an empty or zero office cash target", () => {
+    renderModal();
+
+    const targetInput = screen.getByLabelText(
+      "Efectivo objetivo en oficina cada viernes (MXN)",
+    );
+    const saveButton = screen.getByRole("button", {
+      name: "Crear configuración",
+    });
+
+    fireEvent.change(targetInput, { target: { value: "" } });
+    expect(
+      screen.getByText("Captura un efectivo objetivo mayor que cero."),
+    ).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(targetInput, { target: { value: "0" } });
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.change(targetInput, { target: { value: "1000" } });
+    expect(saveButton).toBeEnabled();
+  });
 });

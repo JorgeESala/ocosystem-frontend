@@ -19,6 +19,7 @@ import {
   HiReceiptRefund,
 } from "react-icons/hi";
 import { formatDateRange, toLocalDateString } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 import { extractErrorMessage } from "@/features/accounting/utils/errorMessage";
 import AccountingErrorAlert from "@/features/accounting/components/AccountingErrorAlert";
 import { AccountingToast } from "@/features/accounting/components/AccountingToast";
@@ -31,6 +32,7 @@ import {
   useCashFlowSummary,
   useCollectionSuggestions,
   useConfirmTripSettlements,
+  useConfirmWeeklyClose,
   useCreateCashFlowAdjustment,
   useCreateCashFlowCut,
   useCreateCashFlowDeposit,
@@ -44,12 +46,14 @@ import {
   useRemesas,
   useTripSettlements,
   useUpdateCashFlowSettings,
+  useWeeklyClose,
 } from "../api/eggCashFlow.queries";
 import CashFlowBalanceCards from "../components/CashFlowBalanceCards";
 import CashFlowMovementsTable from "../components/CashFlowMovementsTable";
 import WeeklySummaryCard from "../components/WeeklySummaryCard";
 import PendingCollectionsPanel from "../components/PendingCollectionsPanel";
 import TripSettlementsPanel from "../components/TripSettlementsPanel";
+import FridayCashClosePanel from "../components/FridayCashClosePanel";
 import RemesasPanel from "../components/RemesasPanel";
 import CutsPanel from "../components/CutsPanel";
 import IncomeModal from "../components/IncomeModal";
@@ -63,6 +67,7 @@ import {
   accountLabel,
   currentWeekRange,
   formatDate,
+  latestFridayWeekRange,
   previousWeekRange,
 } from "../utils/cashFlow.utils";
 import type {
@@ -76,14 +81,15 @@ interface Props {
 
 export default function EggCashFlowPage({ unitType }: Props) {
   const { slug } = useParams();
-  const previousWeek = useMemo(() => previousWeekRange(), []);
+  const defaultWeek = useMemo(() => latestFridayWeekRange(), []);
 
-  const [rangeStart, setRangeStart] = useState<Date>(previousWeek.start);
-  const [rangeEnd, setRangeEnd] = useState<Date>(previousWeek.end);
+  const [rangeStart, setRangeStart] = useState<Date>(defaultWeek.start);
+  const [rangeEnd, setRangeEnd] = useState<Date>(defaultWeek.end);
   const [accountFilter, setAccountFilter] = useState<"ALL" | "CASH" | "BANK">(
     "ALL",
   );
   const [collectionView, setCollectionView] = useState<"ALL" | "CREDIT">("ALL");
+  const [retentionTripId, setRetentionTripId] = useState<number | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
   const [showIncome, setShowIncome] = useState(false);
@@ -113,6 +119,15 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const summaryQuery = useCashFlowSummary(unitType, from, to);
   const movementsQuery = useCashFlowMovements(unitType, from, to);
   const settlementsQuery = useTripSettlements(unitType, from, to);
+  const weeklyCloseEnabled =
+    Boolean(settingsQuery.data) && collectionView === "ALL";
+  const weeklyCloseQuery = useWeeklyClose(
+    unitType,
+    from,
+    to,
+    retentionTripId,
+    weeklyCloseEnabled,
+  );
   const collectionsQuery = useCollectionSuggestions(unitType, from, to);
   const remesasQuery = useRemesas(unitType);
   const cutsQuery = useCashFlowCuts(unitType);
@@ -123,6 +138,7 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const updateSettings = useUpdateCashFlowSettings(unitType);
   const createIncome = useCreateCashFlowIncome(unitType);
   const confirmSettlements = useConfirmTripSettlements(unitType);
+  const confirmWeeklyClose = useConfirmWeeklyClose(unitType);
   const createDeposit = useCreateCashFlowDeposit(unitType);
   const createExpense = useCreateCashFlowExpense(unitType);
   const createRemesaPayment = useCreateCashFlowRemesaPayment(unitType);
@@ -136,6 +152,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
   const summary = summaryQuery.data;
   const accountHolder = settings?.accountHolder ?? "Titular";
   const cuts = useMemo(() => cutsQuery.data ?? [], [cutsQuery.data]);
+  const selectableTrips = useMemo(
+    () =>
+      (settlementsQuery.data ?? []).filter(
+        (settlement) => settlement.editable && !settlement.weekClosed,
+      ),
+    [settlementsQuery.data],
+  );
 
   useEffect(() => {
     if (defaultRangeApplied.current || rangeTouched || cuts.length === 0) {
@@ -146,6 +169,34 @@ export default function EggCashFlowPage({ unitType }: Props) {
     setRangeStart(new Date(`${latest.weekStart}T00:00:00`));
     setRangeEnd(new Date(`${latest.weekEnd}T00:00:00`));
   }, [cuts, rangeTouched]);
+
+  useEffect(() => {
+    setRetentionTripId(null);
+  }, [from, to]);
+
+  useEffect(() => {
+    if (
+      retentionTripId != null &&
+      !selectableTrips.some(
+        (settlement) => settlement.tripId === retentionTripId,
+      )
+    ) {
+      setRetentionTripId(null);
+    }
+  }, [retentionTripId, selectableTrips]);
+
+  useEffect(() => {
+    const suggested = weeklyCloseQuery.data?.selectedTripId;
+    if (
+      retentionTripId == null &&
+      suggested != null &&
+      selectableTrips.some(
+        (settlement) => settlement.tripId === suggested,
+      )
+    ) {
+      setRetentionTripId(suggested);
+    }
+  }, [retentionTripId, weeklyCloseQuery.data?.selectedTripId, selectableTrips]);
 
   const handleRangeStart = (date: Date) => {
     setRangeStart(date);
@@ -182,6 +233,13 @@ export default function EggCashFlowPage({ unitType }: Props) {
 
   const handlePreviousWeek = () => {
     const range = previousWeekRange();
+    setRangeStart(range.start);
+    setRangeEnd(range.end);
+    setRangeTouched(true);
+  };
+
+  const handleFridayWeek = () => {
+    const range = latestFridayWeekRange();
     setRangeStart(range.start);
     setRangeEnd(range.end);
     setRangeTouched(true);
@@ -240,6 +298,24 @@ export default function EggCashFlowPage({ unitType }: Props) {
           setSettlementError({ message, tripId });
           setSettlementToast(`${tripLabel ? `${tripLabel}: ` : ""}${message}`);
         },
+      },
+    );
+  };
+
+  const handleConfirmWeeklyClose = () => {
+    if (retentionTripId == null) return;
+    setActionError(null);
+    confirmWeeklyClose.mutate(
+      { from, to, retentionTripId },
+      {
+        onSuccess: (result) => {
+          setToastMessage(
+            `Cierre de viernes registrado. Se retuvieron ${formatMXN(
+              result.retainedAmount,
+            )} y quedaron ${formatMXN(result.projectedOfficeCash)} en oficina.`,
+          );
+        },
+        onError: handleActionError,
       },
     );
   };
@@ -458,6 +534,9 @@ export default function EggCashFlowPage({ unitType }: Props) {
           <Button color="light" size="xs" onClick={handlePreviousWeek}>
             Semana anterior
           </Button>
+          <Button color="light" size="xs" onClick={handleFridayWeek}>
+            Semana de viernes
+          </Button>
           {cuts.length > 0 && (
             <Button color="light" size="xs" onClick={handleShowCutPeriod}>
               <HiCalendar className="mr-1 h-3 w-3" />
@@ -509,6 +588,27 @@ export default function EggCashFlowPage({ unitType }: Props) {
         />
       ) : (
         <>
+          {weeklyCloseEnabled &&
+            (weeklyCloseQuery.isError ? (
+              <AccountingErrorAlert
+                error={weeklyCloseQuery.error}
+                title="No se pudo calcular el cierre de viernes"
+                onRetry={() => weeklyCloseQuery.refetch()}
+              />
+            ) : (
+              <FridayCashClosePanel
+                preview={
+                  retentionTripId != null ? weeklyCloseQuery.data : undefined
+                }
+                settlements={settlementsQuery.data ?? []}
+                selectedTripId={retentionTripId}
+                onSelectTrip={setRetentionTripId}
+                onConfirm={handleConfirmWeeklyClose}
+                isConfirming={confirmWeeklyClose.isPending}
+                isLoading={weeklyCloseQuery.isLoading}
+                accountHolder={accountHolder}
+              />
+            ))}
           {collectionView === "ALL" &&
             (settlementsQuery.isLoading ? (
               <div className="flex justify-center py-6">

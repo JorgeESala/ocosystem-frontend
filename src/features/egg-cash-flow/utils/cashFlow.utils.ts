@@ -1,3 +1,5 @@
+export const DEFAULT_WEEKLY_CASH_TARGET = 1000;
+
 export const formatDate = (iso: string): string => {
   return new Date(iso + "T00:00:00").toLocaleDateString("es-MX", {
     day: "2-digit",
@@ -26,6 +28,18 @@ export const previousWeekRange = (): { start: Date; end: Date } => {
   start.setDate(start.getDate() - 7);
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
+  return { start, end };
+};
+
+export const latestFridayWeekRange = (
+  reference: Date = new Date(),
+): { start: Date; end: Date } => {
+  const end = new Date(reference);
+  end.setHours(0, 0, 0, 0);
+  const daysSinceFriday = (end.getDay() - 5 + 7) % 7;
+  end.setDate(end.getDate() - daysSinceFriday);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 6);
   return { start, end };
 };
 

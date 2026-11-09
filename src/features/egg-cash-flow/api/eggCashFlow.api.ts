@@ -20,6 +20,8 @@ import type {
   TripSettlement,
   TripSuggestion,
   UpdateCashFlowSettingsDTO,
+  WeeklyClosePreview,
+  WeeklyCloseRequestDTO,
 } from "../types/eggCashFlow.types";
 
 const BASE_URL = "/api/v1/egg-cash-flow";
@@ -186,6 +188,34 @@ export const eggCashFlowApi = {
   ): Promise<TripSettlement[]> => {
     const { data } = await http.post<TripSettlement[]>(
       `${BASE_URL}/settlements/confirm`,
+      payload,
+    );
+    return data;
+  },
+
+  getWeeklyClose: async (
+    from: string,
+    to: string,
+    retentionTripId: number | null,
+  ): Promise<WeeklyClosePreview> => {
+    const { data } = await http.get<WeeklyClosePreview>(
+      `${BASE_URL}/weekly-close`,
+      {
+        params: {
+          from,
+          to,
+          ...(retentionTripId != null ? { retentionTripId } : {}),
+        },
+      },
+    );
+    return data;
+  },
+
+  confirmWeeklyClose: async (
+    payload: WeeklyCloseRequestDTO,
+  ): Promise<WeeklyClosePreview> => {
+    const { data } = await http.post<WeeklyClosePreview>(
+      `${BASE_URL}/weekly-close/confirm`,
       payload,
     );
     return data;

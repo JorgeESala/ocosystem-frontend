@@ -13,6 +13,7 @@ import type {
   EggCashFlowUnit,
   MoveCashFlowMovementRequestDTO,
   UpdateCashFlowSettingsDTO,
+  WeeklyCloseRequestDTO,
 } from "../types/eggCashFlow.types";
 
 const STALE_TIME = 30_000;
@@ -89,6 +90,21 @@ export const useTripSettlements = (
     staleTime: STALE_TIME,
   });
 
+export const useWeeklyClose = (
+  unit: EggCashFlowUnit,
+  from: string,
+  to: string,
+  retentionTripId: number | null,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: eggCashFlowKeys(unit).weeklyClose(from, to, retentionTripId),
+    queryFn: () =>
+      eggCashFlowApi.getWeeklyClose(from, to, retentionTripId),
+    staleTime: STALE_TIME,
+    enabled,
+  });
+
 export const useRemesas = (unit: EggCashFlowUnit) =>
   useQuery({
     queryKey: eggCashFlowKeys(unit).remesas(),
@@ -152,6 +168,15 @@ export const useConfirmTripSettlements = (unit: EggCashFlowUnit) => {
   return useMutation({
     mutationFn: (payload: ConfirmTripSettlementsRequestDTO) =>
       eggCashFlowApi.confirmTripSettlements(payload),
+    onSuccess: invalidate,
+  });
+};
+
+export const useConfirmWeeklyClose = (unit: EggCashFlowUnit) => {
+  const invalidate = useInvalidate(unit);
+  return useMutation({
+    mutationFn: (payload: WeeklyCloseRequestDTO) =>
+      eggCashFlowApi.confirmWeeklyClose(payload),
     onSuccess: invalidate,
   });
 };

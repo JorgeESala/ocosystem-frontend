@@ -29,7 +29,7 @@ export interface HelpGlossaryItem {
 }
 
 export const CASH_FLOW_INTRO =
-  "El Flujo de efectivo de huevo responde una sola pregunta: dónde está el dinero. El chofer cobra en la ruta; al terminar, deposita en la cuenta del titular lo cobrado, salvo lo que la oficina retiene para gastos y nómina. El módulo separa dos bolsas: efectivo en oficina (lo que se quedó en la oficina) y la cuenta del titular. La fila CAJA CHICA de tu hoja es la cobranza de las rutas; el cierre de caja chica es el efectivo que quedó en la oficina. No reemplaza la caja general del sistema anterior ni el Estado de resultados: esas vistas muestran el efectivo registrado; este módulo muestra el efectivo físico por bolsa y lo cierra cada semana.";
+  "El Flujo de efectivo de huevo responde una sola pregunta: dónde está el dinero. El chofer cobra en la ruta; al terminar, casi todo se deposita en la cuenta del titular. El viernes, un solo despacho conserva efectivo para pagar la nómina registrada y dejar el efectivo objetivo de la oficina (por defecto $1,000); el resto se deposita. Si ya había sobrante de la semana anterior, solo se retiene la diferencia y el exceso también se deposita. El módulo separa dos bolsas: efectivo en oficina (lo que se quedó en la oficina) y la cuenta del titular. La fila CAJA CHICA de tu hoja es la cobranza de las rutas; el cierre de caja chica es el efectivo que quedó en la oficina. No reemplaza la caja general del sistema anterior ni el Estado de resultados: esas vistas muestran el efectivo registrado; este módulo muestra el efectivo físico por bolsa y lo cierra cada semana.";
 
 export const MONEY_FLOW: HelpStep[] = [
   {
@@ -45,12 +45,12 @@ export const MONEY_FLOW: HelpStep[] = [
   {
     title: "3. Termina la ruta",
     description:
-      "El chofer deposita en la cuenta del titular lo que cobró. Si la oficina necesita efectivo para gastos o nómina, deja esa parte en la oficina.",
+      "Casi todo el efectivo de la ruta se deposita en la cuenta del titular. El viernes, uno de los despachos conserva la parte necesaria para la nómina y el efectivo objetivo de la oficina.",
   },
   {
     title: "4. La oficina usa el efectivo",
     description:
-      "Ese efectivo en oficina paga gastos y nómina. Lo que no se usa se deposita en la cuenta del titular.",
+      "Ese efectivo en oficina paga la nómina registrada y los gastos de la semana. Si sobra más de lo objetivo, se deposita a la cuenta del titular.",
   },
   {
     title: "5. Las sucursales pagan después",
@@ -71,14 +71,14 @@ export const FIRST_STEPS: HelpStep[] = [
       "Los cobros de sucursales y clientes con cuenta, los gastos de Gastos y los pagos de remesa hechos desde este módulo entran automáticamente. En “Cobranza de ruta” ves los despachos por confirmar y en “Cobros por registrar” lo que el ERP todavía no tiene registrado en el flujo.",
   },
   {
-    title: "3. Registra la cobranza de la ruta",
+    title: "3. Cierra el efectivo del viernes",
     description:
-      "En “Cobranza de ruta” revisa el total calculado del despacho. Si el chofer dejó efectivo en oficina, ajusta “Se quedó en oficina”; el resto entra a la cuenta del titular. Confirma cada despacho o usa “Confirmar todos”.",
+      "En “Cierre de efectivo del viernes” elige el despacho que conservará efectivo. Revisa los gastos registrados, la nómina, el efectivo objetivo y el depósito; después confirma el cierre. Los demás despachos pendientes se confirman y su cobranza se deposita; el efectivo que ya estaba en oficina se conserva.",
   },
   {
-    title: "4. Registra el depósito de la oficina",
+    title: "4. Registra depósitos y gastos",
     description:
-      "Cuando la oficina lleve su efectivo a la cuenta del titular, usa “Depósito”. Si el chofer depositó directo, ya quedó registrado al confirmar la cobranza de ruta.",
+      "El cierre deposita el sobrante automáticamente. Usa “Depósito” solo para efectivo adicional que lleves a la cuenta y “Gasto en efectivo” para gastos que salgan de la oficina.",
   },
   {
     title: "5. Paga las remesas",
@@ -97,7 +97,7 @@ export const BAGS: HelpBag[] = [
     id: "cash",
     title: "Efectivo en oficina",
     description:
-      "El efectivo que se quedó en la oficina para gastos y nómina. En tu hoja es el cierre de caja chica.",
+      "El efectivo que se quedó en la oficina para gastos y nómina. El viernes debe quedar en el efectivo objetivo configurado. En tu hoja es el cierre de caja chica.",
     enters: [
       "Efectivo de ruta que el chofer entregó a la oficina.",
       "Cobros de clientes en efectivo.",
@@ -178,10 +178,11 @@ export const PAGE_SECTIONS: HelpSection[] = [
   },
   {
     id: "pending",
-    title: "Cobranza de ruta y cobros por registrar",
+    title: "Cierre de viernes, cobranza de ruta y cobros por registrar",
     paragraphs: [
       "La cobranza de ruta se calcula sola con las ventas en efectivo del despacho. Ahí ves el total cobrado, cuánto se depositó en la cuenta del titular y cuánto se quedó en oficina. Los clientes en efectivo ya vienen incluidos; no se capturan a mano.",
-      "Confirma cada despacho con un clic. Si se quedó efectivo en la oficina, ajusta el monto antes de confirmar. “Confirmar todos” registra de una vez los despachos pendientes.",
+      "El “Cierre de efectivo del viernes” elige un despacho para conservar efectivo. Calcula lo que falta para llegar al efectivo objetivo, descuenta los gastos y la nómina ya registrados y deposita el sobrante anterior. Los demás despachos pendientes se confirman y su cobranza se deposita; el efectivo que ya estaba en oficina se conserva.",
+      "Confirma cada despacho con un clic cuando necesites una corrección manual. Si se quedó efectivo en la oficina, ajusta el monto antes de confirmar. “Confirmar todos” registra de una vez los despachos pendientes.",
       "Abajo aparecen los cobros a crédito registrados en Contabilidad que aún no tienen movimiento en el flujo. Si el cobro se registra como efectivo, entra a efectivo en oficina; si es transferencia, depósito, cheque o SPEI, entra a la cuenta del titular. Usa “Solo crédito” para ocultar la cobranza en efectivo y ver únicamente esos cobros.",
     ],
   },
@@ -247,7 +248,7 @@ export const EXCEL_COMPARISON: HelpSection = {
     "Fila CAJA CHICA de tu hoja = columna “Caja chica (ingreso)” del corte y tarjeta “Cobranza del periodo”. Es la cobranza de ruta y clientes, no el saldo de la oficina.",
     "Columna CORTE FINAL / saldo de la cuenta = columna “Cuenta del titular” del corte.",
     "Columna “Cierre caja chica” = columna “Efectivo en oficina (cierre)”. Es el efectivo que quedó en la oficina después de depositar (puede ser 0).",
-    "INGRESO A CUENTA de tu hoja = depósito del efectivo de la oficina a la cuenta del titular y la cobranza que el chofer deposita directo.",
+    "INGRESO A CUENTA de tu hoja = depósito del efectivo de la oficina a la cuenta del titular, la cobranza que el chofer deposita directo y el sobrante que deposita el cierre de viernes.",
     "La “Caja general” de tu hoja es la cuenta del titular; aquí la llamamos “Cuenta del titular”. La “Caja general” del sistema anterior es otra vista (el efectivo registrado).",
     "Deuda con Enrique de tu hoja ≠ “Deuda remesas (proveedores)” del módulo.",
     "Si tu hoja no incluye un documento que sí está en el ERP, aparecerá como pendiente en “Cobros por registrar” hasta que lo registres o lo dejes fuera del flujo.",
@@ -264,7 +265,19 @@ export const LEDGER_DIFFERENCES: string[] = [
 export const FAQ: HelpFaq[] = [
   {
     q: "¿Por qué el efectivo en oficina aparece en $0?",
-    a: "Porque al final de la semana se depositó todo el efectivo en la cuenta del titular. La cobranza de la semana no desaparece: está en “Cobranza del periodo” y en “Caja chica (ingreso)” del corte. El $0 es el efectivo que quedó en la oficina.",
+    a: "Porque no quedó efectivo en la oficina o el cierre de viernes depositó el sobrante. La cobranza de la semana no desaparece: está en “Cobranza del periodo” y en “Caja chica (ingreso)” del corte. El $0 es el efectivo que quedó en la oficina.",
+  },
+  {
+    q: "¿Cómo funciona el cierre de efectivo del viernes?",
+    a: "Eliges el despacho que conservará efectivo. El sistema revisa la nómina ya registrada en Gastos, calcula cuánto falta para llegar al efectivo objetivo de la oficina y deposita el resto de los despachos. Si ya había sobrante de la semana anterior, solo retiene la diferencia y deposita el exceso.",
+  },
+  {
+    q: "¿De dónde sale la nómina del cierre de viernes?",
+    a: "De los gastos con categoría Nómina que ya registraste en Gastos para esa semana. No se captura dos veces en el flujo. Si no hay nómina registrada, el sistema avisa pero te deja continuar.",
+  },
+  {
+    q: "¿Qué pasa si el despacho del viernes no alcanza?",
+    a: "Se retiene todo el efectivo de ese despacho y el sistema muestra cuánto falta para el objetivo. Puedes elegir otro despacho y volver a calcular o ajustar el efectivo objetivo en Configurar.",
   },
   {
     q: "¿Por qué “Caja chica (ingreso)” no es el saldo de la oficina?",
@@ -276,11 +289,11 @@ export const FAQ: HelpFaq[] = [
   },
   {
     q: "¿Cómo registro el efectivo que se quedó en la oficina?",
-    a: "En “Cobranza de ruta” ajusta “Se quedó en oficina” antes de confirmar el despacho. El resto entra a la cuenta del titular.",
+    a: "Usa “Cierre de efectivo del viernes” y elige el despacho que conservará efectivo. El sistema calcula cuánto retener para la nómina y el efectivo objetivo. Para correcciones puntuales también puedes ajustar “Se quedó en oficina” en un despacho.",
   },
   {
     q: "¿Cómo registro el depósito del chofer?",
-    a: "La parte que no se quedó en oficina entra a la cuenta del titular al confirmar la cobranza de ruta. “Depósito” es para cuando la oficina lleva su propio efectivo a la cuenta del titular.",
+    a: "La parte que no se quedó en oficina entra a la cuenta del titular al confirmar la cobranza de ruta. El cierre de viernes deposita el sobrante de la oficina; “Depósito” es para efectivo adicional que lleves a la cuenta.",
   },
   {
     q: "¿A dónde entra un cobro en efectivo?",
@@ -324,7 +337,7 @@ export const FAQ: HelpFaq[] = [
   },
   {
     q: "¿Qué se registra automático y qué a mano?",
-    a: "Automático: cobros de sucursales y clientes con cuenta, clientes de depósito directo, gastos y pagos de remesa del módulo. La cobranza de ruta se calcula sola con las ventas del despacho; solo la confirmas y ajustas el efectivo en oficina. A mano: depósitos, ajustes y corte.",
+    a: "Automático: cobros de sucursales y clientes con cuenta, clientes de depósito directo, gastos y pagos de remesa del módulo. La cobranza de ruta se calcula sola con las ventas del despacho. El cierre de viernes calcula la retención y el depósito. A mano: ajustes, depósitos adicionales y corte.",
   },
   {
     q: "¿Todavía tengo que capturar a los clientes en efectivo?",
@@ -356,6 +369,16 @@ export const GLOSSARY: HelpGlossaryItem[] = [
   {
     term: "Cuenta del titular",
     definition: "La cuenta del titular; en tu hoja es la “Caja general”.",
+  },
+  {
+    term: "Cierre de viernes",
+    definition:
+      "Cálculo que elige un despacho para conservar efectivo, descuenta la nómina registrada y deposita el sobrante para dejar el efectivo objetivo en oficina.",
+  },
+  {
+    term: "Efectivo objetivo",
+    definition:
+      "El efectivo que debe quedar en la oficina después del cierre de viernes. Se configura en Configurar y por defecto es $1,000.",
   },
   {
     term: "Efectivo en ruta",
