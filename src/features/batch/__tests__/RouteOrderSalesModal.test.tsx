@@ -23,6 +23,10 @@ vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
     mutate: mocks.mutate,
     isPending: false,
   }),
+  useRegenerateRouteOrderSales: () => ({
+    mutate: mocks.mutate,
+    isPending: false,
+  }),
 }));
 
 vi.mock("@/features/employee/api/employees.queries", () => ({
@@ -110,6 +114,130 @@ describe("RouteOrderSalesModal", () => {
     expect(screen.getByText("Forzada")).toBeInTheDocument();
   });
 
+  it("avisa y permite regenerar un pedido con cambios pendientes", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+    ];
+
+    renderModal();
+
+    expect(
+      screen.getByText(/Hay pedidos con cambios pendientes/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("kg-1"), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    expect(mocks.mutate.mock.calls[0][0]).toMatchObject({
+      orderId: 1,
+      payload: {
+        batchId: 10,
+        lines: [
+          {
+            orderId: 1,
+            lineId: 1,
+            driverId: 1,
+            headCount: 10,
+            weight: 100,
+            kgSent: 100,
+            unitPrice: 35,
+          },
+        ],
+      },
+    });
+  });
+
+  it("regenera todas las líneas aunque el filtro oculte alguna", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        unitType: "EGG",
+        clientName: "Cliente A",
+        quantity: 10,
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+      candidate({
+        lineId: 2,
+        clientId: 11,
+        clientName: "Cliente B",
+        unitType: "EGG",
+        quantity: 5,
+        alreadySold: false,
+      }),
+    ];
+
+    render(
+      <RouteOrderSalesModal
+        batch={{ ...batch, type: "EGG" }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
+      { target: { value: "Cliente A" } },
+    );
+    expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    const payload = mocks.mutate.mock.calls[0][0].payload;
+    expect(payload.lines).toHaveLength(2);
+    expect(payload.lines.map((line: { lineId: number }) => line.lineId)).toEqual(
+      [1, 2],
+    );
+  });
+
+  it("regenera líneas de pollo ocultas usando sus kilos guardados", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        clientName: "Cliente A",
+        weight: 100,
+        kgSent: 102,
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+      candidate({
+        lineId: 2,
+        clientId: 11,
+        clientName: "Cliente B",
+        weight: 50,
+        kgSent: 51,
+        alreadySold: false,
+      }),
+    ];
+
+    renderModal();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
+      { target: { value: "Cliente A" } },
+    );
+    expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    const payload = mocks.mutate.mock.calls[0][0].payload;
+    expect(payload.lines).toHaveLength(2);
+    expect(payload.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ lineId: 1, weight: 100, kgSent: 102 }),
+        expect.objectContaining({ lineId: 2, weight: 50, kgSent: 51 }),
+      ]),
+    );
+  });
+
   it("genera la venta con cabezas, kilos y kilos enviados", () => {
     mocks.mutate.mockReset();
     mocks.candidates = [candidate()];
@@ -139,7 +267,6 @@ describe("RouteOrderSalesModal", () => {
           weight: 100,
           kgSent: 100,
           unitPrice: 35,
-          saleTotal: 3500,
         },
       ],
     });

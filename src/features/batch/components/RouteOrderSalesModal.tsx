@@ -17,6 +17,7 @@ import { HiRefresh } from "react-icons/hi";
 import { useDrivers } from "@/features/employee/api/employees.queries";
 import {
   useGenerateRouteOrderSales,
+  useRegenerateRouteOrderSales,
   useRouteOrderSaleCandidates,
 } from "@/features/route-orders/api/routeOrders.queries";
 import {
@@ -50,6 +51,7 @@ interface RouteGroup {
   driverId: number | null;
   driverName: string | null;
   tripId: number | null;
+  salesRegenerationRequired: boolean;
   rows: RouteOrderSaleCandidateDTO[];
 }
 
@@ -63,8 +65,8 @@ const initialValues = (
 ): ActualValues => ({
   headCount: candidate.headCount != null ? String(candidate.headCount) : "",
   quantity: candidate.quantity != null ? String(candidate.quantity) : "",
-  weight: "",
-  kgSent: "",
+  weight: candidate.weight != null ? String(candidate.weight) : "",
+  kgSent: candidate.kgSent != null ? String(candidate.kgSent) : "",
   unitPrice: String(candidate.unitPrice ?? 0),
 });
 
@@ -118,6 +120,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
   } = useRouteOrderSaleCandidates(date);
   const { data: drivers = [] } = useDrivers();
   const generateMutation = useGenerateRouteOrderSales();
+  const regenerateMutation = useRegenerateRouteOrderSales();
 
   useEffect(() => {
     if (!isSuccess || initializedDateRef.current === date) return;
@@ -181,8 +184,14 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           driverId: candidate.driverId,
           driverName: candidate.driverName,
           tripId: candidate.tripId,
+          salesRegenerationRequired: Boolean(
+            candidate.salesRegenerationRequired,
+          ),
           rows: [],
         } satisfies RouteGroup);
+      group.salesRegenerationRequired =
+        group.salesRegenerationRequired ||
+        Boolean(candidate.salesRegenerationRequired);
       group.rows.push(candidate);
       map.set(candidate.orderId, group);
     }
@@ -284,28 +293,24 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
     return rows.length > 0 && rows.every((row) => selected.has(row.lineId));
   };
 
-  const onSubmit = () => {
-    setSubmitError(null);
-    if (selectedCandidates.length === 0) {
-      setSubmitError("Selecciona al menos un cliente.");
-      return;
-    }
-
+  const buildLines = (
+    candidates: RouteOrderSaleCandidateDTO[],
+  ): GenerateRouteOrderSalesDTO["lines"] | null => {
     const lines: GenerateRouteOrderSalesDTO["lines"] = [];
-    for (const candidate of selectedCandidates) {
+    for (const candidate of candidates) {
       const current = values[candidate.lineId] ?? initialValues(candidate);
       const driverId = candidate.driverId ?? driverByOrder[candidate.orderId];
       if (!driverId) {
         setSubmitError(
           `Selecciona un chofer para la ruta ${candidate.routeName}.`,
         );
-        return;
+        return null;
       }
 
       if (unitType === "EGG") {
         if (toNumber(current.quantity) <= 0) {
           setSubmitError(`Captura los casilleros de ${candidate.clientName}.`);
-          return;
+          return null;
         }
         lines.push({
           orderId: candidate.orderId,
@@ -314,24 +319,23 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           force: forced.has(candidate.lineId),
           quantity: toNumber(current.quantity),
           unitPrice: toNumber(current.unitPrice),
-          saleTotal: lineTotal(current, unitType),
         });
       } else {
         if (toNumber(current.headCount) <= 0) {
           setSubmitError(`Captura las cabezas de ${candidate.clientName}.`);
-          return;
+          return null;
         }
         if (toNumber(current.weight) <= 0) {
           setSubmitError(
             `Captura los kilos vendidos de ${candidate.clientName}.`,
           );
-          return;
+          return null;
         }
         if (toNumber(current.kgSent) <= 0) {
           setSubmitError(
             `Captura los kilos enviados de ${candidate.clientName}.`,
           );
-          return;
+          return null;
         }
         lines.push({
           orderId: candidate.orderId,
@@ -342,10 +346,21 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           weight: toNumber(current.weight),
           kgSent: toNumber(current.kgSent),
           unitPrice: toNumber(current.unitPrice),
-          saleTotal: lineTotal(current, unitType),
         });
       }
     }
+    return lines;
+  };
+
+  const onSubmit = () => {
+    setSubmitError(null);
+    if (selectedCandidates.length === 0) {
+      setSubmitError("Selecciona al menos un cliente.");
+      return;
+    }
+
+    const lines = buildLines(selectedCandidates);
+    if (!lines) return;
 
     generateMutation.mutate(
       { batchId: batch.id, date, lines },
@@ -356,6 +371,35 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
             error instanceof Error
               ? error.message
               : "No se pudieron generar las ventas",
+          ),
+      },
+    );
+  };
+
+  const onRegenerate = (group: RouteGroup) => {
+    setSubmitError(null);
+    const orderCandidates = candidates.filter(
+      (candidate) => candidate.orderId === group.orderId,
+    );
+    const lines = buildLines(orderCandidates);
+    if (!lines) return;
+    if (lines.length === 0) {
+      setSubmitError("El pedido no tiene clientes para regenerar.");
+      return;
+    }
+
+    regenerateMutation.mutate(
+      {
+        orderId: group.orderId,
+        payload: { batchId: batch.id, date, lines },
+      },
+      {
+        onSuccess: (response) => setResult(response),
+        onError: (error: unknown) =>
+          setSubmitError(
+            error instanceof Error
+              ? error.message
+              : "No se pudieron regenerar las ventas",
           ),
       },
     );
@@ -431,6 +475,16 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
               {formatHumanDate(date, "long")} · {batch.supplierName}
             </span>
           </div>
+
+          {groups.some((group) => group.salesRegenerationRequired) && (
+            <Alert color="warning">
+              Hay pedidos con cambios pendientes. Sus ventas ya generadas no
+              se actualizarán hasta que uses <strong>Regenerar ventas</strong>.
+              {unitType === "LIVE_CHICKEN"
+                ? " Verifica los kilos vendidos y enviados antes de regenerar."
+                : ""}
+            </Alert>
+          )}
 
           {isLoading ? (
             <div className="flex justify-center py-10">
@@ -516,6 +570,18 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                           ))}
                         </Select>
                       </div>
+                    )}
+                    {group.salesRegenerationRequired && (
+                      <Button
+                        size="xs"
+                        color="warning"
+                        onClick={() => onRegenerate(group)}
+                        disabled={regenerateMutation.isPending}
+                      >
+                        {regenerateMutation.isPending
+                          ? "Regenerando..."
+                          : "Regenerar ventas"}
+                      </Button>
                     )}
                   </div>
 
@@ -716,14 +782,31 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           )}
 
           {result && (
-            <Alert color={result.skippedCount > 0 ? "warning" : "success"}>
+            <Alert
+              color={
+                result.skippedCount > 0 ||
+                (result.regenerationRequiredOrderIds?.length ?? 0) > 0
+                  ? "warning"
+                  : "success"
+              }
+            >
               Se generaron {result.createdCount} venta
-              {result.createdCount === 1 ? "" : "s"} por{" "}
-              {formatMXN(result.totalAmount)}.
+              {result.createdCount === 1 ? "" : "s"}
+              {(result.updatedCount ?? 0) > 0
+                ? ` y se actualizaron ${result.updatedCount}`
+                : ""}{" "}
+              por {formatMXN(result.totalAmount)}.
               {result.skippedCount > 0
                 ? ` Se omitieron ${result.skippedCount} cliente${
                     result.skippedCount === 1 ? "" : "s"
                   } porque ya tenían venta.`
+                : ""}
+              {(result.regenerationRequiredOrderIds?.length ?? 0) > 0
+                ? ` ${result.regenerationRequiredOrderIds?.length} pedido${
+                    result.regenerationRequiredOrderIds?.length === 1
+                      ? ""
+                      : "s"
+                  } requiere${result.regenerationRequiredOrderIds?.length === 1 ? "" : "n"} regenerar sus ventas.`
                 : ""}
             </Alert>
           )}

@@ -159,6 +159,15 @@ export default function RouteOrdersPage({ unitType }: Props) {
   }, [selectedSheet?.order.trip]);
 
   useEffect(() => {
+    const required = Boolean(selectedSheet?.order.salesRegenerationRequired);
+    setDraft((previous) =>
+      previous && Boolean(previous.salesRegenerationRequired) !== required
+        ? { ...previous, salesRegenerationRequired: required }
+        : previous,
+    );
+  }, [selectedSheet?.order.salesRegenerationRequired]);
+
+  useEffect(() => {
     if (sheets.length === 0) {
       setSelectedRouteId(null);
       return;
@@ -725,6 +734,13 @@ export default function RouteOrdersPage({ unitType }: Props) {
       </div>
 
       {toast && <Alert color={toast.type}>{toast.text}</Alert>}
+
+      {draft?.salesRegenerationRequired && (
+        <Alert color="warning">
+          Este pedido tiene ventas generadas y cambios pendientes. Regenera las
+          ventas desde la remesa para actualizarlas.
+        </Alert>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12">
