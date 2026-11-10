@@ -7,6 +7,7 @@ import {
   getRouteOrderSheet,
   getRouteOrdersDay,
   linkRouteOrderTrip,
+  regenerateRouteOrderSales,
   saveRouteOrder,
   unlinkRouteOrderTrip,
 } from "./routeOrders.api";
@@ -74,6 +75,25 @@ export const useGenerateRouteOrderSales = () => {
   return useMutation({
     mutationFn: (payload: GenerateRouteOrderSalesDTO) =>
       generateRouteOrderSales(payload),
+    onSuccess: () => {
+      invalidateRouteOrders(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+    },
+  });
+};
+
+export const useRegenerateRouteOrderSales = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: number;
+      payload: GenerateRouteOrderSalesDTO;
+    }) => regenerateRouteOrderSales(orderId, payload),
     onSuccess: () => {
       invalidateRouteOrders(queryClient);
       queryClient.invalidateQueries({ queryKey: ["batches"] });

@@ -23,6 +23,10 @@ vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
     mutate: mocks.mutate,
     isPending: false,
   }),
+  useRegenerateRouteOrderSales: () => ({
+    mutate: mocks.mutate,
+    isPending: false,
+  }),
 }));
 
 vi.mock("@/features/employee/api/employees.queries", () => ({
@@ -110,6 +114,46 @@ describe("RouteOrderSalesModal", () => {
     expect(screen.getByText("Forzada")).toBeInTheDocument();
   });
 
+  it("avisa y permite regenerar un pedido con cambios pendientes", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+    ];
+
+    renderModal();
+
+    expect(
+      screen.getByText(/Hay pedidos con cambios pendientes/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("kg-1"), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    expect(mocks.mutate.mock.calls[0][0]).toMatchObject({
+      orderId: 1,
+      payload: {
+        batchId: 10,
+        lines: [
+          {
+            orderId: 1,
+            lineId: 1,
+            driverId: 1,
+            headCount: 10,
+            weight: 100,
+            kgSent: 100,
+            unitPrice: 35,
+          },
+        ],
+      },
+    });
+  });
+
   it("genera la venta con cabezas, kilos y kilos enviados", () => {
     mocks.mutate.mockReset();
     mocks.candidates = [candidate()];
@@ -139,7 +183,6 @@ describe("RouteOrderSalesModal", () => {
           weight: 100,
           kgSent: 100,
           unitPrice: 35,
-          saleTotal: 3500,
         },
       ],
     });

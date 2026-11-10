@@ -56,6 +56,17 @@ export const generateRouteOrderSales = async (
   return data;
 };
 
+export const regenerateRouteOrderSales = async (
+  orderId: number,
+  payload: GenerateRouteOrderSalesDTO,
+): Promise<GenerateRouteOrderSalesResultDTO> => {
+  const { data } = await http.post<GenerateRouteOrderSalesResultDTO>(
+    `${BASE_URL}/${orderId}/regenerate-sales`,
+    payload,
+  );
+  return data;
+};
+
 export const createRouteOrderTrip = async (
   orderId: number,
 ): Promise<RouteOrderDTO> => {

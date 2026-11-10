@@ -726,6 +726,13 @@ export default function RouteOrdersPage({ unitType }: Props) {
 
       {toast && <Alert color={toast.type}>{toast.text}</Alert>}
 
+      {draft?.salesRegenerationRequired && (
+        <Alert color="warning">
+          Este pedido tiene ventas generadas y cambios pendientes. Regenera las
+          ventas desde la remesa para actualizarlas.
+        </Alert>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Spinner size="xl" />

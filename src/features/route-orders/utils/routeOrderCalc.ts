@@ -291,6 +291,9 @@ export const buildDraft = (
     vehicleName: sheet.order?.vehicleName ?? "",
     tripId: sheet.order?.tripId ?? null,
     notes: sheet.order?.notes ?? "",
+    salesRegenerationRequired: Boolean(
+      sheet.order?.salesRegenerationRequired,
+    ),
     rows: sortRows(rows),
   };
 };
