@@ -65,8 +65,8 @@ const initialValues = (
 ): ActualValues => ({
   headCount: candidate.headCount != null ? String(candidate.headCount) : "",
   quantity: candidate.quantity != null ? String(candidate.quantity) : "",
-  weight: "",
-  kgSent: "",
+  weight: candidate.weight != null ? String(candidate.weight) : "",
+  kgSent: candidate.kgSent != null ? String(candidate.kgSent) : "",
   unitPrice: String(candidate.unitPrice ?? 0),
 });
 
@@ -481,7 +481,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
               Hay pedidos con cambios pendientes. Sus ventas ya generadas no
               se actualizarán hasta que uses <strong>Regenerar ventas</strong>.
               {unitType === "LIVE_CHICKEN"
-                ? " Captura también los kilos vendidos y enviados antes de regenerar."
+                ? " Verifica los kilos vendidos y enviados antes de regenerar."
                 : ""}
             </Alert>
           )}

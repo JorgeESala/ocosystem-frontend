@@ -197,6 +197,47 @@ describe("RouteOrderSalesModal", () => {
     );
   });
 
+  it("regenera líneas de pollo ocultas usando sus kilos guardados", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        clientName: "Cliente A",
+        weight: 100,
+        kgSent: 102,
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+      candidate({
+        lineId: 2,
+        clientId: 11,
+        clientName: "Cliente B",
+        weight: 50,
+        kgSent: 51,
+        alreadySold: false,
+      }),
+    ];
+
+    renderModal();
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
+      { target: { value: "Cliente A" } },
+    );
+    expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    const payload = mocks.mutate.mock.calls[0][0].payload;
+    expect(payload.lines).toHaveLength(2);
+    expect(payload.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ lineId: 1, weight: 100, kgSent: 102 }),
+        expect.objectContaining({ lineId: 2, weight: 50, kgSent: 51 }),
+      ]),
+    );
+  });
+
   it("genera la venta con cabezas, kilos y kilos enviados", () => {
     mocks.mutate.mockReset();
     mocks.candidates = [candidate()];

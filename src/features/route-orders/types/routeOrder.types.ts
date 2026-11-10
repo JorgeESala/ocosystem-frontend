@@ -144,6 +144,8 @@ export interface RouteOrderSaleCandidateDTO {
   headCount?: number | null;
   quantity?: number | null;
   unitPrice: number;
+  weight?: number | null;
+  kgSent?: number | null;
   alreadySold: boolean;
   salesRegenerationRequired?: boolean | null;
 }
