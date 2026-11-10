@@ -378,7 +378,10 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
 
   const onRegenerate = (group: RouteGroup) => {
     setSubmitError(null);
-    const lines = buildLines(group.rows);
+    const orderCandidates = candidates.filter(
+      (candidate) => candidate.orderId === group.orderId,
+    );
+    const lines = buildLines(orderCandidates);
     if (!lines) return;
     if (lines.length === 0) {
       setSubmitError("El pedido no tiene clientes para regenerar.");
@@ -477,6 +480,9 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
             <Alert color="warning">
               Hay pedidos con cambios pendientes. Sus ventas ya generadas no
               se actualizarán hasta que uses <strong>Regenerar ventas</strong>.
+              {unitType === "LIVE_CHICKEN"
+                ? " Captura también los kilos vendidos y enviados antes de regenerar."
+                : ""}
             </Alert>
           )}
 

@@ -159,6 +159,15 @@ export default function RouteOrdersPage({ unitType }: Props) {
   }, [selectedSheet?.order.trip]);
 
   useEffect(() => {
+    const required = Boolean(selectedSheet?.order.salesRegenerationRequired);
+    setDraft((previous) =>
+      previous && Boolean(previous.salesRegenerationRequired) !== required
+        ? { ...previous, salesRegenerationRequired: required }
+        : previous,
+    );
+  }, [selectedSheet?.order.salesRegenerationRequired]);
+
+  useEffect(() => {
     if (sheets.length === 0) {
       setSelectedRouteId(null);
       return;

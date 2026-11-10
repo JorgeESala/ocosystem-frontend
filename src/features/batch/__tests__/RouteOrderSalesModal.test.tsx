@@ -154,6 +154,49 @@ describe("RouteOrderSalesModal", () => {
     });
   });
 
+  it("regenera todas las líneas aunque el filtro oculte alguna", () => {
+    mocks.mutate.mockReset();
+    mocks.candidates = [
+      candidate({
+        unitType: "EGG",
+        clientName: "Cliente A",
+        quantity: 10,
+        alreadySold: true,
+        salesRegenerationRequired: true,
+      }),
+      candidate({
+        lineId: 2,
+        clientId: 11,
+        clientName: "Cliente B",
+        unitType: "EGG",
+        quantity: 5,
+        alreadySold: false,
+      }),
+    ];
+
+    render(
+      <RouteOrderSalesModal
+        batch={{ ...batch, type: "EGG" }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
+      { target: { value: "Cliente A" } },
+    );
+    expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
+
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    const payload = mocks.mutate.mock.calls[0][0].payload;
+    expect(payload.lines).toHaveLength(2);
+    expect(payload.lines.map((line: { lineId: number }) => line.lineId)).toEqual(
+      [1, 2],
+    );
+  });
+
   it("genera la venta con cabezas, kilos y kilos enviados", () => {
     mocks.mutate.mockReset();
     mocks.candidates = [candidate()];
