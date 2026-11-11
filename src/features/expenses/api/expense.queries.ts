@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { expenseApi } from "./expense.api";
 import { expenseKeys } from "./expense.keys";
 import type {
+  ExpenseComparisonRange,
   ExpenseCreateRequestDTO,
   ExpenseUpdateRequestDTO,
   ExpensesUnitType,
@@ -30,6 +31,29 @@ export const useFilterExpenses = (
         filters!.end.toISOString().split("T")[0],
       ),
     enabled: Boolean(filters),
+  });
+
+export const useExpenseComparison = (
+  unitType: ExpensesUnitType,
+  range: ExpenseComparisonRange | null,
+) =>
+  useQuery({
+    queryKey: range
+      ? expenseKeys(unitType).comparison(
+          range.start.toISOString(),
+          range.end.toISOString(),
+          range.previousStart.toISOString(),
+          range.previousEnd.toISOString(),
+        )
+      : [...expenseKeys(unitType).all, "comparison", "disabled"],
+    queryFn: () =>
+      expenseApi.compare(
+        range!.start,
+        range!.end,
+        range!.previousStart,
+        range!.previousEnd,
+      ),
+    enabled: Boolean(range),
   });
 
 export const useExpenseById = (unitType: ExpensesUnitType, id: number | null) =>

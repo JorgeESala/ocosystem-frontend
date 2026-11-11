@@ -1,5 +1,8 @@
 import { http } from "@/shared/api/http";
+import { toLocalDateString } from "@/utils/date.utils";
 import type {
+  BranchExpenseComparisonRequest,
+  BranchExpenseComparisonResponse,
   BranchExpenseFilters,
   BranchExpenseRequestDTO,
   BranchExpenseResponseDTO,
@@ -42,6 +45,24 @@ export const branchExpensesApi = {
     );
 
     return data.map(normalizeExpense);
+  },
+
+  comparison: async (
+    request: BranchExpenseComparisonRequest,
+  ): Promise<BranchExpenseComparisonResponse> => {
+    const { data } = await http.post<BranchExpenseComparisonResponse>(
+      `${API_BASE}/comparison`,
+      {
+        branchIds: request.branchIds,
+        businessUnitCategoryId: request.businessUnitCategoryId,
+        expenseCategoryId: request.expenseCategoryId,
+        start: toLocalDateString(request.startDate),
+        end: toLocalDateString(request.endDate),
+        previousStart: toLocalDateString(request.previousStartDate),
+        previousEnd: toLocalDateString(request.previousEndDate),
+      },
+    );
+    return data;
   },
 
   create: async (

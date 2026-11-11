@@ -1,3 +1,8 @@
+import type {
+  ExpenseComparisonItem,
+  ExpenseComparisonTotals,
+} from "@/features/expenses/types/expense.types";
+
 export interface BranchExpenseResponseDTO {
   id: number;
   branchId: number;
@@ -37,3 +42,41 @@ export interface BranchExpenseFilters {
   startDate: Date;
   endDate: Date;
 }
+
+export interface BranchExpenseComparisonRequest {
+  branchIds: number[];
+  businessUnitCategoryId: number;
+  expenseCategoryId?: number;
+  startDate: Date;
+  endDate: Date;
+  previousStartDate: Date;
+  previousEndDate: Date;
+}
+
+export interface BranchExpenseComparisonBranch {
+  branchId: number;
+  branchName: string;
+  currentAmount: number;
+  currentCount: number;
+  previousAmount: number;
+  previousCount: number;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  newInCurrent: boolean;
+  byCategory: BranchExpenseComparisonItem[];
+}
+
+export interface BranchExpenseComparisonResponse {
+  current: ExpenseComparisonTotals;
+  previous: ExpenseComparisonTotals;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  branches: BranchExpenseComparisonBranch[];
+  byCategory: BranchExpenseComparisonItem[];
+}
+
+export type BranchExpenseComparisonItem = ExpenseComparisonItem;

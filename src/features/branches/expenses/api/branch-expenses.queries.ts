@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { BranchExpenseFilters, BranchExpenseRequestDTO } from "../types";
+import type {
+  BranchExpenseComparisonRequest,
+  BranchExpenseFilters,
+  BranchExpenseRequestDTO,
+} from "../types";
 import { branchExpensesApi } from "./branch-expenses.api";
 import { branchExpensesKeys } from "./branch-expenses.keys";
 
@@ -14,6 +18,25 @@ export const useBranchExpensesSearch = (filters: BranchExpenseFilters | null) =>
       : ([...branchExpensesKeys.all, "search", "disabled"] as const),
     queryFn: () => branchExpensesApi.search(filters!),
     enabled: Boolean(filters),
+  });
+
+export const useBranchExpenseComparison = (
+  request: BranchExpenseComparisonRequest | null,
+) =>
+  useQuery({
+    queryKey: request
+      ? branchExpensesKeys.comparison(
+          request.branchIds,
+          request.businessUnitCategoryId,
+          request.expenseCategoryId,
+          request.startDate.toISOString(),
+          request.endDate.toISOString(),
+          request.previousStartDate.toISOString(),
+          request.previousEndDate.toISOString(),
+        )
+      : ([...branchExpensesKeys.all, "comparison", "disabled"] as const),
+    queryFn: () => branchExpensesApi.comparison(request!),
+    enabled: Boolean(request),
   });
 
 const upsertExpenseInCache = <T extends { id: number }>(

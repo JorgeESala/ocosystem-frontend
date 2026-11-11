@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BranchExpensesPage from "../pages/BranchExpensesPage";
@@ -7,6 +7,7 @@ import type { BranchExpenseResponseDTO } from "../types";
 const mocks = vi.hoisted(() => ({
   useBranches: vi.fn(),
   useBranchExpensesSearch: vi.fn(),
+  useBranchExpenseComparison: vi.fn(),
   useExpenseCategories: vi.fn(),
   useBranchBusinessCategories: vi.fn(),
 }));
@@ -17,6 +18,7 @@ vi.mock("@/features/branches/branch/branch.queries", () => ({
 
 vi.mock("../api/branch-expenses.queries", () => ({
   useBranchExpensesSearch: mocks.useBranchExpensesSearch,
+  useBranchExpenseComparison: mocks.useBranchExpenseComparison,
 }));
 
 vi.mock("../api/branch-categories.queries", () => ({
@@ -63,6 +65,8 @@ const renderPage = () =>
 
 describe("BranchExpensesPage", () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 11));
     vi.clearAllMocks();
     mocks.useBranches.mockReturnValue({
       data: [{ id: 1, name: "Centro" }],
@@ -82,26 +86,82 @@ describe("BranchExpensesPage", () => {
       isLoading: false,
       isError: false,
     });
+    mocks.useBranchExpenseComparison.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    });
   });
 
-  it("consulta automáticamente con el rango por defecto y todas las sucursales", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("consulta automáticamente el mes en curso y todas las sucursales", () => {
     renderPage();
 
     expect(mocks.useBranchExpensesSearch).toHaveBeenCalledWith({
       branchIds: [],
-      startDate: expect.any(Date),
-      endDate: expect.any(Date),
+      startDate: new Date(2026, 10, 1),
+      endDate: new Date(2026, 10, 11),
     });
-
-    const filters = mocks.useBranchExpensesSearch.mock.calls[0][0];
-    const days =
-      (filters.endDate.getTime() - filters.startDate.getTime()) /
-      (1000 * 60 * 60 * 24);
-    expect(days).toBeCloseTo(7, 0);
+    expect(mocks.useBranchExpenseComparison).toHaveBeenCalledWith({
+      branchIds: [],
+      businessUnitCategoryId: 21,
+      expenseCategoryId: undefined,
+      startDate: new Date(2026, 10, 1),
+      endDate: new Date(2026, 10, 11),
+      previousStartDate: new Date(2026, 9, 1),
+      previousEndDate: new Date(2026, 9, 11),
+    });
 
     expect(screen.getByText("Resumen Ejecutivo")).toBeTruthy();
     expect(screen.getByText(/Todas las sucursales/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Buscar" })).toBeNull();
+  });
+
+  it("cambia a los últimos dos meses completos con el botón de sugerencia", () => {
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Últimos 2 meses completos" }),
+    );
+
+    expect(mocks.useBranchExpensesSearch).toHaveBeenLastCalledWith({
+      branchIds: [],
+      startDate: new Date(2026, 9, 1),
+      endDate: new Date(2026, 9, 31),
+    });
+    expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith({
+      branchIds: [],
+      businessUnitCategoryId: 21,
+      expenseCategoryId: undefined,
+      startDate: new Date(2026, 9, 1),
+      endDate: new Date(2026, 9, 31),
+      previousStartDate: new Date(2026, 8, 1),
+      previousEndDate: new Date(2026, 8, 30),
+    });
+  });
+
+  it("pide elegir una sola unidad de negocio para comparar", () => {
+    mocks.useBranchBusinessCategories.mockReturnValue({
+      data: [
+        { id: 21, name: "Pollo" },
+        { id: 22, name: "Huevo" },
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Huevo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pollo" }));
+
+    expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith(null);
+    expect(
+      screen.getByText(
+        "Selecciona una sola unidad de negocio para comparar los gastos.",
+      ),
+    ).toBeTruthy();
   });
 
   it("muestra los gastos devueltos por la consulta", () => {
