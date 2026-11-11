@@ -1,5 +1,7 @@
 import { http } from "@/shared/api/http";
+import { toLocalDateString } from "@/utils/date.utils";
 import type {
+  ExpenseComparisonResponse,
   ExpenseCreateRequestDTO,
   ExpenseDetailResponseDTO,
   ExpenseResponseDTO,
@@ -28,6 +30,26 @@ export const expenseApi = {
     if (start) params.start = start;
     if (end) params.end = end;
     const { data } = await http.get(`${BASE_URL}/filter`, { params });
+    return data;
+  },
+
+  compare: async (
+    start: Date,
+    end: Date,
+    previousStart: Date,
+    previousEnd: Date,
+  ): Promise<ExpenseComparisonResponse> => {
+    const { data } = await http.get<ExpenseComparisonResponse>(
+      `${BASE_URL}/comparison`,
+      {
+        params: {
+          start: toLocalDateString(start),
+          end: toLocalDateString(end),
+          previousStart: toLocalDateString(previousStart),
+          previousEnd: toLocalDateString(previousEnd),
+        },
+      },
+    );
     return data;
   },
 

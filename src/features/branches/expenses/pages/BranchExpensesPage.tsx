@@ -4,10 +4,14 @@ import { Alert, Button, Spinner } from "flowbite-react";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchExpenseModal from "../components/BranchExpenseModal";
 import BranchExpenseBreakdowns from "../components/BranchExpenseBreakdowns";
+import BranchExpenseComparison from "../components/BranchExpenseComparison";
 import BranchExpenseSummary from "../components/BranchExpenseSummary";
 import BranchExpensesFilters from "../components/BranchExpensesFilters";
 import BranchExpensesTable from "../components/BranchExpensesTable";
-import { useBranchExpensesSearch } from "../api/branch-expenses.queries";
+import {
+  useBranchExpenseComparison,
+  useBranchExpensesSearch,
+} from "../api/branch-expenses.queries";
 import {
   useBranchBusinessCategories,
   useExpenseCategories,
@@ -17,7 +21,13 @@ import {
   buildBranchExpenseSummary,
   type ExpenseSummaryItem,
 } from "../utils/expense-summary";
-import { formatHumanDate, getLastDays } from "@/utils/date.utils";
+import {
+  formatDateRange,
+  formatHumanDate,
+  getLastCompleteMonthRange,
+  getMonthToDateRange,
+  getPreviousMonthRange,
+} from "@/utils/date.utils";
 
 interface CatalogEntry {
   id: number;
@@ -59,7 +69,7 @@ export default function BranchExpensesPage() {
   const { data: branches = [], isLoading: loadingBranches } = useBranches();
   const { data: expenseCategories = [] } = useExpenseCategories();
   const { data: businessCategories = [] } = useBranchBusinessCategories();
-  const defaultRange = useMemo(() => getLastDays(7), []);
+  const defaultRange = useMemo(() => getMonthToDateRange(), []);
   const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>(
     searchParams.get("branch") ? [Number(searchParams.get("branch"))] : [],
   );
@@ -97,6 +107,55 @@ export default function BranchExpensesPage() {
   const rawExpenses = searchQuery.data ?? [];
   const isLoading = searchQuery.isLoading;
   const isError = searchQuery.isError;
+
+  const comparisonBusinessUnit = useMemo(() => {
+    if (selectedBusinessUnitIds.length > 1) return null;
+    if (selectedBusinessUnitIds.length === 1) {
+      return (
+        businessCategories.find(
+          (category) => category.id === selectedBusinessUnitIds[0],
+        ) ?? null
+      );
+    }
+    return businessCategories[0] ?? null;
+  }, [selectedBusinessUnitIds, businessCategories]);
+
+  const comparisonExpenseCategoryId =
+    selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : undefined;
+
+  const comparisonRequest = useMemo(() => {
+    if (rangeError || !startDate || !endDate || !comparisonBusinessUnit) {
+      return null;
+    }
+    const previous = getPreviousMonthRange(startDate, endDate);
+    return {
+      branchIds: selectedBranchIds,
+      businessUnitCategoryId: comparisonBusinessUnit.id,
+      expenseCategoryId: comparisonExpenseCategoryId,
+      startDate,
+      endDate,
+      previousStartDate: previous.start,
+      previousEndDate: previous.end,
+    };
+  }, [
+    rangeError,
+    startDate,
+    endDate,
+    comparisonBusinessUnit,
+    selectedBranchIds,
+    comparisonExpenseCategoryId,
+  ]);
+  const comparisonQuery = useBranchExpenseComparison(comparisonRequest);
+  const comparisonCurrentLabel =
+    startDate && endDate
+      ? formatDateRange(startDate, endDate)
+      : "Periodo actual";
+  const comparisonPreviousLabel = comparisonRequest
+    ? formatDateRange(
+        comparisonRequest.previousStartDate,
+        comparisonRequest.previousEndDate,
+      )
+    : "Periodo anterior";
 
   const motivoTerm = motivoSearch.trim().toLowerCase();
   const activeFilterCount =
@@ -154,12 +213,25 @@ export default function BranchExpensesPage() {
   })();
 
   const handleClearFilters = () => {
+    const range = getMonthToDateRange();
     setSelectedBranchIds([]);
-    setStartDate(defaultRange.start);
-    setEndDate(defaultRange.end);
+    setStartDate(range.start);
+    setEndDate(range.end);
     setSelectedCategoryIds([]);
     setSelectedBusinessUnitIds([]);
     setMotivoSearch("");
+  };
+
+  const handleCurrentMonth = () => {
+    const range = getMonthToDateRange();
+    setStartDate(range.start);
+    setEndDate(range.end);
+  };
+
+  const handleLastTwoCompleteMonths = () => {
+    const range = getLastCompleteMonthRange();
+    setStartDate(range.start);
+    setEndDate(range.end);
   };
 
   const handleCreateClick = () => {
@@ -186,6 +258,15 @@ export default function BranchExpensesPage() {
 
         <Button onClick={handleCreateClick}>Nuevo gasto</Button>
       </header>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="xs" color="gray" onClick={handleCurrentMonth}>
+          Mes en curso
+        </Button>
+        <Button size="xs" color="gray" onClick={handleLastTwoCompleteMonths}>
+          Últimos 2 meses completos
+        </Button>
+      </div>
 
       <BranchExpensesFilters
         branches={branches}
@@ -226,6 +307,26 @@ export default function BranchExpensesPage() {
             topBusinessUnit={summary.topBusinessUnit?.label}
             topExpenseCategory={summary.topExpenseCategory?.label}
           />
+
+          {selectedBusinessUnitIds.length > 1 && (
+            <Alert
+              color="warning"
+              className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
+            >
+              Selecciona una sola unidad de negocio para comparar los gastos.
+            </Alert>
+          )}
+
+          {comparisonRequest && comparisonBusinessUnit && (
+            <BranchExpenseComparison
+              data={comparisonQuery.data}
+              isLoading={comparisonQuery.isLoading}
+              isError={comparisonQuery.isError}
+              currentLabel={comparisonCurrentLabel}
+              previousLabel={comparisonPreviousLabel}
+              businessUnitLabel={comparisonBusinessUnit.name}
+            />
+          )}
 
           {isError && hasExpenses && (
             <Alert

@@ -9,4 +9,24 @@ export const branchExpensesKeys = {
       startDate,
       endDate,
     ] as const,
+  comparison: (
+    branchIds: number[],
+    businessUnitCategoryId: number,
+    expenseCategoryId: number | undefined,
+    startDate: string,
+    endDate: string,
+    previousStart: string,
+    previousEnd: string,
+  ) =>
+    [
+      ...branchExpensesKeys.all,
+      "comparison",
+      branchIds.join(","),
+      businessUnitCategoryId,
+      expenseCategoryId ?? "all",
+      startDate,
+      endDate,
+      previousStart,
+      previousEnd,
+    ] as const,
 };
