@@ -107,6 +107,22 @@ describe("getPreviousComparisonRange", () => {
     );
   });
 
+  it("uses the full last day of the previous two-month block", () => {
+    expectRange(
+      getPreviousComparisonRange(new Date(2026, 7, 1), new Date(2026, 8, 30)),
+      [2026, 5, 1],
+      [2026, 6, 31],
+    );
+  });
+
+  it("uses the last day of the previous year-end block", () => {
+    expectRange(
+      getPreviousComparisonRange(new Date(2027, 0, 1), new Date(2027, 1, 28)),
+      [2026, 10, 1],
+      [2026, 11, 31],
+    );
+  });
+
   it("uses a non-overlapping equal-length window for an arbitrary range", () => {
     expectRange(
       getPreviousComparisonRange(new Date(2026, 9, 15), new Date(2026, 10, 15)),
