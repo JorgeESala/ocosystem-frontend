@@ -27,8 +27,9 @@ export const useBranchExpenseComparison = (
     queryKey: request
       ? branchExpensesKeys.comparison(
           request.branchIds,
-          request.businessUnitCategoryId,
-          request.expenseCategoryId,
+          request.businessUnitCategoryIds,
+          request.expenseCategoryIds,
+          request.reason ?? "",
           request.startDate.toISOString(),
           request.endDate.toISOString(),
           request.previousStartDate.toISOString(),

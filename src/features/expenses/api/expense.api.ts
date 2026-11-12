@@ -1,5 +1,6 @@
 import { http } from "@/shared/api/http";
 import { toLocalDateString } from "@/utils/date.utils";
+import type { ExpenseCategoryCode, ExpenseType } from "@/core/api/types";
 import type {
   ExpenseComparisonResponse,
   ExpenseCreateRequestDTO,
@@ -14,11 +15,6 @@ export const expenseApi = {
     payload: ExpenseCreateRequestDTO,
   ): Promise<ExpenseResponseDTO> => {
     const { data } = await http.post(BASE_URL, payload);
-    return data;
-  },
-
-  getLatest: async (): Promise<ExpenseResponseDTO[]> => {
-    const { data } = await http.get(`${BASE_URL}/latest`);
     return data;
   },
 
@@ -38,17 +34,21 @@ export const expenseApi = {
     end: Date,
     previousStart: Date,
     previousEnd: Date,
+    categories: ExpenseCategoryCode[] = [],
+    expenseTypes: ExpenseType[] = [],
   ): Promise<ExpenseComparisonResponse> => {
+    const params: Record<string, string> = {
+      start: toLocalDateString(start),
+      end: toLocalDateString(end),
+      previousStart: toLocalDateString(previousStart),
+      previousEnd: toLocalDateString(previousEnd),
+    };
+    if (categories.length > 0) params.categories = categories.join(",");
+    if (expenseTypes.length > 0) params.expenseTypes = expenseTypes.join(",");
+
     const { data } = await http.get<ExpenseComparisonResponse>(
       `${BASE_URL}/comparison`,
-      {
-        params: {
-          start: toLocalDateString(start),
-          end: toLocalDateString(end),
-          previousStart: toLocalDateString(previousStart),
-          previousEnd: toLocalDateString(previousEnd),
-        },
-      },
+      { params },
     );
     return data;
   },

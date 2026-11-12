@@ -26,7 +26,7 @@ import {
   formatHumanDate,
   getLastCompleteMonthRange,
   getMonthToDateRange,
-  getPreviousMonthRange,
+  getPreviousComparisonRange,
 } from "@/utils/date.utils";
 
 interface CatalogEntry {
@@ -108,30 +108,28 @@ export default function BranchExpensesPage() {
   const isLoading = searchQuery.isLoading;
   const isError = searchQuery.isError;
 
-  const comparisonBusinessUnit = useMemo(() => {
-    if (selectedBusinessUnitIds.length > 1) return null;
+  const comparisonBusinessUnitLabel = useMemo(() => {
+    if (selectedBusinessUnitIds.length === 0) return "Todas las unidades";
     if (selectedBusinessUnitIds.length === 1) {
       return (
         businessCategories.find(
           (category) => category.id === selectedBusinessUnitIds[0],
-        ) ?? null
+        )?.name ?? "1 unidad"
       );
     }
-    return businessCategories[0] ?? null;
+    return `${selectedBusinessUnitIds.length} unidades`;
   }, [selectedBusinessUnitIds, businessCategories]);
 
-  const comparisonExpenseCategoryId =
-    selectedCategoryIds.length === 1 ? selectedCategoryIds[0] : undefined;
-
   const comparisonRequest = useMemo(() => {
-    if (rangeError || !startDate || !endDate || !comparisonBusinessUnit) {
+    if (rangeError || !startDate || !endDate) {
       return null;
     }
-    const previous = getPreviousMonthRange(startDate, endDate);
+    const previous = getPreviousComparisonRange(startDate, endDate);
     return {
       branchIds: selectedBranchIds,
-      businessUnitCategoryId: comparisonBusinessUnit.id,
-      expenseCategoryId: comparisonExpenseCategoryId,
+      businessUnitCategoryIds: selectedBusinessUnitIds,
+      expenseCategoryIds: selectedCategoryIds,
+      reason: motivoSearch.trim(),
       startDate,
       endDate,
       previousStartDate: previous.start,
@@ -141,9 +139,10 @@ export default function BranchExpensesPage() {
     rangeError,
     startDate,
     endDate,
-    comparisonBusinessUnit,
     selectedBranchIds,
-    comparisonExpenseCategoryId,
+    selectedBusinessUnitIds,
+    selectedCategoryIds,
+    motivoSearch,
   ]);
   const comparisonQuery = useBranchExpenseComparison(comparisonRequest);
   const comparisonCurrentLabel =
@@ -264,7 +263,7 @@ export default function BranchExpensesPage() {
           Mes en curso
         </Button>
         <Button size="xs" color="gray" onClick={handleLastTwoCompleteMonths}>
-          Últimos 2 meses completos
+          Comparar últimos 2 meses
         </Button>
       </div>
 
@@ -308,23 +307,14 @@ export default function BranchExpensesPage() {
             topExpenseCategory={summary.topExpenseCategory?.label}
           />
 
-          {selectedBusinessUnitIds.length > 1 && (
-            <Alert
-              color="warning"
-              className="border border-amber-900/40 bg-amber-950/40 text-amber-100"
-            >
-              Selecciona una sola unidad de negocio para comparar los gastos.
-            </Alert>
-          )}
-
-          {comparisonRequest && comparisonBusinessUnit && (
+          {comparisonRequest && (
             <BranchExpenseComparison
               data={comparisonQuery.data}
               isLoading={comparisonQuery.isLoading}
               isError={comparisonQuery.isError}
               currentLabel={comparisonCurrentLabel}
               previousLabel={comparisonPreviousLabel}
-              businessUnitLabel={comparisonBusinessUnit.name}
+              businessUnitLabel={comparisonBusinessUnitLabel}
             />
           )}
 

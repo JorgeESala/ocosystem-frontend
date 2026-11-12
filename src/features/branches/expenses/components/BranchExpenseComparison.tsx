@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Alert, Spinner } from "flowbite-react";
 import { HiChevronDown, HiChevronRight } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { comparisonVariationLabel } from "@/features/expenses/utils/expense-comparison";
+import {
+  buildComparisonHighlights,
+  comparisonVariationLabel,
+} from "@/features/expenses/utils/expense-comparison";
 import type {
   BranchExpenseComparisonItem,
   BranchExpenseComparisonResponse,
@@ -45,6 +48,7 @@ const MetricCells = ({
   previousAmount,
   amountDifference,
   amountVariationPct,
+  newInCurrent,
 }: {
   currentCount: number;
   previousCount: number;
@@ -54,6 +58,7 @@ const MetricCells = ({
   previousAmount: number;
   amountDifference: number;
   amountVariationPct: number | null;
+  newInCurrent: boolean;
 }) => (
   <>
     <td className="px-3 py-2.5 text-right text-slate-200">
@@ -66,7 +71,13 @@ const MetricCells = ({
       {signedCount(countDifference)}
     </td>
     <td className="px-3 py-2.5 text-right text-slate-200">
-      {comparisonVariationLabel(currentCount, previousCount, countVariationPct)}
+      {newInCurrent
+        ? "Nuevo"
+        : comparisonVariationLabel(
+            currentCount,
+            previousCount,
+            countVariationPct,
+          )}
     </td>
     <td className="px-3 py-2.5 text-right font-mono text-slate-200">
       {formatMXN(currentAmount)}
@@ -95,6 +106,7 @@ const CategoryRow = ({ item }: { item: BranchExpenseComparisonItem }) => (
       previousAmount={item.previousAmount}
       amountDifference={item.amountDifference}
       amountVariationPct={item.amountVariationPct}
+      newInCurrent={item.newInCurrent}
     />
   </tr>
 );
@@ -148,6 +160,8 @@ export default function BranchExpenseComparison({
     );
   }
 
+  const highlights = buildComparisonHighlights(data.byCategory);
+
   return (
     <section className="space-y-4 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
@@ -165,7 +179,7 @@ export default function BranchExpenseComparison({
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4">
           <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
             Registros
@@ -212,6 +226,19 @@ export default function BranchExpenseComparison({
           </p>
           <p className="mt-1 text-sm text-slate-400">
             Abre una sucursal para ver sus conceptos
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4">
+          <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
+            Mayor aumento
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-white">
+            {highlights.topCountIncrease?.label ?? "Sin aumentos"}
+          </p>
+          <p className="mt-1 text-sm text-slate-400">
+            {highlights.topCountIncrease
+              ? `${signedCount(highlights.topCountIncrease.countDifference)} registros`
+              : "Ningún concepto creció"}
           </p>
         </div>
       </div>
@@ -302,6 +329,7 @@ const BranchRows = ({
         previousAmount={branch.previousAmount}
         amountDifference={branch.amountDifference}
         amountVariationPct={branch.amountVariationPct}
+        newInCurrent={branch.newInCurrent}
       />
     </tr>
     {expanded && branch.byCategory.length === 0 && (

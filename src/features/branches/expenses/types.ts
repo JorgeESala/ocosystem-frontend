@@ -45,8 +45,9 @@ export interface BranchExpenseFilters {
 
 export interface BranchExpenseComparisonRequest {
   branchIds: number[];
-  businessUnitCategoryId: number;
-  expenseCategoryId?: number;
+  businessUnitCategoryIds: number[];
+  expenseCategoryIds: number[];
+  reason?: string;
   startDate: Date;
   endDate: Date;
   previousStartDate: Date;

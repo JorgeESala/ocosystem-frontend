@@ -107,8 +107,9 @@ describe("BranchExpensesPage", () => {
     });
     expect(mocks.useBranchExpenseComparison).toHaveBeenCalledWith({
       branchIds: [],
-      businessUnitCategoryId: 21,
-      expenseCategoryId: undefined,
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      reason: "",
       startDate: new Date(2026, 10, 1),
       endDate: new Date(2026, 10, 11),
       previousStartDate: new Date(2026, 9, 1),
@@ -120,11 +121,11 @@ describe("BranchExpensesPage", () => {
     expect(screen.queryByRole("button", { name: "Buscar" })).toBeNull();
   });
 
-  it("cambia a los últimos dos meses completos con el botón de sugerencia", () => {
+  it("compara octubre contra septiembre con el botón de sugerencia", () => {
     renderPage();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Últimos 2 meses completos" }),
+      screen.getByRole("button", { name: "Comparar últimos 2 meses" }),
     );
 
     expect(mocks.useBranchExpensesSearch).toHaveBeenLastCalledWith({
@@ -134,8 +135,9 @@ describe("BranchExpensesPage", () => {
     });
     expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith({
       branchIds: [],
-      businessUnitCategoryId: 21,
-      expenseCategoryId: undefined,
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      reason: "",
       startDate: new Date(2026, 9, 1),
       endDate: new Date(2026, 9, 31),
       previousStartDate: new Date(2026, 8, 1),
@@ -143,7 +145,43 @@ describe("BranchExpensesPage", () => {
     });
   });
 
-  it("pide elegir una sola unidad de negocio para comparar", () => {
+  it("compara todas las unidades cuando no hay una seleccionada", () => {
+    renderPage();
+
+    expect(mocks.useBranchExpenseComparison).toHaveBeenCalledWith(
+      expect.objectContaining({
+        businessUnitCategoryIds: [],
+        expenseCategoryIds: [],
+        reason: "",
+      }),
+    );
+    expect(screen.getByText(/Todas las unidades/)).toBeTruthy();
+  });
+
+  it("filtra la comparativa por la unidad y el motivo seleccionados", () => {
+    mocks.useBranchBusinessCategories.mockReturnValue({
+      data: [
+        { id: 21, name: "Pollo" },
+        { id: 22, name: "Huevo" },
+      ],
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Huevo" }));
+    fireEvent.change(screen.getByPlaceholderText("Ej. plumas"), {
+      target: { value: "gas" },
+    });
+
+    expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        businessUnitCategoryIds: [22],
+        reason: "gas",
+      }),
+    );
+  });
+
+  it("incluye todas las unidades seleccionadas en la comparativa", () => {
     mocks.useBranchBusinessCategories.mockReturnValue({
       data: [
         { id: 21, name: "Pollo" },
@@ -156,12 +194,12 @@ describe("BranchExpensesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Huevo" }));
     fireEvent.click(screen.getByRole("button", { name: "Pollo" }));
 
-    expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith(null);
-    expect(
-      screen.getByText(
-        "Selecciona una sola unidad de negocio para comparar los gastos.",
-      ),
-    ).toBeTruthy();
+    expect(mocks.useBranchExpenseComparison).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        businessUnitCategoryIds: [22, 21],
+      }),
+    );
+    expect(screen.getByText(/2 unidades/)).toBeTruthy();
   });
 
   it("muestra los gastos devueltos por la consulta", () => {

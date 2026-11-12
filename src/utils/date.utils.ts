@@ -134,10 +134,68 @@ export const getMonthToDateRange = (now: Date = new Date()) => ({
   end: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
 });
 
-export const getPreviousMonthRange = (start: Date, end: Date) => ({
-  start: shiftMonth(start, -1),
-  end: shiftMonth(end, -1),
-});
+export const getPreviousComparisonRange = (start: Date, end: Date) => {
+  const sameMonth =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth();
+  const isFullMonth =
+    start.getDate() === 1 &&
+    end.getDate() === daysInMonth(end.getFullYear(), end.getMonth());
+
+  if (sameMonth) {
+    const previousMonth = new Date(
+      start.getFullYear(),
+      start.getMonth() - 1,
+      1,
+    );
+    const previousYear = previousMonth.getFullYear();
+    const previousMonthIndex = previousMonth.getMonth();
+    const previousLastDay = daysInMonth(previousYear, previousMonthIndex);
+    return {
+      start: previousMonth,
+      end: new Date(
+        previousYear,
+        previousMonthIndex,
+        isFullMonth
+          ? previousLastDay
+          : Math.min(end.getDate(), previousLastDay),
+      ),
+    };
+  }
+
+  const monthsSpanned =
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth()) +
+    1;
+  const isFullBlock =
+    start.getDate() === 1 &&
+    end.getDate() === daysInMonth(end.getFullYear(), end.getMonth());
+
+  if (isFullBlock) {
+    return {
+      start: shiftMonth(start, -monthsSpanned),
+      end: shiftMonth(end, -monthsSpanned),
+    };
+  }
+
+  const dayCount =
+    Math.round(
+      (Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) -
+        Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) /
+        86400000,
+    ) + 1;
+  const previousEnd = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate() - 1,
+  );
+  const previousStart = new Date(
+    previousEnd.getFullYear(),
+    previousEnd.getMonth(),
+    previousEnd.getDate() - (dayCount - 1),
+  );
+  return { start: previousStart, end: previousEnd };
+};
 
 export const getLastCompleteMonthRange = (now: Date = new Date()) => {
   const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);

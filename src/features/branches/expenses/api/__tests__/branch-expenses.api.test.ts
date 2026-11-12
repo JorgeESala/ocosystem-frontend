@@ -38,8 +38,9 @@ describe("branchExpensesApi.comparison", () => {
 
     const result = await branchExpensesApi.comparison({
       branchIds: [3, 4],
-      businessUnitCategoryId: 21,
-      expenseCategoryId: 11,
+      businessUnitCategoryIds: [21, 22],
+      expenseCategoryIds: [11, 12],
+      reason: "gasolina",
       startDate: new Date(2026, 9, 1),
       endDate: new Date(2026, 9, 31),
       previousStartDate: new Date(2026, 8, 1),
@@ -48,8 +49,9 @@ describe("branchExpensesApi.comparison", () => {
 
     expect(mockedHttp.post).toHaveBeenCalledWith("/api/expenses/comparison", {
       branchIds: [3, 4],
-      businessUnitCategoryId: 21,
-      expenseCategoryId: 11,
+      businessUnitCategoryIds: [21, 22],
+      expenseCategoryIds: [11, 12],
+      reason: "gasolina",
       start: "2026-10-01",
       end: "2026-10-31",
       previousStart: "2026-09-01",
