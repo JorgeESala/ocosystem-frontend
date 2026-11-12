@@ -41,6 +41,12 @@ export interface BranchApiKeyDTO {
   active: boolean;
   createdAt: string;
   lastUsedAt: string | null;
+  lastAppVersion: string | null;
+}
+
+export interface LatestVersionDTO {
+  version: string;
+  mandatory: boolean;
 }
 
 export interface CreatedApiKeyDTO {
