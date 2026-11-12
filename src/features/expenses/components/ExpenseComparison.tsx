@@ -292,11 +292,13 @@ const ComparisonTable = ({ items }: { items: ExpenseComparisonItem[] }) => (
               {signedCount(item.countDifference)}
             </td>
             <td className="px-3 py-2.5 text-right text-slate-200">
-              {comparisonVariationLabel(
-                item.currentCount,
-                item.previousCount,
-                item.countVariationPct,
-              )}
+              {item.newInCurrent
+                ? "Nuevo"
+                : comparisonVariationLabel(
+                    item.currentCount,
+                    item.previousCount,
+                    item.countVariationPct,
+                  )}
             </td>
             <td className="px-3 py-2.5 text-right font-mono text-slate-200">
               {formatMXN(item.currentAmount)}

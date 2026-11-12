@@ -21,7 +21,7 @@ import {
   formatDateRange,
   getLastCompleteMonthRange,
   getMonthToDateRange,
-  getPreviousMonthRange,
+  getPreviousComparisonRange,
 } from "@/utils/date.utils";
 
 interface ExpensesPageProps {
@@ -56,7 +56,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
 
   const comparisonRange = useMemo(() => {
     if (!activeDateFilters) return null;
-    const previous = getPreviousMonthRange(
+    const previous = getPreviousComparisonRange(
       activeDateFilters.start,
       activeDateFilters.end,
     );
@@ -67,7 +67,10 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
       previousEnd: previous.end,
     };
   }, [activeDateFilters]);
-  const comparisonQuery = useExpenseComparison(unitType, comparisonRange);
+  const comparisonQuery = useExpenseComparison(unitType, comparisonRange, {
+    categories: selectedCategoryCodes,
+    expenseTypes: selectedExpenseTypes,
+  });
   const currentLabel = activeDateFilters
     ? formatDateRange(activeDateFilters.start, activeDateFilters.end)
     : "Periodo actual";
@@ -164,7 +167,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
           Mes en curso
         </Button>
         <Button size="xs" color="gray" onClick={handleLastTwoCompleteMonths}>
-          Últimos 2 meses completos
+          Comparar últimos 2 meses
         </Button>
       </div>
 

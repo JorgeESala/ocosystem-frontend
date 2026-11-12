@@ -57,34 +57,55 @@ describe("ExpensesPage comparison", () => {
       start: new Date(2026, 10, 1),
       end: new Date(2026, 10, 11),
     });
-    expect(mocks.useExpenseComparison).toHaveBeenCalledWith("EGG", {
-      start: new Date(2026, 10, 1),
-      end: new Date(2026, 10, 11),
-      previousStart: new Date(2026, 9, 1),
-      previousEnd: new Date(2026, 9, 11),
-    });
+    expect(mocks.useExpenseComparison).toHaveBeenCalledWith(
+      "EGG",
+      {
+        start: new Date(2026, 10, 1),
+        end: new Date(2026, 10, 11),
+        previousStart: new Date(2026, 9, 1),
+        previousEnd: new Date(2026, 9, 11),
+      },
+      { categories: [], expenseTypes: [] },
+    );
     expect(screen.getByText("Comparativa de gastos")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Últimos 2 meses completos" }),
+      screen.getByRole("button", { name: "Comparar últimos 2 meses" }),
     ).toBeTruthy();
   });
 
-  it("switches to the last two complete months with the preset", () => {
+  it("compares October against September with the preset", () => {
     renderPage();
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Últimos 2 meses completos" }),
+      screen.getByRole("button", { name: "Comparar últimos 2 meses" }),
     );
 
     expect(mocks.useFilterExpenses).toHaveBeenLastCalledWith("EGG", {
       start: new Date(2026, 9, 1),
       end: new Date(2026, 9, 31),
     });
-    expect(mocks.useExpenseComparison).toHaveBeenLastCalledWith("EGG", {
-      start: new Date(2026, 9, 1),
-      end: new Date(2026, 9, 31),
-      previousStart: new Date(2026, 8, 1),
-      previousEnd: new Date(2026, 8, 30),
-    });
+    expect(mocks.useExpenseComparison).toHaveBeenLastCalledWith(
+      "EGG",
+      {
+        start: new Date(2026, 9, 1),
+        end: new Date(2026, 9, 31),
+        previousStart: new Date(2026, 8, 1),
+        previousEnd: new Date(2026, 8, 30),
+      },
+      { categories: [], expenseTypes: [] },
+    );
+  });
+
+  it("passes the active category and type filters to the comparison", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "Agua" }));
+    fireEvent.click(screen.getByRole("button", { name: "Servicios" }));
+
+    expect(mocks.useExpenseComparison).toHaveBeenLastCalledWith(
+      "EGG",
+      expect.any(Object),
+      { categories: ["WATER"], expenseTypes: ["SERVICIOS"] },
+    );
   });
 });

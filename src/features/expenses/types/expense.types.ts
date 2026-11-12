@@ -131,3 +131,8 @@ export interface ExpenseComparisonRange {
   previousStart: Date;
   previousEnd: Date;
 }
+
+export interface ExpenseComparisonFilters {
+  categories: ExpenseCategoryCode[];
+  expenseTypes: ExpenseType[];
+}

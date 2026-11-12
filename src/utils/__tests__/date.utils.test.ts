@@ -6,7 +6,7 @@ import {
   formatWeekdayDayMonth,
   getLastCompleteMonthRange,
   getMonthToDateRange,
-  getPreviousMonthRange,
+  getPreviousComparisonRange,
 } from "../date.utils";
 
 describe("formatDayMonth", () => {
@@ -66,10 +66,10 @@ describe("getMonthToDateRange", () => {
   });
 });
 
-describe("getPreviousMonthRange", () => {
-  it("shifts a full month back", () => {
+describe("getPreviousComparisonRange", () => {
+  it("uses the full previous month for a complete month", () => {
     expectRange(
-      getPreviousMonthRange(new Date(2026, 9, 1), new Date(2026, 9, 31)),
+      getPreviousComparisonRange(new Date(2026, 9, 1), new Date(2026, 9, 31)),
       [2026, 8, 1],
       [2026, 8, 30],
     );
@@ -77,31 +77,47 @@ describe("getPreviousMonthRange", () => {
 
   it("keeps the same days for a partial month", () => {
     expectRange(
-      getPreviousMonthRange(new Date(2026, 10, 1), new Date(2026, 10, 11)),
+      getPreviousComparisonRange(new Date(2026, 10, 1), new Date(2026, 10, 11)),
       [2026, 9, 1],
       [2026, 9, 11],
     );
   });
 
-  it("clamps the end to the last day of February", () => {
+  it("uses the complete previous month for February", () => {
     expectRange(
-      getPreviousMonthRange(new Date(2026, 2, 1), new Date(2026, 2, 31)),
+      getPreviousComparisonRange(new Date(2026, 1, 1), new Date(2026, 1, 28)),
+      [2026, 0, 1],
+      [2026, 0, 31],
+    );
+  });
+
+  it("clamps a complete March to the last day of February", () => {
+    expectRange(
+      getPreviousComparisonRange(new Date(2026, 2, 1), new Date(2026, 2, 31)),
       [2026, 1, 1],
       [2026, 1, 28],
     );
   });
 
-  it("clamps to February 29 on leap years", () => {
+  it("shifts a two-month complete block back two months", () => {
     expectRange(
-      getPreviousMonthRange(new Date(2028, 2, 1), new Date(2028, 2, 31)),
-      [2028, 1, 1],
-      [2028, 1, 29],
+      getPreviousComparisonRange(new Date(2026, 8, 1), new Date(2026, 9, 31)),
+      [2026, 6, 1],
+      [2026, 7, 31],
+    );
+  });
+
+  it("uses a non-overlapping equal-length window for an arbitrary range", () => {
+    expectRange(
+      getPreviousComparisonRange(new Date(2026, 9, 15), new Date(2026, 10, 15)),
+      [2026, 8, 13],
+      [2026, 9, 14],
     );
   });
 
   it("crosses into the previous year", () => {
     expectRange(
-      getPreviousMonthRange(new Date(2026, 0, 1), new Date(2026, 0, 31)),
+      getPreviousComparisonRange(new Date(2026, 0, 1), new Date(2026, 0, 31)),
       [2025, 11, 1],
       [2025, 11, 31],
     );

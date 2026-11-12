@@ -2,17 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { expenseApi } from "./expense.api";
 import { expenseKeys } from "./expense.keys";
 import type {
+  ExpenseComparisonFilters,
   ExpenseComparisonRange,
   ExpenseCreateRequestDTO,
   ExpenseUpdateRequestDTO,
   ExpensesUnitType,
 } from "../types/expense.types";
-
-export const useLatestExpenses = (unitType: ExpensesUnitType) =>
-  useQuery({
-    queryKey: expenseKeys(unitType).latest(),
-    queryFn: expenseApi.getLatest,
-  });
 
 export const useFilterExpenses = (
   unitType: ExpensesUnitType,
@@ -36,6 +31,7 @@ export const useFilterExpenses = (
 export const useExpenseComparison = (
   unitType: ExpensesUnitType,
   range: ExpenseComparisonRange | null,
+  filters: ExpenseComparisonFilters,
 ) =>
   useQuery({
     queryKey: range
@@ -44,6 +40,8 @@ export const useExpenseComparison = (
           range.end.toISOString(),
           range.previousStart.toISOString(),
           range.previousEnd.toISOString(),
+          filters.categories.join(","),
+          filters.expenseTypes.join(","),
         )
       : [...expenseKeys(unitType).all, "comparison", "disabled"],
     queryFn: () =>
@@ -52,6 +50,8 @@ export const useExpenseComparison = (
         range!.end,
         range!.previousStart,
         range!.previousEnd,
+        filters.categories,
+        filters.expenseTypes,
       ),
     enabled: Boolean(range),
   });

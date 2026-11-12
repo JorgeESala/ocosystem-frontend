@@ -54,8 +54,9 @@ export const branchExpensesApi = {
       `${API_BASE}/comparison`,
       {
         branchIds: request.branchIds,
-        businessUnitCategoryId: request.businessUnitCategoryId,
-        expenseCategoryId: request.expenseCategoryId,
+        businessUnitCategoryIds: request.businessUnitCategoryIds,
+        expenseCategoryIds: request.expenseCategoryIds,
+        reason: request.reason,
         start: toLocalDateString(request.startDate),
         end: toLocalDateString(request.endDate),
         previousStart: toLocalDateString(request.previousStartDate),

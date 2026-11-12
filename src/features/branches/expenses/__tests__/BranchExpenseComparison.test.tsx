@@ -101,6 +101,8 @@ describe("BranchExpenseComparison", () => {
     expect(screen.getByText("Centro")).toBeTruthy();
     expect(screen.getByText("Norte")).toBeTruthy();
     expect(screen.getAllByText("Nuevo").length).toBeGreaterThan(0);
+    expect(screen.getByText("Mayor aumento")).toBeTruthy();
+    expect(screen.getByText("Combustible")).toBeTruthy();
   });
 
   it("expands a branch to show its concepts with counts and amounts", () => {
