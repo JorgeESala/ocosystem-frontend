@@ -1,6 +1,10 @@
 import { http } from "@/shared/api/http";
 import { toApiDateRange } from "@/utils/date.utils";
-import type { CategorySalesDTO, DailySalesDTO } from "./salesReports.api";
+import type {
+  CategoryCostDTO,
+  CategorySalesDTO,
+  DailySalesDTO,
+} from "./salesReports.api";
 
 export interface ConsolidatedSummaryDTO {
   totalSales: number;
@@ -40,6 +44,7 @@ export interface ConsolidatedSalesReportDTO {
   previousBranchSummary: BranchSalesSummaryDTO[];
   dailySales: DailySalesDTO[];
   categories: CategorySalesDTO[];
+  categoryCosts: CategoryCostDTO[];
 }
 
 export const fetchConsolidatedSalesReport = async (

@@ -227,6 +227,38 @@ export const SalesDashboard = ({
   const categories = data?.categories || [];
   const dailySales = data?.dailySales || [];
 
+  const categorySalesSlices = useMemo(
+    () =>
+      (processedData?.categoriasComerciales ?? []).map((category) => ({
+        categoryId: category.categoryId,
+        categoryName: category.categoryName,
+        amount: category.totalSales ?? 0,
+      })),
+    [processedData],
+  );
+
+  const categoryCostSlices = useMemo(
+    () =>
+      (data?.categoryCosts ?? []).map((category) => ({
+        categoryId: category.categoryId,
+        categoryName: category.categoryName,
+        amount: category.totalCost,
+      })),
+    [data],
+  );
+
+  const categoryCostTotal = useMemo(
+    () =>
+      categoryCostSlices
+        .filter(
+          (category) =>
+            category.categoryName !== "Matados" &&
+            category.categoryName !== "Merma",
+        )
+        .reduce((acc, category) => acc + category.amount, 0),
+    [categoryCostSlices],
+  );
+
   const tableProducts = useMemo(
     () =>
       selectedCategory
@@ -577,10 +609,17 @@ export const SalesDashboard = ({
               <TopProductsCard products={visibleTopProducts} />
 
               <CategoryMixCard
-                categories={processedData.categoriasComerciales}
-                totalSales={processedData.totalVentaReal}
+                categories={categorySalesSlices}
+                total={processedData.totalVentaReal}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
+              />
+
+              <CategoryMixCard
+                title="Costos por categoría"
+                subtitle="Remesas + recepciones del periodo"
+                categories={categoryCostSlices}
+                total={categoryCostTotal}
               />
             </div>
           </div>
