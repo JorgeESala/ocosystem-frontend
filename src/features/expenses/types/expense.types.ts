@@ -93,3 +93,46 @@ export interface ExpenseFilters {
   startDate: Date;
   endDate: Date;
 }
+
+export interface ExpenseComparisonTotals {
+  totalAmount: number;
+  expenseCount: number;
+  averageAmount: number;
+}
+
+export interface ExpenseComparisonItem {
+  code: string;
+  label: string;
+  currentAmount: number;
+  currentCount: number;
+  previousAmount: number;
+  previousCount: number;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  newInCurrent: boolean;
+}
+
+export interface ExpenseComparisonResponse {
+  current: ExpenseComparisonTotals;
+  previous: ExpenseComparisonTotals;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  byCategory: ExpenseComparisonItem[];
+  byExpenseType: ExpenseComparisonItem[];
+}
+
+export interface ExpenseComparisonRange {
+  start: Date;
+  end: Date;
+  previousStart: Date;
+  previousEnd: Date;
+}
+
+export interface ExpenseComparisonFilters {
+  categories: ExpenseCategoryCode[];
+  expenseTypes: ExpenseType[];
+}

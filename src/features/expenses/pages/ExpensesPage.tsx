@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, Button, Spinner } from "flowbite-react";
 import ExpenseFilters from "../components/ExpenseFilters";
 import ExpenseModal from "../components/ExpenseModal";
 import ExpenseSummary from "../components/ExpenseSummary";
 import ExpenseBreakdowns from "../components/ExpenseBreakdowns";
+import ExpenseComparison from "../components/ExpenseComparison";
 import ExpensesTable from "../components/ExpensesTable";
-import { useLatestExpenses, useFilterExpenses } from "../api/expense.queries";
+import {
+  useExpenseComparison,
+  useFilterExpenses,
+} from "../api/expense.queries";
 import { buildExpenseSummary } from "../utils/expense-summary";
 import { EXPENSE_UNIT_CONFIG } from "../config/unitConfig";
 import type {
@@ -13,7 +17,12 @@ import type {
   ExpensesUnitType,
 } from "../types/expense.types";
 import type { ExpenseCategoryCode, ExpenseType } from "@/core/api/types";
-import { formatHumanDate } from "@/utils/date.utils";
+import {
+  formatDateRange,
+  getLastCompleteMonthRange,
+  getMonthToDateRange,
+  getPreviousComparisonRange,
+} from "@/utils/date.utils";
 
 interface ExpensesPageProps {
   unitType: ExpensesUnitType;
@@ -21,11 +30,10 @@ interface ExpensesPageProps {
 
 export default function ExpensesPage({ unitType }: ExpensesPageProps) {
   const config = EXPENSE_UNIT_CONFIG[unitType];
+  const [initialRange] = useState(() => getMonthToDateRange());
 
-  const [startDate, setStartDate] = useState<Date | null>(
-    new Date(new Date().setDate(new Date().getDate() - 30)),
-  );
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [startDate, setStartDate] = useState<Date | null>(initialRange.start);
+  const [endDate, setEndDate] = useState<Date | null>(initialRange.end);
   const [selectedCategoryCodes, setSelectedCategoryCodes] = useState<
     ExpenseCategoryCode[]
   >([]);
@@ -35,23 +43,43 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
   const [activeDateFilters, setActiveDateFilters] = useState<{
     start: Date;
     end: Date;
-  } | null>(null);
+  } | null>(initialRange);
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
     null,
   );
   const [showModal, setShowModal] = useState(false);
 
-  const latestQuery = useLatestExpenses(unitType);
   const filterQuery = useFilterExpenses(unitType, activeDateFilters);
+  const rawExpenses = filterQuery.data ?? [];
+  const isLoading = filterQuery.isLoading;
+  const isError = filterQuery.isError;
 
-  const usingDateFilters = Boolean(activeDateFilters);
-  const rawExpenses = usingDateFilters
-    ? (filterQuery.data ?? [])
-    : (latestQuery.data ?? []);
-  const isLoading = usingDateFilters
-    ? filterQuery.isLoading
-    : latestQuery.isLoading;
-  const isError = usingDateFilters ? filterQuery.isError : latestQuery.isError;
+  const comparisonRange = useMemo(() => {
+    if (!activeDateFilters) return null;
+    const previous = getPreviousComparisonRange(
+      activeDateFilters.start,
+      activeDateFilters.end,
+    );
+    return {
+      start: activeDateFilters.start,
+      end: activeDateFilters.end,
+      previousStart: previous.start,
+      previousEnd: previous.end,
+    };
+  }, [activeDateFilters]);
+  const comparisonQuery = useExpenseComparison(unitType, comparisonRange, {
+    categories: selectedCategoryCodes,
+    expenseTypes: selectedExpenseTypes,
+  });
+  const currentLabel = activeDateFilters
+    ? formatDateRange(activeDateFilters.start, activeDateFilters.end)
+    : "Periodo actual";
+  const previousLabel = comparisonRange
+    ? formatDateRange(
+        comparisonRange.previousStart,
+        comparisonRange.previousEnd,
+      )
+    : "Periodo anterior";
 
   const hasCategoryFilter = selectedCategoryCodes.length > 0;
   const hasTypeFilter = selectedExpenseTypes.length > 0;
@@ -73,14 +101,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
   const summary = buildExpenseSummary(displayedExpenses);
 
   const scopeLabel = (() => {
-    const parts: string[] = [];
-    if (activeDateFilters) {
-      parts.push(
-        `Rango ${formatHumanDate(activeDateFilters.start, "short")} - ${formatHumanDate(activeDateFilters.end, "short")}`,
-      );
-    } else {
-      parts.push("Ultimos gastos cargados");
-    }
+    const parts: string[] = [`Rango ${currentLabel}`];
     const filterCount =
       selectedCategoryCodes.length + selectedExpenseTypes.length;
     if (filterCount > 0) {
@@ -96,12 +117,27 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
     setActiveDateFilters({ start: startDate, end: endDate });
   };
 
+  const applyPreset = (range: { start: Date; end: Date }) => {
+    setStartDate(range.start);
+    setEndDate(range.end);
+    setActiveDateFilters(range);
+  };
+
+  const handleCurrentMonth = () => {
+    applyPreset(getMonthToDateRange());
+  };
+
+  const handleLastTwoCompleteMonths = () => {
+    applyPreset(getLastCompleteMonthRange());
+  };
+
   const handleClearFilters = () => {
-    setStartDate(new Date());
-    setEndDate(new Date());
+    const range = getMonthToDateRange();
+    setStartDate(range.start);
+    setEndDate(range.end);
     setSelectedCategoryCodes([]);
     setSelectedExpenseTypes([]);
-    setActiveDateFilters(null);
+    setActiveDateFilters(range);
   };
 
   const handleCreateClick = () => {
@@ -126,6 +162,15 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
         <Button onClick={handleCreateClick}>Nuevo gasto</Button>
       </header>
 
+      <div className="flex flex-wrap gap-2">
+        <Button size="xs" color="gray" onClick={handleCurrentMonth}>
+          Mes en curso
+        </Button>
+        <Button size="xs" color="gray" onClick={handleLastTwoCompleteMonths}>
+          Comparar últimos 2 meses
+        </Button>
+      </div>
+
       <ExpenseFilters
         startDate={startDate}
         endDate={endDate}
@@ -145,6 +190,14 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
         averageAmount={summary.averageAmount}
         scopeLabel={scopeLabel}
         topCategory={summary.topCategory?.label}
+      />
+
+      <ExpenseComparison
+        data={comparisonQuery.data}
+        isLoading={comparisonQuery.isLoading}
+        isError={comparisonQuery.isError}
+        currentLabel={currentLabel}
+        previousLabel={previousLabel}
       />
 
       <ExpenseBreakdowns

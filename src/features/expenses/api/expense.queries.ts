@@ -2,16 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { expenseApi } from "./expense.api";
 import { expenseKeys } from "./expense.keys";
 import type {
+  ExpenseComparisonFilters,
+  ExpenseComparisonRange,
   ExpenseCreateRequestDTO,
   ExpenseUpdateRequestDTO,
   ExpensesUnitType,
 } from "../types/expense.types";
-
-export const useLatestExpenses = (unitType: ExpensesUnitType) =>
-  useQuery({
-    queryKey: expenseKeys(unitType).latest(),
-    queryFn: expenseApi.getLatest,
-  });
 
 export const useFilterExpenses = (
   unitType: ExpensesUnitType,
@@ -30,6 +26,34 @@ export const useFilterExpenses = (
         filters!.end.toISOString().split("T")[0],
       ),
     enabled: Boolean(filters),
+  });
+
+export const useExpenseComparison = (
+  unitType: ExpensesUnitType,
+  range: ExpenseComparisonRange | null,
+  filters: ExpenseComparisonFilters,
+) =>
+  useQuery({
+    queryKey: range
+      ? expenseKeys(unitType).comparison(
+          range.start.toISOString(),
+          range.end.toISOString(),
+          range.previousStart.toISOString(),
+          range.previousEnd.toISOString(),
+          filters.categories.join(","),
+          filters.expenseTypes.join(","),
+        )
+      : [...expenseKeys(unitType).all, "comparison", "disabled"],
+    queryFn: () =>
+      expenseApi.compare(
+        range!.start,
+        range!.end,
+        range!.previousStart,
+        range!.previousEnd,
+        filters.categories,
+        filters.expenseTypes,
+      ),
+    enabled: Boolean(range),
   });
 
 export const useExpenseById = (unitType: ExpensesUnitType, id: number | null) =>
