@@ -193,6 +193,38 @@ export const ConsolidatedSalesDashboard = ({
     [data],
   );
 
+  const categorySalesSlices = useMemo(
+    () =>
+      (data?.categories ?? []).map((category) => ({
+        categoryId: category.categoryId,
+        categoryName: category.categoryName,
+        amount: category.totalSales ?? 0,
+      })),
+    [data],
+  );
+
+  const categoryCostSlices = useMemo(
+    () =>
+      (data?.categoryCosts ?? []).map((category) => ({
+        categoryId: category.categoryId,
+        categoryName: category.categoryName,
+        amount: category.totalCost,
+      })),
+    [data],
+  );
+
+  const categoryCostTotal = useMemo(
+    () =>
+      categoryCostSlices
+        .filter(
+          (category) =>
+            category.categoryName !== "Matados" &&
+            category.categoryName !== "Merma",
+        )
+        .reduce((acc, category) => acc + category.amount, 0),
+    [categoryCostSlices],
+  );
+
   const summary = data?.summary;
   const previousSummary = data?.previousSummary ?? null;
 
@@ -704,10 +736,16 @@ export const ConsolidatedSalesDashboard = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <CategoryMixCard
-              categories={data.categories}
-              totalSales={summary.totalSales}
+              categories={categorySalesSlices}
+              total={summary.totalSales}
+            />
+            <CategoryMixCard
+              title="Costos por categoría"
+              subtitle="Remesas + recepciones del periodo"
+              categories={categoryCostSlices}
+              total={categoryCostTotal}
             />
             <TicketsByWeekdayCard
               rows={weekdayRows}

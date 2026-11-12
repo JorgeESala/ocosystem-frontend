@@ -1,13 +1,20 @@
 import { Card } from "flowbite-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatMXN } from "@/utils/moneyNumbers";
-import type { CategorySalesDTO } from "../api/salesReports.api";
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"];
 
+export interface CategoryMixSlice {
+  categoryId: number;
+  categoryName: string;
+  amount: number;
+}
+
 interface Props {
-  categories: CategorySalesDTO[];
-  totalSales: number;
+  categories: CategoryMixSlice[];
+  total: number;
+  title?: string;
+  subtitle?: string;
   selectedCategory?: string | null;
   onSelectCategory?: (categoryName: string | null) => void;
 }
@@ -58,7 +65,9 @@ const renderPercentLabel = (props: PercentLabelProps) => {
 
 export const CategoryMixCard = ({
   categories,
-  totalSales,
+  total,
+  title = "Ventas por categoría",
+  subtitle,
   selectedCategory,
   onSelectCategory,
 }: Props) => {
@@ -72,9 +81,10 @@ export const CategoryMixCard = ({
   return (
     <Card className="border-none bg-gray-800 shadow-xl">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-md mb-2 font-semibold text-gray-200">
-          Ventas por categoría
-        </h3>
+        <div>
+          <h3 className="text-md mb-2 font-semibold text-gray-200">{title}</h3>
+          {subtitle && <p className="text-[11px] text-gray-500">{subtitle}</p>}
+        </div>
         {onSelectCategory && (
           <span className="text-[11px] text-gray-500">
             Clic para filtrar productos
@@ -87,7 +97,7 @@ export const CategoryMixCard = ({
             <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
               <Pie
                 data={commercialCategories as never[]}
-                dataKey="totalSales"
+                dataKey="amount"
                 nameKey="categoryName"
                 cx="50%"
                 cy="50%"
@@ -133,8 +143,8 @@ export const CategoryMixCard = ({
         <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 px-2 pb-2">
           {commercialCategories.slice(0, 6).map((category, index) => {
             const percentage =
-              totalSales > 0
-                ? (((category.totalSales ?? 0) / totalSales) * 100).toFixed(1)
+              total > 0
+                ? ((category.amount / total) * 100).toFixed(1)
                 : "0.0";
 
             return (
@@ -156,7 +166,7 @@ export const CategoryMixCard = ({
 
                 <div className="flex flex-col items-end">
                   <span className="font-bold text-white">
-                    {formatMXN(category.totalSales ?? 0)}
+                    {formatMXN(category.amount)}
                   </span>
                   <span className="text-[10px] text-gray-500">
                     {percentage}%
