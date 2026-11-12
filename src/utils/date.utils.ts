@@ -174,7 +174,7 @@ export const getPreviousComparisonRange = (start: Date, end: Date) => {
   if (isFullBlock) {
     return {
       start: shiftMonth(start, -monthsSpanned),
-      end: shiftMonth(end, -monthsSpanned),
+      end: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1),
     };
   }
 
