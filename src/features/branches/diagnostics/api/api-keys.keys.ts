@@ -1,4 +1,5 @@
 export const apiKeyKeys = {
   all: ["branch-app-api-keys"] as const,
   list: () => [...apiKeyKeys.all, "list"] as const,
+  latestVersion: () => [...apiKeyKeys.all, "latest-version"] as const,
 };

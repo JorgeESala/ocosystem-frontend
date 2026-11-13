@@ -17,10 +17,14 @@ vi.mock("../api/api-keys.queries", () => ({
         active: true,
         createdAt: "2026-06-09T10:00:00",
         lastUsedAt: null,
+        lastAppVersion: "1.6.2",
       },
     ],
     isLoading: false,
     isError: false,
+  })),
+  useLatestVersion: vi.fn(() => ({
+    data: { version: "1.6.3", mandatory: true },
   })),
   useCreateApiKey: vi.fn(() => ({ mutate: createKey, isPending: false })),
   useRevokeApiKey: vi.fn(() => ({ mutate: revokeKey, isPending: false })),
@@ -55,6 +59,9 @@ describe("ApiKeysSection", () => {
       screen.getByText("Llaves de sucursal (app de reportes)"),
     ).toBeInTheDocument();
     expect(screen.getByText("PC caja")).toBeInTheDocument();
+    expect(screen.getByText("Versión publicada: 1.6.3")).toBeInTheDocument();
+    expect(screen.getByText("1.6.2")).toBeInTheDocument();
+    expect(screen.getByText("Desactualizada")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Revocar/i }));
     expect(revokeKey).toHaveBeenCalledWith(1);
