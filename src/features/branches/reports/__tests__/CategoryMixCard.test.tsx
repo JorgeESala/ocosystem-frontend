@@ -10,7 +10,7 @@ vi.mock("recharts", async (importOriginal) => ({
 
 const costs = [
   { categoryId: 1, categoryName: "Pollo", amount: 1000 },
-  { categoryId: 10, categoryName: "Abarrotes", amount: 250 },
+  { categoryId: 10, categoryName: "Frutas y verduras", amount: 8496.338 },
 ];
 
 const sales = [
@@ -24,15 +24,18 @@ describe("CategoryMixCard", () => {
       <CategoryMixCard
         title="Costos por categoría"
         categories={costs}
-        total={1250}
+        total={9496.338}
       />,
     );
 
     expect(screen.getByText("Costos por categoría")).toBeTruthy();
     expect(screen.getByText("Pollo")).toBeTruthy();
-    expect(screen.getByText("Abarrotes")).toBeTruthy();
-    expect(screen.getByText("80.0%")).toBeTruthy();
-    expect(screen.getByText("20.0%")).toBeTruthy();
+    expect(screen.getByText("Frutas y verduras")).toBeTruthy();
+    expect(screen.getByText("$1,000.00")).toBeTruthy();
+    expect(screen.getByText("$8,496.34")).toBeTruthy();
+    expect(screen.queryByText("$8,496.338")).toBeNull();
+    expect(screen.getByText("10.5%")).toBeTruthy();
+    expect(screen.getByText("89.5%")).toBeTruthy();
     expect(screen.queryByText("Clic para filtrar productos")).toBeNull();
   });
 
