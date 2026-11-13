@@ -229,6 +229,7 @@ export default function ExpensesPage({ unitType }: ExpensesPageProps) {
         <ExpensesTable
           expenses={displayedExpenses}
           onSelect={handleEditClick}
+          resetKey={`${activeDateFilters?.start.toISOString() ?? ""}|${activeDateFilters?.end.toISOString() ?? ""}|${selectedCategoryCodes.join(",")}|${selectedExpenseTypes.join(",")}`}
         />
       )}
 

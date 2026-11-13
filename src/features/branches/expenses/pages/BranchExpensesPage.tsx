@@ -343,6 +343,7 @@ export default function BranchExpensesPage() {
             <BranchExpensesTable
               expenses={expenses}
               onSelect={handleEditClick}
+              resetKey={`${startDate?.toISOString() ?? ""}|${endDate?.toISOString() ?? ""}|${selectedBranchIds.join(",")}|${selectedCategoryIds.join(",")}|${selectedBusinessUnitIds.join(",")}|${motivoSearch}`}
             />
           )}
 

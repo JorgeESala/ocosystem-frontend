@@ -17,6 +17,7 @@ const vehicleCategoryLabel: Record<string, string> = {
 interface ExpensesTableProps {
   expenses: ExpenseResponseDTO[];
   onSelect?: (expense: ExpenseResponseDTO) => void;
+  resetKey?: string;
 }
 
 const formatCurrency = (amount: number) =>
@@ -28,6 +29,7 @@ const formatCurrency = (amount: number) =>
 export default function ExpensesTable({
   expenses,
   onSelect,
+  resetKey = "",
 }: ExpensesTableProps) {
   const [query, setQuery] = useState("");
   const filteredExpenses = useMemo(() => {
@@ -49,7 +51,7 @@ export default function ExpensesTable({
   }, [expenses, query]);
   const pager = useClientPagination(filteredExpenses, {
     pageSize: 25,
-    resetKey: query,
+    resetKey: `${query}|${resetKey}`,
   });
 
   if (!expenses.length) {

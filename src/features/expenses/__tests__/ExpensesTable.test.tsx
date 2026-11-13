@@ -31,6 +31,19 @@ describe("ExpensesTable", () => {
     expect(screen.getByText("Gasto 26")).toBeTruthy();
   });
 
+  it("resets to page one when the parent filters change", () => {
+    const { rerender } = render(
+      <ExpensesTable expenses={expenses} resetKey="a" />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Mostrando 26–50 de 60")).toBeTruthy();
+
+    rerender(<ExpensesTable expenses={expenses} resetKey="b" />);
+
+    expect(screen.getByText("Mostrando 1–25 de 60")).toBeTruthy();
+  });
+
   it("searches the full detail list", () => {
     render(<ExpensesTable expenses={expenses} />);
 

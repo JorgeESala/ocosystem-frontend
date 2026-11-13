@@ -9,6 +9,7 @@ import type { BranchExpenseResponseDTO } from "../types";
 interface BranchExpensesTableProps {
   expenses: BranchExpenseResponseDTO[];
   onSelect?: (expense: BranchExpenseResponseDTO) => void;
+  resetKey?: string;
 }
 
 const formatCurrency = (amount: number) =>
@@ -20,6 +21,7 @@ const formatCurrency = (amount: number) =>
 export default function BranchExpensesTable({
   expenses,
   onSelect,
+  resetKey = "",
 }: BranchExpensesTableProps) {
   const [query, setQuery] = useState("");
   const filteredExpenses = useMemo(() => {
@@ -39,7 +41,7 @@ export default function BranchExpensesTable({
   }, [expenses, query]);
   const pager = useClientPagination(filteredExpenses, {
     pageSize: 25,
-    resetKey: query,
+    resetKey: `${query}|${resetKey}`,
   });
   const total = filteredExpenses.reduce(
     (sum, expense) => sum + Number(expense.amount || 0),
@@ -139,7 +141,7 @@ export default function BranchExpensesTable({
               <tfoot>
                 <tr className="border-t-2 border-slate-600 bg-slate-900/50 font-semibold">
                   <td colSpan={5} className="px-4 py-2.5 text-slate-100">
-                    Total
+                    Total de resultados
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono text-sm font-semibold whitespace-nowrap text-white">
                     {formatCurrency(total)}
