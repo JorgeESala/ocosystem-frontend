@@ -1,3 +1,4 @@
+import { InfoTip } from "@/components/InfoTip";
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { ExpenseSummaryItem } from "../utils/expense-summary";
 
@@ -30,7 +31,19 @@ const BreakdownTable = ({
 }) => (
   <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-4">
     <div className="mb-3 flex items-center justify-between gap-2">
-      <h3 className="text-sm font-semibold text-white">{title}</h3>
+      <div className="flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        <InfoTip title="Cómo leer este desglose">
+          <p>
+            Haz clic en una fila para filtrar la página por ese concepto. Vuelve
+            a hacer clic para quitar el filtro.
+          </p>
+          <p>
+            Monto: suma de los gastos del grupo. Movs: cantidad de gastos del
+            grupo. %: participación dentro del total filtrado.
+          </p>
+        </InfoTip>
+      </div>
       <span className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
         Ordenado por total
       </span>
@@ -41,7 +54,7 @@ const BreakdownTable = ({
         {emptyLabel}
       </div>
     ) : (
-      <div className="overflow-hidden rounded-2xl border border-slate-800">
+      <div className="overflow-x-auto rounded-2xl border border-slate-800">
         <table className="w-full border-collapse text-left">
           <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-slate-400 uppercase">
             <tr>

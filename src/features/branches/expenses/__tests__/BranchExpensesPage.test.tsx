@@ -181,6 +181,18 @@ describe("BranchExpensesPage", () => {
     );
   });
 
+  it("explica cómo leer el resumen, los desgloses y la tabla", () => {
+    renderPage();
+
+    expect(screen.getByLabelText("¿Cómo leer esta página?")).toBeTruthy();
+    expect(screen.getByLabelText("Total gastado")).toBeTruthy();
+    expect(screen.getByLabelText("Movimientos")).toBeTruthy();
+    expect(screen.getByLabelText("Promedio")).toBeTruthy();
+    expect(screen.getByLabelText("Sucursal líder")).toBeTruthy();
+    expect(screen.getAllByLabelText("Cómo leer este desglose")).toHaveLength(3);
+    expect(screen.getByLabelText("Alcance de la búsqueda")).toBeTruthy();
+  });
+
   it("incluye todas las unidades seleccionadas en la comparativa", () => {
     mocks.useBranchBusinessCategories.mockReturnValue({
       data: [

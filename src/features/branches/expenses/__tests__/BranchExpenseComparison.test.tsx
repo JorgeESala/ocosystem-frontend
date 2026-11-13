@@ -105,6 +105,20 @@ describe("BranchExpenseComparison", () => {
     expect(screen.getByText("Combustible")).toBeTruthy();
   });
 
+  it("explains how the comparison and its difference columns work", () => {
+    renderComparison();
+
+    expect(screen.getByLabelText("¿Cómo se compara?")).toBeTruthy();
+    expect(screen.getByLabelText("Registros del periodo")).toBeTruthy();
+    expect(screen.getByLabelText("Monto del periodo")).toBeTruthy();
+    expect(screen.getByLabelText("Sucursales comparadas")).toBeTruthy();
+    expect(screen.getByLabelText("Mayor aumento de registros")).toBeTruthy();
+    expect(screen.getByLabelText("Diferencia de registros")).toBeTruthy();
+    expect(screen.getByLabelText("Variación de registros")).toBeTruthy();
+    expect(screen.getByLabelText("Diferencia de monto")).toBeTruthy();
+    expect(screen.getByLabelText("Variación de monto")).toBeTruthy();
+  });
+
   it("expands a branch to show its concepts with counts and amounts", () => {
     renderComparison();
 
