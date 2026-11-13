@@ -128,6 +128,53 @@ describe("BranchExpenseComparison", () => {
     expect(screen.queryByText("Alimento")).toBeNull();
   });
 
+  it("opens the concept drawer when a branch has many concepts", () => {
+    const manyCategories = Array.from({ length: 10 }, (_, index) =>
+      category(
+        String(100 + index),
+        `Concepto ${index}`,
+        10 - index,
+        5,
+        1000 - index * 50,
+        500,
+      ),
+    );
+
+    renderComparison({
+      data: {
+        ...comparison,
+        branches: [
+          { ...comparison.branches[0], byCategory: manyCategories },
+          comparison.branches[1],
+        ],
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver conceptos de Centro" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Ver todos los conceptos de Centro",
+      }),
+    );
+
+    expect(screen.getByText("Comparativa de la sucursal")).toBeTruthy();
+    expect(
+      screen.getByPlaceholderText("Buscar concepto de la sucursal..."),
+    ).toBeTruthy();
+    expect(screen.getByText("Mostrando 1–10 de 10")).toBeTruthy();
+
+    fireEvent.change(
+      screen.getByPlaceholderText("Buscar concepto de la sucursal..."),
+      { target: { value: "Concepto 9" } },
+    );
+
+    const drawerTable = screen.getAllByRole("table")[1];
+    expect(within(drawerTable).getByText("Concepto 9")).toBeTruthy();
+    expect(within(drawerTable).queryByText("Concepto 0")).toBeNull();
+  });
+
   it("shows an empty state and an error state", () => {
     const { rerender } = renderComparison({
       data: {
