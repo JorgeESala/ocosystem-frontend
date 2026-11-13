@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import ExpenseComparison from "../components/ExpenseComparison";
 import type { ExpenseComparisonResponse } from "../types/expense.types";
 
@@ -87,6 +87,48 @@ describe("ExpenseComparison", () => {
     expect(typeRow).toBeTruthy();
     expect(within(typeRow!).getByText("6")).toBeTruthy();
     expect(within(typeRow!).getByText("15")).toBeTruthy();
+  });
+
+  it("shows the top 10 concepts and lets the user see, search and paginate all", () => {
+    const manyItems = Array.from({ length: 30 }, (_, index) =>
+      item(
+        `Concepto ${String(index + 1).padStart(2, "0")}`,
+        `Concepto ${String(index + 1).padStart(2, "0")}`,
+        30 - index,
+        10,
+        3000 - index * 50,
+        1000,
+      ),
+    );
+
+    renderComparison({
+      data: {
+        ...comparison,
+        byCategory: manyItems,
+        byExpenseType: [],
+      },
+    });
+
+    expect(screen.getByText("Ver todos (30)")).toBeTruthy();
+    expect(screen.getAllByRole("row")).toHaveLength(11);
+
+    fireEvent.click(screen.getByRole("button", { name: "Ver todos (30)" }));
+
+    expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Mostrando 26–30 de 30")).toBeTruthy();
+    expect(screen.getAllByRole("row")).toHaveLength(6);
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar concepto..."), {
+      target: { value: "Concepto 29" },
+    });
+
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("Concepto 29")).toBeTruthy();
+    expect(within(table).queryByText("Concepto 01")).toBeNull();
+    expect(screen.getByText("Mostrando 1–1 de 1")).toBeTruthy();
   });
 
   it("marks a new concept and a disappeared concept", () => {

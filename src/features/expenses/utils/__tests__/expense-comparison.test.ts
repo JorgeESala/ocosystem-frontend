@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   buildComparisonHighlights,
+  comparisonAmountVariationLabel,
+  comparisonCountVariationLabel,
   comparisonVariationLabel,
+  filterComparisonItems,
+  formatSignedAmount,
+  formatSignedCount,
 } from "../expense-comparison";
+import { formatMXN } from "@/utils/moneyNumbers";
 
 const item = (
   label: string,
@@ -18,9 +24,15 @@ const item = (
   currentAmount,
   previousAmount,
   amountDifference: currentAmount - previousAmount,
-  amountVariationPct: null,
+  amountVariationPct:
+    previousAmount === 0
+      ? null
+      : ((currentAmount - previousAmount) / previousAmount) * 100,
   countDifference: currentCount - previousCount,
-  countVariationPct: null,
+  countVariationPct:
+    previousCount === 0
+      ? null
+      : ((currentCount - previousCount) / previousCount) * 100,
   newInCurrent: previousCount === 0 && currentCount > 0,
 });
 
@@ -53,6 +65,52 @@ describe("buildComparisonHighlights", () => {
     expect(highlights.topCountDecrease).toBeUndefined();
     expect(highlights.topAmountIncrease).toBeUndefined();
     expect(highlights.topAmountDecrease).toBeUndefined();
+  });
+});
+
+describe("formatSignedCount", () => {
+  it("adds a plus sign only to positive values", () => {
+    expect(formatSignedCount(16)).toBe("+16");
+    expect(formatSignedCount(-6)).toBe("-6");
+    expect(formatSignedCount(0)).toBe("0");
+  });
+});
+
+describe("formatSignedAmount", () => {
+  it("adds a plus sign only to positive amounts", () => {
+    expect(formatSignedAmount(1600)).toBe(`+${formatMXN(1600)}`);
+    expect(formatSignedAmount(-600)).toBe(formatMXN(-600));
+    expect(formatSignedAmount(0)).toBe(formatMXN(0));
+  });
+});
+
+describe("comparison item variation labels", () => {
+  it("uses the new flag for counts and removes the flag for amounts", () => {
+    expect(comparisonCountVariationLabel(item("Nuevo", 2, 0, 200, 0))).toBe(
+      "Nuevo",
+    );
+    expect(comparisonCountVariationLabel(item("Baja", 0, 2, 0, 200))).toBe(
+      "-100.0%",
+    );
+    expect(comparisonAmountVariationLabel(item("Nuevo", 2, 0, 200, 0))).toBe(
+      "Nuevo",
+    );
+    expect(comparisonAmountVariationLabel(item("Baja", 0, 2, 0, 200))).toBe(
+      "-100.0%",
+    );
+  });
+});
+
+describe("filterComparisonItems", () => {
+  it("filters by label ignoring case and whitespace", () => {
+    const items = [
+      item("Combustible", 2, 1, 200, 100),
+      item("Limpieza", 1, 1, 50, 50),
+    ];
+
+    expect(filterComparisonItems(items, "  gas ")).toEqual([]);
+    expect(filterComparisonItems(items, " comb ")).toEqual([items[0]]);
+    expect(filterComparisonItems(items, "")).toEqual(items);
   });
 });
 
