@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { HiArrowDown, HiArrowUp } from "react-icons/hi";
 
 interface ComparisonKpiProps {
@@ -6,6 +7,7 @@ interface ComparisonKpiProps {
   hint: string;
   variation?: string;
   up?: boolean;
+  info?: ReactNode;
 }
 
 export default function ComparisonKpi({
@@ -14,12 +16,16 @@ export default function ComparisonKpi({
   hint,
   variation,
   up,
+  info,
 }: ComparisonKpiProps) {
   return (
     <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4">
-      <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
-        {title}
-      </p>
+      <div className="flex items-center gap-1.5">
+        <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
+          {title}
+        </p>
+        {info}
+      </div>
       <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
       <p className="mt-1 text-sm text-slate-400">{hint}</p>
       {variation && (
