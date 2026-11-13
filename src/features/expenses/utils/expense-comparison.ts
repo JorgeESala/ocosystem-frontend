@@ -1,3 +1,5 @@
+import { formatMXN } from "@/utils/moneyNumbers";
+
 export interface ComparisonMetric {
   code: string;
   label: string;
@@ -11,6 +13,19 @@ export interface ComparisonMetric {
   countVariationPct: number | null;
   newInCurrent: boolean;
 }
+
+export type ComparisonMetricValues = Pick<
+  ComparisonMetric,
+  | "currentCount"
+  | "previousCount"
+  | "countDifference"
+  | "countVariationPct"
+  | "currentAmount"
+  | "previousAmount"
+  | "amountDifference"
+  | "amountVariationPct"
+  | "newInCurrent"
+>;
 
 export interface ComparisonHighlights {
   topCountIncrease?: ComparisonMetric;
@@ -73,4 +88,41 @@ export const comparisonVariationLabel = (
   if (variationPct === 0) return "0.0%";
   const prefix = variationPct > 0 ? "+" : "";
   return `${prefix}${variationPct.toFixed(1)}%`;
+};
+
+export const formatSignedCount = (value: number): string =>
+  value > 0
+    ? `+${value.toLocaleString("es-MX")}`
+    : value.toLocaleString("es-MX");
+
+export const formatSignedAmount = (value: number): string =>
+  value > 0 ? `+${formatMXN(value)}` : formatMXN(value);
+
+export const comparisonCountVariationLabel = (
+  item: ComparisonMetricValues,
+): string =>
+  item.newInCurrent
+    ? "Nuevo"
+    : comparisonVariationLabel(
+        item.currentCount,
+        item.previousCount,
+        item.countVariationPct,
+      );
+
+export const comparisonAmountVariationLabel = (
+  item: ComparisonMetricValues,
+): string =>
+  comparisonVariationLabel(
+    item.currentAmount > 0 ? 1 : 0,
+    item.previousAmount > 0 ? 1 : 0,
+    item.amountVariationPct,
+  );
+
+export const filterComparisonItems = (
+  items: ComparisonMetric[],
+  query: string,
+): ComparisonMetric[] => {
+  const term = query.trim().toLowerCase();
+  if (!term) return items;
+  return items.filter((item) => item.label.toLowerCase().includes(term));
 };

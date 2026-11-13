@@ -1,14 +1,18 @@
-import { Alert, Spinner } from "flowbite-react";
-import { HiArrowDown, HiArrowUp, HiChartBar } from "react-icons/hi";
+import { HiChartBar } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
+import ComparisonConceptTable from "./comparison/ComparisonConceptTable";
+import ComparisonKpi from "./comparison/ComparisonKpi";
+import {
+  ComparisonEmpty,
+  ComparisonError,
+  ComparisonLoading,
+} from "./comparison/ComparisonStates";
 import {
   buildComparisonHighlights,
   comparisonVariationLabel,
+  formatSignedCount,
 } from "../utils/expense-comparison";
-import type {
-  ExpenseComparisonItem,
-  ExpenseComparisonResponse,
-} from "../types/expense.types";
+import type { ExpenseComparisonResponse } from "../types/expense.types";
 
 interface ExpenseComparisonProps {
   data?: ExpenseComparisonResponse;
@@ -17,25 +21,6 @@ interface ExpenseComparisonProps {
   currentLabel: string;
   previousLabel: string;
 }
-
-const signedCount = (value: number) =>
-  value > 0
-    ? `+${value.toLocaleString("es-MX")}`
-    : value.toLocaleString("es-MX");
-
-const signedAmount = (value: number) =>
-  value > 0 ? `+${formatMXN(value)}` : formatMXN(value);
-
-const amountVariation = (
-  currentAmount: number,
-  previousAmount: number,
-  variationPct: number | null,
-) =>
-  comparisonVariationLabel(
-    currentAmount > 0 ? 1 : 0,
-    previousAmount > 0 ? 1 : 0,
-    variationPct,
-  );
 
 const ComparisonBars = ({ data }: { data: ExpenseComparisonResponse }) => {
   const items = data.byCategory.slice(0, 6);
@@ -93,42 +78,6 @@ const ComparisonBars = ({ data }: { data: ExpenseComparisonResponse }) => {
   );
 };
 
-const Kpi = ({
-  title,
-  value,
-  hint,
-  variation,
-  up,
-}: {
-  title: string;
-  value: string;
-  hint: string;
-  variation?: string;
-  up?: boolean;
-}) => (
-  <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4">
-    <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
-      {title}
-    </p>
-    <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
-    <p className="mt-1 text-sm text-slate-400">{hint}</p>
-    {variation && (
-      <p
-        className={`mt-1 inline-flex items-center gap-1 text-xs font-semibold ${
-          up ? "text-red-300" : "text-emerald-300"
-        }`}
-      >
-        {up ? (
-          <HiArrowUp className="h-3 w-3" />
-        ) : (
-          <HiArrowDown className="h-3 w-3" />
-        )}
-        {variation}
-      </p>
-    )}
-  </div>
-);
-
 export default function ExpenseComparison({
   data,
   isLoading,
@@ -136,23 +85,8 @@ export default function ExpenseComparison({
   currentLabel,
   previousLabel,
 }: ExpenseComparisonProps) {
-  if (isError) {
-    return (
-      <Alert color="failure" className="border border-red-900/40 bg-red-950/40">
-        No se pudo cargar la comparativa.
-      </Alert>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-        <div className="flex items-center justify-center py-6">
-          <Spinner size="lg" />
-        </div>
-      </section>
-    );
-  }
+  if (isError) return <ComparisonError />;
+  if (isLoading) return <ComparisonLoading />;
 
   const hasData =
     data &&
@@ -161,17 +95,10 @@ export default function ExpenseComparison({
 
   if (!hasData) {
     return (
-      <section className="rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
-        <h2 className="text-lg font-semibold text-white">
-          Comparativa de gastos
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          {currentLabel} vs {previousLabel}
-        </p>
-        <div className="mt-4 rounded-2xl border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-400">
-          No hay gastos para comparar en estos periodos.
-        </div>
-      </section>
+      <ComparisonEmpty
+        title="Comparativa de gastos"
+        subtitle={`${currentLabel} vs ${previousLabel}`}
+      />
     );
   }
 
@@ -194,7 +121,7 @@ export default function ExpenseComparison({
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <Kpi
+        <ComparisonKpi
           title="Registros"
           value={data.current.expenseCount.toLocaleString("es-MX")}
           hint={`${data.previous.expenseCount.toLocaleString("es-MX")} en el periodo anterior`}
@@ -205,32 +132,32 @@ export default function ExpenseComparison({
           )}
           up={data.countDifference > 0}
         />
-        <Kpi
+        <ComparisonKpi
           title="Monto"
           value={formatMXN(data.current.totalAmount)}
           hint={`${formatMXN(data.previous.totalAmount)} en el periodo anterior`}
-          variation={amountVariation(
-            data.current.totalAmount,
-            data.previous.totalAmount,
+          variation={comparisonVariationLabel(
+            data.current.totalAmount > 0 ? 1 : 0,
+            data.previous.totalAmount > 0 ? 1 : 0,
             data.amountVariationPct,
           )}
           up={data.amountDifference > 0}
         />
-        <Kpi
+        <ComparisonKpi
           title="Mayor aumento"
           value={highlights.topCountIncrease?.label ?? "Sin aumentos"}
           hint={
             highlights.topCountIncrease
-              ? `${signedCount(highlights.topCountIncrease.countDifference)} registros`
+              ? `${formatSignedCount(highlights.topCountIncrease.countDifference)} registros`
               : "Ningún concepto creció"
           }
         />
-        <Kpi
+        <ComparisonKpi
           title="Mayor disminución"
           value={highlights.topCountDecrease?.label ?? "Sin disminuciones"}
           hint={
             highlights.topCountDecrease
-              ? `${signedCount(highlights.topCountDecrease.countDifference)} registros`
+              ? `${formatSignedCount(highlights.topCountDecrease.countDifference)} registros`
               : "Ningún concepto bajó"
           }
         />
@@ -238,87 +165,14 @@ export default function ExpenseComparison({
 
       <ComparisonBars data={data} />
 
-      <ComparisonTable items={data.byCategory} />
+      <ComparisonConceptTable title="Por concepto" items={data.byCategory} />
 
       {data.byExpenseType.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-white">
-            Por tipo de gasto
-          </h3>
-          <ComparisonTable items={data.byExpenseType} />
-        </div>
+        <ComparisonConceptTable
+          title="Por tipo de gasto"
+          items={data.byExpenseType}
+        />
       )}
     </section>
   );
 }
-
-const ComparisonTable = ({ items }: { items: ExpenseComparisonItem[] }) => (
-  <div className="overflow-x-auto rounded-2xl border border-slate-800">
-    <table className="w-full min-w-[860px] border-collapse text-left">
-      <thead className="bg-slate-900/80 text-xs tracking-[0.12em] text-slate-400 uppercase">
-        <tr>
-          <th className="px-3 py-2.5 font-semibold">Concepto</th>
-          <th className="px-3 py-2.5 text-right font-semibold">
-            Registros actual
-          </th>
-          <th className="px-3 py-2.5 text-right font-semibold">
-            Registros anterior
-          </th>
-          <th className="px-3 py-2.5 text-right font-semibold">
-            Dif. registros
-          </th>
-          <th className="px-3 py-2.5 text-right font-semibold">% registros</th>
-          <th className="px-3 py-2.5 text-right font-semibold">Monto actual</th>
-          <th className="px-3 py-2.5 text-right font-semibold">
-            Monto anterior
-          </th>
-          <th className="px-3 py-2.5 text-right font-semibold">Dif. monto</th>
-          <th className="px-3 py-2.5 text-right font-semibold">% monto</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-800 bg-slate-950/40">
-        {items.map((item) => (
-          <tr key={item.code} className="hover:bg-slate-900/40">
-            <td className="px-3 py-2.5 font-medium text-slate-100">
-              {item.label}
-            </td>
-            <td className="px-3 py-2.5 text-right text-slate-200">
-              {item.currentCount.toLocaleString("es-MX")}
-            </td>
-            <td className="px-3 py-2.5 text-right text-slate-400">
-              {item.previousCount.toLocaleString("es-MX")}
-            </td>
-            <td className="px-3 py-2.5 text-right text-slate-200">
-              {signedCount(item.countDifference)}
-            </td>
-            <td className="px-3 py-2.5 text-right text-slate-200">
-              {item.newInCurrent
-                ? "Nuevo"
-                : comparisonVariationLabel(
-                    item.currentCount,
-                    item.previousCount,
-                    item.countVariationPct,
-                  )}
-            </td>
-            <td className="px-3 py-2.5 text-right font-mono text-slate-200">
-              {formatMXN(item.currentAmount)}
-            </td>
-            <td className="px-3 py-2.5 text-right font-mono text-slate-400">
-              {formatMXN(item.previousAmount)}
-            </td>
-            <td className="px-3 py-2.5 text-right font-mono text-slate-200">
-              {signedAmount(item.amountDifference)}
-            </td>
-            <td className="px-3 py-2.5 text-right text-slate-200">
-              {amountVariation(
-                item.currentAmount,
-                item.previousAmount,
-                item.amountVariationPct,
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);

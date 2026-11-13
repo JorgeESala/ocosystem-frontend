@@ -128,6 +128,92 @@ describe("BranchExpenseComparison", () => {
     expect(screen.queryByText("Alimento")).toBeNull();
   });
 
+  it("shows the top 10 branches and lets the user search and paginate all", () => {
+    const manyBranches = Array.from({ length: 30 }, (_, index) => ({
+      ...comparison.branches[0],
+      branchId: index + 1,
+      branchName: `Sucursal ${String(index + 1).padStart(2, "0")}`,
+      byCategory: comparison.branches[0].byCategory,
+    }));
+
+    renderComparison({
+      data: {
+        ...comparison,
+        branches: manyBranches,
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Ver todas las sucursales (30)" }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Sucursal 11")).toBeNull();
+    expect(screen.getAllByRole("row")).toHaveLength(11);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver todas las sucursales (30)" }),
+    );
+
+    expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Mostrando 26–30 de 30")).toBeTruthy();
+    expect(screen.getByText("Sucursal 30")).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar sucursal..."), {
+      target: { value: "Sucursal 30" },
+    });
+
+    expect(screen.getByText("Mostrando 1–1 de 1")).toBeTruthy();
+    expect(screen.getByText("Sucursal 30")).toBeTruthy();
+    expect(screen.queryByText("Sucursal 01")).toBeNull();
+  });
+
+  it("opens the concept drawer when a branch has many concepts", () => {
+    const manyCategories = Array.from({ length: 10 }, (_, index) =>
+      category(
+        String(100 + index),
+        `Concepto ${index}`,
+        10 - index,
+        5,
+        1000 - index * 50,
+        500,
+      ),
+    );
+
+    renderComparison({
+      data: {
+        ...comparison,
+        branches: [
+          { ...comparison.branches[0], byCategory: manyCategories },
+          comparison.branches[1],
+        ],
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver conceptos de Centro" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Ver todos los conceptos de Centro",
+      }),
+    );
+
+    expect(screen.getByText("Comparativa de la sucursal")).toBeTruthy();
+    expect(
+      screen.getByPlaceholderText("Buscar concepto de la sucursal..."),
+    ).toBeTruthy();
+    expect(screen.getByText("Mostrando 1–10 de 10")).toBeTruthy();
+
+    fireEvent.change(
+      screen.getByPlaceholderText("Buscar concepto de la sucursal..."),
+      { target: { value: "Concepto 9" } },
+    );
+
+    const drawerTable = screen.getAllByRole("table")[1];
+    expect(within(drawerTable).getByText("Concepto 9")).toBeTruthy();
+    expect(within(drawerTable).queryByText("Concepto 0")).toBeNull();
+  });
+
   it("shows an empty state and an error state", () => {
     const { rerender } = renderComparison({
       data: {

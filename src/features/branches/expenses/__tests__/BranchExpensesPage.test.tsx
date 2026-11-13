@@ -289,10 +289,10 @@ describe("BranchExpensesPage", () => {
   it("muestra una fila de totales al final de la tabla", () => {
     renderPage();
 
-    const totalRow = screen.getByText("Total").closest("tr");
+    const totalRow = screen.getByText("Total de resultados").closest("tr");
     const cells = Array.from(totalRow?.querySelectorAll("td") ?? []).map(
       (cell) => cell.textContent,
     );
-    expect(cells).toEqual(["Total", "$150.00", ""]);
+    expect(cells).toEqual(["Total de resultados", "$150.00", ""]);
   });
 });
