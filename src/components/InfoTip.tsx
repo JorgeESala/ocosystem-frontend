@@ -27,7 +27,7 @@ export const InfoTip = ({ title, children, align = "center" }: Props) => {
       <span
         id={tooltipId}
         role="tooltip"
-        className={`absolute top-full z-50 mt-1 hidden w-72 rounded-lg border border-gray-800 bg-gray-950 p-3 text-left text-[11px] leading-relaxed font-normal text-gray-300 normal-case shadow-xl group-focus-within:block group-hover:block ${alignmentClasses[align]}`}
+        className={`absolute top-full z-50 mt-1 hidden w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-800 bg-gray-950 p-3 text-left text-[11px] leading-relaxed font-normal text-gray-300 normal-case shadow-xl group-focus-within:block group-hover:block ${alignmentClasses[align]}`}
       >
         <span className="mb-1 block border-b border-gray-800 pb-1 font-semibold text-white">
           {title}

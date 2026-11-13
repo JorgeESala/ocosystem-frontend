@@ -65,7 +65,7 @@ export default function BranchExpensesFilters({
   const hasChips = categoryOptions.length > 0 || businessUnitOptions.length > 0;
 
   return (
-    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/95 p-4 shadow-lg lg:sticky lg:top-0 lg:z-30 lg:backdrop-blur">
+    <section className="rounded-3xl border border-slate-700/80 bg-slate-950/95 p-4 shadow-lg lg:sticky lg:top-[51px] lg:z-20 lg:backdrop-blur">
       <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_150px_150px_minmax(180px,240px)_auto] lg:items-end">
         <BranchMultiSelect
           branches={branches}

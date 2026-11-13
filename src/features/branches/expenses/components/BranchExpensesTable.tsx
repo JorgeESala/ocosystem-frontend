@@ -70,7 +70,7 @@ export default function BranchExpensesTable({
         />
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] whitespace-nowrap text-slate-500 uppercase">
           {filteredExpenses.length.toLocaleString("es-MX")} registros
-          <InfoTip title="Alcance de la búsqueda">
+          <InfoTip title="Alcance de la búsqueda" align="right">
             Total de resultados de la búsqueda de esta tabla. No cambia el
             resumen ni la comparativa de arriba.
           </InfoTip>
