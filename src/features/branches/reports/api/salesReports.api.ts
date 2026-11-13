@@ -9,6 +9,12 @@ export interface CategorySalesDTO {
   quantitySold: number;
 }
 
+export interface CategoryCostDTO {
+  categoryId: number;
+  categoryName: string;
+  totalCost: number;
+}
+
 export interface DailySalesDTO {
   day: string; // LocalDate llega como string ISO
   totalSales: number;
@@ -51,6 +57,7 @@ export interface SalesReportDTO {
   summary: SalesSummaryDTO;
   products: ProductSalesDTO[];
   categories: CategorySalesDTO[];
+  categoryCosts: CategoryCostDTO[];
   dailySales: DailySalesDTO[];
   dailyCategorySales: DailyCategorySalesDTO[];
 }
