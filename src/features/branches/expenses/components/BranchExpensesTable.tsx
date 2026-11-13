@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Badge, TextInput, Tooltip } from "flowbite-react";
 import { HiPencil, HiSearch } from "react-icons/hi";
+import { InfoTip } from "@/components/InfoTip";
 import TablePagination from "@/components/TablePagination";
 import { useClientPagination } from "@/hooks/useClientPagination";
 import { formatHumanDate } from "@/utils/date.utils";
@@ -67,8 +68,12 @@ export default function BranchExpensesTable({
           onChange={(event) => setQuery(event.target.value)}
           className="w-full sm:w-64"
         />
-        <span className="text-xs font-semibold tracking-[0.18em] whitespace-nowrap text-slate-500 uppercase">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.18em] whitespace-nowrap text-slate-500 uppercase">
           {filteredExpenses.length.toLocaleString("es-MX")} registros
+          <InfoTip title="Alcance de la búsqueda">
+            Total de resultados de la búsqueda de esta tabla. No cambia el
+            resumen ni la comparativa de arriba.
+          </InfoTip>
         </span>
       </div>
 

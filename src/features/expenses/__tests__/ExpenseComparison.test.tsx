@@ -131,6 +131,30 @@ describe("ExpenseComparison", () => {
     expect(screen.getByText("Mostrando 1–1 de 1")).toBeTruthy();
   });
 
+  it("explains how the comparison and its difference columns work", () => {
+    renderComparison();
+
+    expect(screen.getByLabelText("¿Cómo se compara?")).toBeTruthy();
+    expect(screen.getByLabelText("Registros del periodo")).toBeTruthy();
+    expect(screen.getByLabelText("Monto del periodo")).toBeTruthy();
+    expect(screen.getByLabelText("Mayor aumento de registros")).toBeTruthy();
+    expect(
+      screen.getByLabelText("Mayor disminución de registros"),
+    ).toBeTruthy();
+    expect(
+      screen.getAllByLabelText("Diferencia de registros").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByLabelText("Variación de registros").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByLabelText("Diferencia de monto").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByLabelText("Variación de monto").length,
+    ).toBeGreaterThan(0);
+  });
+
   it("marks a new concept and a disappeared concept", () => {
     renderComparison();
 

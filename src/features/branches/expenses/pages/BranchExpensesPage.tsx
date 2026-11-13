@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Button, Spinner } from "flowbite-react";
+import { InfoTip } from "@/components/InfoTip";
 import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchExpenseModal from "../components/BranchExpenseModal";
 import BranchExpenseBreakdowns from "../components/BranchExpenseBreakdowns";
@@ -250,9 +251,29 @@ export default function BranchExpensesPage() {
           <h1 className="text-2xl font-semibold text-white">
             Gastos de sucursales
           </h1>
-          <p className="text-sm text-slate-400">
-            Control de gastos por sucursal, tipo de gasto y unidad de negocio.
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm text-slate-400">
+              Control de gastos por sucursal, tipo de gasto y unidad de negocio.
+            </p>
+            <InfoTip title="¿Cómo leer esta página?">
+              <p>
+                Los filtros de arriba aplican al resumen, la comparativa, los
+                desgloses y la tabla.
+              </p>
+              <p>
+                La comparativa usa el periodo anterior de la misma duración para
+                que los datos sean equivalentes.
+              </p>
+              <p>
+                Haz clic en una fila de los desgloses para filtrar la página por
+                esa sucursal, unidad o tipo de gasto.
+              </p>
+              <p>
+                “Total de resultados” responde a la búsqueda de la tabla de
+                gastos.
+              </p>
+            </InfoTip>
+          </div>
         </div>
 
         <Button onClick={handleCreateClick}>Nuevo gasto</Button>

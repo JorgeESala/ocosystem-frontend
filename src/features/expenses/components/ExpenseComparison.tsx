@@ -1,7 +1,9 @@
 import { HiChartBar } from "react-icons/hi";
+import { InfoTip } from "@/components/InfoTip";
 import { formatMXN } from "@/utils/moneyNumbers";
 import ComparisonConceptTable from "./comparison/ComparisonConceptTable";
 import ComparisonKpi from "./comparison/ComparisonKpi";
+import ComparisonPeriodHelp from "./comparison/ComparisonPeriodHelp";
 import {
   ComparisonEmpty,
   ComparisonError,
@@ -108,8 +110,9 @@ export default function ExpenseComparison({
     <section className="space-y-4 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
+          <p className="flex items-center gap-1.5 text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
             Comparativa de gastos
+            <ComparisonPeriodHelp />
           </p>
           <h2 className="text-lg font-semibold text-white">
             {currentLabel} vs {previousLabel}
@@ -131,6 +134,12 @@ export default function ExpenseComparison({
             data.countVariationPct,
           )}
           up={data.countDifference > 0}
+          info={
+            <InfoTip title="Registros del periodo">
+              Gastos del periodo actual comparados contra el periodo anterior de
+              la misma duración.
+            </InfoTip>
+          }
         />
         <ComparisonKpi
           title="Monto"
@@ -142,6 +151,11 @@ export default function ExpenseComparison({
             data.amountVariationPct,
           )}
           up={data.amountDifference > 0}
+          info={
+            <InfoTip title="Monto del periodo">
+              Suma de los montos del periodo actual y del periodo anterior.
+            </InfoTip>
+          }
         />
         <ComparisonKpi
           title="Mayor aumento"
@@ -151,6 +165,12 @@ export default function ExpenseComparison({
               ? `${formatSignedCount(highlights.topCountIncrease.countDifference)} registros`
               : "Ningún concepto creció"
           }
+          info={
+            <InfoTip title="Mayor aumento de registros">
+              Concepto con el mayor crecimiento en número de registros. Si no
+              hubo aumentos, se muestra “Sin aumentos”.
+            </InfoTip>
+          }
         />
         <ComparisonKpi
           title="Mayor disminución"
@@ -159,6 +179,12 @@ export default function ExpenseComparison({
             highlights.topCountDecrease
               ? `${formatSignedCount(highlights.topCountDecrease.countDifference)} registros`
               : "Ningún concepto bajó"
+          }
+          info={
+            <InfoTip title="Mayor disminución de registros">
+              Concepto con la mayor caída en número de registros. Si no hubo
+              disminuciones, se muestra “Sin disminuciones”.
+            </InfoTip>
           }
         />
       </div>
