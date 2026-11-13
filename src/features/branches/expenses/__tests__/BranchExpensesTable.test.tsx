@@ -23,7 +23,7 @@ describe("BranchExpensesTable", () => {
     render(<BranchExpensesTable expenses={expenses} />);
 
     expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
-    const totalRow = screen.getByText("Total").closest("tr");
+    const totalRow = screen.getByText("Total de resultados").closest("tr");
     expect(totalRow?.textContent).toContain("$3,000.00");
     expect(screen.getByText("Gasto 01")).toBeTruthy();
     expect(screen.queryByText("Gasto 26")).toBeNull();
@@ -43,8 +43,21 @@ describe("BranchExpensesTable", () => {
 
     expect(screen.getByText("Mostrando 1–15 de 15")).toBeTruthy();
     expect(screen.getAllByText("Norte").length).toBeGreaterThan(0);
-    const totalRow = screen.getByText("Total").closest("tr");
+    const totalRow = screen.getByText("Total de resultados").closest("tr");
     expect(totalRow?.textContent).toContain("$1,500.00");
+  });
+
+  it("resets to page one when the parent filters change", () => {
+    const { rerender } = render(
+      <BranchExpensesTable expenses={expenses} resetKey="a" />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Mostrando 26–30 de 30")).toBeTruthy();
+
+    rerender(<BranchExpensesTable expenses={expenses} resetKey="b" />);
+
+    expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
   });
 
   it("changes the page size", () => {

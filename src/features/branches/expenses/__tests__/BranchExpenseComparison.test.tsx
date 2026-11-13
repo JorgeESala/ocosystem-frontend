@@ -128,6 +128,45 @@ describe("BranchExpenseComparison", () => {
     expect(screen.queryByText("Alimento")).toBeNull();
   });
 
+  it("shows the top 10 branches and lets the user search and paginate all", () => {
+    const manyBranches = Array.from({ length: 30 }, (_, index) => ({
+      ...comparison.branches[0],
+      branchId: index + 1,
+      branchName: `Sucursal ${String(index + 1).padStart(2, "0")}`,
+      byCategory: comparison.branches[0].byCategory,
+    }));
+
+    renderComparison({
+      data: {
+        ...comparison,
+        branches: manyBranches,
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Ver todas las sucursales (30)" }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Sucursal 11")).toBeNull();
+    expect(screen.getAllByRole("row")).toHaveLength(11);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver todas las sucursales (30)" }),
+    );
+
+    expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+    expect(screen.getByText("Mostrando 26–30 de 30")).toBeTruthy();
+    expect(screen.getByText("Sucursal 30")).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar sucursal..."), {
+      target: { value: "Sucursal 30" },
+    });
+
+    expect(screen.getByText("Mostrando 1–1 de 1")).toBeTruthy();
+    expect(screen.getByText("Sucursal 30")).toBeTruthy();
+    expect(screen.queryByText("Sucursal 01")).toBeNull();
+  });
+
   it("opens the concept drawer when a branch has many concepts", () => {
     const manyCategories = Array.from({ length: 10 }, (_, index) =>
       category(
