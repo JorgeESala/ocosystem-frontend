@@ -1,8 +1,7 @@
 import { Card } from "flowbite-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatMXN } from "@/utils/moneyNumbers";
-
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"];
+import { colorForCategory } from "../utils/categoryColors";
 
 export interface CategoryMixSlice {
   categoryId: number;
@@ -63,6 +62,8 @@ const renderPercentLabel = (props: PercentLabelProps) => {
   );
 };
 
+const roundCents = (amount: number) => Math.round(amount * 100) / 100;
+
 export const CategoryMixCard = ({
   categories,
   total,
@@ -106,10 +107,10 @@ export const CategoryMixCard = ({
                 paddingAngle={5}
                 label={renderPercentLabel}
               >
-                {commercialCategories.map((category, index) => (
+                {commercialCategories.map((category) => (
                   <Cell
                     key={category.categoryId}
-                    fill={COLORS[index % COLORS.length]}
+                    fill={colorForCategory(category.categoryId)}
                     opacity={
                       selectedCategory &&
                       selectedCategory !== category.categoryName
@@ -134,14 +135,14 @@ export const CategoryMixCard = ({
                   borderRadius: "8px",
                 }}
                 itemStyle={{ color: "#fff" }}
-                formatter={(value: number) => formatMXN(value)}
+                formatter={(value: number) => formatMXN(roundCents(value))}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 px-2 pb-2">
-          {commercialCategories.slice(0, 6).map((category, index) => {
+          {commercialCategories.slice(0, 6).map((category) => {
             const percentage =
               total > 0
                 ? ((category.amount / total) * 100).toFixed(1)
@@ -156,7 +157,7 @@ export const CategoryMixCard = ({
                   <div
                     className="mt-1 h-3 w-3 flex-shrink-0 rounded-full"
                     style={{
-                      backgroundColor: COLORS[index % COLORS.length],
+                      backgroundColor: colorForCategory(category.categoryId),
                     }}
                   />
                   <span className="leading-tight font-medium text-gray-300">
@@ -166,7 +167,7 @@ export const CategoryMixCard = ({
 
                 <div className="flex flex-col items-end">
                   <span className="font-bold text-white">
-                    {formatMXN(category.amount)}
+                    {formatMXN(roundCents(category.amount))}
                   </span>
                   <span className="text-[10px] text-gray-500">
                     {percentage}%
