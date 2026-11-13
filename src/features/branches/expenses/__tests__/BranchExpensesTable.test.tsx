@@ -60,6 +60,13 @@ describe("BranchExpensesTable", () => {
     expect(screen.getByText("Mostrando 1–25 de 30")).toBeTruthy();
   });
 
+  it("anchors the search scope help to the right edge", () => {
+    render(<BranchExpensesTable expenses={expenses} />);
+
+    const help = screen.getByLabelText("Alcance de la búsqueda");
+    expect(help.querySelector('[role="tooltip"]')).toHaveClass("right-0");
+  });
+
   it("changes the page size", () => {
     render(<BranchExpensesTable expenses={expenses} />);
 

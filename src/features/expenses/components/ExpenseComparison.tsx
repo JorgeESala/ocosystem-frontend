@@ -110,10 +110,12 @@ export default function ExpenseComparison({
     <section className="space-y-4 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
       <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
-            Comparativa de gastos
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs font-semibold tracking-[0.22em] text-slate-400 uppercase">
+              Comparativa de gastos
+            </p>
             <ComparisonPeriodHelp />
-          </p>
+          </div>
           <h2 className="text-lg font-semibold text-white">
             {currentLabel} vs {previousLabel}
           </h2>

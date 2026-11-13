@@ -181,6 +181,15 @@ describe("BranchExpensesPage", () => {
     );
   });
 
+  it("mantiene los filtros debajo del selector de unidad de negocio", () => {
+    renderPage();
+
+    const filterSection = screen.getByText("Sucursales").closest("section");
+
+    expect(filterSection).toHaveClass("lg:z-20");
+    expect(filterSection).toHaveClass("lg:top-[51px]");
+  });
+
   it("explica cómo leer el resumen, los desgloses y la tabla", () => {
     renderPage();
 
