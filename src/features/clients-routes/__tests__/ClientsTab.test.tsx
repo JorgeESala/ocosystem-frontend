@@ -164,6 +164,37 @@ describe("ClientsTab", () => {
     ).toBeInTheDocument();
   });
 
+  it("muestra el nombre del negocio cuando el cliente no tiene nombre", () => {
+    mocks.useClients.mockReturnValue({
+      data: [
+        {
+          ...activeClient,
+          id: 9,
+          name: null,
+          businessName: "Abarrotes Sin Nombre",
+          lastPurchaseDate: daysAgo(1),
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<ClientsTab unitType="EGG" />);
+
+    expect(screen.getAllByText("Abarrotes Sin Nombre").length).toBeGreaterThan(
+      0,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar cliente"), {
+      target: { value: "abarrotes" },
+    });
+
+    expect(screen.getAllByText("Abarrotes Sin Nombre").length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it("busca clientes por nombre", () => {
     render(<ClientsTab unitType="EGG" />);
 

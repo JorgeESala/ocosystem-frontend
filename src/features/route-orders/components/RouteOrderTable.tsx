@@ -51,7 +51,11 @@ export const RouteOrderTable: React.FC<Props> = ({
 
   return (
     <div className="overflow-x-auto rounded-3xl border border-gray-700 bg-slate-950/70">
-      <table className="min-w-[1500px] text-left text-xs text-gray-300">
+      <table
+        className={`text-left text-xs text-gray-300 ${
+          unitType === "EGG" ? "min-w-[1500px]" : "min-w-[1050px]"
+        }`}
+      >
         <thead className="bg-slate-900/80 text-[10px] tracking-[0.12em] text-gray-400 uppercase">
           <tr>
             <th className="px-3 py-3">Cliente</th>
@@ -69,9 +73,13 @@ export const RouteOrderTable: React.FC<Props> = ({
             {unitType === "EGG" && (
               <th className="px-3 py-3 text-right">Total</th>
             )}
-            <th className="px-3 py-3">Verduras</th>
-            <th className="px-3 py-3">Condimentos</th>
-            <th className="px-3 py-3">Abarrotes</th>
+            {unitType === "EGG" && (
+              <>
+                <th className="px-3 py-3">Verduras</th>
+                <th className="px-3 py-3">Condimentos</th>
+                <th className="px-3 py-3">Abarrotes</th>
+              </>
+            )}
             <th className="px-3 py-3">Comentarios</th>
             <th className="px-3 py-3" />
           </tr>
@@ -172,42 +180,46 @@ export const RouteOrderTable: React.FC<Props> = ({
                     {quantity > 0 ? formatMXN(rowTotal(row)) : "—"}
                   </td>
                 )}
-                <td className="px-3 py-2">
-                  <Textarea
-                    rows={2}
-                    value={row.vegetables}
-                    onChange={(event) =>
-                      onChange(row.clientId, {
-                        vegetables: event.target.value,
-                      })
-                    }
-                    className="min-w-[120px]"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <Textarea
-                    rows={2}
-                    value={row.condiments}
-                    onChange={(event) =>
-                      onChange(row.clientId, {
-                        condiments: event.target.value,
-                      })
-                    }
-                    className="min-w-[110px]"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <Textarea
-                    rows={2}
-                    value={row.groceries}
-                    onChange={(event) =>
-                      onChange(row.clientId, {
-                        groceries: event.target.value,
-                      })
-                    }
-                    className="min-w-[110px]"
-                  />
-                </td>
+                {unitType === "EGG" && (
+                  <>
+                    <td className="px-3 py-2">
+                      <Textarea
+                        rows={2}
+                        value={row.vegetables}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            vegetables: event.target.value,
+                          })
+                        }
+                        className="min-w-[120px]"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <Textarea
+                        rows={2}
+                        value={row.condiments}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            condiments: event.target.value,
+                          })
+                        }
+                        className="min-w-[110px]"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <Textarea
+                        rows={2}
+                        value={row.groceries}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            groceries: event.target.value,
+                          })
+                        }
+                        className="min-w-[110px]"
+                      />
+                    </td>
+                  </>
+                )}
                 <td className="px-3 py-2">
                   <Textarea
                     rows={2}

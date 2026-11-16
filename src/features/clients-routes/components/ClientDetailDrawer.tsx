@@ -12,6 +12,7 @@ import { useClientPurchases } from "@/core/client/api/client.queries";
 import type { Client, Route } from "@/core/api/types";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
+import { clientDisplayName } from "../utils/clientName";
 import {
   monthToDateRange,
   type ClientsRoutesUnitType,
@@ -67,9 +68,9 @@ export const ClientDetailDrawer: React.FC<ClientDetailDrawerProps> = ({
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-white">
-                {client.businessName ?? client.name}
+                {client.businessName ?? clientDisplayName(client)}
               </h3>
-              {client.businessName && (
+              {client.businessName && client.name && (
                 <p className="text-xs text-gray-500">{client.name}</p>
               )}
               <div className="mt-2 flex flex-wrap gap-1">

@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import type { Client, Route } from "@/core/api/types";
 import { formatHumanDate } from "@/utils/date.utils";
+import { clientDisplayName } from "./clientName";
 
 export const CLIENT_EXPORT_HEADERS = [
   "Nombre",
@@ -32,7 +33,7 @@ export const buildClientsExportRows = (
 ): string[][] =>
   clients.map((client) => {
     const row = [
-      client.name,
+      clientDisplayName(client),
       client.businessName ?? "",
       client.localityName ?? "",
       routesForClient(client)

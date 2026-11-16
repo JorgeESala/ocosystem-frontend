@@ -48,14 +48,21 @@ export interface RouteOrderSection {
 
 export const buildOrderSections = (
   rows: RouteOrderDraftRow[],
-  hideEmptyRows = false,
+  hideEmptyRows: boolean,
+  unitType: RouteOrderUnitType,
 ): RouteOrderSection[] => {
   const internal = rows.filter(isInternalRow);
   const external = rows.filter((row) => !isInternalRow(row));
-  const internalHasOrder = internal.some(rowHasOrderData);
-  const externalHasOrder = external.some(rowHasOrderData);
+  const internalHasOrder = internal.some((row) =>
+    rowHasOrderData(row, unitType),
+  );
+  const externalHasOrder = external.some((row) =>
+    rowHasOrderData(row, unitType),
+  );
   const applyFilter = (sectionRows: RouteOrderDraftRow[]) =>
-    hideEmptyRows ? sectionRows.filter(rowHasOrderData) : sectionRows;
+    hideEmptyRows
+      ? sectionRows.filter((row) => rowHasOrderData(row, unitType))
+      : sectionRows;
 
   if (internalHasOrder && externalHasOrder) {
     return [
@@ -68,12 +75,20 @@ export const buildOrderSections = (
   return allRows.length > 0 ? [{ title: "", rows: allRows }] : [];
 };
 
-export const rowHasOrderData = (row: RouteOrderDraftRow): boolean =>
-  toNumber(row.quantity) > 0 ||
-  toNumber(row.headCount) > 0 ||
-  [row.vegetables, row.condiments, row.groceries, row.comments].some(
-    (value) => (value ?? "").trim().length > 0,
+export const rowHasOrderData = (
+  row: RouteOrderDraftRow,
+  unitType: RouteOrderUnitType,
+): boolean => {
+  if (unitType === "LIVE_CHICKEN") {
+    return toNumber(row.headCount) > 0;
+  }
+  return (
+    toNumber(row.quantity) > 0 ||
+    [row.vegetables, row.condiments, row.groceries, row.comments].some(
+      (value) => (value ?? "").trim().length > 0,
+    )
   );
+};
 
 export interface RouteOrderTotals {
   clientCount: number;
@@ -98,7 +113,7 @@ export const computeTotals = (
     if (unitType === "EGG") {
       totalAmount += quantity * toNumber(row.unitPrice);
     }
-    if (rowHasOrderData(row)) {
+    if (rowHasOrderData(row, unitType)) {
       clientsWithOrder += 1;
     }
   }
@@ -167,7 +182,7 @@ const emptyRow = (
 ): RouteOrderDraftRow => ({
   key: `client-${client.id}`,
   clientId: client.id,
-  clientName: client.name,
+  clientName: client.name ?? client.businessName ?? "",
   businessName: client.businessName ?? "",
   localityName: client.localityName ?? "",
   isInternalBranch: Boolean(client.isInternalBranch),
@@ -188,6 +203,7 @@ const emptyRow = (
 
 const rowFromSavedLine = (
   line: RouteOrderLineDTO,
+  unitType: RouteOrderUnitType,
 ): RouteOrderDraftRow | null => {
   if (line.clientId == null) {
     return null;
@@ -195,7 +211,7 @@ const rowFromSavedLine = (
   return {
     key: `client-${line.clientId}`,
     clientId: line.clientId,
-    clientName: line.clientName,
+    clientName: line.clientName ?? line.businessName ?? "",
     businessName: line.businessName ?? "",
     localityName: line.localityName ?? "",
     isInternalBranch: Boolean(line.isInternalBranch),
@@ -205,15 +221,15 @@ const rowFromSavedLine = (
         ? String(line.headCount)
         : "",
     quantity:
-      line.quantity != null && Number(line.quantity) !== 0
+      unitType === "EGG" && line.quantity != null && Number(line.quantity) !== 0
         ? String(line.quantity)
         : "",
     unitPrice: String(line.unitPrice ?? 0),
     lastSalePricePerCarton: null,
     lastSalePricePerKg: null,
-    vegetables: line.vegetables ?? "",
-    condiments: line.condiments ?? "",
-    groceries: line.groceries ?? "",
+    vegetables: unitType === "EGG" ? (line.vegetables ?? "") : "",
+    condiments: unitType === "EGG" ? (line.condiments ?? "") : "",
+    groceries: unitType === "EGG" ? (line.groceries ?? "") : "",
     comments: line.comments ?? "",
     added: true,
   };
@@ -248,7 +264,7 @@ export const buildDraft = (
     rows.push({
       key: `client-${client.id}`,
       clientId: client.id,
-      clientName: client.name,
+      clientName: client.name ?? client.businessName ?? "",
       businessName: client.businessName ?? "",
       localityName: client.localityName ?? "",
       isInternalBranch:
@@ -259,23 +275,26 @@ export const buildDraft = (
         saved.headCount != null && Number(saved.headCount) !== 0
           ? String(saved.headCount)
           : "",
-      quantity: Number(saved.quantity) !== 0 ? String(saved.quantity) : "",
+      quantity:
+        unitType === "EGG" && Number(saved.quantity) !== 0
+          ? String(saved.quantity)
+          : "",
       unitPrice: String(
         saved.unitPrice ??
           defaultUnitPrice(client, unitType, currentEggPricePerCarton),
       ),
       lastSalePricePerCarton: client.lastSalePricePerCarton ?? null,
       lastSalePricePerKg: client.lastSalePricePerKg ?? null,
-      vegetables: saved.vegetables ?? "",
-      condiments: saved.condiments ?? "",
-      groceries: saved.groceries ?? "",
+      vegetables: unitType === "EGG" ? (saved.vegetables ?? "") : "",
+      condiments: unitType === "EGG" ? (saved.condiments ?? "") : "",
+      groceries: unitType === "EGG" ? (saved.groceries ?? "") : "",
       comments: saved.comments ?? "",
       added: false,
     });
   }
 
   for (const line of savedExtras) {
-    const row = rowFromSavedLine(line);
+    const row = rowFromSavedLine(line, unitType);
     if (row) {
       rows.push(row);
     }
@@ -348,27 +367,28 @@ export const updateDraftRow = (
 
 export const draftToSavePayload = (
   draft: RouteOrderDraft,
+  unitType: RouteOrderUnitType,
 ): RouteOrderSaveDTO => {
   const lines = draft.rows
     .filter((row) => {
       const hasQuantity =
         toNumber(row.quantity) > 0 || toNumber(row.headCount) > 0;
-      const hasNotes = [
-        row.vegetables,
-        row.condiments,
-        row.groceries,
-        row.comments,
-      ].some((value) => value.trim().length > 0);
+      const hasNotes =
+        unitType === "EGG"
+          ? [row.vegetables, row.condiments, row.groceries, row.comments].some(
+              (value) => value.trim().length > 0,
+            )
+          : row.comments.trim().length > 0;
       return hasQuantity || hasNotes;
     })
     .map((row, index) => ({
       clientId: row.clientId,
-      quantity: roundQuantity(toNumber(row.quantity)),
+      quantity: unitType === "EGG" ? roundQuantity(toNumber(row.quantity)) : 0,
       headCount: roundQuantity(toNumber(row.headCount)),
       unitPrice: roundUnitPrice(toNumber(row.unitPrice)),
-      vegetables: row.vegetables,
-      condiments: row.condiments,
-      groceries: row.groceries,
+      vegetables: unitType === "EGG" ? row.vegetables : "",
+      condiments: unitType === "EGG" ? row.condiments : "",
+      groceries: unitType === "EGG" ? row.groceries : "",
       comments: row.comments,
       sortOrder: index,
     }));

@@ -1,3 +1,5 @@
+import { clientDisplayName } from "./clientName";
+
 export interface RouteSheetClient {
   name: string;
   businessName?: string | null;
@@ -35,7 +37,7 @@ export const buildRouteSheetHtml = (input: RouteSheetInput): string => {
       (client) => `
         <tr>
           <td>${escapeHtml(client.businessName ?? client.name)}</td>
-          <td>${escapeHtml(client.name)}</td>
+          <td>${escapeHtml(clientDisplayName(client))}</td>
           <td>${escapeHtml(client.localityName)}</td>
           <td>${escapeHtml(client.phone)}</td>
           <td>${escapeHtml(client.address)}</td>
