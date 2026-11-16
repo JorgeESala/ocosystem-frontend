@@ -16,9 +16,16 @@ interface Props {
   onAdd: (client: Client) => void;
 }
 
+const clientLabel = (client: Client): string =>
+  client.name?.trim() || client.businessName?.trim() || "Sin nombre";
+
 const subtitleFor = (client: Client): string =>
-  [client.businessName, client.localityName].filter(Boolean).join(" · ") ||
-  "Cliente registrado";
+  [
+    client.name?.trim() ? client.businessName?.trim() : null,
+    client.localityName?.trim(),
+  ]
+    .filter(Boolean)
+    .join(" · ") || "Cliente registrado";
 
 export const AddClientModal: React.FC<Props> = ({
   open,
@@ -46,7 +53,7 @@ export const AddClientModal: React.FC<Props> = ({
           selected={selected}
           onChange={setSelected}
           getValue={(client) => client.id}
-          getLabel={(client) => client.name}
+          getLabel={clientLabel}
           getSubtitle={subtitleFor}
           placeholder="Buscar cliente por nombre"
           emptyMessage="No hay clientes disponibles para agregar"
