@@ -9,6 +9,13 @@ export const useApiKeys = () => {
   });
 };
 
+export const useLatestVersion = () => {
+  return useQuery({
+    queryKey: apiKeyKeys.latestVersion(),
+    queryFn: apiKeysApi.getLatestVersion,
+  });
+};
+
 export const useCreateApiKey = () => {
   const queryClient = useQueryClient();
 
