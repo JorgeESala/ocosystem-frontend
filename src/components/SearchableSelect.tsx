@@ -6,7 +6,7 @@ interface Props<T> {
   selected: T | null;
   onChange: (item: T | null) => void;
   getValue: (item: T) => number;
-  getLabel: (item: T) => string;
+  getLabel: (item: T) => string | null | undefined;
   getSubtitle?: (item: T) => string;
   getDisabled?: (item: T) => boolean;
   placeholder?: string;
@@ -15,8 +15,8 @@ interface Props<T> {
   inputId?: string;
 }
 
-const normalize = (s: string) =>
-  s
+const normalize = (value?: string | null) =>
+  (value ?? "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
