@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Card,
   Label,
@@ -17,11 +18,14 @@ import { formatHumanDate } from "@/utils/date.utils";
 import {
   useApiKeys,
   useCreateApiKey,
+  useLatestVersion,
   useRevokeApiKey,
 } from "../api/api-keys.queries";
+import { versionStatus } from "../utils/version";
 
 export function ApiKeysSection() {
   const { data: keys, isLoading, isError } = useApiKeys();
+  const { data: latestVersion } = useLatestVersion();
   const createMutation = useCreateApiKey();
   const revokeMutation = useRevokeApiKey();
   const { data: branches } = useBranches();
@@ -65,6 +69,9 @@ export function ApiKeysSection() {
       <h3 className="mb-4 text-lg font-semibold">
         Llaves de sucursal (app de reportes)
       </h3>
+      <p className="mb-4 text-sm text-gray-500">
+        Versión publicada: {latestVersion?.version ?? "Sin datos"}
+      </p>
 
       {createdKey && (
         <div className="mb-4 rounded border border-green-300 bg-green-50 p-4">
@@ -127,6 +134,8 @@ export function ApiKeysSection() {
             <TableHead>
               <TableHeadCell>Sucursal</TableHeadCell>
               <TableHeadCell>Etiqueta</TableHeadCell>
+              <TableHeadCell>Versión</TableHeadCell>
+              <TableHeadCell>Actualización</TableHeadCell>
               <TableHeadCell>Estado</TableHeadCell>
               <TableHeadCell>Último uso</TableHeadCell>
               <TableHeadCell></TableHeadCell>
@@ -136,6 +145,22 @@ export function ApiKeysSection() {
                 <TableRow key={key.id}>
                   <TableCell>{key.branchName}</TableCell>
                   <TableCell>{key.label ?? "-"}</TableCell>
+                  <TableCell>{key.lastAppVersion ?? "Sin datos"}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const status = versionStatus(
+                        key.lastAppVersion,
+                        latestVersion?.version,
+                      );
+                      if (status === "current") {
+                        return <Badge color="success">Al día</Badge>;
+                      }
+                      if (status === "outdated") {
+                        return <Badge color="failure">Desactualizada</Badge>;
+                      }
+                      return <Badge color="gray">Sin datos</Badge>;
+                    })()}
+                  </TableCell>
                   <TableCell>
                     {key.active ? (
                       <span className="text-green-600">Activa</span>
