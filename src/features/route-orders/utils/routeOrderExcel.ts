@@ -59,9 +59,7 @@ const routeHeaders = (input: RouteOrderPrintInput): string[] => {
     "Nombre de la tienda",
     "Localidad",
     quantityHeader(input.unitType),
-    egg ? "Verduras (kilos)" : "Verduras",
-    "Condimentos",
-    "Abarrotes",
+    ...(egg ? ["Verduras (kilos)", "Condimentos", "Abarrotes"] : []),
     priceHeader(input.unitType),
     ...(egg ? ["Precio por caja"] : []),
     "Comentarios",
@@ -79,9 +77,7 @@ const routeRowValues = (
     row.businessName,
     row.localityName,
     egg ? toNumber(row.quantity) : toNumber(row.headCount),
-    row.vegetables,
-    row.condiments,
-    row.groceries,
+    ...(egg ? [row.vegetables, row.condiments, row.groceries] : []),
     unitPrice,
     ...(egg ? [pricePerBox(unitPrice)] : []),
     row.comments,
@@ -105,11 +101,13 @@ const styleHeaderAndData = (
     };
   });
 
+  const priceCol = egg ? 8 : 5;
+  const boxCol = egg ? 9 : null;
   for (let rowIndex = headerRow + 1; rowIndex <= lastDataRow; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
     row.height = 28;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
-      const notesColumn = col >= 5 && col <= 7;
+      const notesColumn = egg && col >= 5 && col <= 7;
       cell.font = {
         name: "Arial",
         size: notesColumn || col === lastCol ? 12 : 14,
@@ -122,9 +120,9 @@ const styleHeaderAndData = (
       };
     });
     worksheet.getCell(rowIndex, 4).numFmt = egg ? "0" : "0.###";
-    worksheet.getCell(rowIndex, 8).numFmt = "$#,##0.00;[Red]-$#,##0.00";
-    if (egg) {
-      worksheet.getCell(rowIndex, 9).numFmt = "#,##0.00;[Red]-#,##0.00";
+    worksheet.getCell(rowIndex, priceCol).numFmt = "$#,##0.00;[Red]-$#,##0.00";
+    if (boxCol) {
+      worksheet.getCell(rowIndex, boxCol).numFmt = "#,##0.00;[Red]-#,##0.00";
     }
   }
 };
@@ -273,6 +271,7 @@ const buildRouteSheet = (
   const sections = buildOrderSections(
     input.draft.rows,
     Boolean(input.hideEmptyRows),
+    input.unitType,
   );
   const allRows = sections.flatMap((section) => section.rows);
   const headers = routeHeaders(input);
@@ -284,11 +283,15 @@ const buildRouteSheet = (
     { width: 37.2 },
     { width: 27.0 },
     { width: 14.6 },
-    { width: 33.5 },
-    { width: 28.7 },
-    { width: 20.5 },
-    { width: 19.6 },
-    ...(egg ? [{ width: 18.1 }] : []),
+    ...(egg
+      ? [
+          { width: 33.5 },
+          { width: 28.7 },
+          { width: 20.5 },
+          { width: 19.6 },
+          { width: 18.1 },
+        ]
+      : [{ width: 16.0 }]),
     { width: 28.0 },
   ];
 
@@ -491,6 +494,7 @@ const buildSummarySheet = (
     const sections = buildOrderSections(
       input.draft.rows,
       Boolean(input.hideEmptyRows),
+      input.unitType,
     );
     const allRows = sections.flatMap((section) => section.rows);
     const base = [
