@@ -37,6 +37,7 @@ import {
   LastSalePriceHelpContent,
 } from "./ClientsRoutesHelpContent";
 import { type ClientsRoutesUnitType } from "../config/unitConfig";
+import { clientDisplayName } from "../utils/clientName";
 import { includesNormalized } from "../utils/text";
 import { exportClientsToExcel } from "../utils/exportClients";
 
@@ -141,8 +142,7 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
     const filtered = (clients ?? []).filter((client) => {
       const matchesSearch =
         !term ||
-        includesNormalized(client.name, term) ||
-        includesNormalized(client.businessName ?? "", term) ||
+        includesNormalized(clientDisplayName(client), term) ||
         includesNormalized(client.localityName ?? "", term);
       if (!matchesSearch) return false;
 
@@ -181,9 +181,11 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
           ? leftPrice - rightPrice
           : rightPrice - leftPrice;
       }
-      const comparison = left.name.localeCompare(right.name, "es", {
-        sensitivity: "base",
-      });
+      const comparison = clientDisplayName(left).localeCompare(
+        clientDisplayName(right),
+        "es",
+        { sensitivity: "base" },
+      );
       return sortDir === "asc" ? comparison : -comparison;
     });
   }, [
@@ -446,7 +448,7 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
                   >
                     <td className="px-4 py-3 font-medium text-white">
                       <span className="inline-flex items-center gap-2">
-                        {client.name}
+                        {clientDisplayName(client)}
                         {client.active === false && (
                           <span className="rounded bg-gray-700 px-1.5 py-0.5 text-[10px] font-semibold text-gray-300">
                             Inactivo
@@ -597,7 +599,9 @@ export const ClientsTab: React.FC<ClientsTabProps> = ({
 
       <ConfirmDeleteModal
         show={pendingDelete !== null}
-        title={`¿Eliminar "${pendingDelete?.name ?? ""}"?`}
+        title={`¿Eliminar "${
+          pendingDelete ? clientDisplayName(pendingDelete) : ""
+        }"?`}
         message="El cliente se marcará como inactivo. No se eliminará de la base de datos."
         isDeleting={deleteMutation.isPending}
         onConfirm={handleDelete}

@@ -76,15 +76,12 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
     </colgroup>`;
   }
   return `<colgroup>
-    <col style="width:16%" />
     <col style="width:18%" />
-    <col style="width:12%" />
-    <col style="width:9%" />
+    <col style="width:20%" />
+    <col style="width:14%" />
     <col style="width:10%" />
     <col style="width:12%" />
-    <col style="width:11%" />
-    <col style="width:6%" />
-    <col style="width:6%" />
+    <col style="width:26%" />
   </colgroup>`;
 };
 
@@ -149,9 +146,13 @@ const buildTable = (
                  <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>`
               : ""
           }
-          <td>${escapeMultiline(row.vegetables)}</td>
-          <td>${escapeMultiline(row.condiments)}</td>
-          <td>${escapeMultiline(row.groceries)}</td>
+          ${
+            egg
+              ? `<td>${escapeMultiline(row.vegetables)}</td>
+                 <td>${escapeMultiline(row.condiments)}</td>
+                 <td>${escapeMultiline(row.groceries)}</td>`
+              : ""
+          }
           <td>${escapeMultiline(row.comments)}</td>
         </tr>`;
     })
@@ -172,9 +173,9 @@ const buildTable = (
               ? '<th class="num">Precio/caja</th><th class="num">Total</th>'
               : ""
           }
-          <th>Verduras</th>
-          <th>Condimentos</th>
-          <th>Abarrotes</th>
+          ${
+            egg ? "<th>Verduras</th><th>Condimentos</th><th>Abarrotes</th>" : ""
+          }
           <th>Comentarios</th>
         </tr>
       </thead>
@@ -231,6 +232,7 @@ const buildSheetBody = (input: RouteOrderPrintInput): string => {
   const sections = buildOrderSections(
     input.draft.rows,
     Boolean(input.hideEmptyRows),
+    input.unitType,
   );
   const allRows = sections.flatMap((section) => section.rows);
   const sectionsHtml = sections

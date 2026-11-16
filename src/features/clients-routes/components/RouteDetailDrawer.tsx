@@ -14,6 +14,7 @@ import {
 } from "@/core/api/route/routes.queries";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
+import { clientDisplayName } from "../utils/clientName";
 import { openRouteSheet } from "../utils/routeSheet";
 import {
   monthToDateRange,
@@ -228,9 +229,9 @@ export const RouteDetailDrawer: React.FC<RouteDetailDrawerProps> = ({
                       <tr key={client.id} className="border-t border-gray-800">
                         <td className="px-3 py-2">
                           <span className="font-medium text-white">
-                            {client.businessName ?? client.name}
+                            {client.businessName ?? clientDisplayName(client)}
                           </span>
-                          {client.businessName && (
+                          {client.businessName && client.name && (
                             <span className="block text-xs text-gray-500">
                               {client.name}
                             </span>

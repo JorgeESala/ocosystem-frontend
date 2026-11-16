@@ -90,27 +90,33 @@ describe("routeOrderCalc", () => {
     const base = draft.rows[0];
 
     expect(
-      rowHasOrderData({
-        ...base,
-        quantity: "",
-        vegetables: "",
-        condiments: "",
-        groceries: "",
-        comments: "",
-      }),
+      rowHasOrderData(
+        {
+          ...base,
+          quantity: "",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+        "EGG",
+      ),
     ).toBe(false);
     expect(
-      rowHasOrderData({ ...base, quantity: "", vegetables: "Tomate" }),
+      rowHasOrderData({ ...base, quantity: "", vegetables: "Tomate" }, "EGG"),
     ).toBe(true);
     expect(
-      rowHasOrderData({
-        ...base,
-        quantity: "6",
-        vegetables: "",
-        condiments: "",
-        groceries: "",
-        comments: "",
-      }),
+      rowHasOrderData(
+        {
+          ...base,
+          quantity: "6",
+          vegetables: "",
+          condiments: "",
+          groceries: "",
+          comments: "",
+        },
+        "EGG",
+      ),
     ).toBe(true);
   });
 
@@ -146,7 +152,7 @@ describe("routeOrderCalc", () => {
       quantity: "6",
     };
 
-    const both = buildOrderSections([internal, external], true);
+    const both = buildOrderSections([internal, external], true, "EGG");
     expect(both.map((section) => section.title)).toEqual([
       "Clientes internos",
       "Clientes externos",
@@ -165,6 +171,7 @@ describe("routeOrderCalc", () => {
         },
       ],
       true,
+      "EGG",
     );
     expect(onlyInternal).toHaveLength(1);
     expect(onlyInternal[0].title).toBe("");
@@ -183,10 +190,31 @@ describe("routeOrderCalc", () => {
         external,
       ],
       true,
+      "EGG",
     );
     expect(onlyExternal).toHaveLength(1);
     expect(onlyExternal[0].title).toBe("");
     expect(onlyExternal[0].rows).toEqual([external]);
+  });
+
+  it("usa el nombre del negocio cuando el cliente no tiene nombre", () => {
+    const unnamedSheet: RouteOrderSheetDTO = {
+      ...sheet,
+      clients: [
+        {
+          ...sheet.clients[0],
+          name: null as unknown as string,
+        },
+      ],
+      order: {
+        ...sheet.order,
+        lines: [],
+      },
+    };
+
+    const draft = buildDraft(unnamedSheet, "EGG", 65);
+
+    expect(draft.rows[0].clientName).toBe("Abarrotes A");
   });
 
   it("suma cabezas en pollo vivo sin calcular total monetario", () => {
@@ -212,7 +240,13 @@ describe("routeOrderCalc", () => {
     expect(totals.clientsWithOrder).toBe(2);
     expect(totals.totalQuantity).toBe(30);
     expect(totals.totalAmount).toBe(0);
-    expect(rowHasOrderData(rows[0])).toBe(true);
+    expect(rowHasOrderData(rows[0], "LIVE_CHICKEN")).toBe(true);
+    expect(
+      rowHasOrderData(
+        { ...rows[0], headCount: "", comments: "Solo comentario" },
+        "LIVE_CHICKEN",
+      ),
+    ).toBe(false);
   });
 
   it("arma el borrador con último precio, precio actual y líneas guardadas", () => {
@@ -240,6 +274,36 @@ describe("routeOrderCalc", () => {
     const second = draft.rows.find((row) => row.clientId === 11);
 
     expect(second?.unitPrice).toBe("35");
+  });
+
+  it("no conserva verduras, condimentos ni abarrotes en pollo vivo", () => {
+    const draft = buildDraft(sheet, "LIVE_CHICKEN", 65);
+    const first = draft.rows.find((row) => row.clientId === 10);
+    expect(first?.vegetables).toBe("");
+
+    const payload = draftToSavePayload(
+      {
+        ...draft,
+        rows: [
+          {
+            ...draft.rows[0],
+            headCount: "5",
+            vegetables: "Tomate",
+            condiments: "Longaniza",
+            groceries: "Abarrotes",
+            comments: "Comentario",
+          },
+        ],
+      },
+      "LIVE_CHICKEN",
+    );
+
+    expect(payload.lines[0]).toMatchObject({
+      vegetables: "",
+      condiments: "",
+      groceries: "",
+      comments: "Comentario",
+    });
   });
 
   it("agrega clientes sin duplicar y permite quitarlos", () => {
@@ -276,7 +340,7 @@ describe("routeOrderCalc", () => {
     draft.rows[1].quantity = "6";
     draft.rows[1].unitPrice = "65";
 
-    const payload = draftToSavePayload(draft);
+    const payload = draftToSavePayload(draft, "EGG");
 
     expect(payload.routeId).toBe(1);
     expect(payload.orderDate).toBe("2030-01-07");

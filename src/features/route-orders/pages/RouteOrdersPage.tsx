@@ -231,7 +231,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     [externalRows, unitType],
   );
   const orderSections = useMemo(
-    () => (draft ? buildOrderSections(draft.rows) : []),
+    () => (draft ? buildOrderSections(draft.rows, false, unitType) : []),
     [draft],
   );
   const isDivided = orderSections.length > 1;
@@ -387,7 +387,9 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const persistDraft = async (): Promise<RouteOrderDraft | null> => {
     if (!draft) return null;
     try {
-      const saved = await saveMutation.mutateAsync(draftToSavePayload(draft));
+      const saved = await saveMutation.mutateAsync(
+        draftToSavePayload(draft, unitType),
+      );
       const nextDraft = selectedSheet
         ? buildDraft(
             { ...selectedSheet, order: saved },
@@ -530,7 +532,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
       .filter(
         ({ sheetDraft }) =>
           !hideEmptyOnPrint ||
-          sheetDraft.rows.some((row) => rowHasOrderData(row)),
+          sheetDraft.rows.some((row) => rowHasOrderData(row, unitType)),
       )
       .map(({ sheet, sheetDraft }) => buildPrintInput(sheet, sheetDraft));
 
@@ -542,7 +544,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     if (!nextDraft) return;
     if (
       hideEmptyOnPrint &&
-      !nextDraft.rows.some((row) => rowHasOrderData(row))
+      !nextDraft.rows.some((row) => rowHasOrderData(row, unitType))
     ) {
       setToast({
         type: "warning",
@@ -580,7 +582,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     if (!nextDraft) return;
     if (
       hideEmptyOnPrint &&
-      !nextDraft.rows.some((row) => rowHasOrderData(row))
+      !nextDraft.rows.some((row) => rowHasOrderData(row, unitType))
     ) {
       setToast({
         type: "warning",
