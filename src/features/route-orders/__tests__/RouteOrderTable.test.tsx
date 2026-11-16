@@ -134,6 +134,9 @@ describe("RouteOrderTable", () => {
 
     expect(screen.getByText("Cabezas")).toBeInTheDocument();
     expect(screen.queryByText("Total")).not.toBeInTheDocument();
+    expect(screen.queryByText("Verduras")).not.toBeInTheDocument();
+    expect(screen.queryByText("Condimentos")).not.toBeInTheDocument();
+    expect(screen.queryByText("Abarrotes")).not.toBeInTheDocument();
     expect((screen.getByTestId("quantity-1") as HTMLInputElement).value).toBe(
       "25",
     );

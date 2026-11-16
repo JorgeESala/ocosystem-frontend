@@ -19,6 +19,7 @@ import {
   SummaryKpiHelpContent,
 } from "./ClientsRoutesHelpContent";
 import { monthToDateRange, todayWeekday } from "../config/unitConfig";
+import { clientDisplayName } from "../utils/clientName";
 import { routesForToday } from "../utils/todayRoutes";
 
 interface ClientRoutesSummaryTabProps {
@@ -482,7 +483,7 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                         className="border-t border-gray-800"
                       >
                         <td className="py-2">
-                          {client.businessName ? (
+                          {client.businessName && client.name ? (
                             <span className="flex flex-col">
                               <span>{client.businessName}</span>
                               <span className="text-xs text-gray-500">
@@ -490,7 +491,7 @@ export const ClientRoutesSummaryTab: React.FC<ClientRoutesSummaryTabProps> = ({
                               </span>
                             </span>
                           ) : (
-                            client.name
+                            clientDisplayName(client)
                           )}
                         </td>
                         <td className="py-2 text-right text-blue-400">

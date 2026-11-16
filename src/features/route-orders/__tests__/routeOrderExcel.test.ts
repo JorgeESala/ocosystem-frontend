@@ -140,7 +140,7 @@ describe("routeOrderExcel", () => {
 
     const sheet = workbook.getWorksheet("Ruta Centro");
     expect(sheet?.getCell("D4").value).toBe("Cabezas");
-    expect(sheet?.getCell("I4").value).toBe("Comentarios");
+    expect(sheet?.getCell("F4").value).toBe("Comentarios");
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
@@ -149,6 +149,9 @@ describe("routeOrderExcel", () => {
     const content = JSON.stringify(values);
     expect(content).toContain("50");
     expect(content).toContain("TOTAL DE CABEZAS");
+    expect(content).not.toContain('"Verduras"');
+    expect(content).not.toContain('"Condimentos"');
+    expect(content).not.toContain('"Abarrotes"');
     expect(content).not.toContain("TOTAL DEL PEDIDO");
 
     const summary = workbook.getWorksheet("Resumen");

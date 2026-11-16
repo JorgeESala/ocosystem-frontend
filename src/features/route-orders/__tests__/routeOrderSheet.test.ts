@@ -97,6 +97,9 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Precio/kg");
     expect(html).not.toContain("Kilos");
     expect(html).not.toContain("Precio/caja");
+    expect(html).not.toContain("<th>Verduras</th>");
+    expect(html).not.toContain("<th>Condimentos</th>");
+    expect(html).not.toContain("<th>Abarrotes</th>");
     expect(html).not.toContain("TOTAL DEL PEDIDO");
     expect(html).not.toContain("Precio actual del huevo");
   });

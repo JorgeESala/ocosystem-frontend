@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { routesForToday } from "../utils/todayRoutes";
 import { todayWeekday } from "../config/unitConfig";
+import { clientDisplayName } from "../utils/clientName";
 import { includesNormalized, normalizeText } from "../utils/text";
 
 const entries = [
@@ -37,5 +38,15 @@ describe("text utils", () => {
     expect(normalizeText("  Peña Blanca ")).toBe("pena blanca");
     expect(includesNormalized("Abarrotes Peña", "pena")).toBe(true);
     expect(includesNormalized("Abarrotes Peña", "PENA")).toBe(true);
+  });
+
+  it("tolera nombres nulos y usa el nombre del negocio", () => {
+    expect(
+      clientDisplayName({ name: null, businessName: "Abarrotes Peña" }),
+    ).toBe("Abarrotes Peña");
+    expect(clientDisplayName({ name: null, businessName: null })).toBe(
+      "Sin nombre",
+    );
+    expect(includesNormalized(null, "cliente")).toBe(false);
   });
 });

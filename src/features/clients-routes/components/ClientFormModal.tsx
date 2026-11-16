@@ -66,7 +66,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
     }
     if (isEdit && editingClient) {
       setForm({
-        name: editingClient.name,
+        name: editingClient.name ?? "",
         businessName: editingClient.businessName ?? "",
         localityId: editingClient.localityId ?? null,
         phone: editingClient.phone ?? "",
