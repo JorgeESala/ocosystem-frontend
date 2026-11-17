@@ -284,10 +284,27 @@ Before finishing:
 - [ ] `npm run test` passes
 - [ ] `npm run lint` and `npm run build` pass
 - [ ] `bash scripts/check-tests-changed.sh` passes
+- [ ] `bash scripts/check-changed-coverage.sh origin/main` passes
 - [ ] `bash scripts/check-branch-sync.sh` passes
 
 Use `[no-test]` in the commit message only for documentation, styling-only, or
 copy changes without application behavior; state the reason.
+
+## Changed-line coverage
+
+`npm run test:coverage` generates `coverage/lcov.info`. The gate measures only
+the frontend lines added or changed against a base ref, with an 80% threshold.
+Tests, type declarations, the Vite entry point, type-only folders, and config
+data files are excluded.
+
+```bash
+python -m pip install diff-cover   # once
+npm run test:coverage
+bash scripts/check-changed-coverage.sh origin/main
+```
+
+If the check fails, add tests that execute the new lines; do not lower the
+threshold or widen the exclusions without a documented reason.
 
 ## CI / deploys
 
@@ -296,7 +313,9 @@ copy changes without application behavior; state the reason.
 - Agent gates: `.github/workflows/branch-sync.yml` fails when `main` has commits
   missing from `dev`. The CI test job runs `scripts/check-tests-changed.sh` and
   fails production-code changes without test changes; use `[no-test]` in the
-  commit message or PR title only for changes that genuinely need no test.
+  commit message or PR title only for changes that genuinely need no test. It
+  also runs `scripts/check-changed-coverage.sh` with an 80% threshold on changed
+  lines.
 - Deploy jobs run only after tests pass (green-only) using the Netlify action:
   `deploy-dev` on the `dev` branch, `deploy-prod` on `main`. Secrets
   (`NETLIFY_AUTH_TOKEN`, `NETLIFY_DEV_SITE_ID`, `NETLIFY_PROD_SITE_ID`) are
