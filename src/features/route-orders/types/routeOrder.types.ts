@@ -39,6 +39,7 @@ export interface RouteOrderDTO {
   createdBy?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  salesRegenerationRequired?: boolean | null;
   lines: RouteOrderLineDTO[];
 }
 
@@ -121,6 +122,7 @@ export interface RouteOrderDraft {
   vehicleName: string;
   tripId: number | null;
   notes: string;
+  salesRegenerationRequired?: boolean;
   rows: RouteOrderDraftRow[];
 }
 
@@ -142,7 +144,10 @@ export interface RouteOrderSaleCandidateDTO {
   headCount?: number | null;
   quantity?: number | null;
   unitPrice: number;
+  weight?: number | null;
+  kgSent?: number | null;
   alreadySold: boolean;
+  salesRegenerationRequired?: boolean | null;
 }
 
 export interface GenerateRouteOrderSaleLineDTO {
@@ -155,7 +160,6 @@ export interface GenerateRouteOrderSaleLineDTO {
   weight?: number;
   kgSent?: number;
   unitPrice?: number;
-  saleTotal?: number;
 }
 
 export interface GenerateRouteOrderSalesDTO {
@@ -166,9 +170,11 @@ export interface GenerateRouteOrderSalesDTO {
 
 export interface GenerateRouteOrderSalesResultDTO {
   createdCount: number;
+  updatedCount?: number;
   skippedCount: number;
   totalAmount: number;
   createdSaleIds: number[];
   skippedLineIds: number[];
   tripIds: number[];
+  regenerationRequiredOrderIds?: number[];
 }
