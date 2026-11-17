@@ -224,17 +224,79 @@ Caveats:
 
 ## Git
 
-- Working branch: `dev`.
+- Working branch: `dev`. `dev` is integration; `main` is production. Never
+  merge feature work directly to `main`.
+- Release by merging `dev` → `main`.
+- After any push or merge to `main`, bring `main` back into `dev`:
+
+  ```bash
+  git fetch origin
+  git checkout dev
+  git merge origin/main
+  git push origin dev
+  ```
+
+  If `dev` has no new work, use `git merge --ff-only origin/main` instead.
+- `main` must never contain commits that `dev` lacks. Verify with:
+
+  ```bash
+  bash scripts/check-branch-sync.sh
+  ```
+
+- Never force-push `main` or `dev`, and never discard unreleased `dev` work.
 - Commit style: short lowercase, no period, imperative (e.g., "added a button
   to create new routes", "removed unused code"). No conventional-commits
   prefix.
 - Never commit `dist/`, `node_modules/`, `.env`, or the `git-diagnostics-*.zip`
   artifact in the repo root.
 
+## Test-driven development (required)
+
+For any behavior change:
+
+1. Add or update the test first.
+2. Run only that test and confirm it fails for the expected reason:
+
+   ```bash
+   npm run test -- src/path/to/File.test.tsx
+   npm run test -- -t "name of the behavior"
+   ```
+
+3. Implement the smallest change that makes it pass.
+4. Re-run the focused test, then the full suite:
+
+   ```bash
+   npm run test
+   ```
+
+5. Refactor only while the suite is green.
+
+Bug fixes start with a regression test that reproduces the bug. New components,
+hooks, validation, and API behavior start with a test. Tests live in
+`__tests__/` next to the code as `*.test.tsx` and use Vitest + Testing Library.
+Assert behavior, not implementation details; do not delete or skip existing
+assertions to make the suite pass.
+
+Before finishing:
+
+- [ ] The new test failed before the implementation
+- [ ] The focused test passes
+- [ ] `npm run test` passes
+- [ ] `npm run lint` and `npm run build` pass
+- [ ] `bash scripts/check-tests-changed.sh` passes
+- [ ] `bash scripts/check-branch-sync.sh` passes
+
+Use `[no-test]` in the commit message only for documentation, styling-only, or
+copy changes without application behavior; state the reason.
+
 ## CI / deploys
 
 - GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `lint`, `tsc`,
   `build`, `vitest` on every push to `dev`/`main` and on pull requests.
+- Agent gates: `.github/workflows/branch-sync.yml` fails when `main` has commits
+  missing from `dev`. The CI test job runs `scripts/check-tests-changed.sh` and
+  fails production-code changes without test changes; use `[no-test]` in the
+  commit message or PR title only for changes that genuinely need no test.
 - Deploy jobs run only after tests pass (green-only) using the Netlify action:
   `deploy-dev` on the `dev` branch, `deploy-prod` on `main`. Secrets
   (`NETLIFY_AUTH_TOKEN`, `NETLIFY_DEV_SITE_ID`, `NETLIFY_PROD_SITE_ID`) are

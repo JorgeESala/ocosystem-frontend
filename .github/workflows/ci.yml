@@ -15,6 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: check tests changed with source
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: bash scripts/check-tests-changed.sh "$BASE_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
