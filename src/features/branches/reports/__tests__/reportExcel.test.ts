@@ -3,6 +3,8 @@ import {
   analyticsProductsSheet,
   categorySalesSheet,
   dailySalesSheet,
+  expectedSalesBranchesSheet,
+  expectedSalesSheet,
   salesProductsSheet,
 } from "../utils/reportExcel";
 import type { ProductAnalyticsRowDTO } from "../api/productAnalytics.api";
@@ -127,5 +129,69 @@ describe("categorySalesSheet", () => {
     expect(sheet.rows[1][1]).toBe(300);
     expect(sheet.rows[2][1]).toBe("");
     expect(sheet.rows[2][2]).toBe(9.1);
+  });
+});
+
+describe("expectedSalesSheet", () => {
+  it("includes the expected and reported kg columns", () => {
+    const sheet = expectedSalesSheet([
+      {
+        branchId: 1,
+        branchName: "Centro",
+        day: "2026-06-01",
+        expectedKg: 475,
+        reportedKg: 540,
+        differenceKg: 65,
+        variancePct: 13.6842,
+        birdsSold: 300,
+        avgChickenWeight: 1.8333,
+        salesCount: 2,
+        salesWithoutWeight: 0,
+      },
+    ]);
+
+    expect(sheet.rows[0]).toEqual([
+      "Fecha",
+      "Sucursal",
+      "Pollos vendidos",
+      "Peso promedio (kg)",
+      "Kg esperados",
+      "Kg vendidos",
+      "Diferencia (kg)",
+      "Variación %",
+    ]);
+    expect(sheet.rows[1]).toEqual([
+      "2026-06-01",
+      "Centro",
+      300,
+      1.8333,
+      475,
+      540,
+      65,
+      13.68,
+    ]);
+  });
+});
+
+describe("expectedSalesBranchesSheet", () => {
+  it("leaves missing expected values blank", () => {
+    const sheet = expectedSalesBranchesSheet([
+      {
+        branchId: 2,
+        branchName: "Norte",
+        expectedKg: null,
+        reportedKg: null,
+        differenceKg: null,
+        variancePct: null,
+        birdsSold: 0,
+        avgChickenWeight: null,
+        salesCount: 0,
+        salesWithoutWeight: 1,
+        daysWithData: 0,
+      },
+    ]);
+
+    expect(sheet.rows[1][1]).toBe("");
+    expect(sheet.rows[1][7]).toBe(1);
   });
 });

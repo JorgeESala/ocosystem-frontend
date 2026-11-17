@@ -9,4 +9,10 @@ export const salesReportKeys = {
       "consolidated",
       { branchIds, startDate, endDate },
     ] as const,
+  expected: (branchIds: number[], startDate: Date, endDate: Date) =>
+    [
+      ...salesReportKeys.all,
+      "expected",
+      { branchIds, startDate, endDate },
+    ] as const,
 };

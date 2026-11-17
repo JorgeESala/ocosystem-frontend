@@ -87,6 +87,56 @@ vi.mock("../api/consolidatedSales.queries", () => ({
   }),
 }));
 
+vi.mock("../api/expectedSales.queries", () => ({
+  useExpectedSalesReport: () => ({
+    data: {
+      summary: {
+        expectedKg: 1000,
+        reportedKg: 1050,
+        differenceKg: 50,
+        variancePct: 5,
+        birdsSold: 600,
+        avgChickenWeight: 1.9,
+        salesCount: 3,
+        salesWithoutWeight: 0,
+        daysWithData: 1,
+        wastePerChickenKg: 0.25,
+      },
+      branches: [
+        {
+          branchId: 1,
+          branchName: "Centro",
+          expectedKg: 1000,
+          reportedKg: 1050,
+          differenceKg: 50,
+          variancePct: 5,
+          birdsSold: 600,
+          avgChickenWeight: 1.9,
+          salesCount: 3,
+          salesWithoutWeight: 0,
+          daysWithData: 1,
+        },
+      ],
+      daily: [
+        {
+          branchId: 1,
+          branchName: "Centro",
+          day: "2026-06-01",
+          expectedKg: 1000,
+          reportedKg: 1050,
+          differenceKg: 50,
+          variancePct: 5,
+          birdsSold: 600,
+          avgChickenWeight: 1.9,
+          salesCount: 3,
+          salesWithoutWeight: 0,
+        },
+      ],
+    },
+    isLoading: false,
+  }),
+}));
+
 vi.mock("../api/productAnalytics.queries", () => ({
   useProductAnalytics: () => ({ data: analytics, isLoading: false }),
   useProductDetail: () => ({ data: null, isLoading: false, isError: false }),

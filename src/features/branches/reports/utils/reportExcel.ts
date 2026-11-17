@@ -6,6 +6,10 @@ import type {
   ProductSalesDTO,
 } from "../api/salesReports.api";
 import type {
+  BranchExpectedSalesDTO,
+  DailyExpectedSalesDTO,
+} from "../api/expectedSales.api";
+import type {
   ProductAnalyticsDTO,
   ProductAnalyticsRowDTO,
 } from "../api/productAnalytics.api";
@@ -58,6 +62,82 @@ const hasMonetaryValue = (
   categoryName: string,
   totalSales: number | null,
 ): totalSales is number => categoryName !== "Merma" && totalSales != null;
+
+export const expectedSalesSheet = (
+  daily: DailyExpectedSalesDTO[],
+): SheetSpec => ({
+  name: "Venta esperada",
+  rows: [
+    [
+      "Fecha",
+      "Sucursal",
+      "Pollos vendidos",
+      "Peso promedio (kg)",
+      "Kg esperados",
+      "Kg vendidos",
+      "Diferencia (kg)",
+      "Variación %",
+    ],
+    ...daily.map((row) => [
+      row.day,
+      row.branchName,
+      row.birdsSold,
+      row.avgChickenWeight ?? "",
+      row.expectedKg ?? "",
+      row.reportedKg ?? "",
+      row.differenceKg ?? "",
+      row.variancePct == null ? "" : Number(row.variancePct.toFixed(2)),
+    ]),
+  ],
+  cols: [
+    { wch: 12 },
+    { wch: 22 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 15 },
+    { wch: 12 },
+  ],
+});
+
+export const expectedSalesBranchesSheet = (
+  branches: BranchExpectedSalesDTO[],
+): SheetSpec => ({
+  name: "Venta esperada por sucursal",
+  rows: [
+    [
+      "Sucursal",
+      "Kg esperados",
+      "Kg vendidos",
+      "Diferencia (kg)",
+      "Variación %",
+      "Pollos vendidos",
+      "Peso promedio (kg)",
+      "Ventas sin peso",
+    ],
+    ...branches.map((branch) => [
+      branch.branchName,
+      branch.expectedKg ?? "",
+      branch.reportedKg ?? "",
+      branch.differenceKg ?? "",
+      branch.variancePct == null ? "" : Number(branch.variancePct.toFixed(2)),
+      branch.birdsSold,
+      branch.avgChickenWeight ?? "",
+      branch.salesWithoutWeight,
+    ]),
+  ],
+  cols: [
+    { wch: 22 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 15 },
+  ],
+});
 
 export const analyticsProductsSheet = (
   name: string,

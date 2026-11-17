@@ -6,6 +6,7 @@ import {
   HiCurrencyDollar,
   HiDownload,
   HiLightningBolt,
+  HiScale,
   HiTrash,
   HiTrendingUp,
   HiX,
@@ -21,9 +22,11 @@ import {
   Area,
 } from "recharts";
 import { useSalesReport } from "../api/salesReportes.queries";
+import { useExpectedSalesReport } from "../api/expectedSales.queries";
 import { ProductSalesTable } from "./ProductSalesTable";
 import DateRangePicker from "@/components/DateRangePicker";
 import { DashboardSkeleton } from "./DashboardSkeleton";
+import { ExpectedSalesSection } from "./ExpectedSalesSection";
 import { TopProductsCard } from "./TopProductsCard";
 import { StrategyInsights } from "./StrategyInsights";
 import { TicketsByWeekdayCard } from "./TicketsByWeekdayCard";
@@ -42,6 +45,7 @@ import {
 } from "@/utils/date.utils";
 import { formatMXNCompact } from "@/utils/moneyNumbers";
 import { formatUnits } from "../utils/productMetrics";
+import { formatKg, formatVariance } from "../utils/expectedSales";
 import { ticketsByWeekday, peakWeekday } from "../utils/ticketsByWeekday";
 import { deltaPct } from "../utils/consolidatedMetrics";
 import {
@@ -54,6 +58,7 @@ import {
   appendSheet,
   categorySalesSheet,
   dailySalesSheet,
+  expectedSalesSheet,
   salesProductsSheet,
 } from "../utils/reportExcel";
 
@@ -100,6 +105,8 @@ export const SalesDashboard = ({
     dates.start,
     dates.end,
   );
+  const { data: expectedSales, isLoading: expectedSalesLoading } =
+    useExpectedSalesReport([branchId], dates.start, dates.end);
   const { data: previousData } = useSalesReport(
     branchId,
     previousRange.start,
@@ -370,6 +377,20 @@ export const SalesDashboard = ({
             previousLoss,
             roundDelta(deltas?.perdida),
           ],
+          [""],
+          [
+            "Venta esperada de pollo (kg)",
+            expectedSales?.summary.expectedKg ?? "",
+          ],
+          [
+            "Kg vendidos en Entradas y Ventas",
+            expectedSales?.summary.reportedKg ?? "",
+          ],
+          ["Diferencia de kilos", expectedSales?.summary.differenceKg ?? ""],
+          [
+            "Variación de venta esperada (%)",
+            expectedSales?.summary.variancePct ?? "",
+          ],
         ],
         cols: [{ wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 12 }],
       });
@@ -377,6 +398,9 @@ export const SalesDashboard = ({
       appendSheet(wb, dailySalesSheet(data.dailySales));
       appendSheet(wb, categorySalesSheet(data.categories));
       appendSheet(wb, salesProductsSheet(data.products));
+      if (expectedSales) {
+        appendSheet(wb, expectedSalesSheet(expectedSales.daily));
+      }
 
       if (performanceData && performanceData.products.length > 0) {
         appendSheet(
@@ -444,7 +468,7 @@ export const SalesDashboard = ({
         </Alert>
       ) : (
         <>
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KPICard
               title="Pollo Beneficiado"
               value={`${formatUnits(summary?.totalSlaughtered ?? 0)} pzas`}
@@ -454,6 +478,23 @@ export const SalesDashboard = ({
               info={
                 <InfoTip title="Pollo Beneficiado">
                   Piezas registradas en la categoría Matados.
+                </InfoTip>
+              }
+            />
+            <KPICard
+              title="Venta Esperada"
+              value={formatKg(expectedSales?.summary.expectedKg)}
+              color="yellow"
+              icon={HiScale}
+              footnote={`Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`}
+              onClick={() => scrollToSection("expected-sales-section")}
+              actionHint="Ver detalle"
+              info={
+                <InfoTip title="Venta Esperada">
+                  Kilos que deberían venderse según el peso promedio de cada
+                  remesa, menos 250 g de merma por pollo, multiplicado por los
+                  pollos vendidos. Se compara contra los kilos registrados en
+                  Entradas y Ventas.
                 </InfoTip>
               }
             />
@@ -622,6 +663,14 @@ export const SalesDashboard = ({
                 total={categoryCostTotal}
               />
             </div>
+          </div>
+
+          <div className="mt-8 scroll-mt-4" id="expected-sales-section">
+            <ExpectedSalesSection
+              data={expectedSales}
+              isLoading={expectedSalesLoading}
+              scopeLabel={branchName}
+            />
           </div>
 
           <div className="mt-8 space-y-6">

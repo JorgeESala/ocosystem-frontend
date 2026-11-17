@@ -7,6 +7,7 @@ import {
   HiLightningBolt,
   HiOutlineOfficeBuilding,
   HiQuestionMarkCircle,
+  HiScale,
   HiTrash,
   HiTrendingUp,
 } from "react-icons/hi";
@@ -22,6 +23,7 @@ import {
 } from "recharts";
 import { useReportBranches } from "@/features/branches/branch/reportBranches.queries";
 import { useConsolidatedSalesReport } from "../api/consolidatedSales.queries";
+import { useExpectedSalesReport } from "../api/expectedSales.queries";
 import { fetchProductAnalytics } from "../api/productAnalytics.api";
 import { useProductAnalytics } from "../api/productAnalytics.queries";
 import {
@@ -29,6 +31,8 @@ import {
   appendSheet,
   categorySalesSheet,
   dailySalesSheet,
+  expectedSalesBranchesSheet,
+  expectedSalesSheet,
   fetchAllProductAnalytics,
 } from "../utils/reportExcel";
 import { formatMXN, formatMXNCompact } from "@/utils/moneyNumbers";
@@ -46,6 +50,7 @@ import { BranchRankingTable, type RankingSort } from "./BranchRankingTable";
 import { CategoryMixCard } from "./CategoryMixCard";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { DataCompletenessBanner } from "./DataCompletenessBanner";
+import { ExpectedSalesSection } from "./ExpectedSalesSection";
 import { KPICard } from "./KPICard";
 import { ProductAnalyticsSection } from "./ProductAnalyticsSection";
 import type { MatrixMetric } from "./ProductBranchMatrix";
@@ -58,6 +63,7 @@ import {
   deltaPct,
   expectedReportDays,
 } from "../utils/consolidatedMetrics";
+import { formatKg, formatVariance } from "../utils/expectedSales";
 import { peakWeekday, ticketsByWeekday } from "../utils/ticketsByWeekday";
 import { useDebouncedValue } from "../utils/useDebouncedValue";
 import { useTopCategoryFilters } from "../utils/topCategoryFilters";
@@ -121,6 +127,9 @@ export const ConsolidatedSalesDashboard = ({
     dates.end,
   );
 
+  const { data: expectedSales, isLoading: expectedSalesLoading } =
+    useExpectedSalesReport(effectiveBranchIds, dates.start, dates.end);
+
   const { data: topProductsData, isLoading: topProductsLoading } =
     useProductAnalytics(effectiveBranchIds, dates.start, dates.end, {
       limit: 10,
@@ -173,9 +182,10 @@ export const ConsolidatedSalesDashboard = ({
             data.branchSummary,
             data.previousBranchSummary,
             expectedDays,
+            expectedSales?.branches ?? [],
           )
         : [],
-    [data, expectedDays],
+    [data, expectedDays, expectedSales],
   );
 
   const categoryOptions = useMemo(
@@ -324,6 +334,20 @@ export const ConsolidatedSalesDashboard = ({
           ["Ticket promedio con complemento", summary.avgFullTicketValue],
           ["Tickets con complemento (%)", summary.attachRate],
           [""],
+          [
+            "Venta esperada de pollo (kg)",
+            expectedSales?.summary.expectedKg ?? "",
+          ],
+          [
+            "Kg vendidos en Entradas y Ventas",
+            expectedSales?.summary.reportedKg ?? "",
+          ],
+          ["Diferencia de kilos", expectedSales?.summary.differenceKg ?? ""],
+          [
+            "Variación de venta esperada (%)",
+            expectedSales?.summary.variancePct ?? "",
+          ],
+          [""],
           ["Cambio vs. periodo anterior (%)"],
           ["Venta real", deltas.totalSales ?? ""],
           ["Pollo beneficiado", deltas.totalSlaughtered ?? ""],
@@ -344,6 +368,9 @@ export const ConsolidatedSalesDashboard = ({
             "vs. anterior %",
             "Ticket promedio",
             "Pollo beneficiado",
+            "Kg esperados",
+            "Kg vendidos",
+            "Variación esperada %",
             "Merma",
             "Días con reporte",
             "Días faltantes",
@@ -355,6 +382,11 @@ export const ConsolidatedSalesDashboard = ({
             row.salesDelta == null ? "" : Number(row.salesDelta.toFixed(2)),
             row.avgTicket,
             row.totalSlaughtered,
+            row.expectedKg ?? "",
+            row.expectedReportedKg ?? "",
+            row.expectedVariancePct == null
+              ? ""
+              : Number(row.expectedVariancePct.toFixed(2)),
             row.mermaQuantity,
             row.daysWithReport,
             row.missingDays,
@@ -367,6 +399,9 @@ export const ConsolidatedSalesDashboard = ({
           { wch: 15 },
           { wch: 15 },
           { wch: 16 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 18 },
           { wch: 12 },
           { wch: 15 },
           { wch: 13 },
@@ -375,6 +410,10 @@ export const ConsolidatedSalesDashboard = ({
 
       appendSheet(wb, dailySalesSheet(data.dailySales));
       appendSheet(wb, categorySalesSheet(data.categories));
+      if (expectedSales) {
+        appendSheet(wb, expectedSalesSheet(expectedSales.daily));
+        appendSheet(wb, expectedSalesBranchesSheet(expectedSales.branches));
+      }
 
       if (topProductsData && topProductsData.products.length > 0) {
         appendSheet(
@@ -511,7 +550,7 @@ export const ConsolidatedSalesDashboard = ({
             expectedDays={expectedDays}
           />
 
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KPICard
               title="Venta Real"
               value={formatMXNCompact(summary.totalSales)}
@@ -545,6 +584,23 @@ export const ConsolidatedSalesDashboard = ({
                 <InfoTip title="Pollo Beneficiado">
                   Piezas registradas en la categoría Matados. Sirve para
                   comparar producción contra venta.
+                </InfoTip>
+              }
+            />
+            <KPICard
+              title="Venta Esperada"
+              value={formatKg(expectedSales?.summary.expectedKg)}
+              color="yellow"
+              icon={HiScale}
+              footnote={`Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`}
+              onClick={() => scrollToSection("expected-sales-section")}
+              actionHint="Ver detalle"
+              info={
+                <InfoTip title="Venta Esperada">
+                  Kilos que deberían venderse según el peso promedio de cada
+                  remesa, menos 250 g de merma por pollo, multiplicado por los
+                  pollos vendidos. Se compara contra los kilos registrados en
+                  Entradas y Ventas.
                 </InfoTip>
               }
             />
@@ -702,6 +758,14 @@ export const ConsolidatedSalesDashboard = ({
               onSelectBranch={onSelectBranch}
               sort={rankingSort}
               onSortChange={setRankingSort}
+            />
+          </div>
+
+          <div className="mb-8 scroll-mt-4" id="expected-sales-section">
+            <ExpectedSalesSection
+              data={expectedSales}
+              isLoading={expectedSalesLoading}
+              scopeLabel={scopeLabel}
             />
           </div>
 

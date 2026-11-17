@@ -23,6 +23,9 @@ const row = (
   share: 60,
   salesDelta: 10,
   missingDays: 0,
+  expectedKg: null,
+  expectedReportedKg: null,
+  expectedVariancePct: null,
   ...overrides,
 });
 
