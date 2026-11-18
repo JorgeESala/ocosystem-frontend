@@ -140,6 +140,7 @@ export const expectedSalesBranchesSheet = (
       "Pollos vendidos",
       "Peso promedio (kg)",
       "Ventas sin peso",
+      "Ventas sin kilos",
     ],
     ...branches.map((branch) => [
       branch.branchName,
@@ -150,6 +151,7 @@ export const expectedSalesBranchesSheet = (
       branch.birdsSold,
       branch.avgChickenWeight ?? "",
       branch.salesWithoutWeight,
+      branch.salesWithoutReportedKg,
     ]),
   ],
   cols: [
@@ -160,6 +162,7 @@ export const expectedSalesBranchesSheet = (
     { wch: 12 },
     { wch: 15 },
     { wch: 18 },
+    { wch: 15 },
     { wch: 15 },
   ],
 });

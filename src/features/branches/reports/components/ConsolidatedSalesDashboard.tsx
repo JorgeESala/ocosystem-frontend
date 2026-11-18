@@ -583,7 +583,7 @@ export const ConsolidatedSalesDashboard = ({
               color="yellow"
               icon={HiScale}
               footnote={
-                expectedSalesError
+                expectedSalesError && !expectedSales
                   ? "No disponible"
                   : `Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`
               }

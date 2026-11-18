@@ -46,7 +46,7 @@ export const REPORTS_METRICS: HelpMetric[] = [
       "Kilos que deberían venderse según el peso promedio de cada remesa, menos 250 gramos de merma por pollo, multiplicado por los pollos vendidos.",
     details: [
       "Se calcula por cada venta de remesa. Si un día hay ventas de varias remesas, se suman.",
-      "Solo se incluyen ventas con peso promedio de remesa disponible; las demás se avisan en la sección.",
+      "Solo se incluyen ventas con peso promedio de remesa y kilos vendidos registrados; las demás se avisan en la sección.",
       "No se muestra en dinero porque el precio cambia según el tipo de venta.",
     ],
   },
@@ -122,7 +122,7 @@ export const REPORTS_SECTIONS: HelpSection[] = [
     id: "venta-esperada",
     title: "¿Cómo se calcula la venta esperada?",
     content:
-      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. Si una remesa no tiene peso promedio, esa venta no se incluye y se muestra un aviso.",
+      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. Si una remesa no tiene peso promedio o la venta no tiene kilos registrados, esa venta no se incluye y se muestra un aviso.",
   },
   {
     id: "abc",

@@ -301,6 +301,7 @@ describe("expectedSalesBranchesSheet", () => {
 
     expect(sheet.rows[1][1]).toBe("");
     expect(sheet.rows[1][7]).toBe(1);
+    expect(sheet.rows[1][8]).toBe(0);
   });
 
   it("keeps the variance when it is available", () => {
@@ -316,11 +317,12 @@ describe("expectedSalesBranchesSheet", () => {
         avgChickenWeight: 1.9,
         salesCount: 3,
         salesWithoutWeight: 0,
-        salesWithoutReportedKg: 0,
+        salesWithoutReportedKg: 2,
         daysWithData: 1,
       },
     ]);
 
     expect(sheet.rows[1][4]).toBe(5);
+    expect(sheet.rows[1][8]).toBe(2);
   });
 });

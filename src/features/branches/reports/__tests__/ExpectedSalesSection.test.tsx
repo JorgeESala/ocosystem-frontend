@@ -152,7 +152,7 @@ describe("ExpectedSalesSection", () => {
 
     expect(
       screen.getByText(
-        "No hay ventas de remesa con peso promedio disponible en el periodo.",
+        "No hay ventas de remesa con peso promedio y kilos vendidos registrados en el periodo.",
       ),
     ).toBeTruthy();
   });
@@ -204,7 +204,7 @@ describe("ExpectedSalesSection", () => {
 
     expect(
       screen.getByText(
-        "No hay ventas de remesa con peso promedio disponible en el periodo.",
+        "No hay ventas de remesa con peso promedio y kilos vendidos registrados en el periodo.",
       ),
     ).toBeTruthy();
   });

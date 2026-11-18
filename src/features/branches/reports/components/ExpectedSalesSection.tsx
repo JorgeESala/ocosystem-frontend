@@ -174,7 +174,8 @@ export const ExpectedSalesSection = ({
 
       {!hasExpected ? (
         <Alert color="info">
-          No hay ventas de remesa con peso promedio disponible en el periodo.
+          No hay ventas de remesa con peso promedio y kilos vendidos registrados
+          en el periodo.
         </Alert>
       ) : (
         <>
@@ -283,7 +284,8 @@ export const ExpectedSalesSection = ({
             {hasMultipleBranches
               ? "Suma de las sucursales seleccionadas. "
               : ""}
-            Solo se incluyen ventas de remesa con peso promedio disponible.
+            Solo se incluyen ventas de remesa con peso promedio y kilos vendidos
+            registrados.
           </p>
         </>
       )}
