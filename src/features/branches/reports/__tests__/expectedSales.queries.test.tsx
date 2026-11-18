@@ -21,6 +21,7 @@ const report = {
     avgChickenWeight: null,
     salesCount: 0,
     salesWithoutWeight: 0,
+    salesWithoutReportedKg: 0,
     daysWithData: 0,
     wastePerChickenKg: 0.25,
   },

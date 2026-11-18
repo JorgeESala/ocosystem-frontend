@@ -70,7 +70,10 @@ export const expectedSalesSummaryRows = (
   ["Venta esperada de pollo (kg)", summary?.expectedKg ?? ""],
   ["Kg vendidos en Entradas y Ventas", summary?.reportedKg ?? ""],
   ["Diferencia de kilos", summary?.differenceKg ?? ""],
-  ["Variación de venta esperada (%)", summary?.variancePct ?? ""],
+  [
+    "Variación de venta esperada (%)",
+    summary?.variancePct == null ? "" : Number(summary.variancePct.toFixed(2)),
+  ],
 ];
 
 export const expectedSalesRankingColumns = (branch: {

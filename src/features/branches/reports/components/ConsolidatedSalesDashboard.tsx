@@ -129,8 +129,12 @@ export const ConsolidatedSalesDashboard = ({
     dates.end,
   );
 
-  const { data: expectedSales, isLoading: expectedSalesLoading } =
-    useExpectedSalesReport(effectiveBranchIds, dates.start, dates.end);
+  const {
+    data: expectedSales,
+    isLoading: expectedSalesLoading,
+    isError: expectedSalesError,
+    refetch: refetchExpectedSales,
+  } = useExpectedSalesReport(effectiveBranchIds, dates.start, dates.end);
 
   const { data: topProductsData, isLoading: topProductsLoading } =
     useProductAnalytics(effectiveBranchIds, dates.start, dates.end, {
@@ -578,7 +582,11 @@ export const ConsolidatedSalesDashboard = ({
               value={formatKg(expectedSales?.summary.expectedKg)}
               color="yellow"
               icon={HiScale}
-              footnote={`Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`}
+              footnote={
+                expectedSalesError
+                  ? "No disponible"
+                  : `Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`
+              }
               onClick={() => scrollToSection("expected-sales-section")}
               actionHint="Ver detalle"
               info={
@@ -751,6 +759,8 @@ export const ConsolidatedSalesDashboard = ({
             <ExpectedSalesSection
               data={expectedSales}
               isLoading={expectedSalesLoading}
+              isError={expectedSalesError}
+              onRetry={() => void refetchExpectedSales()}
               scopeLabel={scopeLabel}
             />
           </div>

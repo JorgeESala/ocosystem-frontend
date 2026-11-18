@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MockResponsiveContainer } from "@/test/rechartsMock";
 import type { ExpectedSalesReportDTO } from "../api/expectedSales.api";
 import { ExpectedSalesSection } from "../components/ExpectedSalesSection";
@@ -19,6 +19,7 @@ const report: ExpectedSalesReportDTO = {
     avgChickenWeight: 1.9,
     salesCount: 3,
     salesWithoutWeight: 0,
+    salesWithoutReportedKg: 0,
     daysWithData: 1,
     wastePerChickenKg: 0.25,
   },
@@ -34,6 +35,7 @@ const report: ExpectedSalesReportDTO = {
       avgChickenWeight: 1.9,
       salesCount: 3,
       salesWithoutWeight: 0,
+      salesWithoutReportedKg: 0,
       daysWithData: 1,
     },
   ],
@@ -50,6 +52,7 @@ const report: ExpectedSalesReportDTO = {
       avgChickenWeight: 1.9,
       salesCount: 3,
       salesWithoutWeight: 0,
+      salesWithoutReportedKg: 0,
     },
   ],
 };
@@ -94,6 +97,48 @@ describe("ExpectedSalesSection", () => {
     expect(
       screen.getByText(/1 venta sin peso promedio de remesa no se incluye/),
     ).toBeTruthy();
+  });
+
+  it("warns about sales without reported kilos", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: { ...report.summary, salesWithoutReportedKg: 2 },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(/2 ventas sin kilos vendidos registrados/),
+    ).toBeTruthy();
+  });
+
+  it("uses the singular warning for one sale without reported kilos", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: { ...report.summary, salesWithoutReportedKg: 1 },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(/1 venta sin kilos vendidos registrados no se incluye/),
+    ).toBeTruthy();
+  });
+
+  it("shows an error with a retry action when the request fails", () => {
+    const onRetry = vi.fn();
+    render(<ExpectedSalesSection isError onRetry={onRetry} />);
+
+    expect(
+      screen.getByText(/No se pudo cargar la venta esperada/),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByText("Reintentar"));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("shows a loading message before the first load", () => {
@@ -147,8 +192,9 @@ describe("ExpectedSalesSection", () => {
             birdsSold: 0,
             avgChickenWeight: null,
             salesCount: 0,
-            daysWithData: 0,
             salesWithoutWeight: 1,
+            salesWithoutReportedKg: 0,
+            daysWithData: 0,
           },
           branches: [],
           daily: [],

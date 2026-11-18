@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   Alert,
+  Button,
   Card,
   Table,
   TableBody,
@@ -37,6 +38,8 @@ import {
 interface Props {
   data?: ExpectedSalesReportDTO;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   scopeLabel?: string;
 }
 
@@ -64,6 +67,8 @@ const SummaryItem = ({
 export const ExpectedSalesSection = ({
   data,
   isLoading = false,
+  isError = false,
+  onRetry,
   scopeLabel,
 }: Props) => {
   const dailyRows = useMemo(
@@ -77,6 +82,26 @@ export const ExpectedSalesSection = ({
         <div className="flex h-32 items-center justify-center text-sm text-gray-400">
           Cargando venta esperada...
         </div>
+      </Card>
+    );
+  }
+
+  if (isError && !data) {
+    return (
+      <Card className="border-none bg-gray-800 shadow-xl">
+        <Alert color="failure">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>
+              No se pudo cargar la venta esperada. Revisa la conexión o intenta
+              de nuevo.
+            </span>
+            {onRetry && (
+              <Button size="xs" color="failure" onClick={onRetry}>
+                Reintentar
+              </Button>
+            )}
+          </div>
+        </Alert>
       </Card>
     );
   }
@@ -129,6 +154,18 @@ export const ExpectedSalesSection = ({
           {summary?.salesWithoutWeight === 1 ? "venta" : "ventas"} sin peso
           promedio de remesa{" "}
           {summary?.salesWithoutWeight === 1
+            ? "no se incluye"
+            : "no se incluyen"}{" "}
+          en el cálculo.
+        </Alert>
+      )}
+
+      {(summary?.salesWithoutReportedKg ?? 0) > 0 && (
+        <Alert color="warning" className="mb-4">
+          {summary?.salesWithoutReportedKg}{" "}
+          {summary?.salesWithoutReportedKg === 1 ? "venta" : "ventas"} sin kilos
+          vendidos registrados{" "}
+          {summary?.salesWithoutReportedKg === 1
             ? "no se incluye"
             : "no se incluyen"}{" "}
           en el cálculo.

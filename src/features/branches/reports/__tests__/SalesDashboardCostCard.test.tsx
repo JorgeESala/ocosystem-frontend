@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import * as XLSX from "xlsx";
 import { MockResponsiveContainer } from "@/test/rechartsMock";
@@ -6,6 +6,11 @@ import type { SalesReportDTO } from "../api/salesReports.api";
 import type { ProductAnalyticsDTO } from "../api/productAnalytics.api";
 import { SalesDashboard } from "../components/SalesDashboard";
 import { scrollToSection } from "../utils/scrollToSection";
+
+const expectedSalesState = vi.hoisted(() => ({
+  isError: false,
+  refetch: vi.fn(),
+}));
 
 vi.mock("recharts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("recharts")>()),
@@ -78,37 +83,43 @@ vi.mock("../api/salesReportes.queries", () => ({
 
 vi.mock("../api/expectedSales.queries", () => ({
   useExpectedSalesReport: () => ({
-    data: {
-      summary: {
-        expectedKg: 1000,
-        reportedKg: 1050,
-        differenceKg: 50,
-        variancePct: 5,
-        birdsSold: 600,
-        avgChickenWeight: 1.9,
-        salesCount: 3,
-        salesWithoutWeight: 0,
-        daysWithData: 1,
-        wastePerChickenKg: 0.25,
-      },
-      branches: [],
-      daily: [
-        {
-          branchId: 1,
-          branchName: "Centro",
-          day: "2026-06-01",
-          expectedKg: 1000,
-          reportedKg: 1050,
-          differenceKg: 50,
-          variancePct: 5,
-          birdsSold: 600,
-          avgChickenWeight: 1.9,
-          salesCount: 3,
-          salesWithoutWeight: 0,
+    data: expectedSalesState.isError
+      ? undefined
+      : {
+          summary: {
+            expectedKg: 1000,
+            reportedKg: 1050,
+            differenceKg: 50,
+            variancePct: 5,
+            birdsSold: 600,
+            avgChickenWeight: 1.9,
+            salesCount: 3,
+            salesWithoutWeight: 0,
+            salesWithoutReportedKg: 0,
+            daysWithData: 1,
+            wastePerChickenKg: 0.25,
+          },
+          branches: [],
+          daily: [
+            {
+              branchId: 1,
+              branchName: "Centro",
+              day: "2026-06-01",
+              expectedKg: 1000,
+              reportedKg: 1050,
+              differenceKg: 50,
+              variancePct: 5,
+              birdsSold: 600,
+              avgChickenWeight: 1.9,
+              salesCount: 3,
+              salesWithoutWeight: 0,
+              salesWithoutReportedKg: 0,
+            },
+          ],
         },
-      ],
-    },
     isLoading: false,
+    isError: expectedSalesState.isError,
+    refetch: expectedSalesState.refetch,
   }),
 }));
 
@@ -118,6 +129,11 @@ vi.mock("../api/productAnalytics.queries", () => ({
 }));
 
 describe("SalesDashboard category costs", () => {
+  beforeEach(() => {
+    expectedSalesState.isError = false;
+    expectedSalesState.refetch.mockClear();
+  });
+
   it("renders the sales and costs category cards for the branch", () => {
     render(
       <SalesDashboard
@@ -153,5 +169,28 @@ describe("SalesDashboard category costs", () => {
     fireEvent.click(screen.getByText(/Exportar Excel/));
 
     await waitFor(() => expect(writeFile).toHaveBeenCalled());
+  });
+
+  it("shows the expected sales error and retries", () => {
+    expectedSalesState.isError = true;
+
+    render(
+      <SalesDashboard
+        branchId={1}
+        branchName="Centro"
+        dates={{ start: new Date(2026, 5, 1), end: new Date(2026, 5, 7) }}
+        onDatesChange={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getByText(/No se pudo cargar la venta esperada/),
+    ).toBeTruthy();
+    expect(screen.getByText("No disponible")).toBeTruthy();
+
+    fireEvent.click(screen.getByText("Reintentar"));
+
+    expect(expectedSalesState.refetch).toHaveBeenCalledTimes(1);
   });
 });

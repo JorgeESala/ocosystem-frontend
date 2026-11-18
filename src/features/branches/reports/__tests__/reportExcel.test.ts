@@ -146,6 +146,7 @@ describe("expectedSalesSummaryRows", () => {
         avgChickenWeight: 1.9,
         salesCount: 3,
         salesWithoutWeight: 0,
+        salesWithoutReportedKg: 0,
         daysWithData: 1,
         wastePerChickenKg: 0.25,
       }),
@@ -164,6 +165,24 @@ describe("expectedSalesSummaryRows", () => {
       ["Diferencia de kilos", ""],
       ["Variación de venta esperada (%)", ""],
     ]);
+  });
+
+  it("rounds the variance to two decimals", () => {
+    const rows = expectedSalesSummaryRows({
+      expectedKg: 475,
+      reportedKg: 540,
+      differenceKg: 65,
+      variancePct: 13.6842,
+      birdsSold: 300,
+      avgChickenWeight: 1.8333,
+      salesCount: 2,
+      salesWithoutWeight: 0,
+      salesWithoutReportedKg: 0,
+      daysWithData: 1,
+      wastePerChickenKg: 0.25,
+    });
+
+    expect(rows[3]).toEqual(["Variación de venta esperada (%)", 13.68]);
   });
 });
 
@@ -204,6 +223,7 @@ describe("expectedSalesSheet", () => {
         avgChickenWeight: 1.8333,
         salesCount: 2,
         salesWithoutWeight: 0,
+        salesWithoutReportedKg: 0,
       },
     ]);
 
@@ -243,6 +263,7 @@ describe("expectedSalesSheet", () => {
         avgChickenWeight: null,
         salesCount: 0,
         salesWithoutWeight: 1,
+        salesWithoutReportedKg: 0,
       },
     ]);
 
@@ -273,6 +294,7 @@ describe("expectedSalesBranchesSheet", () => {
         avgChickenWeight: null,
         salesCount: 0,
         salesWithoutWeight: 1,
+        salesWithoutReportedKg: 0,
         daysWithData: 0,
       },
     ]);
@@ -294,6 +316,7 @@ describe("expectedSalesBranchesSheet", () => {
         avgChickenWeight: 1.9,
         salesCount: 3,
         salesWithoutWeight: 0,
+        salesWithoutReportedKg: 0,
         daysWithData: 1,
       },
     ]);

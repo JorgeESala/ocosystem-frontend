@@ -10,6 +10,7 @@ export interface ExpectedSalesSummaryDTO {
   avgChickenWeight: number | null;
   salesCount: number;
   salesWithoutWeight: number;
+  salesWithoutReportedKg: number;
   daysWithData: number;
   wastePerChickenKg: number;
 }
@@ -25,6 +26,7 @@ export interface BranchExpectedSalesDTO {
   avgChickenWeight: number | null;
   salesCount: number;
   salesWithoutWeight: number;
+  salesWithoutReportedKg: number;
   daysWithData: number;
 }
 
@@ -40,6 +42,7 @@ export interface DailyExpectedSalesDTO {
   avgChickenWeight: number | null;
   salesCount: number;
   salesWithoutWeight: number;
+  salesWithoutReportedKg: number;
 }
 
 export interface ExpectedSalesReportDTO {

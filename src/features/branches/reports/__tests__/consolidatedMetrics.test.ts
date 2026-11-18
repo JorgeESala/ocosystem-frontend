@@ -111,6 +111,7 @@ describe("buildRankingRows", () => {
         avgChickenWeight: 1.75,
         salesCount: 2,
         salesWithoutWeight: 0,
+        salesWithoutReportedKg: 0,
         daysWithData: 2,
       },
     ]);

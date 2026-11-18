@@ -25,6 +25,7 @@ const daily = (
   avgChickenWeight: 1.8,
   salesCount: 1,
   salesWithoutWeight: 0,
+  salesWithoutReportedKg: 0,
   ...overrides,
 });
 

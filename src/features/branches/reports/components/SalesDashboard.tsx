@@ -106,8 +106,12 @@ export const SalesDashboard = ({
     dates.start,
     dates.end,
   );
-  const { data: expectedSales, isLoading: expectedSalesLoading } =
-    useExpectedSalesReport([branchId], dates.start, dates.end);
+  const {
+    data: expectedSales,
+    isLoading: expectedSalesLoading,
+    isError: expectedSalesError,
+    refetch: refetchExpectedSales,
+  } = useExpectedSalesReport([branchId], dates.start, dates.end);
   const { data: previousData } = useSalesReport(
     branchId,
     previousRange.start,
@@ -475,7 +479,11 @@ export const SalesDashboard = ({
               value={formatKg(expectedSales?.summary.expectedKg)}
               color="yellow"
               icon={HiScale}
-              footnote={`Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`}
+              footnote={
+                expectedSalesError
+                  ? "No disponible"
+                  : `Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`
+              }
               onClick={() => scrollToSection("expected-sales-section")}
               actionHint="Ver detalle"
               info={
@@ -658,6 +666,8 @@ export const SalesDashboard = ({
             <ExpectedSalesSection
               data={expectedSales}
               isLoading={expectedSalesLoading}
+              isError={expectedSalesError}
+              onRetry={() => void refetchExpectedSales()}
               scopeLabel={branchName}
             />
           </div>
