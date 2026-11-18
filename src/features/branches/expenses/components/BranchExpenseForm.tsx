@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Datepicker,
@@ -20,6 +20,10 @@ import type {
   BranchExpenseRequestDTO,
   BranchExpenseResponseDTO,
 } from "../types";
+import {
+  buildExpenseCategoryGroups,
+  selectableExpenseCategories,
+} from "../utils/expense-category-options";
 
 interface BranchExpenseFormProps {
   initialData?: BranchExpenseResponseDTO;
@@ -60,6 +64,14 @@ export default function BranchExpenseForm({
     useCreateBranchExpense();
   const { mutate: updateExpense, isPending: updating } =
     useUpdateBranchExpense();
+  const selectableCategories = useMemo(
+    () => selectableExpenseCategories(expenseCategories),
+    [expenseCategories],
+  );
+  const categoryGroups = useMemo(
+    () => buildExpenseCategoryGroups(expenseCategories),
+    [expenseCategories],
+  );
 
   const [branchId, setBranchId] = useState("");
   const [expenseCategoryId, setExpenseCategoryId] = useState("");
@@ -75,7 +87,7 @@ export default function BranchExpenseForm({
         resolveSelectValue(
           initialData.expenseCategoryId,
           initialData.expenseCategoryName,
-          expenseCategories,
+          selectableCategories,
         ),
       );
       setBusinessUnitCategoryId(
@@ -97,7 +109,7 @@ export default function BranchExpenseForm({
     setAmount("");
     setReason("");
     setDate(new Date());
-  }, [initialData, expenseCategories, businessCategories]);
+  }, [initialData, selectableCategories, businessCategories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,10 +180,14 @@ export default function BranchExpenseForm({
               ? "Cargando tipos..."
               : "Selecciona un tipo de gasto"}
           </option>
-          {expenseCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
+          {categoryGroups.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.options.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </Select>
       </div>

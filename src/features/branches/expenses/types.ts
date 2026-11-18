@@ -9,6 +9,7 @@ export interface BranchExpenseResponseDTO {
   branchName: string;
   expenseCategoryId?: number;
   expenseCategoryName: string;
+  expenseCategoryCode?: string | null;
   businessUnitCategoryId?: number;
   businessUnitCategoryName?: string;
   businessUnitName?: string;
@@ -26,9 +27,25 @@ export interface BranchExpenseRequestDTO {
   reason: string;
 }
 
+export type BranchExpenseReportGroup =
+  | "COSTO"
+  | "VENTA"
+  | "ADMIN"
+  | "INVERSION"
+  | "NO_GASTO";
+
 export interface ExpenseCategoryDTO {
   id: number;
   name: string;
+  code?: string | null;
+  parentId?: number | null;
+  parentName?: string | null;
+  reportGroup?: BranchExpenseReportGroup | null;
+  active?: boolean;
+  sortOrder?: number;
+  visibleInBranchApp?: boolean;
+  replacedById?: number | null;
+  selectable?: boolean;
 }
 
 export interface BranchCategoryDTO {
@@ -81,3 +98,79 @@ export interface BranchExpenseComparisonResponse {
 }
 
 export type BranchExpenseComparisonItem = ExpenseComparisonItem;
+
+export type BranchExpenseGranularity = "WEEK" | "MONTH" | "YEAR";
+
+export interface BranchExpenseAnalyticsRequest {
+  branchIds: number[];
+  businessUnitCategoryIds: number[];
+  expenseCategoryIds: number[];
+  reason?: string;
+  startDate: Date;
+  endDate: Date;
+  previousStartDate?: Date;
+  previousEndDate?: Date;
+  granularity: BranchExpenseGranularity;
+  includeNonOperating: boolean;
+}
+
+export interface BranchExpenseAnalyticsBucketCategory {
+  id: number | null;
+  name: string;
+  amount: number;
+  count: number;
+}
+
+export interface BranchExpenseAnalyticsBucket {
+  key: string;
+  start: string;
+  end: string;
+  label: string;
+  amount: number;
+  count: number;
+  categories: BranchExpenseAnalyticsBucketCategory[];
+}
+
+export interface BranchExpenseAnalyticsCategory {
+  id: number | null;
+  code: string | null;
+  name: string;
+  parentId: number | null;
+  parentName: string | null;
+  reportGroup: BranchExpenseReportGroup | null;
+  currentAmount: number;
+  currentCount: number;
+  previousAmount: number;
+  previousCount: number;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  children: BranchExpenseAnalyticsCategory[];
+}
+
+export interface BranchExpenseAnalyticsRow {
+  id: number | null;
+  name: string;
+  currentAmount: number;
+  currentCount: number;
+  previousAmount: number;
+  previousCount: number;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+}
+
+export interface BranchExpenseAnalyticsResponse {
+  current: ExpenseComparisonTotals;
+  previous: ExpenseComparisonTotals;
+  amountDifference: number;
+  amountVariationPct: number | null;
+  countDifference: number;
+  countVariationPct: number | null;
+  buckets: BranchExpenseAnalyticsBucket[];
+  categories: BranchExpenseAnalyticsCategory[];
+  branches: BranchExpenseAnalyticsRow[];
+  businessUnits: BranchExpenseAnalyticsRow[];
+}

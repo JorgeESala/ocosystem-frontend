@@ -9,6 +9,28 @@ export const branchExpensesKeys = {
       startDate,
       endDate,
     ] as const,
+  analytics: (
+    branchIds: number[],
+    businessUnitCategoryIds: number[],
+    expenseCategoryIds: number[],
+    reason: string,
+    startDate: string,
+    endDate: string,
+    granularity: string,
+    includeNonOperating: boolean,
+  ) =>
+    [
+      ...branchExpensesKeys.all,
+      "analytics",
+      branchIds.join(","),
+      businessUnitCategoryIds.join(","),
+      expenseCategoryIds.join(","),
+      reason,
+      startDate,
+      endDate,
+      granularity,
+      includeNonOperating ? "all" : "operating",
+    ] as const,
   comparison: (
     branchIds: number[],
     businessUnitCategoryIds: number[],

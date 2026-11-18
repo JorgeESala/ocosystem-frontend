@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  BranchExpenseAnalyticsRequest,
   BranchExpenseComparisonRequest,
   BranchExpenseFilters,
   BranchExpenseRequestDTO,
@@ -18,6 +19,26 @@ export const useBranchExpensesSearch = (filters: BranchExpenseFilters | null) =>
       : ([...branchExpensesKeys.all, "search", "disabled"] as const),
     queryFn: () => branchExpensesApi.search(filters!),
     enabled: Boolean(filters),
+  });
+
+export const useBranchExpenseAnalytics = (
+  request: BranchExpenseAnalyticsRequest | null,
+) =>
+  useQuery({
+    queryKey: request
+      ? branchExpensesKeys.analytics(
+          request.branchIds,
+          request.businessUnitCategoryIds,
+          request.expenseCategoryIds,
+          request.reason ?? "",
+          request.startDate.toISOString(),
+          request.endDate.toISOString(),
+          request.granularity,
+          request.includeNonOperating,
+        )
+      : ([...branchExpensesKeys.all, "analytics", "disabled"] as const),
+    queryFn: () => branchExpensesApi.analytics(request!),
+    enabled: Boolean(request),
   });
 
 export const useBranchExpenseComparison = (

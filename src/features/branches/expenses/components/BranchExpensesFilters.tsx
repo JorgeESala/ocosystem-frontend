@@ -5,6 +5,7 @@ import FilterChipGroup from "@/features/expenses/components/FilterChipGroup";
 import type { FilterChipOption } from "@/features/expenses/config/filterConfig";
 import type { Branch } from "@/features/branches/branch/types";
 import type { BranchCategoryDTO, ExpenseCategoryDTO } from "../types";
+import { selectableExpenseCategories } from "../utils/expense-category-options";
 
 interface BranchExpensesFiltersProps {
   branches: Branch[];
@@ -46,13 +47,14 @@ export default function BranchExpensesFilters({
   onMotivoSearchChange,
   onClear,
 }: BranchExpensesFiltersProps) {
-  const categoryOptions: FilterChipOption[] = expenseCategories.map(
-    (category, index) => ({
+  const categoryOptions: FilterChipOption[] =
+    selectableExpenseCategories(expenseCategories).map((category, index) => ({
       value: String(category.id),
-      label: category.name,
+      label: category.parentName
+        ? `${category.parentName} / ${category.name}`
+        : category.name,
       color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-    }),
-  );
+    }));
 
   const businessUnitOptions: FilterChipOption[] = businessCategories.map(
     (category, index) => ({

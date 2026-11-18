@@ -2,12 +2,16 @@ import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import BranchExpensesPage from "../pages/BranchExpensesPage";
-import type { BranchExpenseResponseDTO } from "../types";
+import type {
+  BranchExpenseAnalyticsResponse,
+  BranchExpenseResponseDTO,
+} from "../types";
 
 const mocks = vi.hoisted(() => ({
   useBranches: vi.fn(),
   useBranchExpensesSearch: vi.fn(),
   useBranchExpenseComparison: vi.fn(),
+  useBranchExpenseAnalytics: vi.fn(),
   useExpenseCategories: vi.fn(),
   useBranchBusinessCategories: vi.fn(),
 }));
@@ -19,6 +23,7 @@ vi.mock("@/features/branches/branch/branch.queries", () => ({
 vi.mock("../api/branch-expenses.queries", () => ({
   useBranchExpensesSearch: mocks.useBranchExpensesSearch,
   useBranchExpenseComparison: mocks.useBranchExpenseComparison,
+  useBranchExpenseAnalytics: mocks.useBranchExpenseAnalytics,
 }));
 
 vi.mock("../api/branch-categories.queries", () => ({
@@ -56,6 +61,68 @@ const secondExpense: BranchExpenseResponseDTO = {
   reason: "Jabon y desinfectante",
 };
 
+const analytics: BranchExpenseAnalyticsResponse = {
+  current: { totalAmount: 350, expenseCount: 2, averageAmount: 175 },
+  previous: { totalAmount: 300, expenseCount: 2, averageAmount: 150 },
+  amountDifference: 50,
+  amountVariationPct: 16.67,
+  countDifference: 0,
+  countVariationPct: 0,
+  buckets: [],
+  categories: [
+    {
+      id: 10,
+      code: "COSTO_VENTAS",
+      name: "Costo de ventas",
+      parentId: null,
+      parentName: null,
+      reportGroup: "COSTO",
+      currentAmount: 350,
+      currentCount: 2,
+      previousAmount: 300,
+      previousCount: 2,
+      amountDifference: 50,
+      amountVariationPct: 16.67,
+      countDifference: 0,
+      countVariationPct: 0,
+      children: [
+        {
+          id: 11,
+          code: "GAS_LP",
+          name: "Gas LP",
+          parentId: 10,
+          parentName: "Costo de ventas",
+          reportGroup: "COSTO",
+          currentAmount: 350,
+          currentCount: 2,
+          previousAmount: 300,
+          previousCount: 2,
+          amountDifference: 50,
+          amountVariationPct: 16.67,
+          countDifference: 0,
+          countVariationPct: 0,
+          children: [],
+        },
+      ],
+    },
+  ],
+  branches: [
+    {
+      id: 1,
+      name: "Centro",
+      currentAmount: 350,
+      currentCount: 2,
+      previousAmount: 300,
+      previousCount: 2,
+      amountDifference: 50,
+      amountVariationPct: 16.67,
+      countDifference: 0,
+      countVariationPct: 0,
+    },
+  ],
+  businessUnits: [],
+};
+
 const renderPage = () =>
   render(
     <MemoryRouter>
@@ -87,6 +154,11 @@ describe("BranchExpensesPage", () => {
       isError: false,
     });
     mocks.useBranchExpenseComparison.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    });
+    mocks.useBranchExpenseAnalytics.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: false,
@@ -305,6 +377,43 @@ describe("BranchExpensesPage", () => {
 
     expect(screen.getByText("Compra de plumas")).toBeTruthy();
     expect(screen.getByText("Jabon y desinfectante")).toBeTruthy();
+  });
+
+  it("consulta el reporte con el mes y el periodo anterior al abrir la pestaña", () => {
+    renderPage();
+
+    expect(mocks.useBranchExpenseAnalytics).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reporte" }));
+
+    expect(mocks.useBranchExpenseAnalytics).toHaveBeenLastCalledWith({
+      branchIds: [],
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      reason: "",
+      startDate: new Date(2026, 10, 1),
+      endDate: new Date(2026, 10, 11),
+      previousStartDate: new Date(2026, 9, 1),
+      previousEndDate: new Date(2026, 9, 11),
+      granularity: "MONTH",
+      includeNonOperating: false,
+    });
+  });
+
+  it("muestra el reporte por categoría y sucursal al cambiar de pestaña", () => {
+    mocks.useBranchExpenseAnalytics.mockReturnValue({
+      data: analytics,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Reporte" }));
+
+    expect(screen.getByText("Gasto por categoría y subcategoría")).toBeTruthy();
+    expect(screen.getByText("Gas LP")).toBeTruthy();
+    expect(screen.getByText("Gasto por sucursal")).toBeTruthy();
+    expect(screen.getByText("Gasto actual")).toBeTruthy();
   });
 
   it("muestra una fila de totales al final de la tabla", () => {

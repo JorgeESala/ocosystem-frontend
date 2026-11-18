@@ -6,10 +6,12 @@ import { useBranches } from "@/features/branches/branch/branch.queries";
 import BranchExpenseModal from "../components/BranchExpenseModal";
 import BranchExpenseBreakdowns from "../components/BranchExpenseBreakdowns";
 import BranchExpenseComparison from "../components/BranchExpenseComparison";
+import BranchExpenseReport from "../components/BranchExpenseReport";
 import BranchExpenseSummary from "../components/BranchExpenseSummary";
 import BranchExpensesFilters from "../components/BranchExpensesFilters";
 import BranchExpensesTable from "../components/BranchExpensesTable";
 import {
+  useBranchExpenseAnalytics,
   useBranchExpenseComparison,
   useBranchExpensesSearch,
 } from "../api/branch-expenses.queries";
@@ -17,7 +19,10 @@ import {
   useBranchBusinessCategories,
   useExpenseCategories,
 } from "../api/branch-categories.queries";
-import type { BranchExpenseResponseDTO } from "../types";
+import type {
+  BranchExpenseGranularity,
+  BranchExpenseResponseDTO,
+} from "../types";
 import {
   buildBranchExpenseSummary,
   type ExpenseSummaryItem,
@@ -81,6 +86,10 @@ export default function BranchExpensesPage() {
     number[]
   >([]);
   const [motivoSearch, setMotivoSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"movements" | "report">("movements");
+  const [granularity, setGranularity] =
+    useState<BranchExpenseGranularity>("MONTH");
+  const [includeNonOperating, setIncludeNonOperating] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] =
@@ -146,6 +155,37 @@ export default function BranchExpensesPage() {
     motivoSearch,
   ]);
   const comparisonQuery = useBranchExpenseComparison(comparisonRequest);
+  const analyticsRequest = useMemo(() => {
+    if (rangeError || !startDate || !endDate) {
+      return null;
+    }
+    const previous = getPreviousComparisonRange(startDate, endDate);
+    return {
+      branchIds: selectedBranchIds,
+      businessUnitCategoryIds: selectedBusinessUnitIds,
+      expenseCategoryIds: selectedCategoryIds,
+      reason: motivoSearch.trim(),
+      startDate,
+      endDate,
+      previousStartDate: previous.start,
+      previousEndDate: previous.end,
+      granularity,
+      includeNonOperating,
+    };
+  }, [
+    rangeError,
+    startDate,
+    endDate,
+    selectedBranchIds,
+    selectedBusinessUnitIds,
+    selectedCategoryIds,
+    motivoSearch,
+    granularity,
+    includeNonOperating,
+  ]);
+  const analyticsQuery = useBranchExpenseAnalytics(
+    activeTab === "report" ? analyticsRequest : null,
+  );
   const comparisonCurrentLabel =
     startDate && endDate
       ? formatDateRange(startDate, endDate)
@@ -307,6 +347,23 @@ export default function BranchExpensesPage() {
         onClear={handleClearFilters}
       />
 
+      <div className="flex gap-2 border-b border-slate-800 pb-2">
+        <Button
+          size="sm"
+          color={activeTab === "movements" ? "blue" : "gray"}
+          onClick={() => setActiveTab("movements")}
+        >
+          Movimientos
+        </Button>
+        <Button
+          size="sm"
+          color={activeTab === "report" ? "blue" : "gray"}
+          onClick={() => setActiveTab("report")}
+        >
+          Reporte
+        </Button>
+      </div>
+
       {rangeError && (
         <Alert
           color="failure"
@@ -316,7 +373,7 @@ export default function BranchExpensesPage() {
         </Alert>
       )}
 
-      {!rangeError && (
+      {!rangeError && activeTab === "movements" && (
         <>
           <BranchExpenseSummary
             totalAmount={summary.totalAmount}
@@ -401,6 +458,19 @@ export default function BranchExpensesPage() {
             }
           />
         </>
+      )}
+
+      {!rangeError && activeTab === "report" && (
+        <BranchExpenseReport
+          data={analyticsQuery.data}
+          isLoading={analyticsQuery.isLoading}
+          isError={analyticsQuery.isError}
+          granularity={granularity}
+          onGranularityChange={setGranularity}
+          includeNonOperating={includeNonOperating}
+          onIncludeNonOperatingChange={setIncludeNonOperating}
+          scopeLabel={scopeLabel}
+        />
       )}
 
       <BranchExpenseModal
