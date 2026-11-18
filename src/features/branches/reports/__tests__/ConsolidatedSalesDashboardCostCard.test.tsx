@@ -1,14 +1,39 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import * as XLSX from "xlsx";
 import { MockResponsiveContainer } from "@/test/rechartsMock";
 import type { ConsolidatedSalesReportDTO } from "../api/consolidatedSales.api";
 import type { ProductAnalyticsDTO } from "../api/productAnalytics.api";
 import { ConsolidatedSalesDashboard } from "../components/ConsolidatedSalesDashboard";
+import { scrollToSection } from "../utils/scrollToSection";
+
+const expectedSalesState = vi.hoisted(() => ({
+  isError: false,
+  refetch: vi.fn(),
+}));
 
 vi.mock("recharts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("recharts")>()),
   ResponsiveContainer: MockResponsiveContainer,
+}));
+
+vi.mock("xlsx", () => ({
+  utils: {
+    book_new: vi.fn(() => ({})),
+    aoa_to_sheet: vi.fn(() => ({})),
+    book_append_sheet: vi.fn(),
+  },
+  writeFile: vi.fn(),
+}));
+
+vi.mock("../utils/scrollToSection", () => ({
+  scrollToSection: vi.fn(),
+}));
+
+vi.mock("../utils/reportExcel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/reportExcel")>()),
+  fetchAllProductAnalytics: vi.fn(async () => []),
 }));
 
 const report: ConsolidatedSalesReportDTO = {
@@ -87,6 +112,63 @@ vi.mock("../api/consolidatedSales.queries", () => ({
   }),
 }));
 
+vi.mock("../api/expectedSales.queries", () => ({
+  useExpectedSalesReport: () => ({
+    data: expectedSalesState.isError
+      ? undefined
+      : {
+          summary: {
+            expectedKg: 1000,
+            reportedKg: 1050,
+            differenceKg: 50,
+            variancePct: 5,
+            birdsSold: 600,
+            avgChickenWeight: 1.9,
+            salesCount: 3,
+            salesWithoutWeight: 0,
+            salesWithoutReportedKg: 0,
+            daysWithData: 1,
+            wastePerChickenKg: 0.25,
+          },
+          branches: [
+            {
+              branchId: 1,
+              branchName: "Centro",
+              expectedKg: 1000,
+              reportedKg: 1050,
+              differenceKg: 50,
+              variancePct: 5,
+              birdsSold: 600,
+              avgChickenWeight: 1.9,
+              salesCount: 3,
+              salesWithoutWeight: 0,
+              salesWithoutReportedKg: 0,
+              daysWithData: 1,
+            },
+          ],
+          daily: [
+            {
+              branchId: 1,
+              branchName: "Centro",
+              day: "2026-06-01",
+              expectedKg: 1000,
+              reportedKg: 1050,
+              differenceKg: 50,
+              variancePct: 5,
+              birdsSold: 600,
+              avgChickenWeight: 1.9,
+              salesCount: 3,
+              salesWithoutWeight: 0,
+              salesWithoutReportedKg: 0,
+            },
+          ],
+        },
+    isLoading: false,
+    isError: expectedSalesState.isError,
+    refetch: expectedSalesState.refetch,
+  }),
+}));
+
 vi.mock("../api/productAnalytics.queries", () => ({
   useProductAnalytics: () => ({ data: analytics, isLoading: false }),
   useProductDetail: () => ({ data: null, isLoading: false, isError: false }),
@@ -97,6 +179,11 @@ vi.mock("../api/wasteReport.queries", () => ({
 }));
 
 describe("ConsolidatedSalesDashboard category costs", () => {
+  beforeEach(() => {
+    expectedSalesState.isError = false;
+    expectedSalesState.refetch.mockClear();
+  });
+
   it("renders the sales and costs category cards in the consolidated report", () => {
     render(
       <MemoryRouter>
@@ -112,5 +199,54 @@ describe("ConsolidatedSalesDashboard category costs", () => {
 
     expect(screen.getByText("Ventas por categoría:1")).toBeTruthy();
     expect(screen.getByText("Costos por categoría:1")).toBeTruthy();
+  });
+
+  it("exports expected sales and jumps to the expected section", async () => {
+    const writeFile = vi.mocked(XLSX.writeFile);
+
+    render(
+      <MemoryRouter>
+        <ConsolidatedSalesDashboard
+          dates={{ start: new Date(2026, 5, 1), end: new Date(2026, 5, 7) }}
+          onDatesChange={() => undefined}
+          selectedBranchIds={[]}
+          onSelectedBranchIdsChange={() => undefined}
+          onSelectBranch={() => undefined}
+        />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByText(/Vendidos: 1,050 kg/));
+
+    expect(scrollToSection).toHaveBeenCalledWith("expected-sales-section");
+
+    fireEvent.click(screen.getByText(/Exportar Excel/));
+
+    await waitFor(() => expect(writeFile).toHaveBeenCalled());
+  });
+
+  it("shows the expected sales error and retries", () => {
+    expectedSalesState.isError = true;
+
+    render(
+      <MemoryRouter>
+        <ConsolidatedSalesDashboard
+          dates={{ start: new Date(2026, 5, 1), end: new Date(2026, 5, 7) }}
+          onDatesChange={() => undefined}
+          selectedBranchIds={[]}
+          onSelectedBranchIdsChange={() => undefined}
+          onSelectBranch={() => undefined}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByText(/No se pudo cargar la venta esperada/),
+    ).toBeTruthy();
+    expect(screen.getByText("No disponible")).toBeTruthy();
+
+    fireEvent.click(screen.getByText("Reintentar"));
+
+    expect(expectedSalesState.refetch).toHaveBeenCalledTimes(1);
   });
 });

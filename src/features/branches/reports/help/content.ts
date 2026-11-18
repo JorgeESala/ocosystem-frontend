@@ -40,6 +40,17 @@ export const REPORTS_METRICS: HelpMetric[] = [
     ],
   },
   {
+    id: "venta-esperada",
+    title: "Venta esperada vs vendida (kg)",
+    description:
+      "Kilos que deberían venderse según el peso promedio de cada remesa, menos 250 gramos de merma por pollo, multiplicado por los pollos vendidos.",
+    details: [
+      "Se calcula por cada venta de remesa. Si un día hay ventas de varias remesas, se suman.",
+      "Solo se incluyen ventas con peso promedio de remesa y kilos vendidos registrados; las demás se avisan en la sección.",
+      "No se muestra en dinero porque el precio cambia según el tipo de venta.",
+    ],
+  },
+  {
     id: "ticket-promedio",
     title: "Ticket Promedio",
     description: "Venta Real dividida entre los tickets reales del periodo.",
@@ -106,6 +117,12 @@ export const REPORTS_SECTIONS: HelpSection[] = [
     title: "¿De dónde sale la Pérdida Neta (merma)?",
     content:
       "La merma se separa en dos: la tripa, que es merma operativa, y el resto, que es la pérdida neta (lo que realmente se pierde). La tarjeta muestra la pérdida neta y debajo la merma total, que incluye la tripa. Haz clic en la tarjeta para ver el desglose por producto y por sucursal; desde ahí puedes abrir el detalle diario de cada producto.",
+  },
+  {
+    id: "venta-esperada",
+    title: "¿Cómo se calcula la venta esperada?",
+    content:
+      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. Si una remesa no tiene peso promedio o la venta no tiene kilos registrados, esa venta no se incluye y se muestra un aviso.",
   },
   {
     id: "abc",
