@@ -23,5 +23,21 @@ export default defineConfig({
     hookTimeout: 15_000,
     teardownTimeout: 30_000,
     maxWorkers: process.env.CI ? undefined : 4,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/__tests__/**",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+        "src/**/*.d.ts",
+        "src/test/**",
+        "src/main.tsx",
+        "src/**/types/**",
+        "src/**/*.config.{ts,tsx}",
+      ],
+    },
   },
 });
