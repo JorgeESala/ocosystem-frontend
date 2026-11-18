@@ -59,6 +59,7 @@ import {
   categorySalesSheet,
   dailySalesSheet,
   expectedSalesSheet,
+  expectedSalesSummaryRows,
   salesProductsSheet,
 } from "../utils/reportExcel";
 
@@ -378,19 +379,7 @@ export const SalesDashboard = ({
             roundDelta(deltas?.perdida),
           ],
           [""],
-          [
-            "Venta esperada de pollo (kg)",
-            expectedSales?.summary.expectedKg ?? "",
-          ],
-          [
-            "Kg vendidos en Entradas y Ventas",
-            expectedSales?.summary.reportedKg ?? "",
-          ],
-          ["Diferencia de kilos", expectedSales?.summary.differenceKg ?? ""],
-          [
-            "Variación de venta esperada (%)",
-            expectedSales?.summary.variancePct ?? "",
-          ],
+          ...expectedSalesSummaryRows(expectedSales?.summary),
         ],
         cols: [{ wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 12 }],
       });

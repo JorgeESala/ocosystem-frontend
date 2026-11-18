@@ -5,6 +5,8 @@ import {
   expectedVariancePct,
   formatBirds,
   formatChickenWeight,
+  formatExpectedTooltipLabel,
+  formatExpectedTooltipValue,
   formatKg,
   formatVariance,
 } from "../utils/expectedSales";
@@ -110,5 +112,13 @@ describe("expected sales formatters", () => {
     expect(formatVariance(-4.25)).toBe("-4.3%");
     expect(formatVariance(0)).toBe("0.0%");
     expect(formatVariance(null)).toBe("—");
+  });
+
+  it("formats the chart tooltip label and values", () => {
+    expect(formatExpectedTooltipLabel("2026-06-01")).toContain("jun");
+    expect(formatExpectedTooltipValue(1050, "Kg vendidos")).toEqual([
+      "1,050 kg",
+      "Kg vendidos",
+    ]);
   });
 });

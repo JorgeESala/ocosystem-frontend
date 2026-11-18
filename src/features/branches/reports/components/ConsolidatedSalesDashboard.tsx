@@ -32,7 +32,9 @@ import {
   categorySalesSheet,
   dailySalesSheet,
   expectedSalesBranchesSheet,
+  expectedSalesRankingColumns,
   expectedSalesSheet,
+  expectedSalesSummaryRows,
   fetchAllProductAnalytics,
 } from "../utils/reportExcel";
 import { formatMXN, formatMXNCompact } from "@/utils/moneyNumbers";
@@ -334,19 +336,7 @@ export const ConsolidatedSalesDashboard = ({
           ["Ticket promedio con complemento", summary.avgFullTicketValue],
           ["Tickets con complemento (%)", summary.attachRate],
           [""],
-          [
-            "Venta esperada de pollo (kg)",
-            expectedSales?.summary.expectedKg ?? "",
-          ],
-          [
-            "Kg vendidos en Entradas y Ventas",
-            expectedSales?.summary.reportedKg ?? "",
-          ],
-          ["Diferencia de kilos", expectedSales?.summary.differenceKg ?? ""],
-          [
-            "Variación de venta esperada (%)",
-            expectedSales?.summary.variancePct ?? "",
-          ],
+          ...expectedSalesSummaryRows(expectedSales?.summary),
           [""],
           ["Cambio vs. periodo anterior (%)"],
           ["Venta real", deltas.totalSales ?? ""],
@@ -382,11 +372,7 @@ export const ConsolidatedSalesDashboard = ({
             row.salesDelta == null ? "" : Number(row.salesDelta.toFixed(2)),
             row.avgTicket,
             row.totalSlaughtered,
-            row.expectedKg ?? "",
-            row.expectedReportedKg ?? "",
-            row.expectedVariancePct == null
-              ? ""
-              : Number(row.expectedVariancePct.toFixed(2)),
+            ...expectedSalesRankingColumns(row),
             row.mermaQuantity,
             row.daysWithReport,
             row.missingDays,

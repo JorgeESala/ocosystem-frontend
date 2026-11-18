@@ -1,7 +1,5 @@
-import type {
-  BranchExpectedSalesDTO,
-  DailyExpectedSalesDTO,
-} from "../api/expectedSales.api";
+import type { DailyExpectedSalesDTO } from "../api/expectedSales.api";
+import { formatFullDate } from "@/utils/date.utils";
 
 export interface DailyExpectedSalesRow {
   day: string;
@@ -23,11 +21,6 @@ export const expectedVariancePct = (
   }
   return ((reportedKg - expectedKg) / expectedKg) * 100;
 };
-
-export const buildExpectedByBranch = (
-  branches: BranchExpectedSalesDTO[],
-): Map<number, BranchExpectedSalesDTO> =>
-  new Map(branches.map((branch) => [branch.branchId, branch]));
 
 export const aggregateExpectedDaily = (
   daily: DailyExpectedSalesDTO[],
@@ -118,3 +111,11 @@ export const formatVariance = (value: number | null | undefined): string => {
   const sign = value > 0 ? "+" : "";
   return `${sign}${value.toFixed(1)}%`;
 };
+
+export const formatExpectedTooltipLabel = (value: unknown): string =>
+  formatFullDate(String(value));
+
+export const formatExpectedTooltipValue = (
+  value: number,
+  name: string,
+): [string, string] => [formatKg(value), name];

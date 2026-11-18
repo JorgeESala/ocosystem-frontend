@@ -8,6 +8,7 @@ import type {
 import type {
   BranchExpectedSalesDTO,
   DailyExpectedSalesDTO,
+  ExpectedSalesSummaryDTO,
 } from "../api/expectedSales.api";
 import type {
   ProductAnalyticsDTO,
@@ -62,6 +63,27 @@ const hasMonetaryValue = (
   categoryName: string,
   totalSales: number | null,
 ): totalSales is number => categoryName !== "Merma" && totalSales != null;
+
+export const expectedSalesSummaryRows = (
+  summary: ExpectedSalesSummaryDTO | null | undefined,
+): (string | number)[][] => [
+  ["Venta esperada de pollo (kg)", summary?.expectedKg ?? ""],
+  ["Kg vendidos en Entradas y Ventas", summary?.reportedKg ?? ""],
+  ["Diferencia de kilos", summary?.differenceKg ?? ""],
+  ["Variación de venta esperada (%)", summary?.variancePct ?? ""],
+];
+
+export const expectedSalesRankingColumns = (branch: {
+  expectedKg: number | null;
+  expectedReportedKg: number | null;
+  expectedVariancePct: number | null;
+}): (string | number)[] => [
+  branch.expectedKg ?? "",
+  branch.expectedReportedKg ?? "",
+  branch.expectedVariancePct == null
+    ? ""
+    : Number(branch.expectedVariancePct.toFixed(2)),
+];
 
 export const expectedSalesSheet = (
   daily: DailyExpectedSalesDTO[],

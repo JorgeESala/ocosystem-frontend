@@ -21,12 +21,14 @@ import {
   YAxis,
 } from "recharts";
 import { InfoTip } from "@/components/InfoTip";
-import { formatFullDate, formatWeekdayDayMonth } from "@/utils/date.utils";
+import { formatWeekdayDayMonth } from "@/utils/date.utils";
 import type { ExpectedSalesReportDTO } from "../api/expectedSales.api";
 import {
   aggregateExpectedDaily,
   formatBirds,
   formatChickenWeight,
+  formatExpectedTooltipLabel,
+  formatExpectedTooltipValue,
   formatKg,
   formatKgValue,
   formatVariance,
@@ -170,11 +172,8 @@ export const ExpectedSalesSection = ({
                     borderRadius: "8px",
                     color: "#F3F4F6",
                   }}
-                  labelFormatter={(value) => formatFullDate(value)}
-                  formatter={(value: number, name: string) => [
-                    formatKg(value),
-                    name,
-                  ]}
+                  labelFormatter={formatExpectedTooltipLabel}
+                  formatter={formatExpectedTooltipValue}
                 />
                 <Legend />
                 <Line

@@ -81,6 +81,59 @@ describe("ExpectedSalesSection", () => {
     ).toBeTruthy();
   });
 
+  it("uses the singular warning for one sale without a batch weight", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: { ...report.summary, salesWithoutWeight: 1 },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(/1 venta sin peso promedio de remesa no se incluye/),
+    ).toBeTruthy();
+  });
+
+  it("shows a loading message before the first load", () => {
+    render(<ExpectedSalesSection isLoading />);
+
+    expect(screen.getByText("Cargando venta esperada...")).toBeTruthy();
+  });
+
+  it("handles a missing report without crashing", () => {
+    render(<ExpectedSalesSection />);
+
+    expect(
+      screen.getByText(
+        "No hay ventas de remesa con peso promedio disponible en el periodo.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("notes when the daily rows combine several branches", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          daily: [
+            report.daily[0],
+            {
+              ...report.daily[0],
+              branchId: 2,
+              branchName: "Norte",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Suma de las sucursales seleccionadas/),
+    ).toBeTruthy();
+  });
+
   it("explains when there is no expected sales data", () => {
     render(
       <ExpectedSalesSection

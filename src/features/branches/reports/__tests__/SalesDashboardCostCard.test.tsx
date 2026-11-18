@@ -1,13 +1,33 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import * as XLSX from "xlsx";
 import { MockResponsiveContainer } from "@/test/rechartsMock";
 import type { SalesReportDTO } from "../api/salesReports.api";
 import type { ProductAnalyticsDTO } from "../api/productAnalytics.api";
 import { SalesDashboard } from "../components/SalesDashboard";
+import { scrollToSection } from "../utils/scrollToSection";
 
 vi.mock("recharts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("recharts")>()),
   ResponsiveContainer: MockResponsiveContainer,
+}));
+
+vi.mock("xlsx", () => ({
+  utils: {
+    book_new: vi.fn(() => ({})),
+    aoa_to_sheet: vi.fn(() => ({})),
+    book_append_sheet: vi.fn(),
+  },
+  writeFile: vi.fn(),
+}));
+
+vi.mock("../utils/scrollToSection", () => ({
+  scrollToSection: vi.fn(),
+}));
+
+vi.mock("../utils/reportExcel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/reportExcel")>()),
+  fetchAllProductAnalytics: vi.fn(async () => []),
 }));
 
 const report: SalesReportDTO = {
@@ -111,5 +131,27 @@ describe("SalesDashboard category costs", () => {
 
     expect(screen.getByText("Ventas por categoría")).toBeTruthy();
     expect(screen.getByText("Costos por categoría")).toBeTruthy();
+  });
+
+  it("exports expected sales and jumps to the expected section", async () => {
+    const writeFile = vi.mocked(XLSX.writeFile);
+
+    render(
+      <SalesDashboard
+        branchId={1}
+        branchName="Centro"
+        dates={{ start: new Date(2026, 5, 1), end: new Date(2026, 5, 7) }}
+        onDatesChange={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+
+    fireEvent.click(screen.getByText(/Vendidos: 1,050 kg/));
+
+    expect(scrollToSection).toHaveBeenCalledWith("expected-sales-section");
+
+    fireEvent.click(screen.getByText(/Exportar Excel/));
+
+    await waitFor(() => expect(writeFile).toHaveBeenCalled());
   });
 });

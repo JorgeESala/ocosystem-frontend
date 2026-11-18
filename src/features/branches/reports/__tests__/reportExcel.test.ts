@@ -4,7 +4,9 @@ import {
   categorySalesSheet,
   dailySalesSheet,
   expectedSalesBranchesSheet,
+  expectedSalesRankingColumns,
   expectedSalesSheet,
+  expectedSalesSummaryRows,
   salesProductsSheet,
 } from "../utils/reportExcel";
 import type { ProductAnalyticsRowDTO } from "../api/productAnalytics.api";
@@ -132,6 +134,61 @@ describe("categorySalesSheet", () => {
   });
 });
 
+describe("expectedSalesSummaryRows", () => {
+  it("builds the summary rows from the expected sales totals", () => {
+    expect(
+      expectedSalesSummaryRows({
+        expectedKg: 1000,
+        reportedKg: 1050,
+        differenceKg: 50,
+        variancePct: 5,
+        birdsSold: 600,
+        avgChickenWeight: 1.9,
+        salesCount: 3,
+        salesWithoutWeight: 0,
+        daysWithData: 1,
+        wastePerChickenKg: 0.25,
+      }),
+    ).toEqual([
+      ["Venta esperada de pollo (kg)", 1000],
+      ["Kg vendidos en Entradas y Ventas", 1050],
+      ["Diferencia de kilos", 50],
+      ["Variación de venta esperada (%)", 5],
+    ]);
+  });
+
+  it("uses blanks without a summary", () => {
+    expect(expectedSalesSummaryRows(undefined)).toEqual([
+      ["Venta esperada de pollo (kg)", ""],
+      ["Kg vendidos en Entradas y Ventas", ""],
+      ["Diferencia de kilos", ""],
+      ["Variación de venta esperada (%)", ""],
+    ]);
+  });
+});
+
+describe("expectedSalesRankingColumns", () => {
+  it("builds the expected, reported and variance columns", () => {
+    expect(
+      expectedSalesRankingColumns({
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+      }),
+    ).toEqual([1000, 1050, 5]);
+  });
+
+  it("uses blanks for missing branch values", () => {
+    expect(
+      expectedSalesRankingColumns({
+        expectedKg: null,
+        expectedReportedKg: null,
+        expectedVariancePct: null,
+      }),
+    ).toEqual(["", "", ""]);
+  });
+});
+
 describe("expectedSalesSheet", () => {
   it("includes the expected and reported kg columns", () => {
     const sheet = expectedSalesSheet([
@@ -171,6 +228,35 @@ describe("expectedSalesSheet", () => {
       13.68,
     ]);
   });
+
+  it("leaves missing daily values blank", () => {
+    const sheet = expectedSalesSheet([
+      {
+        branchId: 2,
+        branchName: "Norte",
+        day: "2026-06-02",
+        expectedKg: null,
+        reportedKg: null,
+        differenceKg: null,
+        variancePct: null,
+        birdsSold: 0,
+        avgChickenWeight: null,
+        salesCount: 0,
+        salesWithoutWeight: 1,
+      },
+    ]);
+
+    expect(sheet.rows[1]).toEqual([
+      "2026-06-02",
+      "Norte",
+      0,
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+  });
 });
 
 describe("expectedSalesBranchesSheet", () => {
@@ -193,5 +279,25 @@ describe("expectedSalesBranchesSheet", () => {
 
     expect(sheet.rows[1][1]).toBe("");
     expect(sheet.rows[1][7]).toBe(1);
+  });
+
+  it("keeps the variance when it is available", () => {
+    const sheet = expectedSalesBranchesSheet([
+      {
+        branchId: 1,
+        branchName: "Centro",
+        expectedKg: 1000,
+        reportedKg: 1050,
+        differenceKg: 50,
+        variancePct: 5,
+        birdsSold: 600,
+        avgChickenWeight: 1.9,
+        salesCount: 3,
+        salesWithoutWeight: 0,
+        daysWithData: 1,
+      },
+    ]);
+
+    expect(sheet.rows[1][4]).toBe(5);
   });
 });
