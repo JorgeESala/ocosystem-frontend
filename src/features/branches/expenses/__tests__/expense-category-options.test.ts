@@ -108,7 +108,7 @@ describe("expense category grouping fallbacks", () => {
     ]);
 
     expect(groups).toEqual([
-      { label: "Otros", options: [{ id: 20, name: "Otros gastos" }] },
+      { label: "Sin categoría", options: [{ id: 20, name: "Otros gastos" }] },
     ]);
   });
 });
@@ -125,6 +125,6 @@ describe("expense category grouping without sort order", () => {
       },
     ]);
 
-    expect(groups[0].label).toBe("Otros");
+    expect(groups[0].label).toBe("Sin categoría");
   });
 });

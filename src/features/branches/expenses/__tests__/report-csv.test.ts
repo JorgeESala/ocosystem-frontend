@@ -76,6 +76,23 @@ describe("buildBranchExpenseReportCsv", () => {
     expect(csv).toContain('"  Gas ""LP""","350","300","16.67%","2"');
     expect(csv).toContain('"Centro","350","300","16.67%","2"');
   });
+
+  it("neutralizes spreadsheet formulas in text values", () => {
+    const csv = buildBranchExpenseReportCsv(
+      {
+        ...data,
+        categories: [
+          {
+            ...data.categories[0],
+            name: "=HYPERLINK(\"http://evil\")",
+          },
+        ],
+      },
+      "Noviembre 2026",
+    );
+
+    expect(csv).toContain('"\'=HYPERLINK(""http://evil"")"');
+  });
 });
 
 describe("branch expense report CSV download", () => {
@@ -127,5 +144,22 @@ describe("branch expense report CSV download", () => {
     expect(click).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:report");
     click.mockRestore();
+  });
+
+  it("neutralizes spreadsheet formulas in text values", () => {
+    const csv = buildBranchExpenseReportCsv(
+      {
+        ...data,
+        categories: [
+          {
+            ...data.categories[0],
+            name: '=HYPERLINK("http://evil")',
+          },
+        ],
+      },
+      "Noviembre 2026",
+    );
+
+    expect(csv).toContain('"\'=HYPERLINK(""http://evil"")"');
   });
 });

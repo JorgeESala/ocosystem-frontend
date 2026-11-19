@@ -273,11 +273,9 @@ export default function BranchExpenseReport({
                             ] ?? "gray"
                           }
                         >
-                          {
-                            REPORT_GROUP_LABELS[
-                              category.reportGroup as BranchExpenseReportGroup
-                            ]
-                          }
+                          {REPORT_GROUP_LABELS[
+                            category.reportGroup as BranchExpenseReportGroup
+                          ] ?? category.reportGroup}
                         </Badge>
                       )}
                     </td>

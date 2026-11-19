@@ -16,6 +16,8 @@ export const branchExpensesKeys = {
     reason: string,
     startDate: string,
     endDate: string,
+    previousStart: string,
+    previousEnd: string,
     granularity: string,
     includeNonOperating: boolean,
   ) =>
@@ -28,6 +30,8 @@ export const branchExpensesKeys = {
       reason,
       startDate,
       endDate,
+      previousStart,
+      previousEnd,
       granularity,
       includeNonOperating ? "all" : "operating",
     ] as const,

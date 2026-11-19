@@ -72,6 +72,22 @@ export default function BranchExpenseForm({
     () => buildExpenseCategoryGroups(expenseCategories),
     [expenseCategories],
   );
+  const legacyCategory = useMemo(() => {
+    if (!initialData?.expenseCategoryId) return undefined;
+    if (selectableCategories.some((item) => item.id === initialData.expenseCategoryId)) {
+      return undefined;
+    }
+    const current = expenseCategories.find(
+      (item) => item.id === initialData.expenseCategoryId,
+    );
+    return {
+      id: initialData.expenseCategoryId,
+      name:
+        current?.name ??
+        initialData.expenseCategoryName ??
+        "Tipo histórico",
+    };
+  }, [initialData, expenseCategories, selectableCategories]);
 
   const [branchId, setBranchId] = useState("");
   const [expenseCategoryId, setExpenseCategoryId] = useState("");
@@ -180,6 +196,13 @@ export default function BranchExpenseForm({
               ? "Cargando tipos..."
               : "Selecciona un tipo de gasto"}
           </option>
+          {legacyCategory && (
+            <optgroup label="Histórico">
+              <option value={legacyCategory.id}>
+                {legacyCategory.name} (histórico)
+              </option>
+            </optgroup>
+          )}
           {categoryGroups.map((group) => (
             <optgroup key={group.label} label={group.label}>
               {group.options.map((category) => (

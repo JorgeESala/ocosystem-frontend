@@ -140,6 +140,7 @@ describe("BranchExpenseReport", () => {
   it("shows a spinner while loading without data", () => {
     renderReport({ data: undefined, isLoading: true });
 
+    expect(screen.getByRole("status")).toBeTruthy();
     expect(screen.queryByText("Reporte de gastos")).toBeNull();
   });
 

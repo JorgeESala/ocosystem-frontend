@@ -33,6 +33,8 @@ export const useBranchExpenseAnalytics = (
           request.reason ?? "",
           request.startDate.toISOString(),
           request.endDate.toISOString(),
+          request.previousStartDate?.toISOString() ?? "",
+          request.previousEndDate?.toISOString() ?? "",
           request.granularity,
           request.includeNonOperating,
         )

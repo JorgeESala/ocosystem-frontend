@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import BranchExpenseForm from "../components/BranchExpenseForm";
+import type { BranchExpenseResponseDTO } from "../types";
 
 const mocks = vi.hoisted(() => ({
   useBranches: vi.fn(),
@@ -133,6 +134,34 @@ describe("BranchExpenseForm", () => {
         reason: "Pago de luz",
       }),
       expect.any(Object),
+    );
+  });
+
+  it("keeps the historical category visible when editing an old expense", () => {
+    const historical: BranchExpenseResponseDTO = {
+      id: 9,
+      branchId: 7,
+      branchName: "Centro",
+      expenseCategoryId: 99,
+      expenseCategoryName: "Compra de pollo",
+      amount: 500,
+      date: "2026-01-15",
+      reason: "Compra histórica",
+    };
+
+    render(
+      <BranchExpenseForm
+        initialData={historical}
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("option", { name: "Compra de pollo (histórico)" }),
+    ).toBeTruthy();
+    expect((screen.getAllByRole("combobox")[1] as HTMLSelectElement).value).toBe(
+      "99",
     );
   });
 });

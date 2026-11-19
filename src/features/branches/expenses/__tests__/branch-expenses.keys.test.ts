@@ -11,6 +11,8 @@ describe("branchExpensesKeys.analytics", () => {
         "gas",
         "2026-01-01",
         "2026-01-31",
+        "2025-12-01",
+        "2025-12-31",
         "WEEK",
         true,
       ),
@@ -23,6 +25,8 @@ describe("branchExpensesKeys.analytics", () => {
       "gas",
       "2026-01-01",
       "2026-01-31",
+      "2025-12-01",
+      "2025-12-31",
       "WEEK",
       "all",
     ]);
@@ -30,7 +34,18 @@ describe("branchExpensesKeys.analytics", () => {
 
   it("uses operating when investments and loans are excluded", () => {
     expect(
-      branchExpensesKeys.analytics([], [], [], "", "a", "b", "MONTH", false),
+      branchExpensesKeys.analytics(
+        [],
+        [],
+        [],
+        "",
+        "a",
+        "b",
+        "c",
+        "d",
+        "MONTH",
+        false,
+      ),
     ).toContain("operating");
   });
 });

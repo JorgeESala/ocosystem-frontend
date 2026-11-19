@@ -26,14 +26,13 @@ const request: BranchExpenseAnalyticsRequest = {
   includeNonOperating: false,
 };
 
-const wrapper = ({ children }: { children: ReactNode }) => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  );
-};
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+);
 
 describe("useBranchExpenseAnalytics", () => {
   beforeEach(() => {

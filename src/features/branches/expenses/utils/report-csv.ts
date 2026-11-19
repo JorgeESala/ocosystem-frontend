@@ -1,7 +1,10 @@
 import type { BranchExpenseAnalyticsResponse } from "../types";
 
 const escapeCsv = (value: string | number | null | undefined) => {
-  const text = value == null ? "" : String(value);
+  let text = value == null ? "" : String(value);
+  if (typeof value === "string" && /^[=+\-@]/.test(text)) {
+    text = `'${text}`;
+  }
   return `"${text.replace(/"/g, '""')}"`;
 };
 

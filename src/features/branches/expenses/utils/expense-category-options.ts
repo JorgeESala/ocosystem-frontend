@@ -50,7 +50,7 @@ export const buildExpenseCategoryGroups = (
 
   for (const category of selectable) {
     const parent = category.parentId ? byId.get(category.parentId) : undefined;
-    const label = parent?.name ?? "Otros";
+    const label = parent?.name ?? "Sin categoría";
     const group = groups.get(label) ?? {
       label,
       sortOrder: parent?.sortOrder ?? category.sortOrder ?? 0,
