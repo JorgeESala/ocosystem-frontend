@@ -4,7 +4,11 @@ import {
   buildRankingRows,
   deltaPct,
   expectedReportDays,
+  needsReview,
+  reviewReasons,
+  REVIEW_VARIANCE_THRESHOLD_PCT,
 } from "../utils/consolidatedMetrics";
+import type { BranchRankingRow } from "../utils/consolidatedMetrics";
 
 const branch = (
   branchId: number,
@@ -123,5 +127,147 @@ describe("buildRankingRows", () => {
     expect(branchOne?.expectedReportedKg).toBe(100);
     expect(branchOne?.expectedVariancePct).toBeCloseTo(-16.67);
     expect(branchTwo?.expectedKg).toBeNull();
+  });
+
+  it("marks expected data as not loaded when the report is missing", () => {
+    const rows = buildRankingRows(
+      [branch(1, { totalSales: 300, daysWithReport: 7 })],
+      [],
+      7,
+    );
+
+    expect(rows[0].expectedLoaded).toBe(false);
+    expect(reviewReasons(rows[0])).toEqual([]);
+  });
+
+  it("maps the excluded-sales counters into the ranking row", () => {
+    const rows = buildRankingRows(current, previous, 7, [
+      {
+        branchId: 1,
+        branchName: "Sucursal 1",
+        expectedKg: 100,
+        reportedKg: 90,
+        differenceKg: -10,
+        variancePct: -10,
+        birdsSold: 50,
+        avgChickenWeight: 1.8,
+        salesCount: 1,
+        salesWithoutWeight: 2,
+        salesWithoutReportedKg: 3,
+        daysWithData: 1,
+      },
+    ]);
+
+    const branchOne = rows.find((row) => row.branchId === 1);
+    expect(branchOne?.salesWithoutWeight).toBe(2);
+    expect(branchOne?.salesWithoutReportedKg).toBe(3);
+  });
+});
+
+describe("needsReview", () => {
+  const rankingRow = (
+    overrides: Partial<BranchRankingRow> = {},
+  ): BranchRankingRow => ({
+    ...branch(1, { totalSales: 1000 }),
+    share: 100,
+    salesDelta: null,
+    missingDays: 0,
+    expectedKg: 1000,
+    expectedReportedKg: 1000,
+    expectedVariancePct: 0,
+    expectedLoaded: true,
+    salesWithoutWeight: 0,
+    salesWithoutReportedKg: 0,
+    ...overrides,
+  });
+
+  it("does not flag a healthy branch", () => {
+    expect(needsReview(rankingRow({ expectedVariancePct: 4 }))).toBe(false);
+    expect(reviewReasons(rankingRow({ expectedVariancePct: 4 }))).toEqual([]);
+  });
+
+  it("flags a deviation at the threshold", () => {
+    const row = rankingRow({
+      expectedVariancePct: REVIEW_VARIANCE_THRESHOLD_PCT,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain(
+      "Desviación de 10.0% contra lo esperado.",
+    );
+  });
+
+  it("flags missing report days", () => {
+    const row = rankingRow({ missingDays: 3, daysWithReport: 4 });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain("3 días sin reporte.");
+  });
+
+  it("uses the singular for one missing report day", () => {
+    const row = rankingRow({ missingDays: 1, daysWithReport: 6 });
+
+    expect(reviewReasons(row)).toContain("1 día sin reporte.");
+  });
+
+  it("does not flag a branch with no expected kilos and no activity", () => {
+    const row = rankingRow({
+      expectedKg: null,
+      expectedReportedKg: null,
+      expectedVariancePct: null,
+      totalSales: 0,
+    });
+
+    expect(needsReview(row)).toBe(false);
+  });
+
+  it("does not flag missing expected kilos before the data loads", () => {
+    const row = rankingRow({
+      expectedKg: null,
+      expectedReportedKg: null,
+      expectedVariancePct: null,
+      expectedLoaded: false,
+      totalSales: 500,
+    });
+
+    expect(needsReview(row)).toBe(false);
+    expect(reviewReasons(row)).toEqual([]);
+  });
+
+  it("flags a branch with no expected kilos but activity", () => {
+    const row = rankingRow({
+      expectedKg: null,
+      expectedReportedKg: null,
+      expectedVariancePct: null,
+      totalSales: 500,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain("Sin kilos esperados para comparar.");
+  });
+
+  it("flags excluded sales and counts both exclusion reasons", () => {
+    const row = rankingRow({
+      salesWithoutWeight: 1,
+      salesWithoutReportedKg: 2,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain("3 ventas excluidas del cálculo.");
+  });
+
+  it("uses the singular for one excluded sale", () => {
+    const row = rankingRow({ salesWithoutReportedKg: 1 });
+
+    expect(reviewReasons(row)).toContain("1 venta excluida del cálculo.");
+  });
+
+  it("treats missing exclusion counters as zero", () => {
+    const row = rankingRow({
+      salesWithoutWeight: undefined as unknown as number,
+      salesWithoutReportedKg: undefined as unknown as number,
+    });
+
+    expect(needsReview(row)).toBe(false);
   });
 });

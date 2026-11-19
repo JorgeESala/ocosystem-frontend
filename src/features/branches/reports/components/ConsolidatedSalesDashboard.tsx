@@ -188,7 +188,7 @@ export const ConsolidatedSalesDashboard = ({
             data.branchSummary,
             data.previousBranchSummary,
             expectedDays,
-            expectedSales?.branches ?? [],
+            expectedSales?.branches,
           )
         : [],
     [data, expectedDays, expectedSales],
