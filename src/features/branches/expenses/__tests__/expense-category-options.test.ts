@@ -93,3 +93,38 @@ describe("expense category options", () => {
     );
   });
 });
+
+describe("expense category grouping fallbacks", () => {
+  it("groups a top-level leaf under Otros using its own sort order", () => {
+    const groups = buildExpenseCategoryGroups([
+      {
+        id: 20,
+        name: "Otros gastos",
+        parentId: null,
+        sortOrder: 40,
+        active: true,
+        selectable: true,
+      },
+    ]);
+
+    expect(groups).toEqual([
+      { label: "Otros", options: [{ id: 20, name: "Otros gastos" }] },
+    ]);
+  });
+});
+
+describe("expense category grouping without sort order", () => {
+  it("defaults the group order to zero", () => {
+    const groups = buildExpenseCategoryGroups([
+      {
+        id: 21,
+        name: "Sin orden",
+        parentId: null,
+        active: true,
+        selectable: true,
+      },
+    ]);
+
+    expect(groups[0].label).toBe("Otros");
+  });
+});

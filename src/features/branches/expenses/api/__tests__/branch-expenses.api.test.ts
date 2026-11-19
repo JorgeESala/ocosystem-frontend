@@ -65,6 +65,33 @@ describe("branchExpensesApi.analytics", () => {
     });
     expect(result).toEqual(response);
   });
+
+  it("omits the previous period when it is not provided", async () => {
+    mockedHttp.post.mockResolvedValue({ data: {} });
+
+    await branchExpensesApi.analytics({
+      branchIds: [],
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      startDate: new Date(2026, 0, 1),
+      endDate: new Date(2026, 0, 31),
+      granularity: "MONTH",
+      includeNonOperating: false,
+    });
+
+    expect(mockedHttp.post).toHaveBeenCalledWith("/api/expenses/analytics", {
+      branchIds: [],
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      reason: undefined,
+      start: "2026-01-01",
+      end: "2026-01-31",
+      previousStart: undefined,
+      previousEnd: undefined,
+      granularity: "MONTH",
+      includeNonOperating: false,
+    });
+  });
 });
 
 describe("branchExpensesApi.comparison", () => {

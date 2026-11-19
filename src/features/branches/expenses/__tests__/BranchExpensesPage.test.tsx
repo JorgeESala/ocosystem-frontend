@@ -414,6 +414,38 @@ describe("BranchExpensesPage", () => {
     expect(screen.getByText("Gas LP")).toBeTruthy();
     expect(screen.getByText("Gasto por sucursal")).toBeTruthy();
     expect(screen.getByText("Gasto actual")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Movimientos" }));
+    expect(screen.getByText("Resumen Ejecutivo")).toBeTruthy();
+  });
+
+  it("muestra el tipo de gasto con su categoría padre en las chips", () => {
+    mocks.useExpenseCategories.mockReturnValue({
+      data: [
+        {
+          id: 10,
+          name: "Servicios",
+          sortOrder: 20,
+          active: true,
+          selectable: false,
+        },
+        {
+          id: 11,
+          name: "Luz",
+          parentId: 10,
+          parentName: "Servicios",
+          sortOrder: 20,
+          active: true,
+          selectable: true,
+        },
+      ],
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("button", { name: "Servicios / Luz" }),
+    ).toBeTruthy();
   });
 
   it("muestra una fila de totales al final de la tabla", () => {
