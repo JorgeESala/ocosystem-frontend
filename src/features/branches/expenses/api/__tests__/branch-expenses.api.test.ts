@@ -22,6 +22,78 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+describe("branchExpensesApi.analytics", () => {
+  it("sends the date range, granularity and non-operating flag", async () => {
+    const response = {
+      current: { totalAmount: 0, expenseCount: 0, averageAmount: 0 },
+      previous: { totalAmount: 0, expenseCount: 0, averageAmount: 0 },
+      amountDifference: 0,
+      amountVariationPct: null,
+      countDifference: 0,
+      countVariationPct: null,
+      buckets: [],
+      categories: [],
+      branches: [],
+      businessUnits: [],
+    };
+    mockedHttp.post.mockResolvedValue({ data: response });
+
+    const result = await branchExpensesApi.analytics({
+      branchIds: [3],
+      businessUnitCategoryIds: [21],
+      expenseCategoryIds: [11],
+      reason: "gas",
+      startDate: new Date(2026, 0, 1),
+      endDate: new Date(2026, 0, 31),
+      previousStartDate: new Date(2025, 11, 1),
+      previousEndDate: new Date(2025, 11, 31),
+      granularity: "WEEK",
+      includeNonOperating: true,
+    });
+
+    expect(mockedHttp.post).toHaveBeenCalledWith("/api/expenses/analytics", {
+      branchIds: [3],
+      businessUnitCategoryIds: [21],
+      expenseCategoryIds: [11],
+      reason: "gas",
+      start: "2026-01-01",
+      end: "2026-01-31",
+      previousStart: "2025-12-01",
+      previousEnd: "2025-12-31",
+      granularity: "WEEK",
+      includeNonOperating: true,
+    });
+    expect(result).toEqual(response);
+  });
+
+  it("omits the previous period when it is not provided", async () => {
+    mockedHttp.post.mockResolvedValue({ data: {} });
+
+    await branchExpensesApi.analytics({
+      branchIds: [],
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      startDate: new Date(2026, 0, 1),
+      endDate: new Date(2026, 0, 31),
+      granularity: "MONTH",
+      includeNonOperating: false,
+    });
+
+    expect(mockedHttp.post).toHaveBeenCalledWith("/api/expenses/analytics", {
+      branchIds: [],
+      businessUnitCategoryIds: [],
+      expenseCategoryIds: [],
+      reason: undefined,
+      start: "2026-01-01",
+      end: "2026-01-31",
+      previousStart: undefined,
+      previousEnd: undefined,
+      granularity: "MONTH",
+      includeNonOperating: false,
+    });
+  });
+});
+
 describe("branchExpensesApi.comparison", () => {
   it("posts both periods, branches and the business unit", async () => {
     const response = {

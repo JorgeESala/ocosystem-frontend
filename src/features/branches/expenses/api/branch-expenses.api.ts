@@ -1,6 +1,8 @@
 import { http } from "@/shared/api/http";
 import { toLocalDateString } from "@/utils/date.utils";
 import type {
+  BranchExpenseAnalyticsRequest,
+  BranchExpenseAnalyticsResponse,
   BranchExpenseComparisonRequest,
   BranchExpenseComparisonResponse,
   BranchExpenseFilters,
@@ -61,6 +63,31 @@ export const branchExpensesApi = {
         end: toLocalDateString(request.endDate),
         previousStart: toLocalDateString(request.previousStartDate),
         previousEnd: toLocalDateString(request.previousEndDate),
+      },
+    );
+    return data;
+  },
+
+  analytics: async (
+    request: BranchExpenseAnalyticsRequest,
+  ): Promise<BranchExpenseAnalyticsResponse> => {
+    const { data } = await http.post<BranchExpenseAnalyticsResponse>(
+      `${API_BASE}/analytics`,
+      {
+        branchIds: request.branchIds,
+        businessUnitCategoryIds: request.businessUnitCategoryIds,
+        expenseCategoryIds: request.expenseCategoryIds,
+        reason: request.reason,
+        start: toLocalDateString(request.startDate),
+        end: toLocalDateString(request.endDate),
+        previousStart: request.previousStartDate
+          ? toLocalDateString(request.previousStartDate)
+          : undefined,
+        previousEnd: request.previousEndDate
+          ? toLocalDateString(request.previousEndDate)
+          : undefined,
+        granularity: request.granularity,
+        includeNonOperating: request.includeNonOperating,
       },
     );
     return data;
