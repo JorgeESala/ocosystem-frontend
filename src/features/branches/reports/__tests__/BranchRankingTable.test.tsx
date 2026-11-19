@@ -23,6 +23,9 @@ const row = (
   share: 60,
   salesDelta: 10,
   missingDays: 0,
+  expectedKg: null,
+  expectedReportedKg: null,
+  expectedVariancePct: null,
   ...overrides,
 });
 
@@ -83,5 +86,46 @@ describe("BranchRankingTable", () => {
       key: "avgTicket",
       direction: "desc",
     });
+  });
+
+  it("sorts by the expected sales variance", () => {
+    const onSortChange = vi.fn();
+    render(
+      <BranchRankingTable
+        rows={[row(1, "Sucursal Centro")]}
+        expectedDays={7}
+        onSelectBranch={vi.fn()}
+        sort={defaultSort}
+        onSortChange={onSortChange}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByText(/Kg vendidos \/ esperados/)[0]);
+
+    expect(onSortChange).toHaveBeenCalledWith({
+      key: "expectedVariancePct",
+      direction: "desc",
+    });
+  });
+
+  it("shows the reported and expected kg for a branch", () => {
+    render(
+      <BranchRankingTable
+        rows={[
+          row(1, "Sucursal Centro", {
+            expectedKg: 1000,
+            expectedReportedKg: 1050,
+            expectedVariancePct: 5,
+          }),
+        ]}
+        expectedDays={7}
+        onSelectBranch={vi.fn()}
+        sort={defaultSort}
+        onSortChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/1,050/)).toBeTruthy();
+    expect(screen.getByText("+5.0%")).toBeTruthy();
   });
 });

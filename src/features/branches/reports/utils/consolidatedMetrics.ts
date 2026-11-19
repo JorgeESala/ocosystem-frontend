@@ -1,9 +1,13 @@
 import type { BranchSalesSummaryDTO } from "../api/consolidatedSales.api";
+import type { BranchExpectedSalesDTO } from "../api/expectedSales.api";
 
 export interface BranchRankingRow extends BranchSalesSummaryDTO {
   share: number;
   salesDelta: number | null;
   missingDays: number;
+  expectedKg: number | null;
+  expectedReportedKg: number | null;
+  expectedVariancePct: number | null;
 }
 
 export const deltaPct = (
@@ -35,9 +39,13 @@ export const buildRankingRows = (
   branchSummary: BranchSalesSummaryDTO[],
   previousBranchSummary: BranchSalesSummaryDTO[],
   expectedDays: number,
+  expectedBranches: BranchExpectedSalesDTO[] = [],
 ): BranchRankingRow[] => {
   const previousById = new Map(
     previousBranchSummary.map((branch) => [branch.branchId, branch]),
+  );
+  const expectedById = new Map(
+    expectedBranches.map((branch) => [branch.branchId, branch]),
   );
   const totalSales = branchSummary.reduce(
     (acc, branch) => acc + branch.totalSales,
@@ -45,14 +53,20 @@ export const buildRankingRows = (
   );
 
   return branchSummary
-    .map((branch) => ({
-      ...branch,
-      share: totalSales > 0 ? (branch.totalSales / totalSales) * 100 : 0,
-      salesDelta: deltaPct(
-        branch.totalSales,
-        previousById.get(branch.branchId)?.totalSales,
-      ),
-      missingDays: Math.max(0, expectedDays - branch.daysWithReport),
-    }))
+    .map((branch) => {
+      const expected = expectedById.get(branch.branchId);
+      return {
+        ...branch,
+        share: totalSales > 0 ? (branch.totalSales / totalSales) * 100 : 0,
+        salesDelta: deltaPct(
+          branch.totalSales,
+          previousById.get(branch.branchId)?.totalSales,
+        ),
+        missingDays: Math.max(0, expectedDays - branch.daysWithReport),
+        expectedKg: expected?.expectedKg ?? null,
+        expectedReportedKg: expected?.reportedKg ?? null,
+        expectedVariancePct: expected?.variancePct ?? null,
+      };
+    })
     .sort((a, b) => b.totalSales - a.totalSales);
 };
