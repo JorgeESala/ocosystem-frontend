@@ -14,13 +14,15 @@ import { InfoTip } from "@/components/InfoTip";
 import { formatMXN } from "@/utils/moneyNumbers";
 import { DeltaBadge } from "./DeltaBadge";
 import type { BranchRankingRow } from "../utils/consolidatedMetrics";
+import { formatKgValue, formatVariance } from "../utils/expectedSales";
 
 export type RankingSortKey =
   | "totalSales"
   | "avgTicket"
   | "totalSlaughtered"
   | "mermaQuantity"
-  | "daysWithReport";
+  | "daysWithReport"
+  | "expectedVariancePct";
 
 export interface RankingSort {
   key: RankingSortKey;
@@ -48,8 +50,11 @@ export const BranchRankingTable = ({
   const sortedRows = useMemo(() => {
     const items = [...rows];
     items.sort((a, b) => {
-      const left = a[sort.key];
-      const right = b[sort.key];
+      const left = a[sort.key] ?? null;
+      const right = b[sort.key] ?? null;
+      if (left === null && right === null) return 0;
+      if (left === null) return 1;
+      if (right === null) return -1;
       if (left === right) return 0;
       const comparison = left > right ? 1 : -1;
       return sort.direction === "asc" ? comparison : -comparison;
@@ -121,6 +126,17 @@ export const BranchRankingTable = ({
             </TableHeadCell>
             <TableHeadCell
               className="cursor-pointer hover:bg-gray-700"
+              onClick={() => requestSort("expectedVariancePct")}
+            >
+              Kg vendidos / esperados {sortIcon("expectedVariancePct")}
+              <InfoTip title="Kg vendidos / esperados">
+                Kilos registrados en Entradas y Ventas contra los kilos
+                esperados según el peso promedio de cada remesa, menos 250 g de
+                merma por pollo.
+              </InfoTip>
+            </TableHeadCell>
+            <TableHeadCell
+              className="cursor-pointer hover:bg-gray-700"
               onClick={() => requestSort("mermaQuantity")}
             >
               Merma {sortIcon("mermaQuantity")}
@@ -170,6 +186,21 @@ export const BranchRankingTable = ({
                 </TableCell>
                 <TableCell className="text-white">
                   {formatNumber(row.totalSlaughtered)}
+                </TableCell>
+                <TableCell>
+                  {row.expectedKg == null && row.expectedReportedKg == null ? (
+                    <span className="text-xs text-gray-500">—</span>
+                  ) : (
+                    <div className="flex flex-col">
+                      <span className="text-white">
+                        {formatKgValue(row.expectedReportedKg)} /{" "}
+                        {formatKgValue(row.expectedKg)} kg
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatVariance(row.expectedVariancePct)}
+                      </span>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="text-white">
                   {formatNumber(row.mermaQuantity)}

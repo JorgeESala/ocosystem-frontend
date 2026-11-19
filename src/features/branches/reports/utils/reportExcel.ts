@@ -6,6 +6,11 @@ import type {
   ProductSalesDTO,
 } from "../api/salesReports.api";
 import type {
+  BranchExpectedSalesDTO,
+  DailyExpectedSalesDTO,
+  ExpectedSalesSummaryDTO,
+} from "../api/expectedSales.api";
+import type {
   ProductAnalyticsDTO,
   ProductAnalyticsRowDTO,
 } from "../api/productAnalytics.api";
@@ -58,6 +63,109 @@ const hasMonetaryValue = (
   categoryName: string,
   totalSales: number | null,
 ): totalSales is number => categoryName !== "Merma" && totalSales != null;
+
+export const expectedSalesSummaryRows = (
+  summary: ExpectedSalesSummaryDTO | null | undefined,
+): (string | number)[][] => [
+  ["Venta esperada de pollo (kg)", summary?.expectedKg ?? ""],
+  ["Kg vendidos en Entradas y Ventas", summary?.reportedKg ?? ""],
+  ["Diferencia de kilos", summary?.differenceKg ?? ""],
+  [
+    "Variación de venta esperada (%)",
+    summary?.variancePct == null ? "" : Number(summary.variancePct.toFixed(2)),
+  ],
+];
+
+export const expectedSalesRankingColumns = (branch: {
+  expectedKg: number | null;
+  expectedReportedKg: number | null;
+  expectedVariancePct: number | null;
+}): (string | number)[] => [
+  branch.expectedKg ?? "",
+  branch.expectedReportedKg ?? "",
+  branch.expectedVariancePct == null
+    ? ""
+    : Number(branch.expectedVariancePct.toFixed(2)),
+];
+
+export const expectedSalesSheet = (
+  daily: DailyExpectedSalesDTO[],
+): SheetSpec => ({
+  name: "Venta esperada",
+  rows: [
+    [
+      "Fecha",
+      "Sucursal",
+      "Pollos vendidos",
+      "Peso promedio (kg)",
+      "Kg esperados",
+      "Kg vendidos",
+      "Diferencia (kg)",
+      "Variación %",
+    ],
+    ...daily.map((row) => [
+      row.day,
+      row.branchName,
+      row.birdsSold,
+      row.avgChickenWeight ?? "",
+      row.expectedKg ?? "",
+      row.reportedKg ?? "",
+      row.differenceKg ?? "",
+      row.variancePct == null ? "" : Number(row.variancePct.toFixed(2)),
+    ]),
+  ],
+  cols: [
+    { wch: 12 },
+    { wch: 22 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 15 },
+    { wch: 12 },
+  ],
+});
+
+export const expectedSalesBranchesSheet = (
+  branches: BranchExpectedSalesDTO[],
+): SheetSpec => ({
+  name: "Venta esperada por sucursal",
+  rows: [
+    [
+      "Sucursal",
+      "Kg esperados",
+      "Kg vendidos",
+      "Diferencia (kg)",
+      "Variación %",
+      "Pollos vendidos",
+      "Peso promedio (kg)",
+      "Ventas sin peso",
+      "Ventas sin kilos",
+    ],
+    ...branches.map((branch) => [
+      branch.branchName,
+      branch.expectedKg ?? "",
+      branch.reportedKg ?? "",
+      branch.differenceKg ?? "",
+      branch.variancePct == null ? "" : Number(branch.variancePct.toFixed(2)),
+      branch.birdsSold,
+      branch.avgChickenWeight ?? "",
+      branch.salesWithoutWeight,
+      branch.salesWithoutReportedKg,
+    ]),
+  ],
+  cols: [
+    { wch: 22 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 15 },
+    { wch: 15 },
+  ],
+});
 
 export const analyticsProductsSheet = (
   name: string,

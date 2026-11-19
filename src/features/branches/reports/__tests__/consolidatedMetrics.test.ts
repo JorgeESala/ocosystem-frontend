@@ -97,4 +97,31 @@ describe("buildRankingRows", () => {
     const rows = buildRankingRows([branch(1)], [], 7);
     expect(rows[0].share).toBe(0);
   });
+
+  it("merges expected sales by branch", () => {
+    const rows = buildRankingRows(current, previous, 7, [
+      {
+        branchId: 1,
+        branchName: "Sucursal 1",
+        expectedKg: 120,
+        reportedKg: 100,
+        differenceKg: -20,
+        variancePct: -16.67,
+        birdsSold: 80,
+        avgChickenWeight: 1.75,
+        salesCount: 2,
+        salesWithoutWeight: 0,
+        salesWithoutReportedKg: 0,
+        daysWithData: 2,
+      },
+    ]);
+
+    const branchOne = rows.find((row) => row.branchId === 1);
+    const branchTwo = rows.find((row) => row.branchId === 2);
+
+    expect(branchOne?.expectedKg).toBe(120);
+    expect(branchOne?.expectedReportedKg).toBe(100);
+    expect(branchOne?.expectedVariancePct).toBeCloseTo(-16.67);
+    expect(branchTwo?.expectedKg).toBeNull();
+  });
 });
