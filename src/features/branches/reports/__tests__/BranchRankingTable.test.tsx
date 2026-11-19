@@ -27,6 +27,7 @@ const row = (
   expectedKg: null,
   expectedReportedKg: null,
   expectedVariancePct: null,
+  expectedLoaded: true,
   salesWithoutWeight: 0,
   salesWithoutReportedKg: 0,
   ...overrides,
@@ -189,6 +190,13 @@ describe("BranchRankingTable", () => {
       }),
     ]);
 
+    expect(table().queryByText("Revisar")).toBeNull();
+  });
+
+  it("shows a loading label instead of a review flag while expected data loads", () => {
+    renderTable([row(1, "Sucursal Centro", { expectedLoaded: false })]);
+
+    expect(table().getByText("Cargando kilos esperados")).toBeTruthy();
     expect(table().queryByText("Revisar")).toBeNull();
   });
 

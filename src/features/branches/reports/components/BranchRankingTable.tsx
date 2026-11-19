@@ -119,8 +119,11 @@ const ComplianceCell = ({
     align === "end" ? "items-end text-right" : "items-start text-left";
 
   if (compliance == null) {
-    const missingLabel =
-      row.expectedKg == null ? "Sin kilos esperados" : "Sin kilos vendidos";
+    const missingLabel = !row.expectedLoaded
+      ? "Cargando kilos esperados"
+      : row.expectedKg == null
+        ? "Sin kilos esperados"
+        : "Sin kilos vendidos";
     return (
       <div className={`flex flex-col ${alignment}`}>
         <span className="text-sm text-gray-500">—</span>

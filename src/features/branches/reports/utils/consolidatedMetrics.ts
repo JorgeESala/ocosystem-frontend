@@ -8,6 +8,7 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedKg: number | null;
   expectedReportedKg: number | null;
   expectedVariancePct: number | null;
+  expectedLoaded: boolean;
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
 }
@@ -43,13 +44,13 @@ export const buildRankingRows = (
   branchSummary: BranchSalesSummaryDTO[],
   previousBranchSummary: BranchSalesSummaryDTO[],
   expectedDays: number,
-  expectedBranches: BranchExpectedSalesDTO[] = [],
+  expectedBranches?: BranchExpectedSalesDTO[],
 ): BranchRankingRow[] => {
   const previousById = new Map(
     previousBranchSummary.map((branch) => [branch.branchId, branch]),
   );
   const expectedById = new Map(
-    expectedBranches.map((branch) => [branch.branchId, branch]),
+    (expectedBranches ?? []).map((branch) => [branch.branchId, branch]),
   );
   const totalSales = branchSummary.reduce(
     (acc, branch) => acc + branch.totalSales,
@@ -70,6 +71,7 @@ export const buildRankingRows = (
         expectedKg: expected?.expectedKg ?? null,
         expectedReportedKg: expected?.reportedKg ?? null,
         expectedVariancePct: expected?.variancePct ?? null,
+        expectedLoaded: expectedBranches !== undefined,
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
       };
@@ -96,6 +98,7 @@ export const reviewReasons = (row: BranchRankingRow): string[] => {
   }
 
   if (
+    row.expectedLoaded &&
     row.expectedKg == null &&
     (row.totalSales > 0 || row.expectedReportedKg != null)
   ) {

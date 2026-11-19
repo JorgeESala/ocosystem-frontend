@@ -129,6 +129,17 @@ describe("buildRankingRows", () => {
     expect(branchTwo?.expectedKg).toBeNull();
   });
 
+  it("marks expected data as not loaded when the report is missing", () => {
+    const rows = buildRankingRows(
+      [branch(1, { totalSales: 300, daysWithReport: 7 })],
+      [],
+      7,
+    );
+
+    expect(rows[0].expectedLoaded).toBe(false);
+    expect(reviewReasons(rows[0])).toEqual([]);
+  });
+
   it("maps the excluded-sales counters into the ranking row", () => {
     const rows = buildRankingRows(current, previous, 7, [
       {
@@ -164,6 +175,7 @@ describe("needsReview", () => {
     expectedKg: 1000,
     expectedReportedKg: 1000,
     expectedVariancePct: 0,
+    expectedLoaded: true,
     salesWithoutWeight: 0,
     salesWithoutReportedKg: 0,
     ...overrides,
@@ -207,6 +219,19 @@ describe("needsReview", () => {
     });
 
     expect(needsReview(row)).toBe(false);
+  });
+
+  it("does not flag missing expected kilos before the data loads", () => {
+    const row = rankingRow({
+      expectedKg: null,
+      expectedReportedKg: null,
+      expectedVariancePct: null,
+      expectedLoaded: false,
+      totalSales: 500,
+    });
+
+    expect(needsReview(row)).toBe(false);
+    expect(reviewReasons(row)).toEqual([]);
   });
 
   it("flags a branch with no expected kilos but activity", () => {
