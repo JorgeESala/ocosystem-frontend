@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { Spinner, TextInput, Tooltip } from "flowbite-react";
 import {
-  HiArrowRight,
   HiCheck,
   HiChevronDown,
   HiChevronUp,
@@ -19,12 +17,10 @@ import type { TripSaleDTO, TripsUnitType } from "../types/trip.types";
 import {
   useCreateTrip,
   useTripSales,
-  useTripSalesByDriverAndDate,
   useUpdateTrip,
 } from "../api/trips.queries";
 import { useBulkUpdateBatchSaleRoute } from "@/features/batch/api/batch.queries";
 import {
-  saleIsFromOtherBatch,
   splitMovementsByClientType,
   type TripGroup,
 } from "../utils/tripGrouping";
@@ -37,8 +33,6 @@ interface TripInlineRowProps {
   onEditMovement?: (mov: any) => void;
   renderSaleColumns: (sale: any, isOtherBatch: boolean) => React.ReactNode;
   renderHeaderColumns: () => React.ReactNode;
-  renderOtherBatchHeader?: () => React.ReactNode;
-  slug?: string;
   tripId?: number | null;
 }
 
@@ -59,8 +53,6 @@ export default function TripInlineRow({
   onEditMovement,
   renderSaleColumns,
   renderHeaderColumns,
-  renderOtherBatchHeader,
-  slug,
   tripId: externalTripId,
 }: TripInlineRowProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -69,32 +61,19 @@ export default function TripInlineRow({
   const [editError, setEditError] = useState<string | null>(null);
   const lastSavedValueRef = useRef<string>("");
 
+  const tripId = group.tripId ?? group.trip?.id ?? null;
+
   useEffect(() => {
-    if (
-      externalTripId != null &&
-      group.trip?.id === externalTripId &&
-      !expanded
-    ) {
+    if (externalTripId != null && tripId === externalTripId) {
       setExpanded(true);
     }
-  }, [externalTripId, group.trip?.id, expanded]);
+  }, [externalTripId, tripId]);
 
-  const tripId = group.trip?.id ?? null;
   const fetchSales = !isAdjustmentsGroup(group);
-  const { isLoading: salesLoading } = useTripSales(
+  const { data: tripSales = [], isLoading: salesLoading } = useTripSales(
     unitType,
     fetchSales ? tripId : null,
     { enabled: expanded && fetchSales && tripId != null },
-  );
-
-  const { data: allTripSales = [] } = useTripSalesByDriverAndDate(
-    unitType,
-    group.driverId,
-    group.date,
-    {
-      enabled:
-        expanded && fetchSales && group.driverId != null && group.date != null,
-    },
   );
 
   const updateMutation = useUpdateTrip(unitType);
@@ -158,17 +137,61 @@ export default function TripInlineRow({
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const otherBatchSales = useMemo<TripSaleDTO[]>(
-    () =>
-      (allTripSales as TripSaleDTO[]).filter((s) =>
-        saleIsFromOtherBatch(s, currentBatchId),
-      ),
-    [allTripSales, currentBatchId],
-  );
+  const displaySales = useMemo(() => {
+    if (tripId == null) {
+      return group.movements;
+    }
+
+    const currentMovementById = new Map(
+      group.movements
+        .filter((movement) => movement.type === "SALE")
+        .map((movement) => [movement.id, movement]),
+    );
+
+    return (tripSales as TripSaleDTO[]).map((sale) => {
+      const currentMovement = currentMovementById.get(sale.id);
+      if (currentMovement) {
+        return { ...currentMovement, batchId: currentBatchId };
+      }
+
+      const remesaLabel =
+        sale.batchLabel ??
+        (sale.batchId != null ? `Remesa #${sale.batchId}` : "");
+      const clientName = sale.clientName ?? "Venta directa";
+
+      return {
+        id: sale.id,
+        type: "SALE" as const,
+        date: sale.saleDate,
+        concept: `${clientName}${remesaLabel ? ` · ${remesaLabel}` : ""}`,
+        clientName,
+        quantity: sale.quantity ?? 0,
+        weight: sale.weight ?? null,
+        kgSent: sale.kgSent ?? null,
+        saleTotal: sale.saleTotal,
+        internalClient: sale.internalClient ?? false,
+        tripId: sale.tripId,
+        batchId: sale.batchId,
+        batchLabel: sale.batchLabel,
+        clientId: sale.clientId ?? undefined,
+      };
+    });
+  }, [tripId, tripSales, group.movements, currentBatchId]);
+
+  const headerTotals = useMemo(() => {
+    if (!group.trip) return group.totals;
+    return {
+      kgSold: Number(group.trip.totalWeight ?? 0),
+      kgSent: Number(group.trip.totalKgSent ?? 0),
+      totalPieces: Number(group.trip.totalQuantity ?? 0),
+      saleTotal: Number(group.trip.totalSaleAmount ?? 0),
+      salesCount: Number(group.trip.salesCount ?? 0),
+    };
+  }, [group.trip, group.totals]);
 
   const clientSplit = useMemo(
-    () => splitMovementsByClientType(group.movements),
-    [group.movements],
+    () => splitMovementsByClientType(displaySales),
+    [displaySales],
   );
 
   const handleSaveKg = () => {
@@ -279,7 +302,7 @@ export default function TripInlineRow({
   const trip = group.trip;
   const kgLoss =
     trip?.totalKgLoaded != null && trip.totalKgLoaded > 0
-      ? Math.max(0, trip.totalKgLoaded - group.totals.kgSold)
+      ? Math.max(0, trip.totalKgLoaded - headerTotals.kgSold)
       : null;
 
   return (
@@ -401,10 +424,10 @@ export default function TripInlineRow({
         <div className="flex items-center gap-4 text-right text-sm">
           <div>
             <p className="text-[10px] tracking-wider text-slate-500 uppercase">
-              Ventas
+              {tripId != null ? "Ventas viaje" : "Ventas"}
             </p>
             <p className="font-mono font-semibold text-white">
-              {group.totals.salesCount}
+              {headerTotals.salesCount}
             </p>
           </div>
           <div>
@@ -412,7 +435,7 @@ export default function TripInlineRow({
               Total
             </p>
             <p className="font-mono font-semibold text-white">
-              {formatMXN(group.totals.saleTotal)}
+              {formatMXN(headerTotals.saleTotal)}
             </p>
           </div>
           <div>
@@ -420,10 +443,10 @@ export default function TripInlineRow({
               {isEgg ? "Piezas" : "Vendido"}
             </p>
             {isEgg ? (
-              <EggQuantityDisplay totalPieces={group.totals.totalPieces} />
+              <EggQuantityDisplay totalPieces={headerTotals.totalPieces} />
             ) : (
               <p className="font-mono font-semibold text-white">
-                {formatKg(group.totals.kgSold)}
+                {formatKg(headerTotals.kgSold)}
               </p>
             )}
           </div>
@@ -432,7 +455,7 @@ export default function TripInlineRow({
               Enviado
             </p>
             <p className="font-mono text-slate-300">
-              {formatKg(group.totals.kgSent)}
+              {formatKg(headerTotals.kgSent)}
             </p>
           </div>
           <div
@@ -486,9 +509,11 @@ export default function TripInlineRow({
             </div>
           ) : (
             <>
-              {group.movements.length === 0 ? (
+              {displaySales.length === 0 ? (
                 <div className="px-3 py-3 text-xs text-slate-500">
-                  Aún no hay ventas registradas en este despacho.
+                  {tripId != null
+                    ? "Aún no hay ventas registradas en este viaje."
+                    : "Aún no hay ventas registradas en este despacho."}
                 </div>
               ) : clientSplit.internal.length > 0 ? (
                 <div>
@@ -498,6 +523,7 @@ export default function TripInlineRow({
                     movements={clientSplit.internal}
                     totals={clientSplit.internalTotals}
                     isEgg={isEgg}
+                    currentBatchId={currentBatchId}
                     renderSaleColumns={renderSaleColumns}
                     renderHeaderColumns={renderHeaderColumns}
                   />
@@ -507,12 +533,13 @@ export default function TripInlineRow({
                     movements={clientSplit.external}
                     totals={clientSplit.externalTotals}
                     isEgg={isEgg}
+                    currentBatchId={currentBatchId}
                     renderSaleColumns={renderSaleColumns}
                     renderHeaderColumns={renderHeaderColumns}
                   />
                   <SubtotalBar
                     label="Total"
-                    totals={group.totals}
+                    totals={headerTotals}
                     isEgg={isEgg}
                     className="border-t border-slate-700/60 bg-slate-950/50"
                   />
@@ -523,86 +550,16 @@ export default function TripInlineRow({
                     {renderHeaderColumns()}
                   </div>
                   <div className="divide-y divide-slate-800/60">
-                    {group.movements.map((mov) => (
-                      <div
-                        key={`${mov.type}-${mov.id}`}
-                        className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
-                      >
-                        {renderSaleColumns(mov, false)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {otherBatchSales.length > 0 && (
-                <div className="border-t border-slate-800 bg-slate-950/40 px-3 py-2">
-                  <p className="text-[10px] tracking-wider text-slate-500 uppercase">
-                    Ventas de otras remesas en este despacho (no se cuentan en
-                    esta remesa)
-                  </p>
-                  {renderOtherBatchHeader && (
-                    <div className="mt-2 grid grid-cols-12 items-center gap-2 border-b border-slate-800/60 pb-1">
-                      {renderOtherBatchHeader()}
-                    </div>
-                  )}
-                  <div className="mt-2 space-y-1">
-                    {otherBatchSales.map((s) => {
-                      const isEgg = unitType === "EGG";
-                      const totalPieces = Number(s.quantity ?? 0);
-                      const canNavigate =
-                        s.batchId != null && slug != null && slug !== "";
+                    {displaySales.map((mov) => {
+                      const isOtherBatch =
+                        mov.batchId != null &&
+                        mov.batchId !== currentBatchId;
                       return (
                         <div
-                          key={s.id}
-                          className="grid grid-cols-12 items-center gap-2 rounded border border-slate-800/70 bg-slate-900/30 px-2 py-1.5 text-xs text-slate-400"
+                          key={`${mov.type}-${mov.id}`}
+                          className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
                         >
-                          <div className="col-span-3 truncate">
-                            {canNavigate ? (
-                              <Link
-                                to={`/business/${slug}/salesAndBatches?batch=${s.batchId}${s.tripId != null ? `&tripId=${s.tripId}` : ""}`}
-                                className="inline-flex max-w-full items-center gap-1 text-blue-400 hover:text-blue-300 hover:underline"
-                                title="Ir a la remesa"
-                              >
-                                <span className="truncate">
-                                  {s.batchLabel ?? `Remesa #${s.batchId}`}
-                                </span>
-                                <HiArrowRight className="h-3 w-3 flex-shrink-0" />
-                              </Link>
-                            ) : (
-                              <span className="truncate">
-                                {s.batchLabel ?? "Remesa"}
-                              </span>
-                            )}
-                          </div>
-                          <div className="col-span-3 truncate">
-                            {s.clientName ?? "Venta directa"}
-                          </div>
-                          {isEgg ? (
-                            <>
-                              <div className="col-span-2 flex justify-center">
-                                <EggQuantityDisplay totalPieces={totalPieces} />
-                              </div>
-                              <div className="col-span-2" />
-                              <div className="col-span-2 text-right font-mono text-slate-300">
-                                {formatMXN(Number(s.saleTotal))}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="col-span-2 text-right font-mono">
-                                {formatKg(s.weight)}
-                              </div>
-                              <div className="col-span-2 text-right font-mono text-slate-500">
-                                {s.kgSent != null
-                                  ? `Env ${s.kgSent.toFixed(2)}`
-                                  : "-"}
-                              </div>
-                              <div className="col-span-2 text-right font-mono text-slate-300">
-                                {formatMXN(Number(s.saleTotal))}
-                              </div>
-                            </>
-                          )}
+                          {renderSaleColumns(mov, isOtherBatch)}
                         </div>
                       );
                     })}
@@ -623,6 +580,7 @@ function MovementsSubsection({
   movements,
   totals,
   isEgg,
+  currentBatchId,
   renderSaleColumns,
   renderHeaderColumns,
 }: {
@@ -631,6 +589,7 @@ function MovementsSubsection({
   movements: any[];
   totals: TripGroup["totals"];
   isEgg: boolean;
+  currentBatchId: number;
   renderSaleColumns: (sale: any, isOtherBatch: boolean) => React.ReactNode;
   renderHeaderColumns: () => React.ReactNode;
 }) {
@@ -648,14 +607,18 @@ function MovementsSubsection({
         {renderHeaderColumns()}
       </div>
       <div className="divide-y divide-slate-800/60">
-        {movements.map((mov) => (
-          <div
-            key={`${mov.type}-${mov.id}`}
-            className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
-          >
-            {renderSaleColumns(mov, false)}
-          </div>
-        ))}
+        {movements.map((mov) => {
+          const isOtherBatch =
+            mov.batchId != null && mov.batchId !== currentBatchId;
+          return (
+            <div
+              key={`${mov.type}-${mov.id}`}
+              className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+            >
+              {renderSaleColumns(mov, isOtherBatch)}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

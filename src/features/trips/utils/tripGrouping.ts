@@ -8,18 +8,24 @@ export interface InlineMovement {
   employeeName?: string | null;
   routeId?: number;
   routeName?: string | null;
-  kgSent?: number;
-  weight?: number;
-  quantity?: number;
-  saleTotal?: number;
-  clientId?: number;
+  tripId?: number | null;
+  batchId?: number | null;
+  batchLabel?: string | null;
+  kgSent?: number | null;
+  weight?: number | null;
+  quantity?: number | null;
+  saleTotal?: number | null;
+  clientId?: number | null;
+  clientName?: string | null;
   internalClient?: boolean;
   reason?: string;
+  metadata?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
 export interface TripGroup {
   key: string;
+  tripId?: number | null;
   driverId: number | null;
   driverName: string | null;
   routeId: number | null;
@@ -93,13 +99,19 @@ export function splitMovementsByClientType(
   };
 }
 
-const groupKey = (driverId: number | null, date: string) =>
-  `${driverId ?? "_"}|${date}`;
-
 const dateOnly = (input: string) => {
   if (!input) return "";
   if (input.length >= 10) return input.substring(0, 10);
   return input;
+};
+
+const addMovement = (group: TripGroup, movement: InlineMovement) => {
+  group.movements.push(movement);
+  group.totals.kgSold += safeNumber(movement.weight);
+  group.totals.kgSent += safeNumber(movement.kgSent);
+  group.totals.totalPieces += safeNumber(movement.quantity);
+  group.totals.saleTotal += safeNumber(movement.saleTotal);
+  group.totals.salesCount += 1;
 };
 
 export function buildTripGroups(
@@ -111,107 +123,74 @@ export function buildTripGroups(
   const pickupSales = sales.filter((m) => m.employeeId == null);
   const routedSales = sales.filter((m) => m.employeeId != null);
 
-  const tripIndexByKey = new Map<string, TripSummaryDTO>();
-  for (const t of trips) {
-    tripIndexByKey.set(groupKey(t.driverId, dateOnly(t.departureDate)), t);
+  const tripById = new Map<number, TripSummaryDTO>();
+  for (const trip of trips) {
+    tripById.set(trip.id, trip);
   }
 
   const groupMap = new Map<string, TripGroup>();
-  for (const m of routedSales) {
-    const d = dateOnly(m.date);
-    const key = groupKey(m.employeeId ?? null, d);
+
+  const tripGroup = (
+    tripId: number,
+    fallback?: InlineMovement,
+  ): TripGroup => {
+    const key = `trip-${tripId}`;
+    const existing = groupMap.get(key);
+    if (existing) return existing;
+
+    const trip = tripById.get(tripId) ?? null;
+    const group: TripGroup = {
+      key,
+      tripId,
+      driverId: trip?.driverId ?? fallback?.employeeId ?? null,
+      driverName: trip?.driverName ?? fallback?.employeeName ?? null,
+      routeId: trip?.routeId ?? fallback?.routeId ?? null,
+      routeName: trip?.routeName ?? fallback?.routeName ?? null,
+      date: dateOnly(trip?.departureDate ?? fallback?.date ?? ""),
+      trip,
+      movements: [],
+      totals: emptyTotals(),
+    };
+    groupMap.set(key, group);
+    return group;
+  };
+
+  for (const movement of routedSales) {
+    if (movement.tripId != null) {
+      addMovement(tripGroup(movement.tripId, movement), movement);
+      continue;
+    }
+
+    const key = `untripped-${movement.employeeId ?? "_"}|${dateOnly(movement.date)}`;
     let group = groupMap.get(key);
     if (!group) {
-      const trip = tripIndexByKey.get(key) ?? null;
       group = {
         key,
-        driverId: m.employeeId ?? null,
-        driverName: m.employeeName ?? trip?.driverName ?? null,
-        routeId: m.routeId ?? null,
-        routeName: m.routeName ?? trip?.routeName ?? null,
-        date: d,
-        trip,
+        driverId: movement.employeeId ?? null,
+        driverName: movement.employeeName ?? null,
+        routeId: movement.routeId ?? null,
+        routeName: movement.routeName ?? null,
+        date: dateOnly(movement.date),
+        trip: null,
         movements: [],
-        totals: {
-          kgSold: 0,
-          kgSent: 0,
-          totalPieces: 0,
-          saleTotal: 0,
-          salesCount: 0,
-        },
+        totals: emptyTotals(),
       };
       groupMap.set(key, group);
     }
-    group.movements.push(m);
-    group.totals.kgSold += safeNumber(m.weight);
-    group.totals.kgSent += safeNumber(m.kgSent);
-    group.totals.totalPieces += safeNumber(m.quantity);
-    group.totals.saleTotal += safeNumber(m.saleTotal);
-    group.totals.salesCount += 1;
+    addMovement(group, movement);
   }
 
-  const orphanSales: InlineMovement[] = [];
-  for (const m of routedSales) {
-    const d = dateOnly(m.date);
-    const key = groupKey(m.employeeId ?? null, d);
-    if (!groupMap.has(key)) {
-      orphanSales.push(m);
-    }
-  }
-
-  for (const t of trips) {
-    const key = groupKey(t.driverId, dateOnly(t.departureDate));
-    if (!groupMap.has(key)) {
-      groupMap.set(key, {
-        key,
-        driverId: t.driverId,
-        driverName: t.driverName ?? null,
-        routeId: t.routeId,
-        routeName: t.routeName ?? null,
-        date: dateOnly(t.departureDate),
-        trip: t,
-        movements: [],
-        totals: {
-          kgSold: 0,
-          kgSent: 0,
-          totalPieces: 0,
-          saleTotal: 0,
-          salesCount: 0,
-        },
-      });
-    }
+  for (const trip of trips) {
+    tripGroup(trip.id);
   }
 
   const groups = Array.from(groupMap.values());
-  groups.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-
-  const orphans: TripGroup = {
-    key: "__orphan_sales__",
-    driverId: null,
-    driverName: null,
-    routeId: null,
-    routeName: null,
-    date: "",
-    trip: null,
-    movements: orphanSales,
-    totals: orphanSales.reduce(
-      (acc, m) => {
-        acc.kgSold += safeNumber(m.weight);
-        acc.kgSent += safeNumber(m.kgSent);
-        acc.totalPieces += safeNumber(m.quantity);
-        acc.saleTotal += safeNumber(m.saleTotal);
-        acc.salesCount += 1;
-        return acc;
-      },
-      {
-        kgSold: 0,
-        kgSent: 0,
-        totalPieces: 0,
-        saleTotal: 0,
-        salesCount: 0,
-      },
-    ),
-  };
+  groups.sort((left, right) => {
+    if (left.date !== right.date) {
+      return left.date < right.date ? 1 : -1;
+    }
+    return (right.trip?.id ?? 0) - (left.trip?.id ?? 0);
+  });
 
   const finalList: TripGroup[] = [...groups];
 
@@ -228,38 +207,18 @@ export function buildTripGroups(
       date: "",
       trip: null,
       movements: sortedPickup,
-      totals: sortedPickup.reduce(
-        (acc, m) => {
-          acc.kgSold += safeNumber(m.weight);
-          acc.kgSent += safeNumber(m.kgSent);
-          acc.totalPieces += safeNumber(m.quantity);
-          acc.saleTotal += safeNumber(m.saleTotal);
-          acc.salesCount += 1;
-          return acc;
-        },
-        {
-          kgSold: 0,
-          kgSent: 0,
-          totalPieces: 0,
-          saleTotal: 0,
-          salesCount: 0,
-        },
-      ),
+      totals: accumulateTotals(sortedPickup),
     });
   }
 
   for (const group of finalList) {
     if (
       !group.key.startsWith("__") &&
-      group.movements.length === 1 &&
-      (group.trip == null || group.trip.salesCount === 1)
+      group.trip == null &&
+      group.movements.length === 1
     ) {
       group.isSingleSale = true;
     }
-  }
-
-  if (orphans.movements.length > 0) {
-    finalList.push(orphans);
   }
 
   finalList.push({
@@ -271,13 +230,7 @@ export function buildTripGroups(
     date: "",
     trip: null,
     movements: adjustments,
-    totals: {
-      kgSold: 0,
-      kgSent: 0,
-      totalPieces: 0,
-      saleTotal: 0,
-      salesCount: 0,
-    },
+    totals: emptyTotals(),
   });
 
   return finalList;

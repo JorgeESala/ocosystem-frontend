@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import RouteOrdersPage from "../pages/RouteOrdersPage";
 
 const mocks = vi.hoisted(() => ({
@@ -146,7 +147,11 @@ describe("RouteOrdersPage", () => {
   });
 
   it("carga la ruta, calcula totales y guarda la hoja", async () => {
-    render(<RouteOrdersPage unitType="EGG" />);
+    render(
+      <MemoryRouter initialEntries={["/business/egg/orders"]}>
+        <RouteOrdersPage unitType="EGG" />
+      </MemoryRouter>,
+    );
 
     expect(await screen.findByText("Cliente A")).toBeInTheDocument();
     expect(screen.queryByText("Clientes externos")).not.toBeInTheDocument();
@@ -192,7 +197,11 @@ describe("RouteOrdersPage", () => {
   });
 
   it("permite elegir chofer y vehículo del catálogo y los guarda", async () => {
-    render(<RouteOrdersPage unitType="EGG" />);
+    render(
+      <MemoryRouter initialEntries={["/business/egg/orders"]}>
+        <RouteOrdersPage unitType="EGG" />
+      </MemoryRouter>,
+    );
 
     expect(await screen.findByText("Cliente A")).toBeInTheDocument();
     expect(
@@ -212,5 +221,39 @@ describe("RouteOrdersPage", () => {
       driverName: "Chofer Uno",
       vehicleName: "Camión Uno",
     });
+  });
+
+  it("ofrece abrir las ventas del viaje vinculado", async () => {
+    const order = mocks.sheet.order as unknown as Record<string, unknown>;
+    order.tripId = 76;
+    order.trip = {
+      id: 76,
+      driverId: 1,
+      driverName: "Jorge",
+      vehicleId: null,
+      vehicleName: null,
+      routeId: 1,
+      routeName: "Ruta Centro",
+      departureDate: "2030-01-07",
+      totalKgLoaded: null,
+      totalKgReturned: null,
+      batchSources: [],
+      salesCount: 0,
+    };
+
+    try {
+      render(
+        <MemoryRouter initialEntries={["/business/egg/orders"]}>
+          <RouteOrdersPage unitType="EGG" />
+        </MemoryRouter>,
+      );
+
+      expect(
+        await screen.findByRole("button", { name: "Ver ventas del viaje" }),
+      ).toBeInTheDocument();
+    } finally {
+      order.tripId = null;
+      order.trip = null;
+    }
   });
 });

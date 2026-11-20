@@ -5,6 +5,7 @@ import {
   PICKUP_GROUP_KEY,
   type InlineMovement,
 } from "./tripGrouping";
+import type { TripSummaryDTO } from "../types/trip.types";
 
 const sale = (overrides: Record<string, unknown> = {}) => ({
   id: Math.floor(Math.random() * 100000),
@@ -19,6 +20,87 @@ const sale = (overrides: Record<string, unknown> = {}) => ({
   quantity: 40,
   saleTotal: 2000,
   ...overrides,
+});
+
+const trip = (
+  id: number,
+  overrides: Partial<TripSummaryDTO> = {},
+): TripSummaryDTO => ({
+  id,
+  driverId: 5,
+  driverName: "Chofer A",
+  vehicleId: null,
+  vehicleName: null,
+  routeId: 2,
+  routeName: "Ruta 2",
+  departureDate: "2026-09-10",
+  totalKgLoaded: null,
+  totalKgReturned: null,
+  batchSources: [],
+  salesCount: 2,
+  totalSaleAmount: 0,
+  totalQuantity: 0,
+  totalWeight: 0,
+  totalKgSent: 0,
+  ...overrides,
+});
+
+describe("buildTripGroups - viajes", () => {
+  it("separa dos viajes del mismo chofer y fecha", () => {
+    const groups = buildTripGroups(
+      [
+        sale({ id: 1, tripId: 10 }),
+        sale({ id: 2, tripId: 11, routeId: 3, routeName: "Ruta 3" }),
+      ],
+      [trip(10), trip(11, { routeId: 3, routeName: "Ruta 3" })],
+    );
+
+    const tripGroups = groups.filter((group) => group.trip != null);
+    expect(tripGroups).toHaveLength(2);
+    expect(tripGroups.map((group) => group.tripId).sort()).toEqual([10, 11]);
+  });
+
+  it("no mezcla ventas de otro viaje del mismo chofer y fecha", () => {
+    const groups = buildTripGroups(
+      [
+        sale({ id: 1, tripId: 10, batchId: 1 }),
+        sale({ id: 2, tripId: 11, batchId: 2 }),
+      ],
+      [trip(10), trip(11)],
+    );
+
+    const firstTrip = groups.find((group) => group.tripId === 10);
+    const secondTrip = groups.find((group) => group.tripId === 11);
+
+    expect(firstTrip?.movements.map((movement) => movement.id)).toEqual([1]);
+    expect(secondTrip?.movements.map((movement) => movement.id)).toEqual([2]);
+  });
+
+  it("mantiene visible un viaje con una sola venta", () => {
+    const groups = buildTripGroups(
+      [sale({ id: 1, tripId: 10 })],
+      [trip(10, { salesCount: 1 })],
+    );
+
+    const firstTrip = groups.find((group) => group.tripId === 10);
+    expect(firstTrip).toBeDefined();
+    expect(firstTrip?.isSingleSale).not.toBe(true);
+  });
+
+  it("mantiene las ventas sin viaje fuera de los viajes", () => {
+    const groups = buildTripGroups(
+      [sale({ id: 1, tripId: 10 }), sale({ id: 2, tripId: null })],
+      [trip(10)],
+    );
+
+    const tripGroup = groups.find((group) => group.tripId === 10);
+    expect(tripGroup?.movements.map((movement) => movement.id)).toEqual([1]);
+
+    const withoutTrip = groups.find(
+      (group) => group.trip == null && group.movements.length === 1,
+    );
+    expect(withoutTrip?.movements[0].id).toBe(2);
+  });
 });
 
 describe("buildTripGroups - recogida en CEDIS", () => {

@@ -260,6 +260,21 @@ export const BatchMovementModal: React.FC<{
   }, [employees, isLoadingEmployees, isEditing, reset]);
   const onValid = (data: any) => {
     setSubmitError(null);
+    if (
+      data.movementType === "SALE" &&
+      (batch.type === "EGG" || batch.type === "LIVE_CHICKEN")
+    ) {
+      const hasQuantity =
+        batch.type === "EGG"
+          ? Number(data.boxes || 0) > 0 ||
+            Number(data.cartons || 0) > 0 ||
+            Number(data.quantity || 0) > 0
+          : Number(data.quantity || 0) > 0;
+      if (!hasQuantity && Number(data.saleTotal || 0) <= 0) {
+        setSubmitError("Captura una cantidad o un monto mayor a cero.");
+        return;
+      }
+    }
     const isPickupSale = data.movementType === "SALE" && data.isPickup === true;
     const payload = {
       ...data,

@@ -5,7 +5,6 @@ import TripInlineRow from "@/features/trips/components/TripInlineRow";
 import { useTripsForBatch } from "@/features/trips/api/trips.queries";
 import { buildTripGroups } from "@/features/trips/utils/tripGrouping";
 import type { TripsUnitType } from "@/features/trips/types/trip.types";
-import { useParams } from "react-router-dom";
 
 export const ChickenMovementsTable: React.FC<{
   movements: any[];
@@ -18,7 +17,6 @@ export const ChickenMovementsTable: React.FC<{
     unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
   const { data: trips = [] } = useTripsForBatch(tripsUnitType, batchId);
   const groups = buildTripGroups(movements, trips);
-  const { slug } = useParams();
 
   if (movements.length === 0) {
     return (
@@ -29,7 +27,6 @@ export const ChickenMovementsTable: React.FC<{
   }
 
   const renderSaleColumns = (mov: any, isOtherBatch: boolean) => {
-    if (isOtherBatch) return null;
     const isAdjustment = mov.type === "ADJUSTMENT";
     const kgVendidos = Number(mov.weight || 0);
     const kgEnviados = Number(mov.kgSent || mov.weight || 0);
@@ -98,13 +95,19 @@ export const ChickenMovementsTable: React.FC<{
             : "-"}
         </div>
         <div className="col-span-1 text-right">
-          <button
-            type="button"
-            onClick={() => onEdit(mov)}
-            className="rounded bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-400"
-          >
-            Editar
-          </button>
+          {isOtherBatch ? (
+            <span className="text-[10px] whitespace-nowrap text-slate-500">
+              {mov.batchLabel ?? (mov.batchId ? `Remesa #${mov.batchId}` : "")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onEdit(mov)}
+              className="rounded bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-400"
+            >
+              Editar
+            </button>
+          )}
         </div>
       </>
     );
@@ -142,26 +145,6 @@ export const ChickenMovementsTable: React.FC<{
     </>
   );
 
-  const renderOtherBatchHeader = () => (
-    <>
-      <div className="col-span-3 px-2 text-[10px] tracking-wider text-slate-500 uppercase">
-        Remesa
-      </div>
-      <div className="col-span-3 text-[10px] tracking-wider text-slate-500 uppercase">
-        Cliente
-      </div>
-      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
-        KG vend.
-      </div>
-      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
-        Env
-      </div>
-      <div className="col-span-2 text-right text-[10px] tracking-wider text-slate-500 uppercase">
-        $ Total
-      </div>
-    </>
-  );
-
   const singleSaleSales: { mov: any; key: string }[] = [];
   const tripGroups = groups.filter((g) => !g.isSingleSale);
   for (const group of groups) {
@@ -186,8 +169,6 @@ export const ChickenMovementsTable: React.FC<{
           onEditMovement={onEdit}
           renderSaleColumns={renderSaleColumns}
           renderHeaderColumns={renderHeaderColumns}
-          renderOtherBatchHeader={renderOtherBatchHeader}
-          slug={slug}
           tripId={tripId}
         />
       ))}

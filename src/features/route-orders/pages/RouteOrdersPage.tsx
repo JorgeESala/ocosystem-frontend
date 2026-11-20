@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   Button,
@@ -121,6 +121,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const [linkedTrip, setLinkedTrip] = useState<TripSummaryDTO | null>(null);
 
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const dateString = toLocalDateString(selectedDate);
   const {
     data: sheets = [],
@@ -910,15 +911,28 @@ export default function RouteOrdersPage({ unitType }: Props) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {linkedTrip ? (
-                  <Button
-                    size="xs"
-                    color="light"
-                    onClick={handleUnlinkTrip}
-                    disabled={unlinkTripMutation.isPending}
-                  >
-                    <HiTrash className="mr-1 h-4 w-4" />
-                    Desvincular
-                  </Button>
+                  <>
+                    <Button
+                      size="xs"
+                      color="light"
+                      onClick={() =>
+                        navigate(
+                          `/business/${slug}/salesAndBatches?tripId=${linkedTrip.id}`,
+                        )
+                      }
+                    >
+                      Ver ventas del viaje
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="light"
+                      onClick={handleUnlinkTrip}
+                      disabled={unlinkTripMutation.isPending}
+                    >
+                      <HiTrash className="mr-1 h-4 w-4" />
+                      Desvincular
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button

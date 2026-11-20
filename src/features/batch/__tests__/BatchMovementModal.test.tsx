@@ -576,3 +576,51 @@ describe("BatchMovementModal - Recogida en CEDIS", () => {
     expect(screen.getByText("Cliente interno")).toBeInTheDocument();
   });
 });
+
+describe("BatchMovementModal - ventas vacías", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    routeMocks.useRoutes.mockReturnValue({
+      data: [{ id: 1, name: "Ruta Uno" }],
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  it("no guarda una venta de pollo sin cantidad ni monto", async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={qc}>
+        <BatchMovementModal
+          batch={chickenBatch}
+          onClose={vi.fn()}
+          initialData={{
+            id: 99,
+            type: "SALE",
+            date: "2026-01-15",
+            routeId: 1,
+            routeName: "Ruta Uno",
+            employeeId: 1,
+            quantity: "0",
+            weight: "0",
+            kgSent: "0",
+            saleTotal: "0",
+            metadata: { weight: 0, kg_sent: 0 },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar Cambios" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Captura una cantidad o un monto mayor a cero."),
+      ).toBeInTheDocument(),
+    );
+    expect(batchMocks.updateSaleMutate).not.toHaveBeenCalled();
+  });
+});

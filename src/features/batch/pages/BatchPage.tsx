@@ -75,6 +75,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
     if (isLoading) return;
     const exists = batches.some((b: Batch) => b.id === targetId);
     if (!exists) return;
+    setShowOnlyWithAvailability(false);
     handleBatchClick(targetId);
     const next = new URLSearchParams(searchParams);
     next.delete("batch");
@@ -84,6 +85,12 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const tripIdFromUrl = useMemo(() => {
     const raw = searchParams.get("tripId");
     return raw != null ? Number(raw) : null;
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("tripId") != null) {
+      setShowOnlyWithAvailability(false);
+    }
   }, [searchParams]);
 
   const handleClearFilter = useCallback(() => {

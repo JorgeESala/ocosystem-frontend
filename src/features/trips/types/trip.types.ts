@@ -63,6 +63,10 @@ export interface TripSummaryDTO {
   totalKgReturned?: number | null;
   batchSources: BatchSourceDTO[];
   salesCount: number;
+  totalSaleAmount?: number | null;
+  totalQuantity?: number | null;
+  totalWeight?: number | null;
+  totalKgSent?: number | null;
 }
 
 export interface TripSaleDTO {
