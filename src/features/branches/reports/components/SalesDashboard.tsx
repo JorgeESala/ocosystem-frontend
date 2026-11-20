@@ -25,6 +25,7 @@ import { useSalesReport } from "../api/salesReportes.queries";
 import { useExpectedSalesReport } from "../api/expectedSales.queries";
 import { ProductSalesTable } from "./ProductSalesTable";
 import DateRangePicker from "@/components/DateRangePicker";
+import { DateRangePresets } from "./DateRangePresets";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { ExpectedSalesSection } from "./ExpectedSalesSection";
 import { TopProductsCard } from "./TopProductsCard";
@@ -435,7 +436,10 @@ export const SalesDashboard = ({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <DateRangePresets
+            onSelect={(start, end) => onDatesChange(start, end)}
+          />
           <DateRangePicker
             startDate={new Date(dates.start)}
             endDate={new Date(dates.end)}

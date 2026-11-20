@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import * as XLSX from "xlsx";
 import { MockResponsiveContainer } from "@/test/rechartsMock";
 import type { SalesReportDTO } from "../api/salesReports.api";
@@ -192,5 +198,28 @@ describe("SalesDashboard category costs", () => {
     fireEvent.click(screen.getByText("Reintentar"));
 
     expect(expectedSalesState.refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("selects today from the date presets", () => {
+    const onDatesChange = vi.fn();
+
+    render(
+      <SalesDashboard
+        branchId={1}
+        branchName="Centro"
+        dates={{ start: new Date(2026, 5, 1), end: new Date(2026, 5, 7) }}
+        onDatesChange={onDatesChange}
+        onBack={() => undefined}
+      />,
+    );
+
+    const presets = within(screen.getByTestId("date-range-presets"));
+    fireEvent.click(presets.getByRole("button", { name: "Hoy" }));
+
+    expect(onDatesChange).toHaveBeenCalledTimes(1);
+    const [start, end] = onDatesChange.mock.calls[0];
+    const today = new Date().toDateString();
+    expect(start.toDateString()).toBe(today);
+    expect(end.toDateString()).toBe(today);
   });
 });
