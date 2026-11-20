@@ -1,7 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import RouteOrdersPage from "../pages/RouteOrdersPage";
+
+const LocationProbe = () => {
+  const location = useLocation();
+  return (
+    <div data-testid="location">
+      {location.pathname}
+      {location.search}
+    </div>
+  );
+};
 
 const mocks = vi.hoisted(() => ({
   saveMutateAsync: vi.fn(),
@@ -244,13 +259,29 @@ describe("RouteOrdersPage", () => {
     try {
       render(
         <MemoryRouter initialEntries={["/business/egg/orders"]}>
-          <RouteOrdersPage unitType="EGG" />
+          <Routes>
+            <Route
+              path="/business/:slug/orders"
+              element={<RouteOrdersPage unitType="EGG" />}
+            />
+            <Route
+              path="/business/:slug/salesAndBatches"
+              element={<LocationProbe />}
+            />
+          </Routes>
         </MemoryRouter>,
       );
 
-      expect(
-        await screen.findByRole("button", { name: "Ver ventas del viaje" }),
-      ).toBeInTheDocument();
+      const button = await screen.findByRole("button", {
+        name: "Ver ventas del viaje",
+      });
+      fireEvent.click(button);
+
+      await waitFor(() =>
+        expect(screen.getByTestId("location")).toHaveTextContent(
+          "/business/egg/salesAndBatches?tripId=76",
+        ),
+      );
     } finally {
       order.tripId = null;
       order.trip = null;

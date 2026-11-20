@@ -588,6 +588,40 @@ describe("BatchMovementModal - ventas vacías", () => {
     });
   });
 
+  it("no guarda una venta de huevo sin cajas, casilleros ni piezas", async () => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={qc}>
+        <BatchMovementModal
+          batch={eggBatch}
+          onClose={vi.fn()}
+          initialData={{
+            id: 98,
+            type: "SALE",
+            date: "2026-01-15",
+            routeId: 1,
+            routeName: "Ruta Uno",
+            employeeId: 1,
+            quantity: "0",
+            saleTotal: "0",
+            metadata: { boxes: 0, cartons: 0, loose_pieces: 0 },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar Cambios" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Captura una cantidad o un monto mayor a cero."),
+      ).toBeInTheDocument(),
+    );
+    expect(batchMocks.updateSaleMutate).not.toHaveBeenCalled();
+  });
+
   it("no guarda una venta de pollo sin cantidad ni monto", async () => {
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },

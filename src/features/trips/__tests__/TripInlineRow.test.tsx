@@ -102,6 +102,74 @@ const group: TripGroup = {
 };
 
 describe("TripInlineRow - ventas del viaje", () => {
+  it("muestra un despacho sin viaje y separa clientes internos", async () => {
+    mocks.tripSales = [];
+
+    const internalSale = {
+      ...currentMovement,
+      id: 3,
+      tripId: null,
+      clientId: 7,
+      clientName: "Sucursal",
+      internalClient: true,
+    };
+    const untrippedGroup: TripGroup = {
+      key: "untripped-25|2026-11-19",
+      tripId: null,
+      driverId: 25,
+      driverName: "Jorge",
+      routeId: 3,
+      routeName: "Señor",
+      date: "2026-11-19",
+      trip: null,
+      movements: [internalSale, currentMovement],
+      totals: {
+        kgSold: 30,
+        kgSent: 31,
+        totalPieces: 20,
+        saleTotal: 200,
+        salesCount: 2,
+      },
+    };
+
+    render(
+      <TripInlineRow
+        unitType="LIVE_CHICKEN"
+        currentBatchId={130}
+        group={untrippedGroup}
+        defaultExpanded
+        renderSaleColumns={(movement) => <span>{movement.clientName}</span>}
+        renderHeaderColumns={() => <span>Encabezado</span>}
+      />,
+    );
+
+    expect((await screen.findAllByText("Ventas")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Sucursal")).toBeInTheDocument();
+    expect(await screen.findByText("RONELI")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Aún no hay ventas registradas en este despacho."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("muestra el mensaje cuando el viaje no tiene ventas", async () => {
+    mocks.tripSales = [];
+
+    render(
+      <TripInlineRow
+        unitType="LIVE_CHICKEN"
+        currentBatchId={130}
+        group={{ ...group, movements: [] }}
+        tripId={76}
+        renderSaleColumns={(movement) => <span>{movement.clientName}</span>}
+        renderHeaderColumns={() => <span>Encabezado</span>}
+      />,
+    );
+
+    expect(
+      await screen.findByText("Aún no hay ventas registradas en este viaje."),
+    ).toBeInTheDocument();
+  });
+
   it("muestra los totales de todo el viaje y las ventas de otras remesas", async () => {
     mocks.tripSales = [currentMovement, otherBatchSale];
 
