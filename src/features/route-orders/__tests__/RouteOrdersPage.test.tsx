@@ -252,7 +252,15 @@ describe("RouteOrdersPage", () => {
       departureDate: "2030-01-07",
       totalKgLoaded: null,
       totalKgReturned: null,
-      batchSources: [],
+      batchSources: [
+        {
+          id: 1,
+          batchId: 130,
+          batchLabel: "Remesa del 2026-11-19",
+          kgLoaded: 0,
+          createdAt: "2026-11-19T00:00:00Z",
+        },
+      ],
       salesCount: 0,
     };
 
@@ -279,7 +287,7 @@ describe("RouteOrdersPage", () => {
 
       await waitFor(() =>
         expect(screen.getByTestId("location")).toHaveTextContent(
-          "/business/egg/salesAndBatches?tripId=76",
+          "/business/egg/salesAndBatches?tripId=76&batch=130",
         ),
       );
     } finally {

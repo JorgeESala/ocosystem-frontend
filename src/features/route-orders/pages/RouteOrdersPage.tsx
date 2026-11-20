@@ -915,11 +915,26 @@ export default function RouteOrdersPage({ unitType }: Props) {
                     <Button
                       size="xs"
                       color="light"
-                      onClick={() =>
+                      onClick={() => {
+                        const targetBatchId =
+                          linkedTrip.batchSources?.reduce<number | null>(
+                            (latest, source) =>
+                              source.batchId != null &&
+                              (latest == null || source.batchId > latest)
+                                ? source.batchId
+                                : latest,
+                            null,
+                          ) ?? null;
+                        const params = new URLSearchParams({
+                          tripId: String(linkedTrip.id),
+                        });
+                        if (targetBatchId != null) {
+                          params.set("batch", String(targetBatchId));
+                        }
                         navigate(
-                          `/business/${slug}/salesAndBatches?tripId=${linkedTrip.id}`,
-                        )
-                      }
+                          `/business/${slug}/salesAndBatches?${params.toString()}`,
+                        );
+                      }}
                     >
                       Ver ventas del viaje
                     </Button>
