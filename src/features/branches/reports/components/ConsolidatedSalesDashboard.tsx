@@ -45,6 +45,7 @@ import {
   toLocalDateString,
 } from "@/utils/date.utils";
 import DateRangePicker from "@/components/DateRangePicker";
+import { DateRangePresets } from "./DateRangePresets";
 import ExcludedBranchesNote from "@/components/ExcludedBranchesNote";
 import { InfoTip } from "@/components/InfoTip";
 import { BranchScopeSelect } from "./BranchScopeSelect";
@@ -71,7 +72,6 @@ import { useDebouncedValue } from "../utils/useDebouncedValue";
 import { useTopCategoryFilters } from "../utils/topCategoryFilters";
 import { scrollToSection } from "../utils/scrollToSection";
 
-const PRESET_DAYS = [7, 14, 30, 90];
 const CATALOG_PAGE_SIZE = 10;
 
 const formatNumber = (value: number) =>
@@ -188,7 +188,7 @@ export const ConsolidatedSalesDashboard = ({
             data.branchSummary,
             data.previousBranchSummary,
             expectedDays,
-            expectedSales?.branches ?? [],
+            expectedSales?.branches,
           )
         : [],
     [data, expectedDays, expectedSales],
@@ -304,14 +304,6 @@ export const ConsolidatedSalesDashboard = ({
   const partialCount = rankingRows.filter(
     (row) => row.daysWithReport > 0 && row.missingDays > 0,
   ).length;
-
-  const applyPreset = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - (days - 1));
-    start.setHours(0, 0, 0, 0);
-    onDatesChange(start, end);
-  };
 
   const handleDateChange = (start: Date | null, end: Date | null) => {
     if (start && end) onDatesChange(start, end);
@@ -474,18 +466,7 @@ export const ConsolidatedSalesDashboard = ({
         onChange={onSelectedBranchIdsChange}
         disabled={branchesLoading}
       />
-      <div className="flex items-center gap-1">
-        {PRESET_DAYS.map((days) => (
-          <Button
-            key={days}
-            size="xs"
-            color="gray"
-            onClick={() => applyPreset(days)}
-          >
-            {days}D
-          </Button>
-        ))}
-      </div>
+      <DateRangePresets onSelect={(start, end) => onDatesChange(start, end)} />
       <DateRangePicker
         startDate={dates.start}
         endDate={dates.end}

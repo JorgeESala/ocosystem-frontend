@@ -8,7 +8,12 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedKg: number | null;
   expectedReportedKg: number | null;
   expectedVariancePct: number | null;
+  expectedLoaded: boolean;
+  salesWithoutWeight: number;
+  salesWithoutReportedKg: number;
 }
+
+export const REVIEW_VARIANCE_THRESHOLD_PCT = 10;
 
 export const deltaPct = (
   current: number,
@@ -39,13 +44,13 @@ export const buildRankingRows = (
   branchSummary: BranchSalesSummaryDTO[],
   previousBranchSummary: BranchSalesSummaryDTO[],
   expectedDays: number,
-  expectedBranches: BranchExpectedSalesDTO[] = [],
+  expectedBranches?: BranchExpectedSalesDTO[],
 ): BranchRankingRow[] => {
   const previousById = new Map(
     previousBranchSummary.map((branch) => [branch.branchId, branch]),
   );
   const expectedById = new Map(
-    expectedBranches.map((branch) => [branch.branchId, branch]),
+    (expectedBranches ?? []).map((branch) => [branch.branchId, branch]),
   );
   const totalSales = branchSummary.reduce(
     (acc, branch) => acc + branch.totalSales,
@@ -66,7 +71,52 @@ export const buildRankingRows = (
         expectedKg: expected?.expectedKg ?? null,
         expectedReportedKg: expected?.reportedKg ?? null,
         expectedVariancePct: expected?.variancePct ?? null,
+        expectedLoaded: expectedBranches !== undefined,
+        salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
+        salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
       };
     })
     .sort((a, b) => b.totalSales - a.totalSales);
 };
+
+export const reviewReasons = (row: BranchRankingRow): string[] => {
+  const reasons: string[] = [];
+
+  if (
+    row.expectedVariancePct != null &&
+    Math.abs(row.expectedVariancePct) >= REVIEW_VARIANCE_THRESHOLD_PCT
+  ) {
+    reasons.push(
+      `Desviación de ${Math.abs(row.expectedVariancePct).toFixed(1)}% contra lo esperado.`,
+    );
+  }
+
+  if (row.missingDays > 0) {
+    reasons.push(
+      `${row.missingDays} ${row.missingDays === 1 ? "día" : "días"} sin reporte.`,
+    );
+  }
+
+  if (
+    row.expectedLoaded &&
+    row.expectedKg == null &&
+    (row.totalSales > 0 || row.expectedReportedKg != null)
+  ) {
+    reasons.push("Sin kilos esperados para comparar.");
+  }
+
+  const excludedSales =
+    (row.salesWithoutWeight ?? 0) + (row.salesWithoutReportedKg ?? 0);
+  if (excludedSales > 0) {
+    reasons.push(
+      `${excludedSales} ${
+        excludedSales === 1 ? "venta excluida" : "ventas excluidas"
+      } del cálculo.`,
+    );
+  }
+
+  return reasons;
+};
+
+export const needsReview = (row: BranchRankingRow): boolean =>
+  reviewReasons(row).length > 0;
