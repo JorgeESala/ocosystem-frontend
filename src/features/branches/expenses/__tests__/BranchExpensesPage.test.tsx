@@ -253,12 +253,12 @@ describe("BranchExpensesPage", () => {
     );
   });
 
-  it("mantiene los filtros debajo del selector de unidad de negocio", () => {
+  it("mantiene el selector de sucursales por encima del encabezado", () => {
     renderPage();
 
     const filterSection = screen.getByText("Sucursales").closest("section");
 
-    expect(filterSection).toHaveClass("lg:z-20");
+    expect(filterSection).toHaveClass("lg:z-40");
     expect(filterSection).toHaveClass("lg:top-[51px]");
   });
 
