@@ -5,7 +5,8 @@ import { UNIT_CONFIG } from "../../config/unitConfig";
 export const EggBatchOverview: React.FC<{
   batch: BatchResponseDTO;
   autoExpandId?: number | null;
-}> = ({ batch, autoExpandId }) => {
+  tripId?: number | null;
+}> = ({ batch, autoExpandId, tripId }) => {
   const config = UNIT_CONFIG["EGG"];
 
   return (
@@ -14,6 +15,7 @@ export const EggBatchOverview: React.FC<{
       statsComponent={<config.HeaderStats batch={batch} />}
       footerComponent={<config.FooterStats batch={batch} />}
       autoExpandId={autoExpandId}
+      tripId={tripId}
     />
   );
 };

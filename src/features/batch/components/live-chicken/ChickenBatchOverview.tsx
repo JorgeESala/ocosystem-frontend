@@ -5,7 +5,8 @@ import { BaseBatchOverview } from "../BaseBatchOverview";
 export const ChickenBatchOverview: React.FC<{
   batch: BatchResponseDTO;
   autoExpandId?: number | null;
-}> = ({ batch, autoExpandId }) => {
+  tripId?: number | null;
+}> = ({ batch, autoExpandId, tripId }) => {
   const config = UNIT_CONFIG["LIVE_CHICKEN"];
 
   return (
@@ -14,6 +15,7 @@ export const ChickenBatchOverview: React.FC<{
       statsComponent={<config.HeaderStats batch={batch} />}
       footerComponent={<config.FooterStats batch={batch} />}
       autoExpandId={autoExpandId}
+      tripId={tripId}
     />
   );
 };
