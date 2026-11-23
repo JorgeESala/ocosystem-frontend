@@ -21,6 +21,7 @@ import {
 } from "../api/trips.queries";
 import { useBulkUpdateBatchSaleRoute } from "@/features/batch/api/batch.queries";
 import {
+  formatRemesaLabel,
   splitMovementsByClientType,
   type TripGroup,
 } from "../utils/tripGrouping";
@@ -154,9 +155,7 @@ export default function TripInlineRow({
         return { ...currentMovement, batchId: currentBatchId };
       }
 
-      const remesaLabel =
-        sale.batchLabel ??
-        (sale.batchId != null ? `Remesa #${sale.batchId}` : "");
+      const remesaLabel = formatRemesaLabel(sale.batchId, sale.batchLabel);
       const clientName = sale.clientName ?? "Venta directa";
 
       return {
@@ -193,6 +192,19 @@ export default function TripInlineRow({
     () => splitMovementsByClientType(displaySales),
     [displaySales],
   );
+
+  const { currentBatchSales, otherBatchSales } = useMemo(() => {
+    const current: any[] = [];
+    const other: any[] = [];
+    for (const mov of displaySales) {
+      if (mov.batchId != null && mov.batchId !== currentBatchId) {
+        other.push(mov);
+      } else {
+        current.push(mov);
+      }
+    }
+    return { currentBatchSales: current, otherBatchSales: other };
+  }, [displaySales, currentBatchId]);
 
   const handleSaveKg = () => {
     if (group.driverId == null || !group.date) {
@@ -550,20 +562,37 @@ export default function TripInlineRow({
                     {renderHeaderColumns()}
                   </div>
                   <div className="divide-y divide-slate-800/60">
-                    {displaySales.map((mov) => {
-                      const isOtherBatch =
-                        mov.batchId != null &&
-                        mov.batchId !== currentBatchId;
-                      return (
-                        <div
-                          key={`${mov.type}-${mov.id}`}
-                          className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
-                        >
-                          {renderSaleColumns(mov, isOtherBatch)}
-                        </div>
-                      );
-                    })}
+                    {currentBatchSales.map((mov) => (
+                      <div
+                        key={`${mov.type}-${mov.id}`}
+                        className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+                      >
+                        {renderSaleColumns(mov, false)}
+                      </div>
+                    ))}
                   </div>
+                  {otherBatchSales.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between gap-2 border-t border-slate-800 bg-slate-950/50 px-3 py-2">
+                        <span className="text-[10px] font-semibold tracking-wider text-blue-300 uppercase">
+                          Ventas de otras remesas (incluidas en el viaje)
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          No se editan desde esta remesa
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-800/60">
+                        {otherBatchSales.map((mov) => (
+                          <div
+                            key={`${mov.type}-${mov.id}`}
+                            className="grid grid-cols-12 items-center gap-2 px-3 py-1.5 text-sm"
+                          >
+                            {renderSaleColumns(mov, true)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>

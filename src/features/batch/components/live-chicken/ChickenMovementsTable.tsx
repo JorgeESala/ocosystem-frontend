@@ -1,9 +1,13 @@
+import { Link, useParams } from "react-router-dom";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
 import type { BusinessUnitType } from "../../types.batch";
 import TripInlineRow from "@/features/trips/components/TripInlineRow";
 import { useTripsForBatch } from "@/features/trips/api/trips.queries";
-import { buildTripGroups } from "@/features/trips/utils/tripGrouping";
+import {
+  buildTripGroups,
+  formatRemesaLabel,
+} from "@/features/trips/utils/tripGrouping";
 import type { TripsUnitType } from "@/features/trips/types/trip.types";
 
 export const ChickenMovementsTable: React.FC<{
@@ -17,6 +21,7 @@ export const ChickenMovementsTable: React.FC<{
     unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
   const { data: trips = [] } = useTripsForBatch(tripsUnitType, batchId);
   const groups = buildTripGroups(movements, trips);
+  const { slug } = useParams();
 
   if (movements.length === 0) {
     return (
@@ -96,9 +101,19 @@ export const ChickenMovementsTable: React.FC<{
         </div>
         <div className="col-span-1 text-right">
           {isOtherBatch ? (
-            <span className="text-[10px] whitespace-nowrap text-slate-500">
-              {mov.batchLabel ?? (mov.batchId ? `Remesa #${mov.batchId}` : "")}
-            </span>
+            mov.batchId != null && slug ? (
+              <Link
+                to={`/business/${slug}/salesAndBatches?batch=${mov.batchId}${mov.tripId != null ? `&tripId=${mov.tripId}` : ""}`}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold whitespace-nowrap text-blue-400 hover:text-blue-300 hover:underline"
+                title="Ver remesa"
+              >
+                Ver remesa #{mov.batchId}
+              </Link>
+            ) : (
+              <span className="text-[10px] whitespace-nowrap text-slate-500">
+                {formatRemesaLabel(mov.batchId, mov.batchLabel)}
+              </span>
+            )
           ) : (
             <button
               type="button"
