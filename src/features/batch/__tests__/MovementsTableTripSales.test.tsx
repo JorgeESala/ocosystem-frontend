@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { EggMovementsTable } from "../components/egg/EggMovementsTable";
 import { ChickenMovementsTable } from "../components/live-chicken/ChickenMovementsTable";
 
@@ -73,15 +74,24 @@ const movement = {
 describe("MovementsTable - ventas de otras remesas", () => {
   it("muestra la remesa y oculta el botón de editar en pollo vivo", () => {
     render(
-      <ChickenMovementsTable
-        movements={[movement]}
-        onEdit={vi.fn()}
-        unitType="LIVE_CHICKEN"
-        batchId={130}
-      />,
+      <MemoryRouter initialEntries={["/business/pollo-vivo/batches/130"]}>
+        <Routes>
+          <Route
+            path="/business/:slug/*"
+            element={
+              <ChickenMovementsTable
+                movements={[movement]}
+                onEdit={vi.fn()}
+                unitType="LIVE_CHICKEN"
+                batchId={130}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
     );
 
-    expect(screen.getByText("Remesa del 2026-11-17")).toBeInTheDocument();
+    expect(screen.getByText("Ver remesa #129")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Editar" }),
     ).not.toBeInTheDocument();

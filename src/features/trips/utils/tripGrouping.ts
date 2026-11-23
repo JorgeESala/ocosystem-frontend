@@ -244,3 +244,9 @@ export function saleIsFromOtherBatch(
   if (saleBatchId == null) return false;
   return saleBatchId !== currentBatchId;
 }
+
+export const formatRemesaLabel = (
+  batchId?: number | null,
+  batchLabel?: string | null,
+) => (batchId != null ? `Remesa #${batchId}` : (batchLabel ?? ""));
+
