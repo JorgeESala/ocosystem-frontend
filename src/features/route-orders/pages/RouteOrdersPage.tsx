@@ -150,6 +150,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
 
   const selectedSheet =
     sheets.find((sheet) => sheet.route.id === selectedRouteId) ?? null;
+  const tripForSales = selectedSheet?.order.trip ?? linkedTrip;
   const linkedTripId = linkedTrip?.id ?? draft?.tripId ?? null;
   const { data: tripSales = [] } = useTripSales(unitType, linkedTripId, {
     enabled: linkedTripId != null,
@@ -916,8 +917,9 @@ export default function RouteOrdersPage({ unitType }: Props) {
                       size="xs"
                       color="light"
                       onClick={() => {
+                        if (!tripForSales) return;
                         const targetBatchId =
-                          linkedTrip.batchSources?.reduce<number | null>(
+                          tripForSales.batchSources?.reduce<number | null>(
                             (latest, source) =>
                               source.batchId != null &&
                               (latest == null || source.batchId > latest)
@@ -926,7 +928,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
                             null,
                           ) ?? null;
                         const params = new URLSearchParams({
-                          tripId: String(linkedTrip.id),
+                          tripId: String(tripForSales.id),
                         });
                         if (targetBatchId != null) {
                           params.set("batch", String(targetBatchId));
