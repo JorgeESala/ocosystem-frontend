@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BatchPage } from "../pages/BatchPage";
+
+const tripMock = vi.hoisted(() => ({ useTripSummary: vi.fn() }));
 
 const batch = {
   id: 130,
@@ -28,6 +30,33 @@ vi.mock("../api/batch.queries", () => ({
     isLoading: false,
     isError: false,
   }),
+}));
+
+const tripSummary = {
+  id: 76,
+  driverId: 25,
+  driverName: "Jorge",
+  vehicleId: null,
+  vehicleName: null,
+  routeId: 3,
+  routeName: "Señor",
+  departureDate: "2026-11-19",
+  totalKgLoaded: null,
+  totalKgReturned: null,
+  batchSources: [
+    {
+      id: 1,
+      batchId: 130,
+      batchLabel: "Remesa del 2026-11-19",
+      kgLoaded: 0,
+      createdAt: "2026-11-19T00:00:00Z",
+    },
+  ],
+  salesCount: 0,
+};
+
+vi.mock("@/features/trips/api/trips.queries", () => ({
+  useTripSummary: tripMock.useTripSummary,
 }));
 
 vi.mock("../config/unitConfig", () => ({
@@ -57,6 +86,15 @@ vi.mock("../components/BatchEntryForm", () => ({
 }));
 
 describe("BatchPage - acceso a un viaje", () => {
+  beforeEach(() => {
+    tripMock.useTripSummary.mockReset();
+    tripMock.useTripSummary.mockImplementation(
+      (_unitType: string, id: number | null) => ({
+        data: id === 76 ? tripSummary : undefined,
+      }),
+    );
+  });
+
   it("muestra las remesas sin existencia al abrir un viaje", async () => {
     render(
       <MemoryRouter
@@ -72,6 +110,7 @@ describe("BatchPage - acceso a un viaje", () => {
         screen.getByRole("switch", { name: "Solo con disponibilidad" }),
       ).not.toBeChecked(),
     );
+    expect(tripMock.useTripSummary).toHaveBeenCalledWith("LIVE_CHICKEN", 76);
   });
 
   it("muestra la remesa indicada aunque no tenga existencia", async () => {

@@ -8,6 +8,8 @@ import {
   ToggleSwitch,
 } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
+import { useTripSummary } from "@/features/trips/api/trips.queries";
+import type { TripsUnitType } from "@/features/trips/types/trip.types";
 import type { Batch, BatchPageProps } from "../types.batch";
 
 import { UNIT_CONFIG } from "../config/unitConfig";
@@ -34,6 +36,10 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   const [showOnlyWithAvailability, setShowOnlyWithAvailability] =
     useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const tripIdFromUrl = useMemo(() => {
+    const raw = searchParams.get("tripId");
+    return raw != null ? Number(raw) : null;
+  }, [searchParams]);
 
   useEffect(() => {
     if (expandedBatchId === null) return;
@@ -42,6 +48,26 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   }, [expandedBatchId]);
 
   const { data: batches = [], isLoading, isError } = useBatches(unitType);
+  const tripsUnitType: TripsUnitType =
+    unitType === "EGG" ? "EGG" : "LIVE_CHICKEN";
+  const { data: targetTrip } = useTripSummary(tripsUnitType, tripIdFromUrl);
+  const targetBatchId = useMemo(
+    () =>
+      targetTrip?.batchSources?.reduce<number | null>(
+        (latest, source) =>
+          source.batchId != null && (latest == null || source.batchId > latest)
+            ? source.batchId
+            : latest,
+        null,
+      ) ?? null,
+    [targetTrip],
+  );
+
+  useEffect(() => {
+    if (targetBatchId == null || isLoading) return;
+    setShowOnlyWithAvailability(false);
+    setExpandedBatchId(targetBatchId);
+  }, [targetBatchId, isLoading, batches]);
 
   const config = UNIT_CONFIG[unitType];
   const BatchOverview = config.overviewComponent;
@@ -81,11 +107,6 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
     next.delete("batch");
     setSearchParams(next, { replace: true });
   }, [searchParams, batches, isLoading, handleBatchClick, setSearchParams]);
-
-  const tripIdFromUrl = useMemo(() => {
-    const raw = searchParams.get("tripId");
-    return raw != null ? Number(raw) : null;
-  }, [searchParams]);
 
   useEffect(() => {
     if (searchParams.get("tripId") != null) {

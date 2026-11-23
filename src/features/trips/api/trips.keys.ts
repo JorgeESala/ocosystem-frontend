@@ -6,6 +6,8 @@ export const tripKeys = (unitType: TripsUnitType) => ({
     [...tripKeys(unitType).all, "by-batch", batchId] as const,
   byRouteDate: (routeId: number, date: string) =>
     [...tripKeys(unitType).all, "by-route-date", routeId, date] as const,
+  summary: (id: number) =>
+    [...tripKeys(unitType).all, "summary", id] as const,
   sales: (id: number) =>
     [...tripKeys(unitType).all, "detail", id, "sales"] as const,
   salesByDriverDate: (driverId: number, date: string) =>
