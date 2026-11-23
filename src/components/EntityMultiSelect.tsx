@@ -59,7 +59,7 @@ export function EntityMultiSelect<T extends { id: number; name: string }>({
           placement="bottom-start"
           color="gray"
           dismissOnClick={false}
-          className="absolute z-50 w-56"
+          className="z-50 w-56 max-h-72 overflow-y-auto"
           renderTrigger={() => (
             <button
               type="button"
