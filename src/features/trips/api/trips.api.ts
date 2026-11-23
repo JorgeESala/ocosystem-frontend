@@ -33,6 +33,11 @@ export const tripApi = {
     return data;
   },
 
+  getSummary: async (id: number): Promise<TripSummaryDTO> => {
+    const { data } = await http.get<TripSummaryDTO>(`${BASE_URL}/${id}`);
+    return data;
+  },
+
   getSalesForTrip: async (tripId: number): Promise<TripSaleDTO[]> => {
     const { data } = await http.get<TripSaleDTO[]>(
       `${BASE_URL}/${tripId}/sales`,

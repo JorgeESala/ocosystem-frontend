@@ -30,6 +30,33 @@ vi.mock("../api/batch.queries", () => ({
   }),
 }));
 
+vi.mock("@/features/trips/api/trips.queries", () => ({
+  useTripSummary: () => ({
+    data: {
+      id: 76,
+      driverId: 25,
+      driverName: "Jorge",
+      vehicleId: null,
+      vehicleName: null,
+      routeId: 3,
+      routeName: "Señor",
+      departureDate: "2026-11-19",
+      totalKgLoaded: null,
+      totalKgReturned: null,
+      batchSources: [
+        {
+          id: 1,
+          batchId: 130,
+          batchLabel: "Remesa del 2026-11-19",
+          kgLoaded: 0,
+          createdAt: "2026-11-19T00:00:00Z",
+        },
+      ],
+      salesCount: 0,
+    },
+  }),
+}));
+
 vi.mock("../config/unitConfig", () => ({
   UNIT_CONFIG: {
     LIVE_CHICKEN: {
