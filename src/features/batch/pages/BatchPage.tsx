@@ -64,10 +64,10 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
   );
 
   useEffect(() => {
-    if (targetBatchId == null) return;
+    if (targetBatchId == null || isLoading) return;
     setShowOnlyWithAvailability(false);
     setExpandedBatchId(targetBatchId);
-  }, [targetBatchId]);
+  }, [targetBatchId, isLoading, batches]);
 
   const config = UNIT_CONFIG[unitType];
   const BatchOverview = config.overviewComponent;
