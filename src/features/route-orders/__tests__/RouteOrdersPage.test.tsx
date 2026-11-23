@@ -255,6 +255,13 @@ describe("RouteOrdersPage", () => {
       batchSources: [
         {
           id: 1,
+          batchId: 129,
+          batchLabel: "Remesa del 2026-11-18",
+          kgLoaded: 0,
+          createdAt: "2026-11-18T00:00:00Z",
+        },
+        {
+          id: 2,
           batchId: 130,
           batchLabel: "Remesa del 2026-11-19",
           kgLoaded: 0,
