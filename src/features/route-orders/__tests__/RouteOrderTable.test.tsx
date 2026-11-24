@@ -160,9 +160,11 @@ describe("RouteOrderTable", () => {
     expect((screen.getByTestId("feed-1") as HTMLInputElement).value).toBe(
       "485",
     );
-    expect((screen.getByTestId("eggs-1") as HTMLInputElement).value).toBe(
+    expect((screen.getByTestId("egg-1") as HTMLInputElement).value).toBe(
       "4.85",
     );
+    expect(screen.getByTestId("feed-1")).toHaveAttribute("maxLength", "200");
+    expect(screen.getByTestId("egg-1")).toHaveAttribute("maxLength", "200");
     expect((screen.getByTestId("weight-1") as HTMLInputElement).value).toBe(
       "219.616",
     );
@@ -173,7 +175,7 @@ describe("RouteOrderTable", () => {
     fireEvent.change(screen.getByTestId("feed-1"), {
       target: { value: "450" },
     });
-    fireEvent.change(screen.getByTestId("eggs-1"), {
+    fireEvent.change(screen.getByTestId("egg-1"), {
       target: { value: "3" },
     });
     fireEvent.change(screen.getByTestId("weight-1"), {

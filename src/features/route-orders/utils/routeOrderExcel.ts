@@ -211,7 +211,7 @@ const writeSectionTotals = (
   row = writeTotalLine(
     worksheet,
     row,
-    `TOTAL DE ${egg ? "CAJAS" : "POLLO"} · ${sectionTitle.toUpperCase()}`,
+    `TOTAL DE ${egg ? "CAJAS" : "POLLOS"} · ${sectionTitle.toUpperCase()}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,
@@ -276,7 +276,7 @@ const writeOverallTotals = (
   row = writeTotalLine(
     worksheet,
     row,
-    `TOTAL DE ${egg ? "CAJAS" : "POLLO"}`,
+    `TOTAL DE ${egg ? "CAJAS" : "POLLOS"}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,

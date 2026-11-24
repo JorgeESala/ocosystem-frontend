@@ -14,7 +14,7 @@ const quantityText = (
 ): string =>
   unitType === "EGG"
     ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
-    : `${totals.totalQuantity} pollo`;
+    : `${totals.totalQuantity} pollos`;
 
 const SummaryCard: React.FC<{
   title: string;

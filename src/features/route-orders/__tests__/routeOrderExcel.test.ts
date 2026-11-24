@@ -176,7 +176,7 @@ describe("routeOrderExcel", () => {
       values.push(row.values);
     });
     const content = JSON.stringify(values);
-    expect(content).toContain("TOTAL DE POLLO");
+    expect(content).toContain("TOTAL DE POLLOS");
     expect(content).toContain("10 GY 10 MD");
     expect(content).not.toContain("Precio por kilo");
     expect(content).not.toContain("Últ. vendido");
@@ -220,6 +220,47 @@ describe("routeOrderExcel", () => {
     const sheet = workbook.getWorksheet("Ruta Centro");
     expect(sheet?.getCell("H5").value).toBe("");
     expect(sheet?.getCell("I5").value).toBe("");
+  });
+
+  it("numera consecutivamente internos y externos en pollo vivo", async () => {
+    const mixedDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          isInternalBranch: true,
+          clientName: "Sucursal Interna",
+          headCount: "10",
+          quantity: "",
+        },
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente Externo",
+          isInternalBranch: false,
+          headCount: "20",
+          quantity: "",
+        },
+      ],
+    };
+    const workbook = await buildRouteOrderWorkbook([
+      {
+        ...input,
+        unitType: "LIVE_CHICKEN",
+        draft: mixedDraft,
+        currentEggPricePerCarton: null,
+        currentEggPricePerBox: null,
+        currentEggPriceEffectiveFrom: null,
+      },
+    ]);
+
+    const sheet = workbook.getWorksheet("Ruta Centro");
+    const rowNumbers = sheet
+      ?.getColumn(1)
+      .values.filter((value): value is number => typeof value === "number");
+
+    expect(rowNumbers).toEqual([1, 2]);
   });
 
   it("separa clientes internos y externos y no repite la columna Ruta", async () => {

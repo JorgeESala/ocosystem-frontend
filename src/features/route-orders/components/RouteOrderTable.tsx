@@ -132,6 +132,7 @@ export const RouteOrderTable: React.FC<Props> = ({
                       <TextInput
                         type="text"
                         sizing="sm"
+                        maxLength={200}
                         value={row.feedText}
                         data-testid={`feed-${row.clientId}`}
                         onChange={(event) =>
@@ -146,8 +147,9 @@ export const RouteOrderTable: React.FC<Props> = ({
                       <TextInput
                         type="text"
                         sizing="sm"
+                        maxLength={200}
                         value={row.eggText}
-                        data-testid={`eggs-${row.clientId}`}
+                        data-testid={`egg-${row.clientId}`}
                         onChange={(event) =>
                           onChange(row.clientId, {
                             eggText: event.target.value,

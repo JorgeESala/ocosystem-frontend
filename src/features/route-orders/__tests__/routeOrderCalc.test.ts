@@ -305,6 +305,32 @@ describe("routeOrderCalc", () => {
     expect(savedRow?.cashAmount).toBe("11200.5");
   });
 
+  it("incluye una fila solo de control aunque no tenga cabezas", () => {
+    const draft = buildDraft(sheet, "LIVE_CHICKEN", 65);
+    const row = {
+      ...draft.rows[0],
+      headCount: "",
+      feedText: "485",
+      eggText: "4.85",
+      weight: "219.616",
+      cashAmount: "11200.50",
+    };
+
+    const payload = draftToSavePayload(
+      { ...draft, rows: [row] },
+      "LIVE_CHICKEN",
+    );
+
+    expect(payload.lines).toHaveLength(1);
+    expect(payload.lines[0]).toMatchObject({
+      headCount: 0,
+      feedText: "485",
+      eggText: "4.85",
+      weight: 219.616,
+      cashAmount: 11200.5,
+    });
+  });
+
   it("arma el borrador con último precio, precio actual y líneas guardadas", () => {
     const draft = buildDraft(sheet, "EGG", 65);
 

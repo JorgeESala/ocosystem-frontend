@@ -152,7 +152,7 @@ const buildTable = (
           <td>${escapeHtml(row.eggText)}</td>
           <td class="num">${weight > 0 ? weight : ""}</td>
           <td class="num">${cashAmount > 0 ? formatMXN(cashAmount) : ""}</td>
-          <td></td>
+          <td class="signature"></td>
           <td>${escapeMultiline(row.comments)}</td>
         </tr>`;
       }
@@ -203,7 +203,7 @@ const buildTable = (
                  <th>Huevo</th>
                  <th class="num">Peso</th>
                  <th class="num">Efectivo</th>
-                 <th>Firma</th>
+                 <th class="signature">Firma</th>
                  <th>Comentarios</th>`
           }
         </tr>
@@ -221,7 +221,7 @@ const buildSectionTotals = (
   const quantityTotals =
     input.unitType === "EGG"
       ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
-      : `${totals.totalQuantity} pollo`;
+      : `${totals.totalQuantity} pollos`;
 
   return `<div class="section-totals">
     <strong>Subtotal ${escapeHtml(title.toLowerCase())}:</strong>
@@ -241,7 +241,7 @@ const buildOverallTotals = (
       ? `<span><strong>Total casilleros:</strong> ${totals.totalQuantity}</span>
          <span><strong>Total cajas:</strong> ${totals.totalBoxes}</span>
          <span><strong>TOTAL DEL PEDIDO:</strong> ${formatMXN(totals.totalAmount)}</span>`
-      : `<span><strong>Total pollo:</strong> ${totals.totalQuantity}</span>`;
+      : `<span><strong>Total pollos:</strong> ${totals.totalQuantity}</span>`;
 
   return `
     <div class="totals">
