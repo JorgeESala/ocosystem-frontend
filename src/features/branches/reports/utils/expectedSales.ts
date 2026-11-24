@@ -18,6 +18,7 @@ export interface DailyExpectedSalesRow {
   expectedMoney: number | null;
   moneyDifference: number | null;
   salesWithZeroMoney: number;
+  salesWithoutReportedMoney: number;
 }
 
 export const MONEY_REVIEW_TOLERANCE_PCT = 0.5;
@@ -77,6 +78,7 @@ export const aggregateExpectedDaily = (
       expectedMoney: number | null;
       moneyDifference: number | null;
       salesWithZeroMoney: number;
+      salesWithoutReportedMoney: number;
       priceDates: Set<string>;
     }
   >();
@@ -95,6 +97,7 @@ export const aggregateExpectedDaily = (
       expectedMoney: null,
       moneyDifference: null,
       salesWithZeroMoney: 0,
+      salesWithoutReportedMoney: 0,
       priceDates: new Set<string>(),
     };
 
@@ -111,6 +114,7 @@ export const aggregateExpectedDaily = (
     }
     current.salesWithoutWeight += row.salesWithoutWeight ?? 0;
     current.salesWithZeroMoney += row.salesWithZeroMoney ?? 0;
+    current.salesWithoutReportedMoney += row.salesWithoutReportedMoney ?? 0;
 
     if (row.reportedMoney != null) {
       current.reportedMoney = (current.reportedMoney ?? 0) + row.reportedMoney;
@@ -160,6 +164,7 @@ export const aggregateExpectedDaily = (
       expectedMoney: value.expectedMoney,
       moneyDifference: value.moneyDifference,
       salesWithZeroMoney: value.salesWithZeroMoney,
+      salesWithoutReportedMoney: value.salesWithoutReportedMoney,
     }));
 };
 

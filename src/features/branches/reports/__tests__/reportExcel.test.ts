@@ -158,6 +158,8 @@ describe("expectedSalesSummaryRows", () => {
         comparableDays: 1,
         branchesWithoutReference: 0,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
+        daysWithoutReportedMoney: 0,
       }),
     ).toEqual([
       ["Venta esperada de pollo (kg)", 1000],
@@ -173,6 +175,8 @@ describe("expectedSalesSummaryRows", () => {
       ["Días sin precio de referencia", 0],
       ["Sucursales sin producto de referencia", 0],
       ["Ventas con monto cero", 0],
+      ["Ventas sin monto registrado", 0],
+      ["Días sin monto registrado", 0],
     ]);
   });
 
@@ -191,6 +195,8 @@ describe("expectedSalesSummaryRows", () => {
       ["Días sin precio de referencia", ""],
       ["Sucursales sin producto de referencia", ""],
       ["Ventas con monto cero", ""],
+      ["Ventas sin monto registrado", ""],
+      ["Días sin monto registrado", ""],
     ]);
   });
 
@@ -216,6 +222,8 @@ describe("expectedSalesSummaryRows", () => {
       comparableDays: 0,
       branchesWithoutReference: 0,
       salesWithZeroMoney: 0,
+      salesWithoutReportedMoney: 0,
+      daysWithoutReportedMoney: 0,
     });
 
     expect(rows[3]).toEqual(["Variación de venta esperada (%)", 13.68]);
@@ -235,8 +243,9 @@ describe("expectedSalesRankingColumns", () => {
         moneyDifference: 500,
         comparableDays: 2,
         effectivePricePerKg: 50,
+        salesWithoutReportedMoney: 1,
       }),
-    ).toEqual([1000, 1050, 5, 5000, 6000, 5500, 500, 2, 50]);
+    ).toEqual([1000, 1050, 5, 5000, 6000, 5500, 500, 2, 50, 1]);
   });
 
   it("uses blanks for missing branch values", () => {
@@ -251,8 +260,9 @@ describe("expectedSalesRankingColumns", () => {
         moneyDifference: null,
         comparableDays: 0,
         effectivePricePerKg: null,
+        salesWithoutReportedMoney: 0,
       }),
-    ).toEqual(["", "", "", "", "", "", "", 0, ""]);
+    ).toEqual(["", "", "", "", "", "", "", 0, "", 0]);
   });
 });
 
@@ -279,6 +289,7 @@ describe("expectedSalesSheet", () => {
         comparableReportedMoney: 24000,
         moneyDifference: 250,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
       },
     ]);
 
@@ -298,6 +309,7 @@ describe("expectedSalesSheet", () => {
       "Venta comparable ($)",
       "Diferencia contra mínimo ($)",
       "Ventas con monto cero",
+      "Ventas sin monto registrado",
     ]);
     expect(sheet.rows[1]).toEqual([
       "2026-06-01",
@@ -314,6 +326,7 @@ describe("expectedSalesSheet", () => {
       24000,
       24000,
       250,
+      0,
       0,
     ]);
   });
@@ -340,6 +353,7 @@ describe("expectedSalesSheet", () => {
         comparableReportedMoney: null,
         moneyDifference: null,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
       },
     ]);
 
@@ -358,6 +372,7 @@ describe("expectedSalesSheet", () => {
       "",
       "",
       "",
+      0,
       0,
     ]);
   });
@@ -391,6 +406,8 @@ describe("expectedSalesBranchesSheet", () => {
         priceMissingDays: 0,
         comparableDays: 0,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
+        daysWithoutReportedMoney: 0,
       },
     ]);
 
@@ -400,6 +417,8 @@ describe("expectedSalesBranchesSheet", () => {
     expect(sheet.rows[1][13]).toBe("");
     expect(sheet.rows[1][18]).toBe(0);
     expect(sheet.rows[1][19]).toBe(0);
+    expect(sheet.rows[1][20]).toBe(0);
+    expect(sheet.rows[1][21]).toBe(0);
   });
 
   it("keeps the variance and money when they are available", () => {
@@ -429,6 +448,8 @@ describe("expectedSalesBranchesSheet", () => {
         priceMissingDays: 0,
         comparableDays: 1,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
+        daysWithoutReportedMoney: 0,
       },
     ]);
 
@@ -443,5 +464,7 @@ describe("expectedSalesBranchesSheet", () => {
     expect(sheet.rows[1][16]).toBe(1000);
     expect(sheet.rows[1][17]).toBe(1);
     expect(sheet.rows[1][19]).toBe(0);
+    expect(sheet.rows[1][20]).toBe(0);
+    expect(sheet.rows[1][21]).toBe(0);
   });
 });

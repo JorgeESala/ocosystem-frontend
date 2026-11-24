@@ -43,6 +43,8 @@ const report = {
     comparableDays: 1,
     branchesWithoutReference: 0,
     salesWithZeroMoney: 0,
+    salesWithoutReportedMoney: 0,
+    daysWithoutReportedMoney: 0,
   },
   branches: [],
   daily: [],

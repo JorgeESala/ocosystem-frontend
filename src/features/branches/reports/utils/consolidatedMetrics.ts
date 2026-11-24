@@ -18,7 +18,7 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedMoneyDifference: number | null;
   expectedEffectivePrice: number | null;
   expectedComparableDays: number;
-  expectedSalesWithZeroMoney: number;
+  expectedSalesWithoutReportedMoney: number;
   referenceProductBarcode: string | null;
   referencePriceMissing: boolean;
 }
@@ -90,7 +90,8 @@ export const buildRankingRows = (
         expectedMoneyDifference: expected?.moneyDifference ?? null,
         expectedEffectivePrice: expected?.effectivePricePerKg ?? null,
         expectedComparableDays: expected?.comparableDays ?? 0,
-        expectedSalesWithZeroMoney: expected?.salesWithZeroMoney ?? 0,
+        expectedSalesWithoutReportedMoney:
+          expected?.salesWithoutReportedMoney ?? 0,
         referenceProductBarcode: expected?.referenceProductBarcode ?? null,
         referencePriceMissing: (expected?.priceMissingDays ?? 0) > 0,
       };
@@ -147,6 +148,16 @@ export const reviewReasons = (row: BranchRankingRow): string[] => {
 
     if (isBelowMinimum(row.expectedMoney, row.expectedReportedMoney)) {
       reasons.push("Venta registrada por debajo del mínimo.");
+    }
+
+    if (row.expectedSalesWithoutReportedMoney > 0) {
+      reasons.push(
+        `${row.expectedSalesWithoutReportedMoney} ${
+          row.expectedSalesWithoutReportedMoney === 1
+            ? "venta sin monto registrado"
+            : "ventas sin monto registrado"
+        }.`,
+      );
     }
   }
 

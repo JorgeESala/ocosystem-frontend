@@ -36,7 +36,7 @@ const row = (
   expectedMoneyDifference: 0,
   expectedEffectivePrice: 50,
   expectedComparableDays: 7,
-  expectedSalesWithZeroMoney: 0,
+  expectedSalesWithoutReportedMoney: 0,
   referenceProductBarcode: "REF",
   referencePriceMissing: false,
   ...overrides,
@@ -327,7 +327,7 @@ describe("BranchRankingTable", () => {
         expectedMoneyDifference: null,
         expectedEffectivePrice: null,
         expectedComparableDays: 0,
-        expectedSalesWithZeroMoney: 0,
+        expectedSalesWithoutReportedMoney: 0,
         referenceProductBarcode: null,
         referencePriceMissing: true,
       }),
@@ -336,6 +336,27 @@ describe("BranchRankingTable", () => {
     expect(table().getByText("Sin producto de referencia")).toBeTruthy();
     expect(cards().getByText("Sin producto de referencia")).toBeTruthy();
     expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("shows a missing amount label when the price exists but the amount is missing", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 1000,
+        expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
+        expectedMoneyDifference: null,
+        expectedSalesWithoutReportedMoney: 1,
+        referenceProductBarcode: "REF",
+        referencePriceMissing: false,
+      }),
+    ]);
+
+    expect(table().getByText("Sin monto registrado")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(table().getByTitle("1 venta sin monto registrado.")).toBeTruthy();
   });
 
   it("shows a missing price label when the product has no price", () => {
@@ -350,7 +371,7 @@ describe("BranchRankingTable", () => {
         expectedMoneyDifference: null,
         expectedEffectivePrice: null,
         expectedComparableDays: 0,
-        expectedSalesWithZeroMoney: 0,
+        expectedSalesWithoutReportedMoney: 0,
         referenceProductBarcode: "REF",
         referencePriceMissing: true,
       }),
@@ -392,7 +413,7 @@ describe("BranchRankingTable", () => {
           expectedMoneyDifference: null,
           expectedEffectivePrice: null,
           expectedComparableDays: 0,
-          expectedSalesWithZeroMoney: 0,
+          expectedSalesWithoutReportedMoney: 0,
           referenceProductBarcode: null,
           referencePriceMissing: false,
         }),

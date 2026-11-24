@@ -22,6 +22,8 @@ export interface ExpectedSalesSummaryDTO {
   comparableDays: number;
   branchesWithoutReference: number;
   salesWithZeroMoney: number;
+  salesWithoutReportedMoney: number;
+  daysWithoutReportedMoney: number;
 }
 
 export interface BranchExpectedSalesDTO {
@@ -49,6 +51,8 @@ export interface BranchExpectedSalesDTO {
   priceMissingDays: number;
   comparableDays: number;
   salesWithZeroMoney: number;
+  salesWithoutReportedMoney: number;
+  daysWithoutReportedMoney: number;
 }
 
 export interface DailyExpectedSalesDTO {
@@ -71,6 +75,7 @@ export interface DailyExpectedSalesDTO {
   expectedMoney: number | null;
   moneyDifference: number | null;
   salesWithZeroMoney: number;
+  salesWithoutReportedMoney: number;
 }
 
 export interface ExpectedSalesReportDTO {

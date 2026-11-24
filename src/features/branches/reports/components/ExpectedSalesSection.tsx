@@ -169,6 +169,20 @@ export const ExpectedSalesSection = ({
       : "Configura el producto de referencia";
   const comparableDays = summary?.comparableDays ?? 0;
   const daysWithData = summary?.daysWithData ?? 0;
+  const missingReportedMoney = (summary?.salesWithoutReportedMoney ?? 0) > 0;
+  const differenceHint = moneyState
+    ? `${moneyStateHint(moneyState)} · ${comparableDays} de ${daysWithData} días`
+    : summary?.expectedMoney == null
+      ? "Sin producto o precio de referencia"
+      : missingReportedMoney
+        ? "Sin monto registrado"
+        : "Sin producto o precio de referencia";
+  const reportedMoneyHint =
+    summary?.reportedMoney == null && missingReportedMoney
+      ? "Sin monto registrado"
+      : `Comparable: ${formatMoney(
+          summary?.comparableReportedMoney,
+        )} · ${comparableDays} de ${daysWithData} días`;
 
   return (
     <Card className="border-none bg-gray-800 shadow-xl">
@@ -227,15 +241,13 @@ export const ExpectedSalesSection = ({
           <SummaryItem
             label="Venta registrada"
             value={formatMoney(summary?.reportedMoney)}
-            hint={`Comparable: ${formatMoney(
-              summary?.comparableReportedMoney,
-            )} · ${comparableDays} de ${daysWithData} días`}
+            hint={reportedMoneyHint}
           />
           <SummaryItem
             label="Diferencia contra el mínimo"
             value={formatMoney(summary?.moneyDifference)}
             valueClassName={moneyStateClass(moneyState)}
-            hint={`${moneyStateHint(moneyState)} · ${comparableDays} de ${daysWithData} días`}
+            hint={differenceHint}
           />
         </div>
       ) : (
@@ -288,6 +300,14 @@ export const ExpectedSalesSection = ({
           {summary?.salesWithZeroMoney === 1 ? "venta" : "ventas"} con monto
           cero; se incluyen en la venta registrada y pueden quedar por debajo
           del mínimo.
+        </Alert>
+      )}
+
+      {moneyView && (summary?.salesWithoutReportedMoney ?? 0) > 0 && (
+        <Alert color="warning" className="mb-4">
+          {summary?.salesWithoutReportedMoney}{" "}
+          {summary?.salesWithoutReportedMoney === 1 ? "venta" : "ventas"} sin
+          monto registrado; su mínimo no entra en la diferencia.
         </Alert>
       )}
 
@@ -359,8 +379,8 @@ export const ExpectedSalesSection = ({
                 <Legend />
                 <Line
                   type="monotone"
-                  dataKey={moneyView ? "reportedMoney" : "reportedKg"}
-                  name={moneyView ? "Venta registrada" : "Kg vendidos"}
+                  dataKey={moneyView ? "comparableReportedMoney" : "reportedKg"}
+                  name={moneyView ? "Venta comparable" : "Kg vendidos"}
                   stroke="#22C55E"
                   strokeWidth={2}
                   dot={false}
@@ -484,7 +504,7 @@ export const ExpectedSalesSection = ({
               ? "Suma de las sucursales seleccionadas. "
               : ""}
             {moneyView
-              ? `El mínimo usa el último precio de venta de referencia de cada día. La venta total incluye todos los días; la diferencia usa solo los días comparables. Se permite ${MONEY_REVIEW_TOLERANCE_PCT}% de tolerancia por redondeo. No es una meta ni una proyección.`
+              ? `El mínimo usa el último precio de venta de referencia de cada día. El gráfico compara la venta comparable contra el mínimo; la tabla muestra también la venta total. Se permite ${MONEY_REVIEW_TOLERANCE_PCT}% de tolerancia por redondeo. No es una meta ni una proyección.`
               : "Solo se incluyen ventas de remesa con peso promedio y kilos vendidos registrados."}
           </p>
         </>

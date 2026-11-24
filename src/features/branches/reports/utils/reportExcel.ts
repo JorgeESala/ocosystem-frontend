@@ -89,6 +89,8 @@ export const expectedSalesSummaryRows = (
     summary?.branchesWithoutReference ?? "",
   ],
   ["Ventas con monto cero", summary?.salesWithZeroMoney ?? ""],
+  ["Ventas sin monto registrado", summary?.salesWithoutReportedMoney ?? ""],
+  ["Días sin monto registrado", summary?.daysWithoutReportedMoney ?? ""],
 ];
 
 export const expectedSalesRankingColumns = (branch: {
@@ -101,6 +103,7 @@ export const expectedSalesRankingColumns = (branch: {
   moneyDifference: number | null;
   comparableDays: number;
   effectivePricePerKg: number | null;
+  salesWithoutReportedMoney: number;
 }): (string | number)[] => [
   branch.expectedKg ?? "",
   branch.expectedReportedKg ?? "",
@@ -113,6 +116,7 @@ export const expectedSalesRankingColumns = (branch: {
   branch.moneyDifference ?? "",
   branch.comparableDays,
   branch.effectivePricePerKg ?? "",
+  branch.salesWithoutReportedMoney,
 ];
 
 export const expectedSalesSheet = (
@@ -136,6 +140,7 @@ export const expectedSalesSheet = (
       "Venta comparable ($)",
       "Diferencia contra mínimo ($)",
       "Ventas con monto cero",
+      "Ventas sin monto registrado",
     ],
     ...daily.map((row) => [
       row.day,
@@ -153,6 +158,7 @@ export const expectedSalesSheet = (
       row.comparableReportedMoney ?? "",
       row.moneyDifference ?? "",
       row.salesWithZeroMoney,
+      row.salesWithoutReportedMoney,
     ]),
   ],
   cols: [
@@ -171,6 +177,7 @@ export const expectedSalesSheet = (
     { wch: 20 },
     { wch: 25 },
     { wch: 18 },
+    { wch: 22 },
   ],
 });
 
@@ -200,6 +207,8 @@ export const expectedSalesBranchesSheet = (
       "Días comparables",
       "Días sin precio",
       "Ventas con monto cero",
+      "Ventas sin monto registrado",
+      "Días sin monto registrado",
     ],
     ...branches.map((branch) => [
       branch.branchName,
@@ -222,6 +231,8 @@ export const expectedSalesBranchesSheet = (
       branch.comparableDays,
       branch.priceMissingDays,
       branch.salesWithZeroMoney,
+      branch.salesWithoutReportedMoney,
+      branch.daysWithoutReportedMoney,
     ]),
   ],
   cols: [
@@ -245,6 +256,8 @@ export const expectedSalesBranchesSheet = (
     { wch: 16 },
     { wch: 15 },
     { wch: 18 },
+    { wch: 22 },
+    { wch: 20 },
   ],
 });
 

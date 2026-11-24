@@ -40,6 +40,8 @@ const report: ExpectedSalesReportDTO = {
     comparableDays: 1,
     branchesWithoutReference: 0,
     salesWithZeroMoney: 0,
+    salesWithoutReportedMoney: 0,
+    daysWithoutReportedMoney: 0,
   },
   branches: [
     {
@@ -67,6 +69,8 @@ const report: ExpectedSalesReportDTO = {
       priceMissingDays: 0,
       comparableDays: 1,
       salesWithZeroMoney: 0,
+      salesWithoutReportedMoney: 0,
+      daysWithoutReportedMoney: 0,
     },
   ],
   daily: [
@@ -90,6 +94,7 @@ const report: ExpectedSalesReportDTO = {
       comparableReportedMoney: 46000,
       moneyDifference: 1000,
       salesWithZeroMoney: 0,
+      salesWithoutReportedMoney: 0,
     },
   ],
 };
@@ -121,7 +126,7 @@ describe("ExpectedSalesSection", () => {
     expect(screen.getAllByText("$1,000.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$45.00 / kg").length).toBeGreaterThan(0);
     expect(screen.getByText("Venta total")).toBeTruthy();
-    expect(screen.getByText("Venta comparable")).toBeTruthy();
+    expect(screen.getAllByText("Venta comparable").length).toBeGreaterThan(0);
     expect(
       screen.getByText(/Comparable: \$46,000\.00 · 1 de 1 días/),
     ).toBeTruthy();
@@ -341,6 +346,36 @@ describe("ExpectedSalesSection", () => {
     fireEvent.click(screen.getByText("Dinero"));
 
     expect(screen.getByText(/2 ventas con monto cero/)).toBeTruthy();
+  });
+
+  it("distinguishes a missing registered amount from a missing price", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: {
+            ...report.summary,
+            expectedMoney: 775,
+            reportedMoney: null,
+            comparableReportedMoney: null,
+            moneyDifference: null,
+            salesWithoutReportedMoney: 1,
+            daysWithoutReportedMoney: 1,
+            comparableDays: 0,
+          },
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+
+    expect(screen.getAllByText(/Sin monto registrado/).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getByText(/1 venta sin monto registrado/)).toBeTruthy();
+    expect(
+      screen.queryByText(/Sin producto o precio de referencia/),
+    ).toBeNull();
   });
 
   it("hides the reference product editor for non-admin users", () => {

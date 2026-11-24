@@ -182,7 +182,11 @@ const ComplianceCell = ({
       ) : row.expectedLoaded && row.expectedKg != null ? (
         <span className="text-xs text-gray-500">
           {row.referenceProductBarcode
-            ? "Sin precio de referencia"
+            ? row.referencePriceMissing
+              ? "Sin precio de referencia"
+              : row.expectedSalesWithoutReportedMoney > 0
+                ? "Sin monto registrado"
+                : "Sin precio de referencia"
             : "Sin producto de referencia"}
         </span>
       ) : null}
@@ -235,7 +239,8 @@ const legend = (
     <p>
       Revisar = desviación de {REVIEW_VARIANCE_THRESHOLD_PCT}% o más, días sin
       reporte, sin kilos esperados, sin producto o precio de referencia, venta
-      por debajo del mínimo o ventas excluidas del cálculo.
+      sin monto registrado, venta por debajo del mínimo o ventas excluidas del
+      cálculo.
     </p>
   </div>
 );

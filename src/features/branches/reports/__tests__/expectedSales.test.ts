@@ -39,6 +39,7 @@ const daily = (
   comparableReportedMoney: 4800,
   moneyDifference: 300,
   salesWithZeroMoney: 0,
+  salesWithoutReportedMoney: 0,
   ...overrides,
 });
 
@@ -166,6 +167,7 @@ describe("aggregateExpectedDaily", () => {
         comparableReportedMoney: null,
         moneyDifference: null,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
       }),
     ]);
 

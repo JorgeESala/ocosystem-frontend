@@ -128,6 +128,8 @@ describe("buildRankingRows", () => {
         effectivePricePerKg: 50,
         comparableDays: 2,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
+        daysWithoutReportedMoney: 0,
         priceMissingDays: 0,
       },
     ]);
@@ -184,6 +186,8 @@ describe("buildRankingRows", () => {
         effectivePricePerKg: 50,
         comparableDays: 1,
         salesWithZeroMoney: 0,
+        salesWithoutReportedMoney: 0,
+        daysWithoutReportedMoney: 0,
         priceMissingDays: 0,
       },
     ]);
@@ -214,7 +218,7 @@ describe("needsReview", () => {
     expectedMoneyDifference: 0,
     expectedEffectivePrice: 50,
     expectedComparableDays: 7,
-    expectedSalesWithZeroMoney: 0,
+    expectedSalesWithoutReportedMoney: 0,
     referenceProductBarcode: "REF",
     referencePriceMissing: false,
     ...overrides,
@@ -367,6 +371,19 @@ describe("needsReview", () => {
 
     expect(needsReview(row)).toBe(false);
     expect(reviewReasons(row)).toEqual([]);
+  });
+
+  it("flags sales without a registered amount", () => {
+    const row = rankingRow({
+      expectedMoney: 1000,
+      expectedReportedMoney: null,
+      expectedTotalReportedMoney: null,
+      expectedMoneyDifference: null,
+      expectedSalesWithoutReportedMoney: 2,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain("2 ventas sin monto registrado.");
   });
 
   it("does not flag money reasons before expected data loads", () => {
