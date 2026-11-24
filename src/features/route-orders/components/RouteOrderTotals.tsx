@@ -27,7 +27,7 @@ export const RouteOrderTotals: React.FC<Props> = ({ unitType, totals }) => (
       hint={`${totals.clientsWithOrder} con pedido`}
     />
     <Card
-      label={unitType === "EGG" ? "Total casilleros" : "Total cabezas"}
+      label={unitType === "EGG" ? "Total casilleros" : "Total pollos"}
       value={totals.totalQuantity.toLocaleString("es-MX")}
     />
     {unitType === "EGG" ? (

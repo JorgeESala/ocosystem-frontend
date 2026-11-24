@@ -25,6 +25,10 @@ const draft: RouteOrderDraft = {
       headCount: "",
       quantity: "18",
       unitPrice: "65",
+      feedText: "",
+      eggText: "",
+      weight: "",
+      cashAmount: "",
       lastSalePricePerCarton: 60,
       lastSalePricePerKg: 30,
       vegetables: "Tomate 8 kilos",
@@ -68,7 +72,7 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("1,170.00");
   });
 
-  it("genera la hoja de pollo vivo solo con cabezas y precio por kilo", () => {
+  it("genera la hoja de pollo vivo con las columnas de control", () => {
     const chickenDraft: RouteOrderDraft = {
       ...draft,
       rows: [
@@ -77,6 +81,10 @@ describe("routeOrderSheet", () => {
           headCount: "50",
           quantity: "",
           unitPrice: "35",
+          feedText: "485",
+          eggText: "4.85",
+          weight: "219.616",
+          cashAmount: "11200.50",
         },
       ],
     };
@@ -91,17 +99,68 @@ describe("routeOrderSheet", () => {
       },
     ]);
 
-    expect(html).toContain("Cabezas");
-    expect(html).toContain("Total cabezas:");
-    expect(html).toContain("50");
-    expect(html).toContain("Precio/kg");
-    expect(html).not.toContain("Kilos");
+    expect(html).toContain("No.</th>");
+    expect(html).toContain("Pollo</th>");
+    expect(html).toContain("Alimento</th>");
+    expect(html).toContain("Huevo</th>");
+    expect(html).toContain("Peso</th>");
+    expect(html).toContain("Efectivo</th>");
+    expect(html).toContain("Firma</th>");
+    expect(html).toContain("Comentarios</th>");
+    expect(html).toContain('<td class="signature"></td>');
+    expect(html).toContain("Total pollos:");
+    expect(html).toContain("485");
+    expect(html).toContain("4.85");
+    expect(html).toContain("219.616");
+    expect(html).toContain("11,200.50");
+    expect(html).not.toContain("Precio/kg");
+    expect(html).not.toContain("Precio por kilo");
     expect(html).not.toContain("Precio/caja");
     expect(html).not.toContain("<th>Verduras</th>");
     expect(html).not.toContain("<th>Condimentos</th>");
     expect(html).not.toContain("<th>Abarrotes</th>");
     expect(html).not.toContain("TOTAL DEL PEDIDO");
     expect(html).not.toContain("Precio actual del huevo");
+  });
+
+  it("numera consecutivamente internos y externos en pollo vivo", () => {
+    const mixedDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          isInternalBranch: true,
+          clientName: "Sucursal Interna",
+          headCount: "10",
+          quantity: "",
+        },
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente Externo",
+          isInternalBranch: false,
+          headCount: "20",
+          quantity: "",
+        },
+      ],
+    };
+    const html = buildRouteOrdersPrintHtml([
+      {
+        ...eggInput,
+        unitType: "LIVE_CHICKEN",
+        draft: mixedDraft,
+        currentEggPricePerCarton: null,
+        currentEggPricePerBox: null,
+        currentEggPriceEffectiveFrom: null,
+      },
+    ]);
+
+    expect(html.indexOf("Sucursal Interna")).toBeLessThan(
+      html.indexOf("Cliente Externo"),
+    );
+    expect(html).toContain('<td class="num">1</td>');
+    expect(html).toContain('<td class="num">2</td>');
   });
 
   it("oculta clientes sin pedido y conserva los que solo tienen notas", () => {

@@ -97,6 +97,14 @@ describe("RouteOrderSalesModal", () => {
     expect(screen.getByTestId("select-2")).toBeDisabled();
   });
 
+  it("prellena los kilos vendidos con el peso del pedido", () => {
+    mocks.candidates = [candidate({ weight: 219.616 })];
+
+    renderModal();
+
+    expect(screen.getByTestId("kg-1")).toHaveValue(219.616);
+  });
+
   it("permite agregar otra venta a un cliente ya vendido", () => {
     mocks.candidates = [
       candidate({
@@ -181,10 +189,9 @@ describe("RouteOrderSalesModal", () => {
       />,
     );
 
-    fireEvent.change(
-      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
-      { target: { value: "Cliente A" } },
-    );
+    fireEvent.change(screen.getByPlaceholderText(/Cliente, negocio o ruta/i), {
+      target: { value: "Cliente A" },
+    });
     expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));
@@ -192,9 +199,9 @@ describe("RouteOrderSalesModal", () => {
     expect(mocks.mutate).toHaveBeenCalledTimes(1);
     const payload = mocks.mutate.mock.calls[0][0].payload;
     expect(payload.lines).toHaveLength(2);
-    expect(payload.lines.map((line: { lineId: number }) => line.lineId)).toEqual(
-      [1, 2],
-    );
+    expect(
+      payload.lines.map((line: { lineId: number }) => line.lineId),
+    ).toEqual([1, 2]);
   });
 
   it("regenera líneas de pollo ocultas usando sus kilos guardados", () => {
@@ -219,10 +226,9 @@ describe("RouteOrderSalesModal", () => {
 
     renderModal();
 
-    fireEvent.change(
-      screen.getByPlaceholderText(/Cliente, negocio o ruta/i),
-      { target: { value: "Cliente A" } },
-    );
+    fireEvent.change(screen.getByPlaceholderText(/Cliente, negocio o ruta/i), {
+      target: { value: "Cliente A" },
+    });
     expect(screen.queryByText("Cliente B")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Regenerar ventas/i }));

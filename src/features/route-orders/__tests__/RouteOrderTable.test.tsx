@@ -16,6 +16,10 @@ const rows: RouteOrderDraftRow[] = [
     headCount: "",
     quantity: "18",
     unitPrice: "65",
+    feedText: "",
+    eggText: "",
+    weight: "",
+    cashAmount: "",
     lastSalePricePerCarton: 60,
     lastSalePricePerKg: 30,
     vegetables: "Tomate",
@@ -35,6 +39,10 @@ const rows: RouteOrderDraftRow[] = [
     headCount: "",
     quantity: "",
     unitPrice: "65",
+    feedText: "",
+    eggText: "",
+    weight: "",
+    cashAmount: "",
     lastSalePricePerCarton: null,
     lastSalePricePerKg: null,
     vegetables: "",
@@ -117,7 +125,8 @@ describe("RouteOrderTable", () => {
     );
   });
 
-  it("captura cabezas en pollo vivo y no muestra total monetario", () => {
+  it("captura pollo, alimento, huevo, peso y efectivo sin total monetario", () => {
+    const onChange = vi.fn();
     render(
       <RouteOrderTable
         unitType="LIVE_CHICKEN"
@@ -125,14 +134,22 @@ describe("RouteOrderTable", () => {
           ...row,
           quantity: "",
           headCount: "25",
+          feedText: "485",
+          eggText: "4.85",
+          weight: "219.616",
+          cashAmount: "11200.50",
         }))}
         currentEggPricePerCarton={65}
-        onChange={vi.fn()}
+        onChange={onChange}
         onRemove={vi.fn()}
       />,
     );
 
-    expect(screen.getByText("Cabezas")).toBeInTheDocument();
+    expect(screen.getByText("Pollo")).toBeInTheDocument();
+    expect(screen.getByText("Alimento")).toBeInTheDocument();
+    expect(screen.getByText("Huevo")).toBeInTheDocument();
+    expect(screen.getByText("Peso")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo")).toBeInTheDocument();
     expect(screen.queryByText("Total")).not.toBeInTheDocument();
     expect(screen.queryByText("Verduras")).not.toBeInTheDocument();
     expect(screen.queryByText("Condimentos")).not.toBeInTheDocument();
@@ -140,6 +157,55 @@ describe("RouteOrderTable", () => {
     expect((screen.getByTestId("quantity-1") as HTMLInputElement).value).toBe(
       "25",
     );
+    expect((screen.getByTestId("feed-1") as HTMLInputElement).value).toBe(
+      "485",
+    );
+    expect((screen.getByTestId("egg-1") as HTMLInputElement).value).toBe(
+      "4.85",
+    );
+    expect(screen.getByTestId("feed-1")).toHaveAttribute("maxLength", "200");
+    expect(screen.getByTestId("egg-1")).toHaveAttribute("maxLength", "200");
+    expect((screen.getByTestId("weight-1") as HTMLInputElement).value).toBe(
+      "219.616",
+    );
+    expect((screen.getByTestId("cash-1") as HTMLInputElement).value).toBe(
+      "11200.50",
+    );
+
+    fireEvent.change(screen.getByTestId("feed-1"), {
+      target: { value: "450" },
+    });
+    fireEvent.change(screen.getByTestId("egg-1"), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByTestId("weight-1"), {
+      target: { value: "30.8" },
+    });
+    fireEvent.change(screen.getByTestId("cash-1"), {
+      target: { value: "1601" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(1, { feedText: "450" });
+    expect(onChange).toHaveBeenCalledWith(1, { eggText: "3" });
+    expect(onChange).toHaveBeenCalledWith(1, { weight: "30.8" });
+    expect(onChange).toHaveBeenCalledWith(1, { cashAmount: "1601" });
+  });
+
+  it("no muestra las columnas de control en la hoja de huevo", () => {
+    render(
+      <RouteOrderTable
+        unitType="EGG"
+        rows={rows}
+        currentEggPricePerCarton={65}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Alimento")).not.toBeInTheDocument();
+    expect(screen.queryByText("Peso")).not.toBeInTheDocument();
+    expect(screen.queryByText("Efectivo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Firma")).not.toBeInTheDocument();
   });
 
   it("permite quitar clientes agregados de otra ruta", () => {

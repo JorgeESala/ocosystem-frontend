@@ -25,6 +25,10 @@ const draft: RouteOrderDraft = {
       headCount: "",
       quantity: "18",
       unitPrice: "65",
+      feedText: "",
+      eggText: "",
+      weight: "",
+      cashAmount: "",
       lastSalePricePerCarton: null,
       lastSalePricePerKg: null,
       vegetables: "Tomate",
@@ -44,6 +48,10 @@ const draft: RouteOrderDraft = {
       headCount: "",
       quantity: "",
       unitPrice: "65",
+      feedText: "",
+      eggText: "",
+      weight: "",
+      cashAmount: "",
       lastSalePricePerCarton: null,
       lastSalePricePerKg: null,
       vegetables: "",
@@ -115,7 +123,7 @@ describe("routeOrderExcel", () => {
     expect(summaryContent).toContain("Total");
   });
 
-  it("genera la hoja de pollo vivo solo con cabezas y sin total monetario", async () => {
+  it("genera la hoja de pollo vivo con las columnas de control", async () => {
     const chickenDraft: RouteOrderDraft = {
       ...draft,
       rows: [
@@ -124,6 +132,11 @@ describe("routeOrderExcel", () => {
           headCount: "50",
           quantity: "",
           unitPrice: "35",
+          feedText: "485",
+          eggText: "4.85",
+          weight: "219.616",
+          cashAmount: "11200.50",
+          comments: "10 GY 10 MD",
         },
       ],
     };
@@ -139,24 +152,115 @@ describe("routeOrderExcel", () => {
     ]);
 
     const sheet = workbook.getWorksheet("Ruta Centro");
-    expect(sheet?.getCell("D4").value).toBe("Cabezas");
-    expect(sheet?.getCell("F4").value).toBe("Comentarios");
+    expect(sheet?.getCell("A4").value).toBe("No.");
+    expect(sheet?.getCell("B4").value).toBe("Cliente");
+    expect(sheet?.getCell("E4").value).toBe("Pollo");
+    expect(sheet?.getCell("F4").value).toBe("Alimento");
+    expect(sheet?.getCell("G4").value).toBe("Huevo");
+    expect(sheet?.getCell("H4").value).toBe("Peso");
+    expect(sheet?.getCell("I4").value).toBe("Efectivo");
+    expect(sheet?.getCell("J4").value).toBe("Firma");
+    expect(sheet?.getCell("K4").value).toBe("Comentarios");
+    expect(sheet?.getCell("A5").value).toBe(1);
+    expect(sheet?.getCell("E5").value).toBe(50);
+    expect(sheet?.getCell("F5").value).toBe("485");
+    expect(sheet?.getCell("G5").value).toBe("4.85");
+    expect(sheet?.getCell("H5").value).toBe(219.616);
+    expect(sheet?.getCell("I5").value).toBe(11200.5);
+    expect(sheet?.getCell("J5").value).toBe("");
+    expect(sheet?.getCell("H5").numFmt).toBe("0.###");
+    expect(sheet?.getCell("I5").numFmt).toContain("$");
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
       values.push(row.values);
     });
     const content = JSON.stringify(values);
-    expect(content).toContain("50");
-    expect(content).toContain("TOTAL DE CABEZAS");
+    expect(content).toContain("TOTAL DE POLLOS");
+    expect(content).toContain("10 GY 10 MD");
+    expect(content).not.toContain("Precio por kilo");
+    expect(content).not.toContain("Últ. vendido");
     expect(content).not.toContain('"Verduras"');
     expect(content).not.toContain('"Condimentos"');
     expect(content).not.toContain('"Abarrotes"');
     expect(content).not.toContain("TOTAL DEL PEDIDO");
 
     const summary = workbook.getWorksheet("Resumen");
-    expect(summary?.getCell("I3").value).toBe("Cabezas");
+    expect(summary?.getCell("I3").value).toBe("Pollo");
     expect(summary?.getCell("J3").value ?? null).toBeNull();
+  });
+
+  it("deja en blanco peso y efectivo cuando no se capturan", async () => {
+    const chickenDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          headCount: "50",
+          quantity: "",
+          unitPrice: "35",
+          feedText: "",
+          eggText: "",
+          weight: "",
+          cashAmount: "",
+        },
+      ],
+    };
+    const workbook = await buildRouteOrderWorkbook([
+      {
+        ...input,
+        unitType: "LIVE_CHICKEN",
+        draft: chickenDraft,
+        currentEggPricePerCarton: null,
+        currentEggPricePerBox: null,
+        currentEggPriceEffectiveFrom: null,
+      },
+    ]);
+
+    const sheet = workbook.getWorksheet("Ruta Centro");
+    expect(sheet?.getCell("H5").value).toBe("");
+    expect(sheet?.getCell("I5").value).toBe("");
+  });
+
+  it("numera consecutivamente internos y externos en pollo vivo", async () => {
+    const mixedDraft: RouteOrderDraft = {
+      ...draft,
+      rows: [
+        {
+          ...draft.rows[0],
+          isInternalBranch: true,
+          clientName: "Sucursal Interna",
+          headCount: "10",
+          quantity: "",
+        },
+        {
+          ...draft.rows[0],
+          key: "client-11",
+          clientId: 11,
+          clientName: "Cliente Externo",
+          isInternalBranch: false,
+          headCount: "20",
+          quantity: "",
+        },
+      ],
+    };
+    const workbook = await buildRouteOrderWorkbook([
+      {
+        ...input,
+        unitType: "LIVE_CHICKEN",
+        draft: mixedDraft,
+        currentEggPricePerCarton: null,
+        currentEggPricePerBox: null,
+        currentEggPriceEffectiveFrom: null,
+      },
+    ]);
+
+    const sheet = workbook.getWorksheet("Ruta Centro");
+    const rowNumbers = sheet
+      ?.getColumn(1)
+      .values.filter((value): value is number => typeof value === "number");
+
+    expect(rowNumbers).toEqual([1, 2]);
   });
 
   it("separa clientes internos y externos y no repite la columna Ruta", async () => {

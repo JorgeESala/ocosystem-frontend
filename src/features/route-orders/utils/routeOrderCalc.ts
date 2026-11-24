@@ -80,7 +80,13 @@ export const rowHasOrderData = (
   unitType: RouteOrderUnitType,
 ): boolean => {
   if (unitType === "LIVE_CHICKEN") {
-    return toNumber(row.headCount) > 0;
+    return (
+      toNumber(row.headCount) > 0 ||
+      row.feedText.trim().length > 0 ||
+      row.eggText.trim().length > 0 ||
+      toNumber(row.weight) > 0 ||
+      toNumber(row.cashAmount) > 0
+    );
   }
   return (
     toNumber(row.quantity) > 0 ||
@@ -192,6 +198,10 @@ const emptyRow = (
   unitPrice: String(
     defaultUnitPrice(client, unitType, currentEggPricePerCarton),
   ),
+  feedText: "",
+  eggText: "",
+  weight: "",
+  cashAmount: "",
   lastSalePricePerCarton: client.lastSalePricePerCarton ?? null,
   lastSalePricePerKg: client.lastSalePricePerKg ?? null,
   vegetables: "",
@@ -225,6 +235,16 @@ const rowFromSavedLine = (
         ? String(line.quantity)
         : "",
     unitPrice: String(line.unitPrice ?? 0),
+    feedText: line.feedText ?? "",
+    eggText: line.eggText ?? "",
+    weight:
+      line.weight != null && Number(line.weight) !== 0
+        ? String(line.weight)
+        : "",
+    cashAmount:
+      line.cashAmount != null && Number(line.cashAmount) !== 0
+        ? String(line.cashAmount)
+        : "",
     lastSalePricePerCarton: null,
     lastSalePricePerKg: null,
     vegetables: unitType === "EGG" ? (line.vegetables ?? "") : "",
@@ -283,6 +303,16 @@ export const buildDraft = (
         saved.unitPrice ??
           defaultUnitPrice(client, unitType, currentEggPricePerCarton),
       ),
+      feedText: saved.feedText ?? "",
+      eggText: saved.eggText ?? "",
+      weight:
+        saved.weight != null && Number(saved.weight) !== 0
+          ? String(saved.weight)
+          : "",
+      cashAmount:
+        saved.cashAmount != null && Number(saved.cashAmount) !== 0
+          ? String(saved.cashAmount)
+          : "",
       lastSalePricePerCarton: client.lastSalePricePerCarton ?? null,
       lastSalePricePerKg: client.lastSalePricePerKg ?? null,
       vegetables: unitType === "EGG" ? (saved.vegetables ?? "") : "",
@@ -310,9 +340,7 @@ export const buildDraft = (
     vehicleName: sheet.order?.vehicleName ?? "",
     tripId: sheet.order?.tripId ?? null,
     notes: sheet.order?.notes ?? "",
-    salesRegenerationRequired: Boolean(
-      sheet.order?.salesRegenerationRequired,
-    ),
+    salesRegenerationRequired: Boolean(sheet.order?.salesRegenerationRequired),
     rows: sortRows(rows),
   };
 };
@@ -379,13 +407,29 @@ export const draftToSavePayload = (
               (value) => value.trim().length > 0,
             )
           : row.comments.trim().length > 0;
-      return hasQuantity || hasNotes;
+      const hasControlValues =
+        unitType === "LIVE_CHICKEN" &&
+        (row.feedText.trim().length > 0 ||
+          row.eggText.trim().length > 0 ||
+          toNumber(row.weight) > 0 ||
+          toNumber(row.cashAmount) > 0);
+      return hasQuantity || hasNotes || hasControlValues;
     })
     .map((row, index) => ({
       clientId: row.clientId,
       quantity: unitType === "EGG" ? roundQuantity(toNumber(row.quantity)) : 0,
       headCount: roundQuantity(toNumber(row.headCount)),
       unitPrice: roundUnitPrice(toNumber(row.unitPrice)),
+      feedText: unitType === "LIVE_CHICKEN" ? row.feedText : "",
+      eggText: unitType === "LIVE_CHICKEN" ? row.eggText : "",
+      weight:
+        unitType === "LIVE_CHICKEN" && row.weight.trim().length > 0
+          ? roundQuantity(toNumber(row.weight))
+          : undefined,
+      cashAmount:
+        unitType === "LIVE_CHICKEN" && row.cashAmount.trim().length > 0
+          ? roundMoney(toNumber(row.cashAmount))
+          : undefined,
       vegetables: unitType === "EGG" ? row.vegetables : "",
       condiments: unitType === "EGG" ? row.condiments : "",
       groceries: unitType === "EGG" ? row.groceries : "",

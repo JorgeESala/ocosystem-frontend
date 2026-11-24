@@ -49,7 +49,7 @@ const unitLabel = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Huevo" : "Pollo vivo";
 
 const quantityLabel = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Pollo";
 
 const priceLabel = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
@@ -76,12 +76,17 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
     </colgroup>`;
   }
   return `<colgroup>
-    <col style="width:18%" />
-    <col style="width:20%" />
+    <col style="width:4%" />
+    <col style="width:15%" />
     <col style="width:14%" />
+    <col style="width:11%" />
+    <col style="width:6%" />
+    <col style="width:9%" />
+    <col style="width:7%" />
+    <col style="width:7%" />
+    <col style="width:9%" />
+    <col style="width:8%" />
     <col style="width:10%" />
-    <col style="width:12%" />
-    <col style="width:26%" />
   </colgroup>`;
 };
 
@@ -121,16 +126,37 @@ const buildHeader = (input: RouteOrderPrintInput): string => {
 const buildTable = (
   input: RouteOrderPrintInput,
   sectionRows: RouteOrderPrintInput["draft"]["rows"],
+  startIndex: number,
 ): string => {
   const { unitType } = input;
   const egg = unitType === "EGG";
   const rows = sectionRows
-    .map((row) => {
+    .map((row, index) => {
       const quantity = egg ? toNumber(row.quantity) : toNumber(row.headCount);
       const quantityText = egg ? row.quantity : row.headCount;
       const unitPrice = toNumber(row.unitPrice);
       const showPrices = quantity > 0 || unitPrice > 0;
       const total = rowTotal(row);
+
+      if (!egg) {
+        const weight = toNumber(row.weight);
+        const cashAmount = toNumber(row.cashAmount);
+        return `
+        <tr>
+          <td class="num">${startIndex + index}</td>
+          <td>${escapeHtml(row.clientName)}</td>
+          <td>${escapeHtml(row.businessName)}</td>
+          <td>${escapeHtml(row.localityName)}</td>
+          <td class="num">${quantityText ? escapeHtml(quantityText) : ""}</td>
+          <td>${escapeHtml(row.feedText)}</td>
+          <td>${escapeHtml(row.eggText)}</td>
+          <td class="num">${weight > 0 ? weight : ""}</td>
+          <td class="num">${cashAmount > 0 ? formatMXN(cashAmount) : ""}</td>
+          <td class="signature"></td>
+          <td>${escapeMultiline(row.comments)}</td>
+        </tr>`;
+      }
+
       return `
         <tr>
           <td>${escapeHtml(row.clientName)}</td>
@@ -138,21 +164,13 @@ const buildTable = (
           <td>${escapeHtml(row.localityName)}</td>
           <td class="num">${quantityText ? escapeHtml(quantityText) : ""}</td>
           <td class="num">${showPrices ? formatMXN(unitPrice) : ""}</td>
-          ${
-            egg
-              ? `<td class="num">${
-                  showPrices ? formatMXN(pricePerBox(unitPrice)) : ""
-                }</td>
-                 <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>`
-              : ""
-          }
-          ${
-            egg
-              ? `<td>${escapeMultiline(row.vegetables)}</td>
-                 <td>${escapeMultiline(row.condiments)}</td>
-                 <td>${escapeMultiline(row.groceries)}</td>`
-              : ""
-          }
+          <td class="num">${
+            showPrices ? formatMXN(pricePerBox(unitPrice)) : ""
+          }</td>
+          <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>
+          <td>${escapeMultiline(row.vegetables)}</td>
+          <td>${escapeMultiline(row.condiments)}</td>
+          <td>${escapeMultiline(row.groceries)}</td>
           <td>${escapeMultiline(row.comments)}</td>
         </tr>`;
     })
@@ -163,20 +181,31 @@ const buildTable = (
       ${buildColgroup(unitType)}
       <thead>
         <tr>
-          <th>Cliente</th>
-          <th>Negocio</th>
-          <th>Localidad</th>
-          <th class="num">${quantityLabel(unitType)}</th>
-          <th class="num">${priceLabel(unitType)}</th>
           ${
             egg
-              ? '<th class="num">Precio/caja</th><th class="num">Total</th>'
-              : ""
+              ? `<th>Cliente</th>
+                 <th>Negocio</th>
+                 <th>Localidad</th>
+                 <th class="num">${quantityLabel(unitType)}</th>
+                 <th class="num">${priceLabel(unitType)}</th>
+                 <th class="num">Precio/caja</th>
+                 <th class="num">Total</th>
+                 <th>Verduras</th>
+                 <th>Condimentos</th>
+                 <th>Abarrotes</th>
+                 <th>Comentarios</th>`
+              : `<th class="num">No.</th>
+                 <th>Cliente</th>
+                 <th>Negocio</th>
+                 <th>Localidad</th>
+                 <th class="num">${quantityLabel(unitType)}</th>
+                 <th>Alimento</th>
+                 <th>Huevo</th>
+                 <th class="num">Peso</th>
+                 <th class="num">Efectivo</th>
+                 <th class="signature">Firma</th>
+                 <th>Comentarios</th>`
           }
-          ${
-            egg ? "<th>Verduras</th><th>Condimentos</th><th>Abarrotes</th>" : ""
-          }
-          <th>Comentarios</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -192,7 +221,7 @@ const buildSectionTotals = (
   const quantityTotals =
     input.unitType === "EGG"
       ? `${totals.totalQuantity} casilleros · ${totals.totalBoxes} cajas`
-      : `${totals.totalQuantity} cabezas`;
+      : `${totals.totalQuantity} pollos`;
 
   return `<div class="section-totals">
     <strong>Subtotal ${escapeHtml(title.toLowerCase())}:</strong>
@@ -212,7 +241,7 @@ const buildOverallTotals = (
       ? `<span><strong>Total casilleros:</strong> ${totals.totalQuantity}</span>
          <span><strong>Total cajas:</strong> ${totals.totalBoxes}</span>
          <span><strong>TOTAL DEL PEDIDO:</strong> ${formatMXN(totals.totalAmount)}</span>`
-      : `<span><strong>Total cabezas:</strong> ${totals.totalQuantity}</span>`;
+      : `<span><strong>Total pollos:</strong> ${totals.totalQuantity}</span>`;
 
   return `
     <div class="totals">
@@ -235,21 +264,24 @@ const buildSheetBody = (input: RouteOrderPrintInput): string => {
     input.unitType,
   );
   const allRows = sections.flatMap((section) => section.rows);
+  let rowNumber = 1;
   const sectionsHtml = sections
-    .map(
-      (section) => `
+    .map((section) => {
+      const html = `
         ${
           section.title
             ? `<h2 class="section-title">${escapeHtml(section.title)}</h2>`
             : ""
         }
-        ${buildTable(input, section.rows)}
+        ${buildTable(input, section.rows, rowNumber)}
         ${
           section.title
             ? buildSectionTotals(input, section.title, section.rows)
             : ""
-        }`,
-    )
+        }`;
+      rowNumber += section.rows.length;
+      return html;
+    })
     .join("");
 
   return `${buildHeader(input)}${sectionsHtml}${buildOverallTotals(input, allRows)}`;
