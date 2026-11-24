@@ -74,18 +74,35 @@ export const expectedSalesSummaryRows = (
     "Variación de venta esperada (%)",
     summary?.variancePct == null ? "" : Number(summary.variancePct.toFixed(2)),
   ],
+  ["Venta mínima esperada (dinero)", summary?.expectedMoney ?? ""],
+  [
+    "Venta registrada en Entradas y Ventas (dinero)",
+    summary?.reportedMoney ?? "",
+  ],
+  ["Diferencia contra el mínimo", summary?.moneyDifference ?? ""],
+  ["Días sin precio de referencia", summary?.daysWithoutPrice ?? ""],
+  [
+    "Sucursales sin producto de referencia",
+    summary?.branchesWithoutReference ?? "",
+  ],
 ];
 
 export const expectedSalesRankingColumns = (branch: {
   expectedKg: number | null;
   expectedReportedKg: number | null;
   expectedVariancePct: number | null;
+  expectedMoney: number | null;
+  reportedMoney: number | null;
+  moneyDifference: number | null;
 }): (string | number)[] => [
   branch.expectedKg ?? "",
   branch.expectedReportedKg ?? "",
   branch.expectedVariancePct == null
     ? ""
     : Number(branch.expectedVariancePct.toFixed(2)),
+  branch.expectedMoney ?? "",
+  branch.reportedMoney ?? "",
+  branch.moneyDifference ?? "",
 ];
 
 export const expectedSalesSheet = (
@@ -102,6 +119,11 @@ export const expectedSalesSheet = (
       "Kg vendidos",
       "Diferencia (kg)",
       "Variación %",
+      "Precio referencia/kg",
+      "Precio al",
+      "Mínimo esperado ($)",
+      "Venta registrada ($)",
+      "Diferencia contra mínimo ($)",
     ],
     ...daily.map((row) => [
       row.day,
@@ -112,6 +134,11 @@ export const expectedSalesSheet = (
       row.reportedKg ?? "",
       row.differenceKg ?? "",
       row.variancePct == null ? "" : Number(row.variancePct.toFixed(2)),
+      row.referencePricePerKg ?? "",
+      row.priceAsOf ?? "",
+      row.expectedMoney ?? "",
+      row.reportedMoney ?? "",
+      row.moneyDifference ?? "",
     ]),
   ],
   cols: [
@@ -123,6 +150,11 @@ export const expectedSalesSheet = (
     { wch: 14 },
     { wch: 15 },
     { wch: 12 },
+    { wch: 18 },
+    { wch: 12 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 25 },
   ],
 });
 
@@ -133,6 +165,9 @@ export const expectedSalesBranchesSheet = (
   rows: [
     [
       "Sucursal",
+      "Producto de referencia",
+      "Precio referencia/kg",
+      "Precio al",
       "Kg esperados",
       "Kg vendidos",
       "Diferencia (kg)",
@@ -141,9 +176,16 @@ export const expectedSalesBranchesSheet = (
       "Peso promedio (kg)",
       "Ventas sin peso",
       "Ventas sin kilos",
+      "Mínimo esperado ($)",
+      "Venta registrada ($)",
+      "Diferencia ($)",
+      "Días sin precio",
     ],
     ...branches.map((branch) => [
       branch.branchName,
+      branch.referenceProductName ?? "",
+      branch.referencePricePerKg ?? "",
+      branch.priceAsOf ?? "",
       branch.expectedKg ?? "",
       branch.reportedKg ?? "",
       branch.differenceKg ?? "",
@@ -152,10 +194,17 @@ export const expectedSalesBranchesSheet = (
       branch.avgChickenWeight ?? "",
       branch.salesWithoutWeight,
       branch.salesWithoutReportedKg,
+      branch.expectedMoney ?? "",
+      branch.reportedMoney ?? "",
+      branch.moneyDifference ?? "",
+      branch.priceMissingDays,
     ]),
   ],
   cols: [
     { wch: 22 },
+    { wch: 24 },
+    { wch: 18 },
+    { wch: 12 },
     { wch: 14 },
     { wch: 14 },
     { wch: 15 },
@@ -163,6 +212,10 @@ export const expectedSalesBranchesSheet = (
     { wch: 15 },
     { wch: 18 },
     { wch: 15 },
+    { wch: 15 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 16 },
     { wch: 15 },
   ],
 });

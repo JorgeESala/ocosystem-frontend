@@ -1,5 +1,6 @@
 import type { BranchSalesSummaryDTO } from "../api/consolidatedSales.api";
 import type { BranchExpectedSalesDTO } from "../api/expectedSales.api";
+import { isBelowMinimum } from "./expectedSales";
 
 export interface BranchRankingRow extends BranchSalesSummaryDTO {
   share: number;
@@ -11,6 +12,11 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedLoaded: boolean;
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
+  expectedMoney: number | null;
+  expectedReportedMoney: number | null;
+  expectedMoneyDifference: number | null;
+  referenceProductBarcode: string | null;
+  referencePriceMissing: boolean;
 }
 
 export const REVIEW_VARIANCE_THRESHOLD_PCT = 10;
@@ -74,6 +80,11 @@ export const buildRankingRows = (
         expectedLoaded: expectedBranches !== undefined,
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
+        expectedMoney: expected?.expectedMoney ?? null,
+        expectedReportedMoney: expected?.reportedMoney ?? null,
+        expectedMoneyDifference: expected?.moneyDifference ?? null,
+        referenceProductBarcode: expected?.referenceProductBarcode ?? null,
+        referencePriceMissing: (expected?.priceMissingDays ?? 0) > 0,
       };
     })
     .sort((a, b) => b.totalSales - a.totalSales);
@@ -113,6 +124,22 @@ export const reviewReasons = (row: BranchRankingRow): string[] => {
         excludedSales === 1 ? "venta excluida" : "ventas excluidas"
       } del cálculo.`,
     );
+  }
+
+  if (row.expectedLoaded) {
+    if (row.expectedKg != null && !row.referenceProductBarcode) {
+      reasons.push("Sin producto de referencia de pollo.");
+    } else if (row.expectedKg != null && row.referencePriceMissing) {
+      reasons.push(
+        row.expectedMoney == null
+          ? "Sin precio de referencia."
+          : "Sin precio de referencia para algunos días.",
+      );
+    }
+
+    if (isBelowMinimum(row.expectedMoney, row.expectedReportedMoney)) {
+      reasons.push("Venta registrada por debajo del mínimo.");
+    }
   }
 
   return reasons;

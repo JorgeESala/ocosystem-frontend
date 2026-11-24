@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Alert,
@@ -11,6 +11,7 @@ import {
   TableHeadCell,
   TableRow,
 } from "flowbite-react";
+import { HiCog } from "react-icons/hi";
 import {
   CartesianGrid,
   Legend,
@@ -22,18 +23,24 @@ import {
   YAxis,
 } from "recharts";
 import { InfoTip } from "@/components/InfoTip";
-import { formatWeekdayDayMonth } from "@/utils/date.utils";
+import { formatFullDate, formatWeekdayDayMonth } from "@/utils/date.utils";
+import { formatMXNCompact } from "@/utils/moneyNumbers";
 import type { ExpectedSalesReportDTO } from "../api/expectedSales.api";
 import {
   aggregateExpectedDaily,
   formatBirds,
   formatChickenWeight,
+  formatExpectedMoneyTooltipValue,
   formatExpectedTooltipLabel,
   formatExpectedTooltipValue,
   formatKg,
   formatKgValue,
+  formatMoney,
+  formatPricePerKg,
   formatVariance,
+  isBelowMinimum,
 } from "../utils/expectedSales";
+import { ReferenceProductModal } from "./ReferenceProductModal";
 
 interface Props {
   data?: ExpectedSalesReportDTO;
@@ -41,6 +48,7 @@ interface Props {
   isError?: boolean;
   onRetry?: () => void;
   scopeLabel?: string;
+  asOf?: Date;
 }
 
 const SummaryItem = ({
@@ -48,18 +56,20 @@ const SummaryItem = ({
   value,
   hint,
   info,
+  valueClassName = "text-white",
 }: {
   label: string;
   value: string;
   hint?: string;
   info?: ReactNode;
+  valueClassName?: string;
 }) => (
   <div className="rounded-xl border border-gray-700 bg-gray-900/60 p-4">
     <p className="flex items-center gap-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase">
       {label}
       {info}
     </p>
-    <p className="mt-1 text-xl font-bold text-white">{value}</p>
+    <p className={`mt-1 text-xl font-bold ${valueClassName}`}>{value}</p>
     {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
   </div>
 );
@@ -70,7 +80,11 @@ export const ExpectedSalesSection = ({
   isError = false,
   onRetry,
   scopeLabel,
+  asOf,
 }: Props) => {
+  const [view, setView] = useState<"kg" | "money">("kg");
+  const [configOpen, setConfigOpen] = useState(false);
+
   const dailyRows = useMemo(
     () => aggregateExpectedDaily(data?.daily ?? []),
     [data],
@@ -112,41 +126,122 @@ export const ExpectedSalesSection = ({
   const hasExpected = (summary?.daysWithData ?? 0) > 0;
   const hasMultipleBranches =
     new Set((data?.daily ?? []).map((row) => row.branchId)).size > 1;
+  const branchInfo =
+    !hasMultipleBranches && (data?.branches ?? []).length === 1
+      ? data?.branches[0]
+      : null;
+  const moneyView = view === "money";
+  const belowMinimum = isBelowMinimum(
+    summary?.expectedMoney,
+    summary?.reportedMoney,
+  );
+
+  const minimumHint = branchInfo?.referenceProductName
+    ? branchInfo.referencePricePerKg != null
+      ? `${branchInfo.referenceProductName} · ${formatPricePerKg(
+          branchInfo.referencePricePerKg,
+        )}`
+      : `${branchInfo.referenceProductName} · Sin precio registrado`
+    : hasMultipleBranches
+      ? "Cada sucursal usa su propio producto de referencia"
+      : "Configura el producto de referencia";
 
   return (
     <Card className="border-none bg-gray-800 shadow-xl">
-      <div className="mb-4 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-        <h3 className="flex items-center gap-1 text-lg font-semibold text-gray-200">
-          Venta esperada vs vendida (kg)
-          <InfoTip title="Venta esperada vs vendida">
-            Por cada venta de remesa: (peso promedio del pollo de la remesa −{" "}
-            {wasteGrams} g) × pollos vendidos. Si un día hay ventas de varias
-            remesas, se suman. No se muestra en dinero porque el precio cambia
-            según el tipo de venta.
-          </InfoTip>
-        </h3>
-        {scopeLabel && (
-          <span className="text-xs text-gray-500">{scopeLabel}</span>
-        )}
+      <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <h3 className="flex items-center gap-1 text-lg font-semibold text-gray-200">
+            Venta esperada vs vendida
+            <InfoTip title="Venta esperada vs vendida">
+              Por cada venta de remesa: (peso promedio del pollo de la remesa −{" "}
+              {wasteGrams} g) × pollos vendidos. Si un día hay ventas de varias
+              remesas, se suman. En dinero, el mínimo es kg esperados × el
+              último precio de venta del producto de referencia de cada día. La
+              venta registrada es el dinero de las ventas de remesa. No es una
+              meta ni una proyección.
+            </InfoTip>
+          </h3>
+          {scopeLabel && (
+            <span className="text-xs text-gray-500">{scopeLabel}</span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-gray-700 p-1">
+            <Button
+              size="xs"
+              color={moneyView ? "gray" : "blue"}
+              onClick={() => setView("kg")}
+            >
+              Kg
+            </Button>
+            <Button
+              size="xs"
+              color={moneyView ? "blue" : "gray"}
+              onClick={() => setView("money")}
+            >
+              Dinero
+            </Button>
+          </div>
+          {asOf && (
+            <Button size="xs" color="gray" onClick={() => setConfigOpen(true)}>
+              <HiCog className="mr-1 h-4 w-4" />
+              Producto de referencia
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <SummaryItem
-          label="Kg esperados"
-          value={formatKg(summary?.expectedKg)}
-          hint={`Peso promedio: ${formatChickenWeight(summary?.avgChickenWeight)}`}
-        />
-        <SummaryItem
-          label="Kg vendidos"
-          value={formatKg(summary?.reportedKg)}
-          hint={`${formatBirds(summary?.birdsSold)} pollos vendidos`}
-        />
-        <SummaryItem
-          label="Diferencia"
-          value={formatKg(summary?.differenceKg)}
-          hint={formatVariance(summary?.variancePct)}
-        />
-      </div>
+      {moneyView ? (
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SummaryItem
+            label="Venta mínima esperada"
+            value={formatMoney(summary?.expectedMoney)}
+            hint={minimumHint}
+          />
+          <SummaryItem
+            label="Venta registrada"
+            value={formatMoney(summary?.reportedMoney)}
+            hint="Dinero de las ventas de remesa"
+          />
+          <SummaryItem
+            label="Diferencia contra el mínimo"
+            value={formatMoney(summary?.moneyDifference)}
+            valueClassName={
+              summary?.moneyDifference == null
+                ? "text-white"
+                : belowMinimum
+                  ? "text-red-400"
+                  : "text-green-400"
+            }
+            hint={
+              summary?.expectedMoney == null
+                ? "Sin producto o precio de referencia"
+                : belowMinimum
+                  ? "Por debajo del mínimo"
+                  : "Por arriba del mínimo"
+            }
+          />
+        </div>
+      ) : (
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SummaryItem
+            label="Kg esperados"
+            value={formatKg(summary?.expectedKg)}
+            hint={`Peso promedio: ${formatChickenWeight(summary?.avgChickenWeight)}`}
+          />
+          <SummaryItem
+            label="Kg vendidos"
+            value={formatKg(summary?.reportedKg)}
+            hint={`${formatBirds(summary?.birdsSold)} pollos vendidos`}
+          />
+          <SummaryItem
+            label="Diferencia"
+            value={formatKg(summary?.differenceKg)}
+            hint={formatVariance(summary?.variancePct)}
+          />
+        </div>
+      )}
 
       {(summary?.salesWithoutWeight ?? 0) > 0 && (
         <Alert color="warning" className="mb-4">
@@ -169,6 +264,24 @@ export const ExpectedSalesSection = ({
             ? "no se incluye"
             : "no se incluyen"}{" "}
           en el cálculo.
+        </Alert>
+      )}
+
+      {moneyView && (summary?.branchesWithoutReference ?? 0) > 0 && (
+        <Alert color="warning" className="mb-4">
+          {summary?.branchesWithoutReference}{" "}
+          {summary?.branchesWithoutReference === 1
+            ? "sucursal no tiene"
+            : "sucursales no tienen"}{" "}
+          producto de referencia; su venta mínima no se calcula.
+        </Alert>
+      )}
+
+      {moneyView && (summary?.daysWithoutPrice ?? 0) > 0 && (
+        <Alert color="warning" className="mb-4">
+          {summary?.daysWithoutPrice}{" "}
+          {summary?.daysWithoutPrice === 1 ? "día sin" : "días sin"} precio de
+          referencia; no se incluyen en la comparación en dinero.
         </Alert>
       )}
 
@@ -200,7 +313,9 @@ export const ExpectedSalesSection = ({
                   stroke="#9CA3AF"
                   fontSize={12}
                   tickFormatter={(value: number) =>
-                    `${value.toLocaleString("es-MX")} kg`
+                    moneyView
+                      ? formatMXNCompact(value)
+                      : `${value.toLocaleString("es-MX")} kg`
                   }
                 />
                 <Tooltip
@@ -211,13 +326,17 @@ export const ExpectedSalesSection = ({
                     color: "#F3F4F6",
                   }}
                   labelFormatter={formatExpectedTooltipLabel}
-                  formatter={formatExpectedTooltipValue}
+                  formatter={
+                    moneyView
+                      ? formatExpectedMoneyTooltipValue
+                      : formatExpectedTooltipValue
+                  }
                 />
                 <Legend />
                 <Line
                   type="monotone"
-                  dataKey="reportedKg"
-                  name="Kg vendidos"
+                  dataKey={moneyView ? "reportedMoney" : "reportedKg"}
+                  name={moneyView ? "Venta registrada" : "Kg vendidos"}
                   stroke="#22C55E"
                   strokeWidth={2}
                   dot={false}
@@ -225,8 +344,8 @@ export const ExpectedSalesSection = ({
                 />
                 <Line
                   type="monotone"
-                  dataKey="expectedKg"
-                  name="Kg esperados"
+                  dataKey={moneyView ? "expectedMoney" : "expectedKg"}
+                  name={moneyView ? "Mínimo esperado" : "Kg esperados"}
                   stroke="#F59E0B"
                   strokeWidth={2}
                   strokeDasharray="5 5"
@@ -242,12 +361,28 @@ export const ExpectedSalesSection = ({
               <TableHead>
                 <TableRow>
                   <TableHeadCell>Día</TableHeadCell>
-                  <TableHeadCell>Pollos vendidos</TableHeadCell>
-                  <TableHeadCell>Peso promedio</TableHeadCell>
-                  <TableHeadCell>Kg esperados</TableHeadCell>
-                  <TableHeadCell>Kg vendidos</TableHeadCell>
-                  <TableHeadCell>Diferencia</TableHeadCell>
-                  <TableHeadCell>Variación</TableHeadCell>
+                  {moneyView ? (
+                    <>
+                      <TableHeadCell>Kg esperados</TableHeadCell>
+                      <TableHeadCell>
+                        {hasMultipleBranches
+                          ? "Precio efectivo/kg"
+                          : "Precio/kg"}
+                      </TableHeadCell>
+                      <TableHeadCell>Mín. esperado</TableHeadCell>
+                      <TableHeadCell>Venta registrada</TableHeadCell>
+                      <TableHeadCell>Diferencia</TableHeadCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableHeadCell>Pollos vendidos</TableHeadCell>
+                      <TableHeadCell>Peso promedio</TableHeadCell>
+                      <TableHeadCell>Kg esperados</TableHeadCell>
+                      <TableHeadCell>Kg vendidos</TableHeadCell>
+                      <TableHeadCell>Diferencia</TableHeadCell>
+                      <TableHeadCell>Variación</TableHeadCell>
+                    </>
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody className="divide-y divide-gray-700">
@@ -256,24 +391,61 @@ export const ExpectedSalesSection = ({
                     <TableCell className="font-medium text-white">
                       {formatWeekdayDayMonth(row.day)}
                     </TableCell>
-                    <TableCell className="text-white">
-                      {formatBirds(row.birdsSold)}
-                    </TableCell>
-                    <TableCell className="text-white">
-                      {formatChickenWeight(row.avgChickenWeight)}
-                    </TableCell>
-                    <TableCell className="text-white">
-                      {formatKgValue(row.expectedKg)}
-                    </TableCell>
-                    <TableCell className="text-white">
-                      {formatKgValue(row.reportedKg)}
-                    </TableCell>
-                    <TableCell className="text-white">
-                      {formatKgValue(row.differenceKg)}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {formatVariance(row.variancePct)}
-                    </TableCell>
+                    {moneyView ? (
+                      <>
+                        <TableCell className="text-white">
+                          {formatKgValue(row.expectedKg)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          <span>
+                            {formatPricePerKg(row.referencePricePerKg)}
+                          </span>
+                          {row.priceAsOf && !hasMultipleBranches && (
+                            <span className="block text-[11px] text-gray-500">
+                              Precio del {formatFullDate(row.priceAsOf)}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatMoney(row.expectedMoney)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatMoney(row.reportedMoney)}
+                        </TableCell>
+                        <TableCell
+                          className={
+                            isBelowMinimum(row.expectedMoney, row.reportedMoney)
+                              ? "text-red-400"
+                              : row.moneyDifference == null
+                                ? "text-gray-400"
+                                : "text-green-400"
+                          }
+                        >
+                          {formatMoney(row.moneyDifference)}
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell className="text-white">
+                          {formatBirds(row.birdsSold)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatChickenWeight(row.avgChickenWeight)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatKgValue(row.expectedKg)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatKgValue(row.reportedKg)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {formatKgValue(row.differenceKg)}
+                        </TableCell>
+                        <TableCell className="text-gray-300">
+                          {formatVariance(row.variancePct)}
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -284,10 +456,18 @@ export const ExpectedSalesSection = ({
             {hasMultipleBranches
               ? "Suma de las sucursales seleccionadas. "
               : ""}
-            Solo se incluyen ventas de remesa con peso promedio y kilos vendidos
-            registrados.
+            {moneyView
+              ? "El mínimo usa el último precio de venta del producto de referencia de cada día. La venta registrada es el dinero de las ventas de remesa. No es una meta ni una proyección."
+              : "Solo se incluyen ventas de remesa con peso promedio y kilos vendidos registrados."}
           </p>
         </>
+      )}
+
+      {configOpen && asOf && (
+        <ReferenceProductModal
+          asOf={asOf}
+          onClose={() => setConfigOpen(false)}
+        />
       )}
     </Card>
   );

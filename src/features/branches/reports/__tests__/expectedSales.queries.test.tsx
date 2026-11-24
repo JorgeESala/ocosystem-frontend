@@ -2,13 +2,29 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ExpectedSalesReportDTO } from "../api/expectedSales.api";
-import { fetchExpectedSalesReport } from "../api/expectedSales.api";
-import { useExpectedSalesReport } from "../api/expectedSales.queries";
+import type {
+  ExpectedSalesReportDTO,
+  ReferenceProductDTO,
+} from "../api/expectedSales.api";
+import {
+  deleteReferenceProduct,
+  fetchExpectedSalesReport,
+  fetchReferenceProducts,
+  updateReferenceProduct,
+} from "../api/expectedSales.api";
+import {
+  useDeleteReferenceProduct,
+  useExpectedSalesReport,
+  useReferenceProducts,
+  useUpdateReferenceProduct,
+} from "../api/expectedSales.queries";
 import { salesReportKeys } from "../api/salesReports.keys";
 
 vi.mock("../api/expectedSales.api", () => ({
   fetchExpectedSalesReport: vi.fn(),
+  fetchReferenceProducts: vi.fn(),
+  updateReferenceProduct: vi.fn(),
+  deleteReferenceProduct: vi.fn(),
 }));
 
 const report = {
@@ -24,10 +40,25 @@ const report = {
     salesWithoutReportedKg: 0,
     daysWithData: 0,
     wastePerChickenKg: 0.25,
+    expectedMoney: null,
+    reportedMoney: null,
+    moneyDifference: null,
+    daysWithoutPrice: 0,
+    branchesWithoutReference: 0,
   },
   branches: [],
   daily: [],
 } as ExpectedSalesReportDTO;
+
+const referenceProduct: ReferenceProductDTO = {
+  branchId: 1,
+  branchName: "Centro",
+  productBarcode: "REF",
+  productName: "Pollo entero",
+  unitName: "Kilogramo",
+  pricePerKg: 50,
+  priceAsOf: "2026-06-07",
+};
 
 const wrapper = (queryClient: QueryClient) => {
   return ({ children }: { children: ReactNode }) => (
@@ -76,5 +107,60 @@ describe("useExpectedSalesReport", () => {
     );
 
     expect(fetchExpectedSalesReport).not.toHaveBeenCalled();
+  });
+});
+
+describe("reference product queries", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchReferenceProducts).mockResolvedValue([referenceProduct]);
+    vi.mocked(updateReferenceProduct).mockResolvedValue(referenceProduct);
+    vi.mocked(deleteReferenceProduct).mockResolvedValue(undefined);
+  });
+
+  it("fetches reference products with the as-of key", async () => {
+    const queryClient = newQueryClient();
+
+    const { result } = renderHook(() => useReferenceProducts("2026-06-07"), {
+      wrapper: wrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchReferenceProducts).toHaveBeenCalledWith("2026-06-07");
+    expect(queryClient.getQueryCache().getAll()[0]?.queryKey).toEqual(
+      salesReportKeys.referenceProducts("2026-06-07"),
+    );
+  });
+
+  it("updates a reference product and invalidates the reports", async () => {
+    const queryClient = newQueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useUpdateReferenceProduct(), {
+      wrapper: wrapper(queryClient),
+    });
+
+    await result.current.mutateAsync({ branchId: 1, productBarcode: "REF" });
+
+    expect(updateReferenceProduct).toHaveBeenCalledWith(1, "REF");
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: salesReportKeys.all,
+    });
+  });
+
+  it("clears a reference product and invalidates the reports", async () => {
+    const queryClient = newQueryClient();
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    const { result } = renderHook(() => useDeleteReferenceProduct(), {
+      wrapper: wrapper(queryClient),
+    });
+
+    await result.current.mutateAsync(1);
+
+    expect(deleteReferenceProduct).toHaveBeenCalledWith(1);
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: salesReportKeys.all,
+    });
   });
 });

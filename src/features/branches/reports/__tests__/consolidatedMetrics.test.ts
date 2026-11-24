@@ -117,6 +117,14 @@ describe("buildRankingRows", () => {
         salesWithoutWeight: 0,
         salesWithoutReportedKg: 0,
         daysWithData: 2,
+        referenceProductBarcode: "REF",
+        referenceProductName: "Pollo entero",
+        referencePricePerKg: 50,
+        priceAsOf: "2026-06-01",
+        expectedMoney: 6000,
+        reportedMoney: 5500,
+        moneyDifference: -500,
+        priceMissingDays: 0,
       },
     ]);
 
@@ -155,6 +163,14 @@ describe("buildRankingRows", () => {
         salesWithoutWeight: 2,
         salesWithoutReportedKg: 3,
         daysWithData: 1,
+        referenceProductBarcode: "REF",
+        referenceProductName: "Pollo entero",
+        referencePricePerKg: 50,
+        priceAsOf: "2026-06-01",
+        expectedMoney: 5000,
+        reportedMoney: 4500,
+        moneyDifference: -500,
+        priceMissingDays: 0,
       },
     ]);
 
@@ -178,6 +194,11 @@ describe("needsReview", () => {
     expectedLoaded: true,
     salesWithoutWeight: 0,
     salesWithoutReportedKg: 0,
+    expectedMoney: 1000,
+    expectedReportedMoney: 1000,
+    expectedMoneyDifference: 0,
+    referenceProductBarcode: "REF",
+    referencePriceMissing: false,
     ...overrides,
   });
 
@@ -266,6 +287,78 @@ describe("needsReview", () => {
     const row = rankingRow({
       salesWithoutWeight: undefined as unknown as number,
       salesWithoutReportedKg: undefined as unknown as number,
+    });
+
+    expect(needsReview(row)).toBe(false);
+  });
+
+  it("flags a branch without a reference product", () => {
+    const row = rankingRow({
+      referenceProductBarcode: null,
+      expectedMoney: null,
+      expectedReportedMoney: null,
+      expectedMoneyDifference: null,
+      referencePriceMissing: true,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain(
+      "Sin producto de referencia de pollo.",
+    );
+  });
+
+  it("flags a branch without a reference price", () => {
+    const row = rankingRow({
+      expectedMoney: null,
+      expectedReportedMoney: null,
+      expectedMoneyDifference: null,
+      referencePriceMissing: true,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain("Sin precio de referencia.");
+  });
+
+  it("flags some days without a reference price", () => {
+    const row = rankingRow({ referencePriceMissing: true });
+
+    expect(reviewReasons(row)).toContain(
+      "Sin precio de referencia para algunos días.",
+    );
+  });
+
+  it("flags a sale below the money minimum", () => {
+    const row = rankingRow({
+      expectedMoney: 1000,
+      expectedReportedMoney: 900,
+      expectedMoneyDifference: -100,
+    });
+
+    expect(needsReview(row)).toBe(true);
+    expect(reviewReasons(row)).toContain(
+      "Venta registrada por debajo del mínimo.",
+    );
+  });
+
+  it("does not flag money within the tolerance", () => {
+    const row = rankingRow({
+      expectedMoney: 1000,
+      expectedReportedMoney: 996,
+      expectedMoneyDifference: -4,
+    });
+
+    expect(needsReview(row)).toBe(false);
+    expect(reviewReasons(row)).toEqual([]);
+  });
+
+  it("does not flag money reasons before expected data loads", () => {
+    const row = rankingRow({
+      expectedLoaded: false,
+      expectedMoney: null,
+      expectedReportedMoney: null,
+      expectedMoneyDifference: null,
+      referenceProductBarcode: null,
+      referencePriceMissing: true,
     });
 
     expect(needsReview(row)).toBe(false);

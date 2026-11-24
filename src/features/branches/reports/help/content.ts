@@ -41,13 +41,14 @@ export const REPORTS_METRICS: HelpMetric[] = [
   },
   {
     id: "venta-esperada",
-    title: "Venta esperada vs vendida (kg)",
+    title: "Venta esperada vs vendida (kg y dinero)",
     description:
-      "Kilos que deberían venderse según el peso promedio de cada remesa, menos 250 gramos de merma por pollo, multiplicado por los pollos vendidos.",
+      "Kilos que deberían venderse según el peso promedio de cada remesa, menos 250 gramos de merma por pollo, multiplicado por los pollos vendidos. En dinero, el mínimo usa el último precio de venta del producto de referencia de cada sucursal.",
     details: [
       "Se calcula por cada venta de remesa. Si un día hay ventas de varias remesas, se suman.",
       "Solo se incluyen ventas con peso promedio de remesa y kilos vendidos registrados; las demás se avisan en la sección.",
-      "No se muestra en dinero porque el precio cambia según el tipo de venta.",
+      "El mínimo en dinero usa el último precio de venta registrado del producto de referencia de cada día. No es una meta ni una proyección.",
+      "La venta registrada es el dinero de las ventas de remesa. Si falta el producto o el precio de referencia, la sección lo avisa.",
     ],
   },
   {
@@ -122,7 +123,7 @@ export const REPORTS_SECTIONS: HelpSection[] = [
     id: "venta-esperada",
     title: "¿Cómo se calcula la venta esperada?",
     content:
-      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. Si una remesa no tiene peso promedio o la venta no tiene kilos registrados, esa venta no se incluye y se muestra un aviso.",
+      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. En dinero, el mínimo es kg esperados × el último precio de venta del producto de referencia de cada día; la venta registrada es el dinero de las ventas de remesa. Si una remesa no tiene peso promedio, la venta no tiene kilos registrados o falta el precio de referencia, esa parte no se incluye y se muestra un aviso.",
   },
   {
     id: "abc",

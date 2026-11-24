@@ -673,6 +673,7 @@ export const SalesDashboard = ({
               isError={expectedSalesError}
               onRetry={() => void refetchExpectedSales()}
               scopeLabel={branchName}
+              asOf={dates.end}
             />
           </div>
 

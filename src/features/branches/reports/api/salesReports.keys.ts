@@ -15,4 +15,6 @@ export const salesReportKeys = {
       "expected",
       { branchIds, startDate, endDate },
     ] as const,
+  referenceProducts: (asOf: string) =>
+    [...salesReportKeys.all, "reference-products", asOf] as const,
 };

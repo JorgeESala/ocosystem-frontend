@@ -357,6 +357,9 @@ export const ConsolidatedSalesDashboard = ({
             "Kg esperados",
             "Kg vendidos",
             "Variación esperada %",
+            "Mínimo esperado ($)",
+            "Venta registrada ($)",
+            "Diferencia ($)",
             "Merma",
             "Días con reporte",
             "Días faltantes",
@@ -368,7 +371,14 @@ export const ConsolidatedSalesDashboard = ({
             row.salesDelta == null ? "" : Number(row.salesDelta.toFixed(2)),
             row.avgTicket,
             row.totalSlaughtered,
-            ...expectedSalesRankingColumns(row),
+            ...expectedSalesRankingColumns({
+              expectedKg: row.expectedKg,
+              expectedReportedKg: row.expectedReportedKg,
+              expectedVariancePct: row.expectedVariancePct,
+              expectedMoney: row.expectedMoney,
+              reportedMoney: row.expectedReportedMoney,
+              moneyDifference: row.expectedMoneyDifference,
+            }),
             row.mermaQuantity,
             row.daysWithReport,
             row.missingDays,
@@ -384,6 +394,9 @@ export const ConsolidatedSalesDashboard = ({
           { wch: 14 },
           { wch: 14 },
           { wch: 18 },
+          { wch: 20 },
+          { wch: 20 },
+          { wch: 16 },
           { wch: 12 },
           { wch: 15 },
           { wch: 13 },
@@ -743,6 +756,7 @@ export const ConsolidatedSalesDashboard = ({
               isError={expectedSalesError}
               onRetry={() => void refetchExpectedSales()}
               scopeLabel={scopeLabel}
+              asOf={dates.end}
             />
           </div>
 

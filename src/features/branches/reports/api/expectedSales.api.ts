@@ -13,6 +13,11 @@ export interface ExpectedSalesSummaryDTO {
   salesWithoutReportedKg: number;
   daysWithData: number;
   wastePerChickenKg: number;
+  expectedMoney: number | null;
+  reportedMoney: number | null;
+  moneyDifference: number | null;
+  daysWithoutPrice: number;
+  branchesWithoutReference: number;
 }
 
 export interface BranchExpectedSalesDTO {
@@ -28,6 +33,14 @@ export interface BranchExpectedSalesDTO {
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
   daysWithData: number;
+  referenceProductBarcode: string | null;
+  referenceProductName: string | null;
+  referencePricePerKg: number | null;
+  priceAsOf: string | null;
+  expectedMoney: number | null;
+  reportedMoney: number | null;
+  moneyDifference: number | null;
+  priceMissingDays: number;
 }
 
 export interface DailyExpectedSalesDTO {
@@ -43,12 +56,27 @@ export interface DailyExpectedSalesDTO {
   salesCount: number;
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
+  referencePricePerKg: number | null;
+  priceAsOf: string | null;
+  expectedMoney: number | null;
+  reportedMoney: number | null;
+  moneyDifference: number | null;
 }
 
 export interface ExpectedSalesReportDTO {
   summary: ExpectedSalesSummaryDTO;
   branches: BranchExpectedSalesDTO[];
   daily: DailyExpectedSalesDTO[];
+}
+
+export interface ReferenceProductDTO {
+  branchId: number;
+  branchName: string;
+  productBarcode: string | null;
+  productName: string | null;
+  unitName: string | null;
+  pricePerKg: number | null;
+  priceAsOf: string | null;
 }
 
 export const fetchExpectedSalesReport = async (
@@ -66,4 +94,30 @@ export const fetchExpectedSalesReport = async (
     `/api/reports/sales/expected?${params.toString()}`,
   );
   return data;
+};
+
+export const fetchReferenceProducts = async (asOf: string) => {
+  const params = new URLSearchParams({ asOf });
+
+  const { data } = await http.get<ReferenceProductDTO[]>(
+    `/api/reports/sales/expected/reference-products?${params.toString()}`,
+  );
+  return data;
+};
+
+export const updateReferenceProduct = async (
+  branchId: number,
+  productBarcode: string,
+) => {
+  const { data } = await http.put<ReferenceProductDTO>(
+    `/api/reports/sales/expected/reference-products/${branchId}`,
+    { productBarcode },
+  );
+  return data;
+};
+
+export const deleteReferenceProduct = async (branchId: number) => {
+  await http.delete(
+    `/api/reports/sales/expected/reference-products/${branchId}`,
+  );
 };

@@ -1,5 +1,6 @@
 import type { DailyExpectedSalesDTO } from "../api/expectedSales.api";
 import { formatFullDate } from "@/utils/date.utils";
+import { formatMXN } from "@/utils/moneyNumbers";
 
 export interface DailyExpectedSalesRow {
   day: string;
@@ -10,7 +11,14 @@ export interface DailyExpectedSalesRow {
   birdsSold: number;
   avgChickenWeight: number | null;
   salesWithoutWeight: number;
+  referencePricePerKg: number | null;
+  priceAsOf: string | null;
+  expectedMoney: number | null;
+  reportedMoney: number | null;
+  moneyDifference: number | null;
 }
+
+export const MONEY_REVIEW_TOLERANCE_PCT = 0.5;
 
 export const expectedVariancePct = (
   expectedKg: number | null,
@@ -20,6 +28,23 @@ export const expectedVariancePct = (
     return null;
   }
   return ((reportedKg - expectedKg) / expectedKg) * 100;
+};
+
+export const isBelowMinimum = (
+  expectedMoney: number | null | undefined,
+  reportedMoney: number | null | undefined,
+): boolean => {
+  if (expectedMoney == null || reportedMoney == null) return false;
+  const tolerance = Math.max(
+    1,
+    expectedMoney * (MONEY_REVIEW_TOLERANCE_PCT / 100),
+  );
+  return reportedMoney < expectedMoney - tolerance;
+};
+
+export const isKgUnitName = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? "").trim().toLowerCase();
+  return normalized === "kg" || normalized.startsWith("kilo");
 };
 
 export const aggregateExpectedDaily = (
@@ -34,6 +59,11 @@ export const aggregateExpectedDaily = (
       weightedKg: number;
       weightedBirds: number;
       salesWithoutWeight: number;
+      pricedExpectedKg: number;
+      expectedMoney: number | null;
+      reportedMoney: number | null;
+      moneyDifference: number | null;
+      priceDates: Set<string>;
     }
   >();
 
@@ -45,6 +75,11 @@ export const aggregateExpectedDaily = (
       weightedKg: 0,
       weightedBirds: 0,
       salesWithoutWeight: 0,
+      pricedExpectedKg: 0,
+      expectedMoney: null,
+      reportedMoney: null,
+      moneyDifference: null,
+      priceDates: new Set<string>(),
     };
 
     if (row.expectedKg != null) {
@@ -59,6 +94,21 @@ export const aggregateExpectedDaily = (
       current.weightedBirds += row.birdsSold;
     }
     current.salesWithoutWeight += row.salesWithoutWeight ?? 0;
+
+    if (row.expectedMoney != null && row.expectedKg != null) {
+      current.expectedMoney = (current.expectedMoney ?? 0) + row.expectedMoney;
+      current.pricedExpectedKg += row.expectedKg;
+    }
+    if (row.reportedMoney != null) {
+      current.reportedMoney = (current.reportedMoney ?? 0) + row.reportedMoney;
+    }
+    if (row.moneyDifference != null) {
+      current.moneyDifference =
+        (current.moneyDifference ?? 0) + row.moneyDifference;
+    }
+    if (row.priceAsOf) {
+      current.priceDates.add(row.priceAsOf);
+    }
 
     byDay.set(row.day, current);
   }
@@ -78,6 +128,15 @@ export const aggregateExpectedDaily = (
       avgChickenWeight:
         value.weightedBirds > 0 ? value.weightedKg / value.weightedBirds : null,
       salesWithoutWeight: value.salesWithoutWeight,
+      referencePricePerKg:
+        value.expectedMoney != null && value.pricedExpectedKg > 0
+          ? value.expectedMoney / value.pricedExpectedKg
+          : null,
+      priceAsOf:
+        value.priceDates.size === 1 ? Array.from(value.priceDates)[0] : null,
+      expectedMoney: value.expectedMoney,
+      reportedMoney: value.reportedMoney,
+      moneyDifference: value.moneyDifference,
     }));
 };
 
@@ -112,6 +171,12 @@ export const formatVariance = (value: number | null | undefined): string => {
   return `${sign}${value.toFixed(1)}%`;
 };
 
+export const formatMoney = (value: number | null | undefined): string =>
+  value == null ? "—" : formatMXN(value);
+
+export const formatPricePerKg = (value: number | null | undefined): string =>
+  value == null ? "—" : `${formatMXN(value)} / kg`;
+
 export const formatExpectedTooltipLabel = (value: unknown): string =>
   formatFullDate(String(value));
 
@@ -119,3 +184,8 @@ export const formatExpectedTooltipValue = (
   value: number,
   name: string,
 ): [string, string] => [formatKg(value), name];
+
+export const formatExpectedMoneyTooltipValue = (
+  value: number,
+  name: string,
+): [string, string] => [formatMXN(value), name];

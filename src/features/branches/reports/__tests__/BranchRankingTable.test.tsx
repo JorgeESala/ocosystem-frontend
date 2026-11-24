@@ -30,6 +30,11 @@ const row = (
   expectedLoaded: true,
   salesWithoutWeight: 0,
   salesWithoutReportedKg: 0,
+  expectedMoney: 1000,
+  expectedReportedMoney: 1000,
+  expectedMoneyDifference: 0,
+  referenceProductBarcode: "REF",
+  referencePriceMissing: false,
   ...overrides,
 });
 
@@ -267,5 +272,93 @@ describe("BranchRankingTable", () => {
       key: "totalSales",
       direction: "desc",
     });
+  });
+
+  it("shows the money minimum and registered money in the table", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 45000,
+        expectedReportedMoney: 46000,
+        expectedMoneyDifference: 1000,
+      }),
+    ]);
+
+    expect(table().getByText(/Mín\. \$45,000 · Real \$46,000/)).toBeTruthy();
+  });
+
+  it("flags a branch below the money minimum", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1000,
+        expectedVariancePct: 0,
+        expectedMoney: 1000,
+        expectedReportedMoney: 900,
+        expectedMoneyDifference: -100,
+      }),
+    ]);
+
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(
+      table().getByTitle("Venta registrada por debajo del mínimo."),
+    ).toBeTruthy();
+  });
+
+  it("shows a missing reference label when the branch has no product", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: null,
+        expectedReportedMoney: null,
+        expectedMoneyDifference: null,
+        referenceProductBarcode: null,
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    expect(table().getByText("Sin producto de referencia")).toBeTruthy();
+    expect(cards().getByText("Sin producto de referencia")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("shows a missing price label when the product has no price", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: null,
+        expectedReportedMoney: null,
+        expectedMoneyDifference: null,
+        referenceProductBarcode: "REF",
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    expect(table().getByText("Sin precio de referencia")).toBeTruthy();
+    expect(cards().getByText("Sin precio de referencia")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("shows the money comparison in the mobile card", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 45000,
+        expectedReportedMoney: 46000,
+        expectedMoneyDifference: 1000,
+      }),
+    ]);
+
+    expect(cards().getByText(/Mín\. \$45,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Real \$46,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Diferencia \$1,000\.00/)).toBeTruthy();
   });
 });

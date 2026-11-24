@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "flowbite-react";
 import { HiChevronDown, HiChevronRight, HiChevronUp } from "react-icons/hi";
-import { formatMXN } from "@/utils/moneyNumbers";
+import { formatMXN, formatMXNCompact } from "@/utils/moneyNumbers";
 import { DeltaBadge } from "./DeltaBadge";
 import type { BranchRankingRow } from "../utils/consolidatedMetrics";
 import {
@@ -20,7 +20,12 @@ import {
   reviewReasons,
   REVIEW_VARIANCE_THRESHOLD_PCT,
 } from "../utils/consolidatedMetrics";
-import { formatKgValue, formatVariance } from "../utils/expectedSales";
+import {
+  formatKgValue,
+  formatMoney,
+  formatVariance,
+  isBelowMinimum,
+} from "../utils/expectedSales";
 
 export type RankingSortKey =
   | "totalSales"
@@ -150,6 +155,24 @@ const ComplianceCell = ({
         {formatKgValue(row.expectedReportedKg)} vendidos ·{" "}
         {formatKgValue(row.expectedKg)} esperados
       </span>
+      {row.expectedMoney != null && row.expectedReportedMoney != null ? (
+        <span
+          className={`text-xs tabular-nums ${
+            isBelowMinimum(row.expectedMoney, row.expectedReportedMoney)
+              ? "text-red-400"
+              : "text-gray-400"
+          }`}
+        >
+          Mín. {formatMXNCompact(row.expectedMoney)} · Real{" "}
+          {formatMXNCompact(row.expectedReportedMoney)}
+        </span>
+      ) : row.expectedLoaded && row.expectedKg != null ? (
+        <span className="text-xs text-gray-500">
+          {row.referenceProductBarcode
+            ? "Sin precio de referencia"
+            : "Sin producto de referencia"}
+        </span>
+      ) : null}
     </div>
   );
 };
@@ -186,13 +209,19 @@ const legend = (
       remesa − 250 g) × pollos vendidos.
     </p>
     <p>
+      Venta mínima = kg esperados × el último precio de venta del producto de
+      referencia de cada día. Se compara con el dinero registrado en las ventas
+      de remesa; no es una meta ni una proyección.
+    </p>
+    <p>
       El color de Cumplimiento indica la desviación: verde ±5%, ámbar 5–10%,
       rojo ≥{REVIEW_VARIANCE_THRESHOLD_PCT}%. Merma total incluye tripa; la
       Pérdida Neta del KPI la excluye.
     </p>
     <p>
       Revisar = desviación de {REVIEW_VARIANCE_THRESHOLD_PCT}% o más, días sin
-      reporte, sin kilos esperados o ventas excluidas del cálculo.
+      reporte, sin kilos esperados, sin producto o precio de referencia, venta
+      por debajo del mínimo o ventas excluidas del cálculo.
     </p>
   </div>
 );
@@ -463,6 +492,32 @@ export const BranchRankingTable = ({
                   </p>
                   <ComplianceCell row={row} align="start" />
                 </div>
+                {row.expectedLoaded &&
+                  row.expectedKg != null &&
+                  row.expectedMoney != null &&
+                  row.expectedReportedMoney != null && (
+                    <div className="col-span-2">
+                      <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+                        Venta mínima vs registrada
+                      </p>
+                      <div className="flex flex-wrap items-baseline gap-3 text-white">
+                        <span>Mín. {formatMXN(row.expectedMoney)}</span>
+                        <span>Real {formatMXN(row.expectedReportedMoney)}</span>
+                      </div>
+                      <p
+                        className={`text-xs ${
+                          isBelowMinimum(
+                            row.expectedMoney,
+                            row.expectedReportedMoney,
+                          )
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }`}
+                      >
+                        Diferencia {formatMoney(row.expectedMoneyDifference)}
+                      </p>
+                    </div>
+                  )}
                 <div className="col-span-2">
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cobertura

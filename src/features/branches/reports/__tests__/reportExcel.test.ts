@@ -149,12 +149,22 @@ describe("expectedSalesSummaryRows", () => {
         salesWithoutReportedKg: 0,
         daysWithData: 1,
         wastePerChickenKg: 0.25,
+        expectedMoney: 5000,
+        reportedMoney: 5500,
+        moneyDifference: 500,
+        daysWithoutPrice: 0,
+        branchesWithoutReference: 0,
       }),
     ).toEqual([
       ["Venta esperada de pollo (kg)", 1000],
       ["Kg vendidos en Entradas y Ventas", 1050],
       ["Diferencia de kilos", 50],
       ["Variación de venta esperada (%)", 5],
+      ["Venta mínima esperada (dinero)", 5000],
+      ["Venta registrada en Entradas y Ventas (dinero)", 5500],
+      ["Diferencia contra el mínimo", 500],
+      ["Días sin precio de referencia", 0],
+      ["Sucursales sin producto de referencia", 0],
     ]);
   });
 
@@ -164,6 +174,11 @@ describe("expectedSalesSummaryRows", () => {
       ["Kg vendidos en Entradas y Ventas", ""],
       ["Diferencia de kilos", ""],
       ["Variación de venta esperada (%)", ""],
+      ["Venta mínima esperada (dinero)", ""],
+      ["Venta registrada en Entradas y Ventas (dinero)", ""],
+      ["Diferencia contra el mínimo", ""],
+      ["Días sin precio de referencia", ""],
+      ["Sucursales sin producto de referencia", ""],
     ]);
   });
 
@@ -180,6 +195,11 @@ describe("expectedSalesSummaryRows", () => {
       salesWithoutReportedKg: 0,
       daysWithData: 1,
       wastePerChickenKg: 0.25,
+      expectedMoney: null,
+      reportedMoney: null,
+      moneyDifference: null,
+      daysWithoutPrice: 0,
+      branchesWithoutReference: 0,
     });
 
     expect(rows[3]).toEqual(["Variación de venta esperada (%)", 13.68]);
@@ -187,14 +207,17 @@ describe("expectedSalesSummaryRows", () => {
 });
 
 describe("expectedSalesRankingColumns", () => {
-  it("builds the expected, reported and variance columns", () => {
+  it("builds the expected, reported, variance and money columns", () => {
     expect(
       expectedSalesRankingColumns({
         expectedKg: 1000,
         expectedReportedKg: 1050,
         expectedVariancePct: 5,
+        expectedMoney: 5000,
+        reportedMoney: 5500,
+        moneyDifference: 500,
       }),
-    ).toEqual([1000, 1050, 5]);
+    ).toEqual([1000, 1050, 5, 5000, 5500, 500]);
   });
 
   it("uses blanks for missing branch values", () => {
@@ -203,13 +226,16 @@ describe("expectedSalesRankingColumns", () => {
         expectedKg: null,
         expectedReportedKg: null,
         expectedVariancePct: null,
+        expectedMoney: null,
+        reportedMoney: null,
+        moneyDifference: null,
       }),
-    ).toEqual(["", "", ""]);
+    ).toEqual(["", "", "", "", "", ""]);
   });
 });
 
 describe("expectedSalesSheet", () => {
-  it("includes the expected and reported kg columns", () => {
+  it("includes the kg, price and money columns", () => {
     const sheet = expectedSalesSheet([
       {
         branchId: 1,
@@ -224,6 +250,11 @@ describe("expectedSalesSheet", () => {
         salesCount: 2,
         salesWithoutWeight: 0,
         salesWithoutReportedKg: 0,
+        referencePricePerKg: 50,
+        priceAsOf: "2026-06-01",
+        expectedMoney: 23750,
+        reportedMoney: 24000,
+        moneyDifference: 250,
       },
     ]);
 
@@ -236,6 +267,11 @@ describe("expectedSalesSheet", () => {
       "Kg vendidos",
       "Diferencia (kg)",
       "Variación %",
+      "Precio referencia/kg",
+      "Precio al",
+      "Mínimo esperado ($)",
+      "Venta registrada ($)",
+      "Diferencia contra mínimo ($)",
     ]);
     expect(sheet.rows[1]).toEqual([
       "2026-06-01",
@@ -246,6 +282,11 @@ describe("expectedSalesSheet", () => {
       540,
       65,
       13.68,
+      50,
+      "2026-06-01",
+      23750,
+      24000,
+      250,
     ]);
   });
 
@@ -264,6 +305,11 @@ describe("expectedSalesSheet", () => {
         salesCount: 0,
         salesWithoutWeight: 1,
         salesWithoutReportedKg: 0,
+        referencePricePerKg: null,
+        priceAsOf: null,
+        expectedMoney: null,
+        reportedMoney: null,
+        moneyDifference: null,
       },
     ]);
 
@@ -271,6 +317,11 @@ describe("expectedSalesSheet", () => {
       "2026-06-02",
       "Norte",
       0,
+      "",
+      "",
+      "",
+      "",
+      "",
       "",
       "",
       "",
@@ -296,15 +347,25 @@ describe("expectedSalesBranchesSheet", () => {
         salesWithoutWeight: 1,
         salesWithoutReportedKg: 0,
         daysWithData: 0,
+        referenceProductBarcode: null,
+        referenceProductName: null,
+        referencePricePerKg: null,
+        priceAsOf: null,
+        expectedMoney: null,
+        reportedMoney: null,
+        moneyDifference: null,
+        priceMissingDays: 0,
       },
     ]);
 
     expect(sheet.rows[1][1]).toBe("");
-    expect(sheet.rows[1][7]).toBe(1);
-    expect(sheet.rows[1][8]).toBe(0);
+    expect(sheet.rows[1][10]).toBe(1);
+    expect(sheet.rows[1][11]).toBe(0);
+    expect(sheet.rows[1][12]).toBe("");
+    expect(sheet.rows[1][15]).toBe(0);
   });
 
-  it("keeps the variance when it is available", () => {
+  it("keeps the variance and money when they are available", () => {
     const sheet = expectedSalesBranchesSheet([
       {
         branchId: 1,
@@ -319,10 +380,23 @@ describe("expectedSalesBranchesSheet", () => {
         salesWithoutWeight: 0,
         salesWithoutReportedKg: 2,
         daysWithData: 1,
+        referenceProductBarcode: "REF",
+        referenceProductName: "Pollo entero",
+        referencePricePerKg: 50,
+        priceAsOf: "2026-06-01",
+        expectedMoney: 50000,
+        reportedMoney: 51000,
+        moneyDifference: 1000,
+        priceMissingDays: 0,
       },
     ]);
 
-    expect(sheet.rows[1][4]).toBe(5);
-    expect(sheet.rows[1][8]).toBe(2);
+    expect(sheet.rows[1][1]).toBe("Pollo entero");
+    expect(sheet.rows[1][2]).toBe(50);
+    expect(sheet.rows[1][7]).toBe(5);
+    expect(sheet.rows[1][11]).toBe(2);
+    expect(sheet.rows[1][12]).toBe(50000);
+    expect(sheet.rows[1][13]).toBe(51000);
+    expect(sheet.rows[1][14]).toBe(1000);
   });
 });
