@@ -14,7 +14,11 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   salesWithoutReportedKg: number;
   expectedMoney: number | null;
   expectedReportedMoney: number | null;
+  expectedTotalReportedMoney: number | null;
   expectedMoneyDifference: number | null;
+  expectedEffectivePrice: number | null;
+  expectedComparableDays: number;
+  expectedSalesWithZeroMoney: number;
   referenceProductBarcode: string | null;
   referencePriceMissing: boolean;
 }
@@ -81,8 +85,12 @@ export const buildRankingRows = (
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
         expectedMoney: expected?.expectedMoney ?? null,
-        expectedReportedMoney: expected?.reportedMoney ?? null,
+        expectedReportedMoney: expected?.comparableReportedMoney ?? null,
+        expectedTotalReportedMoney: expected?.reportedMoney ?? null,
         expectedMoneyDifference: expected?.moneyDifference ?? null,
+        expectedEffectivePrice: expected?.effectivePricePerKg ?? null,
+        expectedComparableDays: expected?.comparableDays ?? 0,
+        expectedSalesWithZeroMoney: expected?.salesWithZeroMoney ?? 0,
         referenceProductBarcode: expected?.referenceProductBarcode ?? null,
         referencePriceMissing: (expected?.priceMissingDays ?? 0) > 0,
       };

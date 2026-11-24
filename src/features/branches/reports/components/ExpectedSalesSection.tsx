@@ -38,7 +38,8 @@ import {
   formatMoney,
   formatPricePerKg,
   formatVariance,
-  isBelowMinimum,
+  moneyComparisonState,
+  MONEY_REVIEW_TOLERANCE_PCT,
 } from "../utils/expectedSales";
 import { ReferenceProductModal } from "./ReferenceProductModal";
 
@@ -49,6 +50,7 @@ interface Props {
   onRetry?: () => void;
   scopeLabel?: string;
   asOf?: Date;
+  canConfigure?: boolean;
 }
 
 const SummaryItem = ({
@@ -74,6 +76,20 @@ const SummaryItem = ({
   </div>
 );
 
+const moneyStateClass = (state: ReturnType<typeof moneyComparisonState>) => {
+  if (state === "below") return "text-red-400";
+  if (state === "within") return "text-amber-400";
+  if (state === "above") return "text-green-400";
+  return "text-white";
+};
+
+const moneyStateHint = (state: ReturnType<typeof moneyComparisonState>) => {
+  if (state === "below") return "Por debajo del mínimo";
+  if (state === "within") return "Dentro de la tolerancia";
+  if (state === "above") return "Por arriba del mínimo";
+  return "Sin producto o precio de referencia";
+};
+
 export const ExpectedSalesSection = ({
   data,
   isLoading = false,
@@ -81,6 +97,7 @@ export const ExpectedSalesSection = ({
   onRetry,
   scopeLabel,
   asOf,
+  canConfigure = false,
 }: Props) => {
   const [view, setView] = useState<"kg" | "money">("kg");
   const [configOpen, setConfigOpen] = useState(false);
@@ -131,20 +148,27 @@ export const ExpectedSalesSection = ({
       ? data?.branches[0]
       : null;
   const moneyView = view === "money";
-  const belowMinimum = isBelowMinimum(
+  const moneyState = moneyComparisonState(
     summary?.expectedMoney,
-    summary?.reportedMoney,
+    summary?.comparableReportedMoney,
   );
-
+  const effectivePrice = summary?.effectivePricePerKg;
+  const closePrice = branchInfo?.referencePricePerKg;
+  const priceHint = [
+    effectivePrice != null
+      ? `Efectivo: ${formatPricePerKg(effectivePrice)}`
+      : null,
+    closePrice != null ? `Cierre: ${formatPricePerKg(closePrice)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const minimumHint = branchInfo?.referenceProductName
-    ? branchInfo.referencePricePerKg != null
-      ? `${branchInfo.referenceProductName} · ${formatPricePerKg(
-          branchInfo.referencePricePerKg,
-        )}`
-      : `${branchInfo.referenceProductName} · Sin precio registrado`
+    ? `${branchInfo.referenceProductName}${priceHint ? ` · ${priceHint}` : " · Sin precio registrado"}`
     : hasMultipleBranches
-      ? "Cada sucursal usa su propio producto de referencia"
+      ? "Cada sucursal usa su propio producto y precio"
       : "Configura el producto de referencia";
+  const comparableDays = summary?.comparableDays ?? 0;
+  const daysWithData = summary?.daysWithData ?? 0;
 
   return (
     <Card className="border-none bg-gray-800 shadow-xl">
@@ -156,9 +180,10 @@ export const ExpectedSalesSection = ({
               Por cada venta de remesa: (peso promedio del pollo de la remesa −{" "}
               {wasteGrams} g) × pollos vendidos. Si un día hay ventas de varias
               remesas, se suman. En dinero, el mínimo es kg esperados × el
-              último precio de venta del producto de referencia de cada día. La
-              venta registrada es el dinero de las ventas de remesa. No es una
-              meta ni una proyección.
+              último precio de venta de referencia de cada día. La venta total
+              incluye todos los días; la diferencia usa solo los días
+              comparables. Se permite {MONEY_REVIEW_TOLERANCE_PCT}% de
+              tolerancia por redondeo. No es una meta ni una proyección.
             </InfoTip>
           </h3>
           {scopeLabel && (
@@ -183,7 +208,7 @@ export const ExpectedSalesSection = ({
               Dinero
             </Button>
           </div>
-          {asOf && (
+          {canConfigure && asOf && (
             <Button size="xs" color="gray" onClick={() => setConfigOpen(true)}>
               <HiCog className="mr-1 h-4 w-4" />
               Producto de referencia
@@ -202,25 +227,15 @@ export const ExpectedSalesSection = ({
           <SummaryItem
             label="Venta registrada"
             value={formatMoney(summary?.reportedMoney)}
-            hint="Dinero de las ventas de remesa"
+            hint={`Comparable: ${formatMoney(
+              summary?.comparableReportedMoney,
+            )} · ${comparableDays} de ${daysWithData} días`}
           />
           <SummaryItem
             label="Diferencia contra el mínimo"
             value={formatMoney(summary?.moneyDifference)}
-            valueClassName={
-              summary?.moneyDifference == null
-                ? "text-white"
-                : belowMinimum
-                  ? "text-red-400"
-                  : "text-green-400"
-            }
-            hint={
-              summary?.expectedMoney == null
-                ? "Sin producto o precio de referencia"
-                : belowMinimum
-                  ? "Por debajo del mínimo"
-                  : "Por arriba del mínimo"
-            }
+            valueClassName={moneyStateClass(moneyState)}
+            hint={`${moneyStateHint(moneyState)} · ${comparableDays} de ${daysWithData} días`}
           />
         </div>
       ) : (
@@ -267,13 +282,22 @@ export const ExpectedSalesSection = ({
         </Alert>
       )}
 
+      {moneyView && (summary?.salesWithZeroMoney ?? 0) > 0 && (
+        <Alert color="warning" className="mb-4">
+          {summary?.salesWithZeroMoney}{" "}
+          {summary?.salesWithZeroMoney === 1 ? "venta" : "ventas"} con monto
+          cero; se incluyen en la venta registrada y pueden quedar por debajo
+          del mínimo.
+        </Alert>
+      )}
+
       {moneyView && (summary?.branchesWithoutReference ?? 0) > 0 && (
         <Alert color="warning" className="mb-4">
           {summary?.branchesWithoutReference}{" "}
           {summary?.branchesWithoutReference === 1
             ? "sucursal no tiene"
             : "sucursales no tienen"}{" "}
-          producto de referencia; su venta mínima no se calcula.
+          producto de referencia; su venta no entra en el mínimo.
         </Alert>
       )}
 
@@ -281,7 +305,7 @@ export const ExpectedSalesSection = ({
         <Alert color="warning" className="mb-4">
           {summary?.daysWithoutPrice}{" "}
           {summary?.daysWithoutPrice === 1 ? "día sin" : "días sin"} precio de
-          referencia; no se incluyen en la comparación en dinero.
+          referencia; no se incluyen en la diferencia.
         </Alert>
       )}
 
@@ -370,7 +394,8 @@ export const ExpectedSalesSection = ({
                           : "Precio/kg"}
                       </TableHeadCell>
                       <TableHeadCell>Mín. esperado</TableHeadCell>
-                      <TableHeadCell>Venta registrada</TableHeadCell>
+                      <TableHeadCell>Venta total</TableHeadCell>
+                      <TableHeadCell>Venta comparable</TableHeadCell>
                       <TableHeadCell>Diferencia</TableHeadCell>
                     </>
                   ) : (
@@ -412,14 +437,16 @@ export const ExpectedSalesSection = ({
                         <TableCell className="text-white">
                           {formatMoney(row.reportedMoney)}
                         </TableCell>
+                        <TableCell className="text-white">
+                          {formatMoney(row.comparableReportedMoney)}
+                        </TableCell>
                         <TableCell
-                          className={
-                            isBelowMinimum(row.expectedMoney, row.reportedMoney)
-                              ? "text-red-400"
-                              : row.moneyDifference == null
-                                ? "text-gray-400"
-                                : "text-green-400"
-                          }
+                          className={moneyStateClass(
+                            moneyComparisonState(
+                              row.expectedMoney,
+                              row.comparableReportedMoney,
+                            ),
+                          )}
                         >
                           {formatMoney(row.moneyDifference)}
                         </TableCell>
@@ -457,13 +484,13 @@ export const ExpectedSalesSection = ({
               ? "Suma de las sucursales seleccionadas. "
               : ""}
             {moneyView
-              ? "El mínimo usa el último precio de venta del producto de referencia de cada día. La venta registrada es el dinero de las ventas de remesa. No es una meta ni una proyección."
+              ? `El mínimo usa el último precio de venta de referencia de cada día. La venta total incluye todos los días; la diferencia usa solo los días comparables. Se permite ${MONEY_REVIEW_TOLERANCE_PCT}% de tolerancia por redondeo. No es una meta ni una proyección.`
               : "Solo se incluyen ventas de remesa con peso promedio y kilos vendidos registrados."}
           </p>
         </>
       )}
 
-      {configOpen && asOf && (
+      {configOpen && asOf && canConfigure && (
         <ReferenceProductModal
           asOf={asOf}
           onClose={() => setConfigOpen(false)}

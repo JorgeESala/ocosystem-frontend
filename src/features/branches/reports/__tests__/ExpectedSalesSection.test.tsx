@@ -33,9 +33,13 @@ const report: ExpectedSalesReportDTO = {
     wastePerChickenKg: 0.25,
     expectedMoney: 45000,
     reportedMoney: 46000,
+    comparableReportedMoney: 46000,
     moneyDifference: 1000,
+    effectivePricePerKg: 45,
     daysWithoutPrice: 0,
+    comparableDays: 1,
     branchesWithoutReference: 0,
+    salesWithZeroMoney: 0,
   },
   branches: [
     {
@@ -57,8 +61,12 @@ const report: ExpectedSalesReportDTO = {
       priceAsOf: "2026-06-01",
       expectedMoney: 45000,
       reportedMoney: 46000,
+      comparableReportedMoney: 46000,
       moneyDifference: 1000,
+      effectivePricePerKg: 45,
       priceMissingDays: 0,
+      comparableDays: 1,
+      salesWithZeroMoney: 0,
     },
   ],
   daily: [
@@ -79,7 +87,9 @@ const report: ExpectedSalesReportDTO = {
       priceAsOf: "2026-06-01",
       expectedMoney: 45000,
       reportedMoney: 46000,
+      comparableReportedMoney: 46000,
       moneyDifference: 1000,
+      salesWithZeroMoney: 0,
     },
   ],
 };
@@ -110,6 +120,11 @@ describe("ExpectedSalesSection", () => {
     expect(screen.getAllByText("$46,000.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$1,000.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$45.00 / kg").length).toBeGreaterThan(0);
+    expect(screen.getByText("Venta total")).toBeTruthy();
+    expect(screen.getByText("Venta comparable")).toBeTruthy();
+    expect(
+      screen.getByText(/Comparable: \$46,000\.00 · 1 de 1 días/),
+    ).toBeTruthy();
   });
 
   it("switches back to the kg view", () => {
@@ -186,7 +201,7 @@ describe("ExpectedSalesSection", () => {
     fireEvent.click(screen.getByText("Dinero"));
 
     expect(
-      screen.getByText("Cada sucursal usa su propio producto de referencia"),
+      screen.getByText("Cada sucursal usa su propio producto y precio"),
     ).toBeTruthy();
     expect(screen.getByText("Precio efectivo/kg")).toBeTruthy();
   });
@@ -200,7 +215,10 @@ describe("ExpectedSalesSection", () => {
             ...report.summary,
             expectedMoney: 1000,
             reportedMoney: 900,
+            comparableReportedMoney: 900,
             moneyDifference: -100,
+            effectivePricePerKg: 1,
+            comparableDays: 1,
           },
         }}
       />,
@@ -208,7 +226,30 @@ describe("ExpectedSalesSection", () => {
 
     fireEvent.click(screen.getByText("Dinero"));
 
-    expect(screen.getByText("Por debajo del mínimo")).toBeTruthy();
+    expect(screen.getByText(/Por debajo del mínimo/)).toBeTruthy();
+  });
+
+  it("shows the within-tolerance hint for a small negative difference", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: {
+            ...report.summary,
+            expectedMoney: 1000,
+            reportedMoney: 996,
+            comparableReportedMoney: 996,
+            moneyDifference: -4,
+            effectivePricePerKg: 1,
+            comparableDays: 1,
+          },
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+
+    expect(screen.getByText(/Dentro de la tolerancia/)).toBeTruthy();
   });
 
   it("colors a daily row below the minimum", () => {
@@ -221,6 +262,7 @@ describe("ExpectedSalesSection", () => {
               ...report.daily[0],
               expectedMoney: 1000,
               reportedMoney: 900,
+              comparableReportedMoney: 900,
               moneyDifference: -100,
             },
           ],
@@ -245,6 +287,7 @@ describe("ExpectedSalesSection", () => {
               priceAsOf: null,
               expectedMoney: null,
               reportedMoney: null,
+              comparableReportedMoney: null,
               moneyDifference: null,
             },
           ],
@@ -266,7 +309,10 @@ describe("ExpectedSalesSection", () => {
             ...report.summary,
             expectedMoney: null,
             reportedMoney: null,
+            comparableReportedMoney: null,
             moneyDifference: null,
+            effectivePricePerKg: null,
+            comparableDays: 0,
           },
         }}
       />,
@@ -275,12 +321,42 @@ describe("ExpectedSalesSection", () => {
     fireEvent.click(screen.getByText("Dinero"));
 
     expect(
-      screen.getByText("Sin producto o precio de referencia"),
+      screen.getByText(/Sin producto o precio de referencia/),
     ).toBeTruthy();
   });
 
-  it("opens the reference product picker from the report", () => {
+  it("warns about sales with zero amount", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: {
+            ...report.summary,
+            salesWithZeroMoney: 2,
+          },
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+
+    expect(screen.getByText(/2 ventas con monto cero/)).toBeTruthy();
+  });
+
+  it("hides the reference product editor for non-admin users", () => {
     render(<ExpectedSalesSection data={report} asOf={new Date(2026, 5, 7)} />);
+
+    expect(screen.queryByText("Producto de referencia")).toBeNull();
+  });
+
+  it("opens the reference product picker from the report", () => {
+    render(
+      <ExpectedSalesSection
+        data={report}
+        asOf={new Date(2026, 5, 7)}
+        canConfigure
+      />,
+    );
 
     fireEvent.click(screen.getByText("Producto de referencia"));
 

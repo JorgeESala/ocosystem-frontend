@@ -24,7 +24,7 @@ import {
   formatKgValue,
   formatMoney,
   formatVariance,
-  isBelowMinimum,
+  moneyComparisonState,
 } from "../utils/expectedSales";
 
 export type RankingSortKey =
@@ -46,6 +46,7 @@ interface Props {
   onSelectBranch: (branchId: number, branchName: string) => void;
   sort: RankingSort;
   onSortChange: (sort: RankingSort) => void;
+  expectedError?: boolean;
 }
 
 const SORT_OPTIONS: { value: RankingSortKey; label: string }[] = [
@@ -115,20 +116,24 @@ const ReviewBadge = ({ row }: { row: BranchRankingRow }) => {
 const ComplianceCell = ({
   row,
   align = "end",
+  expectedError = false,
 }: {
   row: BranchRankingRow;
   align?: "start" | "end";
+  expectedError?: boolean;
 }) => {
   const compliance = compliancePct(row);
   const alignment =
     align === "end" ? "items-end text-right" : "items-start text-left";
 
   if (compliance == null) {
-    const missingLabel = !row.expectedLoaded
-      ? "Cargando kilos esperados"
-      : row.expectedKg == null
-        ? "Sin kilos esperados"
-        : "Sin kilos vendidos";
+    const missingLabel = expectedError
+      ? "No se pudo cargar la venta esperada"
+      : !row.expectedLoaded
+        ? "Cargando kilos esperados"
+        : row.expectedKg == null
+          ? "Sin kilos esperados"
+          : "Sin kilos vendidos";
     return (
       <div className={`flex flex-col ${alignment}`}>
         <span className="text-sm text-gray-500">—</span>
@@ -158,12 +163,20 @@ const ComplianceCell = ({
       {row.expectedMoney != null && row.expectedReportedMoney != null ? (
         <span
           className={`text-xs tabular-nums ${
-            isBelowMinimum(row.expectedMoney, row.expectedReportedMoney)
+            moneyComparisonState(
+              row.expectedMoney,
+              row.expectedReportedMoney,
+            ) === "below"
               ? "text-red-400"
-              : "text-gray-400"
+              : moneyComparisonState(
+                    row.expectedMoney,
+                    row.expectedReportedMoney,
+                  ) === "within"
+                ? "text-amber-400"
+                : "text-gray-400"
           }`}
         >
-          Mín. {formatMXNCompact(row.expectedMoney)} · Real{" "}
+          Mín. {formatMXNCompact(row.expectedMoney)} · Comp.{" "}
           {formatMXNCompact(row.expectedReportedMoney)}
         </span>
       ) : row.expectedLoaded && row.expectedKg != null ? (
@@ -210,8 +223,9 @@ const legend = (
     </p>
     <p>
       Venta mínima = kg esperados × el último precio de venta del producto de
-      referencia de cada día. Se compara con el dinero registrado en las ventas
-      de remesa; no es una meta ni una proyección.
+      referencia de cada día. Comp. es la venta registrada en los días con
+      precio; el total incluye todos los días. Se permite 0.5% de tolerancia por
+      redondeo. No es una meta ni una proyección.
     </p>
     <p>
       El color de Cumplimiento indica la desviación: verde ±5%, ámbar 5–10%,
@@ -232,6 +246,7 @@ export const BranchRankingTable = ({
   onSelectBranch,
   sort,
   onSortChange,
+  expectedError = false,
 }: Props) => {
   const sortedRows = useMemo(() => {
     const items = [...rows];
@@ -407,7 +422,7 @@ export const BranchRankingTable = ({
                   {formatPieces(row.totalSlaughtered)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <ComplianceCell row={row} />
+                  <ComplianceCell row={row} expectedError={expectedError} />
                 </TableCell>
                 <TableCell className="text-right text-white tabular-nums">
                   {formatQuantity(row.mermaQuantity)} kg
@@ -490,7 +505,11 @@ export const BranchRankingTable = ({
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cumplimiento kg
                   </p>
-                  <ComplianceCell row={row} align="start" />
+                  <ComplianceCell
+                    row={row}
+                    align="start"
+                    expectedError={expectedError}
+                  />
                 </div>
                 {row.expectedLoaded &&
                   row.expectedKg != null &&
@@ -502,16 +521,31 @@ export const BranchRankingTable = ({
                       </p>
                       <div className="flex flex-wrap items-baseline gap-3 text-white">
                         <span>Mín. {formatMXN(row.expectedMoney)}</span>
-                        <span>Real {formatMXN(row.expectedReportedMoney)}</span>
+                        <span>
+                          Comp. {formatMXN(row.expectedReportedMoney)}
+                        </span>
                       </div>
+                      {row.expectedTotalReportedMoney != null &&
+                        row.expectedTotalReportedMoney !==
+                          row.expectedReportedMoney && (
+                          <p className="text-xs text-gray-400">
+                            Total registrado{" "}
+                            {formatMXN(row.expectedTotalReportedMoney)}
+                          </p>
+                        )}
                       <p
                         className={`text-xs ${
-                          isBelowMinimum(
+                          moneyComparisonState(
                             row.expectedMoney,
                             row.expectedReportedMoney,
-                          )
+                          ) === "below"
                             ? "text-red-400"
-                            : "text-green-400"
+                            : moneyComparisonState(
+                                  row.expectedMoney,
+                                  row.expectedReportedMoney,
+                                ) === "within"
+                              ? "text-amber-400"
+                              : "text-green-400"
                         }`}
                       >
                         Diferencia {formatMoney(row.expectedMoneyDifference)}

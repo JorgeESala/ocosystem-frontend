@@ -13,11 +13,15 @@ export interface ExpectedSalesSummaryDTO {
   salesWithoutReportedKg: number;
   daysWithData: number;
   wastePerChickenKg: number;
-  expectedMoney: number | null;
   reportedMoney: number | null;
+  comparableReportedMoney: number | null;
+  expectedMoney: number | null;
   moneyDifference: number | null;
+  effectivePricePerKg: number | null;
   daysWithoutPrice: number;
+  comparableDays: number;
   branchesWithoutReference: number;
+  salesWithZeroMoney: number;
 }
 
 export interface BranchExpectedSalesDTO {
@@ -37,10 +41,14 @@ export interface BranchExpectedSalesDTO {
   referenceProductName: string | null;
   referencePricePerKg: number | null;
   priceAsOf: string | null;
-  expectedMoney: number | null;
   reportedMoney: number | null;
+  comparableReportedMoney: number | null;
+  expectedMoney: number | null;
   moneyDifference: number | null;
+  effectivePricePerKg: number | null;
   priceMissingDays: number;
+  comparableDays: number;
+  salesWithZeroMoney: number;
 }
 
 export interface DailyExpectedSalesDTO {
@@ -58,9 +66,11 @@ export interface DailyExpectedSalesDTO {
   salesWithoutReportedKg: number;
   referencePricePerKg: number | null;
   priceAsOf: string | null;
-  expectedMoney: number | null;
   reportedMoney: number | null;
+  comparableReportedMoney: number | null;
+  expectedMoney: number | null;
   moneyDifference: number | null;
+  salesWithZeroMoney: number;
 }
 
 export interface ExpectedSalesReportDTO {

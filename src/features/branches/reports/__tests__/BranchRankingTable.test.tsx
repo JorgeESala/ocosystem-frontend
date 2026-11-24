@@ -32,7 +32,11 @@ const row = (
   salesWithoutReportedKg: 0,
   expectedMoney: 1000,
   expectedReportedMoney: 1000,
+  expectedTotalReportedMoney: 1000,
   expectedMoneyDifference: 0,
+  expectedEffectivePrice: 50,
+  expectedComparableDays: 7,
+  expectedSalesWithZeroMoney: 0,
   referenceProductBarcode: "REF",
   referencePriceMissing: false,
   ...overrides,
@@ -49,6 +53,7 @@ const renderTable = (
     sort?: RankingSort;
     onSortChange?: (sort: RankingSort) => void;
     onSelectBranch?: (branchId: number, branchName: string) => void;
+    expectedError?: boolean;
   } = {},
 ) =>
   render(
@@ -58,6 +63,7 @@ const renderTable = (
       onSelectBranch={overrides.onSelectBranch ?? vi.fn()}
       sort={overrides.sort ?? defaultSort}
       onSortChange={overrides.onSortChange ?? vi.fn()}
+      expectedError={overrides.expectedError}
     />,
   );
 
@@ -282,11 +288,12 @@ describe("BranchRankingTable", () => {
         expectedVariancePct: 5,
         expectedMoney: 45000,
         expectedReportedMoney: 46000,
+        expectedTotalReportedMoney: 46000,
         expectedMoneyDifference: 1000,
       }),
     ]);
 
-    expect(table().getByText(/Mín\. \$45,000 · Real \$46,000/)).toBeTruthy();
+    expect(table().getByText(/Mín\. \$45,000 · Comp\. \$46,000/)).toBeTruthy();
   });
 
   it("flags a branch below the money minimum", () => {
@@ -297,6 +304,7 @@ describe("BranchRankingTable", () => {
         expectedVariancePct: 0,
         expectedMoney: 1000,
         expectedReportedMoney: 900,
+        expectedTotalReportedMoney: 900,
         expectedMoneyDifference: -100,
       }),
     ]);
@@ -315,7 +323,11 @@ describe("BranchRankingTable", () => {
         expectedVariancePct: 5,
         expectedMoney: null,
         expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
         expectedMoneyDifference: null,
+        expectedEffectivePrice: null,
+        expectedComparableDays: 0,
+        expectedSalesWithZeroMoney: 0,
         referenceProductBarcode: null,
         referencePriceMissing: true,
       }),
@@ -334,7 +346,11 @@ describe("BranchRankingTable", () => {
         expectedVariancePct: 5,
         expectedMoney: null,
         expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
         expectedMoneyDifference: null,
+        expectedEffectivePrice: null,
+        expectedComparableDays: 0,
+        expectedSalesWithZeroMoney: 0,
         referenceProductBarcode: "REF",
         referencePriceMissing: true,
       }),
@@ -358,7 +374,36 @@ describe("BranchRankingTable", () => {
     ]);
 
     expect(cards().getByText(/Mín\. \$45,000\.00/)).toBeTruthy();
-    expect(cards().getByText(/Real \$46,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Comp\. \$46,000\.00/)).toBeTruthy();
     expect(cards().getByText(/Diferencia \$1,000\.00/)).toBeTruthy();
+  });
+
+  it("shows the expected sales error instead of loading forever", () => {
+    renderTable(
+      [
+        row(1, "Sucursal Centro", {
+          expectedLoaded: false,
+          expectedKg: null,
+          expectedReportedKg: null,
+          expectedVariancePct: null,
+          expectedMoney: null,
+          expectedReportedMoney: null,
+          expectedTotalReportedMoney: null,
+          expectedMoneyDifference: null,
+          expectedEffectivePrice: null,
+          expectedComparableDays: 0,
+          expectedSalesWithZeroMoney: 0,
+          referenceProductBarcode: null,
+          referencePriceMissing: false,
+        }),
+      ],
+      { expectedError: true },
+    );
+
+    expect(
+      table().getByText("No se pudo cargar la venta esperada"),
+    ).toBeTruthy();
+    expect(table().queryByText("Cargando kilos esperados")).toBeNull();
+    expect(table().queryByText("Revisar")).toBeNull();
   });
 });

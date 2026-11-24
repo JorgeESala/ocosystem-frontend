@@ -13,9 +13,11 @@ export interface DailyExpectedSalesRow {
   salesWithoutWeight: number;
   referencePricePerKg: number | null;
   priceAsOf: string | null;
-  expectedMoney: number | null;
   reportedMoney: number | null;
+  comparableReportedMoney: number | null;
+  expectedMoney: number | null;
   moneyDifference: number | null;
+  salesWithZeroMoney: number;
 }
 
 export const MONEY_REVIEW_TOLERANCE_PCT = 0.5;
@@ -30,17 +32,27 @@ export const expectedVariancePct = (
   return ((reportedKg - expectedKg) / expectedKg) * 100;
 };
 
+export type MoneyComparisonState = "below" | "within" | "above" | null;
+
+export const moneyComparisonState = (
+  expectedMoney: number | null | undefined,
+  reportedMoney: number | null | undefined,
+): MoneyComparisonState => {
+  if (expectedMoney == null || reportedMoney == null) return null;
+  const tolerance = Math.max(
+    0.01,
+    expectedMoney * (MONEY_REVIEW_TOLERANCE_PCT / 100),
+  );
+  const difference = reportedMoney - expectedMoney;
+  if (difference < -tolerance) return "below";
+  if (difference > tolerance) return "above";
+  return "within";
+};
+
 export const isBelowMinimum = (
   expectedMoney: number | null | undefined,
   reportedMoney: number | null | undefined,
-): boolean => {
-  if (expectedMoney == null || reportedMoney == null) return false;
-  const tolerance = Math.max(
-    1,
-    expectedMoney * (MONEY_REVIEW_TOLERANCE_PCT / 100),
-  );
-  return reportedMoney < expectedMoney - tolerance;
-};
+): boolean => moneyComparisonState(expectedMoney, reportedMoney) === "below";
 
 export const isKgUnitName = (value: string | null | undefined): boolean => {
   const normalized = (value ?? "").trim().toLowerCase();
@@ -60,9 +72,11 @@ export const aggregateExpectedDaily = (
       weightedBirds: number;
       salesWithoutWeight: number;
       pricedExpectedKg: number;
-      expectedMoney: number | null;
       reportedMoney: number | null;
+      comparableReportedMoney: number | null;
+      expectedMoney: number | null;
       moneyDifference: number | null;
+      salesWithZeroMoney: number;
       priceDates: Set<string>;
     }
   >();
@@ -76,9 +90,11 @@ export const aggregateExpectedDaily = (
       weightedBirds: 0,
       salesWithoutWeight: 0,
       pricedExpectedKg: 0,
-      expectedMoney: null,
       reportedMoney: null,
+      comparableReportedMoney: null,
+      expectedMoney: null,
       moneyDifference: null,
+      salesWithZeroMoney: 0,
       priceDates: new Set<string>(),
     };
 
@@ -94,13 +110,18 @@ export const aggregateExpectedDaily = (
       current.weightedBirds += row.birdsSold;
     }
     current.salesWithoutWeight += row.salesWithoutWeight ?? 0;
+    current.salesWithZeroMoney += row.salesWithZeroMoney ?? 0;
 
+    if (row.reportedMoney != null) {
+      current.reportedMoney = (current.reportedMoney ?? 0) + row.reportedMoney;
+    }
     if (row.expectedMoney != null && row.expectedKg != null) {
       current.expectedMoney = (current.expectedMoney ?? 0) + row.expectedMoney;
       current.pricedExpectedKg += row.expectedKg;
     }
-    if (row.reportedMoney != null) {
-      current.reportedMoney = (current.reportedMoney ?? 0) + row.reportedMoney;
+    if (row.comparableReportedMoney != null) {
+      current.comparableReportedMoney =
+        (current.comparableReportedMoney ?? 0) + row.comparableReportedMoney;
     }
     if (row.moneyDifference != null) {
       current.moneyDifference =
@@ -134,9 +155,11 @@ export const aggregateExpectedDaily = (
           : null,
       priceAsOf:
         value.priceDates.size === 1 ? Array.from(value.priceDates)[0] : null,
-      expectedMoney: value.expectedMoney,
       reportedMoney: value.reportedMoney,
+      comparableReportedMoney: value.comparableReportedMoney,
+      expectedMoney: value.expectedMoney,
       moneyDifference: value.moneyDifference,
+      salesWithZeroMoney: value.salesWithZeroMoney,
     }));
 };
 

@@ -122,8 +122,12 @@ describe("buildRankingRows", () => {
         referencePricePerKg: 50,
         priceAsOf: "2026-06-01",
         expectedMoney: 6000,
-        reportedMoney: 5500,
+        reportedMoney: 6000,
+        comparableReportedMoney: 5500,
         moneyDifference: -500,
+        effectivePricePerKg: 50,
+        comparableDays: 2,
+        salesWithZeroMoney: 0,
         priceMissingDays: 0,
       },
     ]);
@@ -134,7 +138,13 @@ describe("buildRankingRows", () => {
     expect(branchOne?.expectedKg).toBe(120);
     expect(branchOne?.expectedReportedKg).toBe(100);
     expect(branchOne?.expectedVariancePct).toBeCloseTo(-16.67);
+    expect(branchOne?.expectedReportedMoney).toBe(5500);
+    expect(branchOne?.expectedTotalReportedMoney).toBe(6000);
+    expect(branchOne?.expectedEffectivePrice).toBe(50);
+    expect(branchOne?.expectedComparableDays).toBe(2);
     expect(branchTwo?.expectedKg).toBeNull();
+    expect(branchTwo?.expectedReportedMoney).toBeNull();
+    expect(branchTwo?.expectedTotalReportedMoney).toBeNull();
   });
 
   it("marks expected data as not loaded when the report is missing", () => {
@@ -168,8 +178,12 @@ describe("buildRankingRows", () => {
         referencePricePerKg: 50,
         priceAsOf: "2026-06-01",
         expectedMoney: 5000,
-        reportedMoney: 4500,
+        reportedMoney: 5000,
+        comparableReportedMoney: 4500,
         moneyDifference: -500,
+        effectivePricePerKg: 50,
+        comparableDays: 1,
+        salesWithZeroMoney: 0,
         priceMissingDays: 0,
       },
     ]);
@@ -196,7 +210,11 @@ describe("needsReview", () => {
     salesWithoutReportedKg: 0,
     expectedMoney: 1000,
     expectedReportedMoney: 1000,
+    expectedTotalReportedMoney: 1000,
     expectedMoneyDifference: 0,
+    expectedEffectivePrice: 50,
+    expectedComparableDays: 7,
+    expectedSalesWithZeroMoney: 0,
     referenceProductBarcode: "REF",
     referencePriceMissing: false,
     ...overrides,

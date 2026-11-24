@@ -45,7 +45,18 @@ export const ReferenceProductModal = ({ asOf, onClose }: Props) => {
       .sort((left, right) => left.name.localeCompare(right.name, "es"));
   }, [catalogQuery.data]);
 
-  const handleChange = async (branchId: number, barcode: string) => {
+  const handleChange = async (
+    branchId: number,
+    branchName: string,
+    barcode: string,
+  ) => {
+    if (!barcode) {
+      const confirmed = window.confirm(
+        `¿Quitar el producto de referencia de ${branchName}?`,
+      );
+      if (!confirmed) return;
+    }
+
     setActionError(null);
     setSavingBranchId(branchId);
     try {
@@ -77,6 +88,11 @@ export const ReferenceProductModal = ({ asOf, onClose }: Props) => {
             Elige el pollo vendido por kilo que se usa como precio mínimo. Se
             toma el último precio de venta registrado para cada día del reporte.
           </p>
+
+          <Alert color="info">
+            Elige el producto más barato de la sucursal. Si eliges un corte, el
+            mínimo queda más alto que el piso real.
+          </Alert>
 
           {referenceQuery.isError && (
             <Alert color="failure">
@@ -135,10 +151,11 @@ export const ReferenceProductModal = ({ asOf, onClose }: Props) => {
                         </p>
                         {row.pricePerKg != null ? (
                           <p className="text-xs text-gray-400">
-                            {formatMXN(row.pricePerKg)} / kg · Precio del{" "}
+                            {formatMXN(row.pricePerKg)} / kg · Precio al cierre
+                            del reporte{" "}
                             {row.priceAsOf
                               ? formatFullDate(row.priceAsOf)
-                              : "último registro"}
+                              : "sin fecha"}
                           </p>
                         ) : (
                           <p className="text-xs text-amber-400">
@@ -157,7 +174,11 @@ export const ReferenceProductModal = ({ asOf, onClose }: Props) => {
                       value={row.productBarcode ?? ""}
                       disabled={savingBranchId != null}
                       onChange={(event) =>
-                        void handleChange(row.branchId, event.target.value)
+                        void handleChange(
+                          row.branchId,
+                          row.branchName,
+                          event.target.value,
+                        )
                       }
                     >
                       <option value="">Sin producto de referencia</option>

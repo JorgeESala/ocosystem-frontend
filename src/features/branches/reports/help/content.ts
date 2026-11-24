@@ -47,8 +47,8 @@ export const REPORTS_METRICS: HelpMetric[] = [
     details: [
       "Se calcula por cada venta de remesa. Si un día hay ventas de varias remesas, se suman.",
       "Solo se incluyen ventas con peso promedio de remesa y kilos vendidos registrados; las demás se avisan en la sección.",
-      "El mínimo en dinero usa el último precio de venta registrado del producto de referencia de cada día. No es una meta ni una proyección.",
-      "La venta registrada es el dinero de las ventas de remesa. Si falta el producto o el precio de referencia, la sección lo avisa.",
+      "El mínimo en dinero usa el último precio de venta registrado del producto de referencia de cada día, no el precio más bajo del periodo. La venta total incluye todos los días; la diferencia usa solo los días comparables.",
+      "Se permite 0.5% de tolerancia por redondeo. Las ventas con monto cero y los días sin precio se avisan en la sección.",
     ],
   },
   {
@@ -123,7 +123,7 @@ export const REPORTS_SECTIONS: HelpSection[] = [
     id: "venta-esperada",
     title: "¿Cómo se calcula la venta esperada?",
     content:
-      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. En dinero, el mínimo es kg esperados × el último precio de venta del producto de referencia de cada día; la venta registrada es el dinero de las ventas de remesa. Si una remesa no tiene peso promedio, la venta no tiene kilos registrados o falta el precio de referencia, esa parte no se incluye y se muestra un aviso.",
+      "Por cada venta de remesa: (peso promedio del pollo de la remesa − 0.25 kg) × pollos vendidos. El peso promedio sale de los kilos y pollos de la remesa. Si un día hay ventas de varias remesas, se suman. La comparación usa los kilos registrados en Entradas y Ventas. En dinero, el mínimo es kg esperados × el último precio de venta del producto de referencia de cada día; la venta total incluye todos los días y la diferencia usa solo los días comparables. Se permite 0.5% de tolerancia por redondeo. Si una remesa no tiene peso promedio, la venta no tiene kilos registrados, falta el precio de referencia o la venta tiene monto cero, la sección lo avisa.",
   },
   {
     id: "abc",

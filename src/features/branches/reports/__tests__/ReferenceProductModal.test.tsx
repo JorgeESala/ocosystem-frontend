@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fireEvent,
   render,
@@ -125,6 +125,11 @@ describe("ReferenceProductModal", () => {
     vi.clearAllMocks();
     mocks.update.mockResolvedValue(undefined);
     mocks.remove.mockResolvedValue(undefined);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("lists the branches with their configured product and price", () => {
@@ -138,7 +143,7 @@ describe("ReferenceProductModal", () => {
     expect(screen.getByText("Centro")).toBeTruthy();
     expect(screen.getByText("Norte")).toBeTruthy();
     expect(screen.getByText(/\$50\.00 \/ kg/)).toBeTruthy();
-    expect(screen.getByText(/Precio del/)).toBeTruthy();
+    expect(screen.getByText(/Precio al cierre/)).toBeTruthy();
     expect(screen.getByText("Sin precio de venta registrado")).toBeTruthy();
   });
 
@@ -188,6 +193,30 @@ describe("ReferenceProductModal", () => {
     });
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith(2));
+  });
+
+  it("does not clear the product when the confirmation is cancelled", async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    render(
+      <ReferenceProductModal asOf={new Date(2026, 5, 7)} onClose={vi.fn()} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Producto de referencia de Norte"), {
+      target: { value: "" },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it("warns to choose the cheapest reference product", () => {
+    render(
+      <ReferenceProductModal asOf={new Date(2026, 5, 7)} onClose={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByText(/Elige el producto más barato de la sucursal/),
+    ).toBeTruthy();
   });
 
   it("shows an error when the change cannot be saved", async () => {
