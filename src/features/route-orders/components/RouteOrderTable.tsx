@@ -28,7 +28,7 @@ const lastPrice = (row: RouteOrderDraftRow, unitType: RouteOrderUnitType) => {
 };
 
 const quantityHeader = (unitType: RouteOrderUnitType) =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Pollo";
 
 const priceHeader = (unitType: RouteOrderUnitType) =>
   unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
@@ -51,17 +51,21 @@ export const RouteOrderTable: React.FC<Props> = ({
 
   return (
     <div className="overflow-x-auto rounded-3xl border border-gray-700 bg-slate-950/70">
-      <table
-        className={`text-left text-xs text-gray-300 ${
-          unitType === "EGG" ? "min-w-[1500px]" : "min-w-[1050px]"
-        }`}
-      >
+      <table className="min-w-[1500px] text-left text-xs text-gray-300">
         <thead className="bg-slate-900/80 text-[10px] tracking-[0.12em] text-gray-400 uppercase">
           <tr>
             <th className="px-3 py-3">Cliente</th>
             <th className="px-3 py-3">Negocio</th>
             <th className="px-3 py-3">Localidad</th>
             <th className="px-3 py-3 text-right">{quantityHeader(unitType)}</th>
+            {unitType === "LIVE_CHICKEN" && (
+              <>
+                <th className="px-3 py-3">Alimento</th>
+                <th className="px-3 py-3">Huevo</th>
+                <th className="px-3 py-3 text-right">Peso</th>
+                <th className="px-3 py-3 text-right">Efectivo</th>
+              </>
+            )}
             <th className="px-3 py-3 text-right">Últ. vendido</th>
             {unitType === "EGG" && (
               <th className="px-3 py-3 text-right">Precio actual</th>
@@ -122,6 +126,70 @@ export const RouteOrderTable: React.FC<Props> = ({
                     className="w-24"
                   />
                 </td>
+                {unitType === "LIVE_CHICKEN" && (
+                  <>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="text"
+                        sizing="sm"
+                        value={row.feedText}
+                        data-testid={`feed-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            feedText: event.target.value,
+                          })
+                        }
+                        className="w-28"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="text"
+                        sizing="sm"
+                        value={row.eggText}
+                        data-testid={`eggs-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            eggText: event.target.value,
+                          })
+                        }
+                        className="w-24"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="number"
+                        sizing="sm"
+                        min="0"
+                        step="0.001"
+                        value={row.weight}
+                        data-testid={`weight-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            weight: event.target.value,
+                          })
+                        }
+                        className="w-24"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="number"
+                        sizing="sm"
+                        min="0"
+                        step="0.01"
+                        value={row.cashAmount}
+                        data-testid={`cash-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            cashAmount: event.target.value,
+                          })
+                        }
+                        className="w-28"
+                      />
+                    </td>
+                  </>
+                )}
                 <td className="px-3 py-2 text-right whitespace-nowrap">
                   {lastPrice(row, unitType)}
                 </td>

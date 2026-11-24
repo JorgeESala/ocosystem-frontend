@@ -247,6 +247,62 @@ describe("routeOrderCalc", () => {
         "LIVE_CHICKEN",
       ),
     ).toBe(false);
+    expect(
+      rowHasOrderData(
+        { ...rows[0], headCount: "", feedText: "485" },
+        "LIVE_CHICKEN",
+      ),
+    ).toBe(true);
+  });
+
+  it("guarda y recupera alimento, huevo, peso y efectivo en pollo vivo", () => {
+    const draft = buildDraft(sheet, "LIVE_CHICKEN", 65);
+    const row = {
+      ...draft.rows[0],
+      headCount: "10",
+      feedText: "485",
+      eggText: "4.85",
+      weight: "219.616",
+      cashAmount: "11200.50",
+    };
+
+    const payload = draftToSavePayload(
+      { ...draft, rows: [row] },
+      "LIVE_CHICKEN",
+    );
+
+    expect(payload.lines[0]).toMatchObject({
+      feedText: "485",
+      eggText: "4.85",
+      weight: 219.616,
+      cashAmount: 11200.5,
+    });
+
+    const savedSheet: RouteOrderSheetDTO = {
+      ...sheet,
+      order: {
+        ...sheet.order,
+        lines: [
+          {
+            ...sheet.order.lines[0],
+            headCount: 10,
+            feedText: "485",
+            eggText: "4.85",
+            weight: 219.616,
+            cashAmount: 11200.5,
+          },
+        ],
+      },
+    };
+    const savedDraft = buildDraft(savedSheet, "LIVE_CHICKEN", 65);
+    const savedRow = savedDraft.rows.find(
+      (candidate) => candidate.clientId === 10,
+    );
+
+    expect(savedRow?.feedText).toBe("485");
+    expect(savedRow?.eggText).toBe("4.85");
+    expect(savedRow?.weight).toBe("219.616");
+    expect(savedRow?.cashAmount).toBe("11200.5");
   });
 
   it("arma el borrador con último precio, precio actual y líneas guardadas", () => {
