@@ -160,23 +160,24 @@ const ComplianceCell = ({
         {formatKgValue(row.expectedReportedKg)} vendidos ·{" "}
         {formatKgValue(row.expectedKg)} esperados
       </span>
-      {row.expectedMoney != null && row.expectedReportedMoney != null ? (
+      {row.expectedComparableMoney != null &&
+      row.expectedReportedMoney != null ? (
         <span
           className={`text-xs tabular-nums ${
             moneyComparisonState(
-              row.expectedMoney,
+              row.expectedComparableMoney,
               row.expectedReportedMoney,
             ) === "below"
               ? "text-red-400"
               : moneyComparisonState(
-                    row.expectedMoney,
+                    row.expectedComparableMoney,
                     row.expectedReportedMoney,
                   ) === "within"
                 ? "text-amber-400"
                 : "text-gray-400"
           }`}
         >
-          Mín. {formatMXNCompact(row.expectedMoney)} · Comp.{" "}
+          Mín. comp. {formatMXNCompact(row.expectedComparableMoney)} · Comp.{" "}
           {formatMXNCompact(row.expectedReportedMoney)}
         </span>
       ) : row.expectedLoaded && row.expectedKg != null ? (
@@ -518,14 +519,16 @@ export const BranchRankingTable = ({
                 </div>
                 {row.expectedLoaded &&
                   row.expectedKg != null &&
-                  row.expectedMoney != null &&
+                  row.expectedComparableMoney != null &&
                   row.expectedReportedMoney != null && (
                     <div className="col-span-2">
                       <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                         Venta mínima vs registrada
                       </p>
                       <div className="flex flex-wrap items-baseline gap-3 text-white">
-                        <span>Mín. {formatMXN(row.expectedMoney)}</span>
+                        <span>
+                          Mín. comp. {formatMXN(row.expectedComparableMoney)}
+                        </span>
                         <span>
                           Comp. {formatMXN(row.expectedReportedMoney)}
                         </span>
@@ -541,12 +544,12 @@ export const BranchRankingTable = ({
                       <p
                         className={`text-xs ${
                           moneyComparisonState(
-                            row.expectedMoney,
+                            row.expectedComparableMoney,
                             row.expectedReportedMoney,
                           ) === "below"
                             ? "text-red-400"
                             : moneyComparisonState(
-                                  row.expectedMoney,
+                                  row.expectedComparableMoney,
                                   row.expectedReportedMoney,
                                 ) === "within"
                               ? "text-amber-400"

@@ -1,6 +1,6 @@
 import type { BranchSalesSummaryDTO } from "../api/consolidatedSales.api";
 import type { BranchExpectedSalesDTO } from "../api/expectedSales.api";
-import { isBelowMinimum } from "./expectedSales";
+import { comparableExpectedMoney, isBelowMinimum } from "./expectedSales";
 
 export interface BranchRankingRow extends BranchSalesSummaryDTO {
   share: number;
@@ -13,6 +13,7 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
   expectedMoney: number | null;
+  expectedComparableMoney: number | null;
   expectedReportedMoney: number | null;
   expectedTotalReportedMoney: number | null;
   expectedMoneyDifference: number | null;
@@ -85,6 +86,10 @@ export const buildRankingRows = (
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
         expectedMoney: expected?.expectedMoney ?? null,
+        expectedComparableMoney: comparableExpectedMoney(
+          expected?.comparableReportedMoney,
+          expected?.moneyDifference,
+        ),
         expectedReportedMoney: expected?.comparableReportedMoney ?? null,
         expectedTotalReportedMoney: expected?.reportedMoney ?? null,
         expectedMoneyDifference: expected?.moneyDifference ?? null,
@@ -146,7 +151,9 @@ export const reviewReasons = (row: BranchRankingRow): string[] => {
       );
     }
 
-    if (isBelowMinimum(row.expectedMoney, row.expectedReportedMoney)) {
+    if (
+      isBelowMinimum(row.expectedComparableMoney, row.expectedReportedMoney)
+    ) {
       reasons.push("Venta registrada por debajo del mínimo.");
     }
 

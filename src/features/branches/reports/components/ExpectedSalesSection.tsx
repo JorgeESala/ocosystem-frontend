@@ -38,6 +38,7 @@ import {
   formatMoney,
   formatPricePerKg,
   formatVariance,
+  comparableExpectedMoney,
   moneyComparisonState,
   MONEY_REVIEW_TOLERANCE_PCT,
 } from "../utils/expectedSales";
@@ -149,7 +150,10 @@ export const ExpectedSalesSection = ({
       : null;
   const moneyView = view === "money";
   const moneyState = moneyComparisonState(
-    summary?.expectedMoney,
+    comparableExpectedMoney(
+      summary?.comparableReportedMoney,
+      summary?.moneyDifference,
+    ),
     summary?.comparableReportedMoney,
   );
   const effectivePrice = summary?.effectivePricePerKg;

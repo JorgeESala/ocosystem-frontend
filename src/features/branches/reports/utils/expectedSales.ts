@@ -55,6 +55,14 @@ export const isBelowMinimum = (
   reportedMoney: number | null | undefined,
 ): boolean => moneyComparisonState(expectedMoney, reportedMoney) === "below";
 
+export const comparableExpectedMoney = (
+  comparableReportedMoney: number | null | undefined,
+  moneyDifference: number | null | undefined,
+): number | null =>
+  comparableReportedMoney != null && moneyDifference != null
+    ? comparableReportedMoney - moneyDifference
+    : null;
+
 export const isKgUnitName = (value: string | null | undefined): boolean => {
   const normalized = (value ?? "").trim().toLowerCase();
   return normalized === "kg" || normalized.startsWith("kilo");

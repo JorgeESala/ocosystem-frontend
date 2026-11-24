@@ -31,6 +31,7 @@ const row = (
   salesWithoutWeight: 0,
   salesWithoutReportedKg: 0,
   expectedMoney: 1000,
+  expectedComparableMoney: 1000,
   expectedReportedMoney: 1000,
   expectedTotalReportedMoney: 1000,
   expectedMoneyDifference: 0,
@@ -287,13 +288,16 @@ describe("BranchRankingTable", () => {
         expectedReportedKg: 1050,
         expectedVariancePct: 5,
         expectedMoney: 45000,
+        expectedComparableMoney: 45000,
         expectedReportedMoney: 46000,
         expectedTotalReportedMoney: 46000,
         expectedMoneyDifference: 1000,
       }),
     ]);
 
-    expect(table().getByText(/Mín\. \$45,000 · Comp\. \$46,000/)).toBeTruthy();
+    expect(
+      table().getByText(/Mín\. comp\. \$45,000 · Comp\. \$46,000/),
+    ).toBeTruthy();
   });
 
   it("flags a branch below the money minimum", () => {
@@ -336,6 +340,31 @@ describe("BranchRankingTable", () => {
     expect(table().getByText("Sin producto de referencia")).toBeTruthy();
     expect(cards().getByText("Sin producto de referencia")).toBeTruthy();
     expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("does not flag a mixed comparable day as below the minimum", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1000,
+        expectedVariancePct: 0,
+        expectedMoney: 2000,
+        expectedComparableMoney: 1000,
+        expectedReportedMoney: 1000,
+        expectedTotalReportedMoney: 1000,
+        expectedMoneyDifference: 0,
+        expectedSalesWithoutReportedMoney: 1,
+      }),
+    ]);
+
+    expect(
+      table().getByText(/Mín\. comp\. \$1,000 · Comp\. \$1,000/),
+    ).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(table().getByTitle("1 venta sin monto registrado.")).toBeTruthy();
+    expect(
+      table().queryByText("Venta registrada por debajo del mínimo."),
+    ).toBeNull();
   });
 
   it("shows a missing amount label when the price exists but the amount is missing", () => {
@@ -389,12 +418,13 @@ describe("BranchRankingTable", () => {
         expectedReportedKg: 1050,
         expectedVariancePct: 5,
         expectedMoney: 45000,
+        expectedComparableMoney: 45000,
         expectedReportedMoney: 46000,
         expectedMoneyDifference: 1000,
       }),
     ]);
 
-    expect(cards().getByText(/Mín\. \$45,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Mín\. comp\. \$45,000\.00/)).toBeTruthy();
     expect(cards().getByText(/Comp\. \$46,000\.00/)).toBeTruthy();
     expect(cards().getByText(/Diferencia \$1,000\.00/)).toBeTruthy();
   });
@@ -408,6 +438,7 @@ describe("BranchRankingTable", () => {
           expectedReportedKg: null,
           expectedVariancePct: null,
           expectedMoney: null,
+          expectedComparableMoney: null,
           expectedReportedMoney: null,
           expectedTotalReportedMoney: null,
           expectedMoneyDifference: null,

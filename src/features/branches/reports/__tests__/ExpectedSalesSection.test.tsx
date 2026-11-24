@@ -234,6 +234,32 @@ describe("ExpectedSalesSection", () => {
     expect(screen.getByText(/Por debajo del mínimo/)).toBeTruthy();
   });
 
+  it("uses the comparable expected amount for the mixed-day state", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: {
+            ...report.summary,
+            expectedMoney: 2000,
+            reportedMoney: 1000,
+            comparableReportedMoney: 1000,
+            moneyDifference: 0,
+            salesWithoutReportedMoney: 1,
+            daysWithoutReportedMoney: 1,
+            comparableDays: 1,
+          },
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+
+    expect(screen.getByText(/Dentro de la tolerancia/)).toBeTruthy();
+    expect(screen.queryByText(/Por debajo del mínimo/)).toBeNull();
+    expect(screen.getByText(/1 venta sin monto registrado/)).toBeTruthy();
+  });
+
   it("shows the within-tolerance hint for a small negative difference", () => {
     render(
       <ExpectedSalesSection

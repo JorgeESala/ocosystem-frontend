@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DailyExpectedSalesDTO } from "../api/expectedSales.api";
 import {
   aggregateExpectedDaily,
+  comparableExpectedMoney,
   expectedVariancePct,
   formatBirds,
   formatChickenWeight,
@@ -53,6 +54,18 @@ describe("expectedVariancePct", () => {
     expect(expectedVariancePct(null, 100)).toBeNull();
     expect(expectedVariancePct(0, 100)).toBeNull();
     expect(expectedVariancePct(100, null)).toBeNull();
+  });
+});
+
+describe("comparableExpectedMoney", () => {
+  it("derives the expected amount for comparable days", () => {
+    expect(comparableExpectedMoney(1000, 0)).toBe(1000);
+    expect(comparableExpectedMoney(1000, -100)).toBe(1100);
+  });
+
+  it("returns null when the comparable amount is missing", () => {
+    expect(comparableExpectedMoney(null, 0)).toBeNull();
+    expect(comparableExpectedMoney(1000, null)).toBeNull();
   });
 });
 

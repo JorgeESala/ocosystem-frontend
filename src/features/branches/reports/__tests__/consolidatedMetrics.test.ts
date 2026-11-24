@@ -141,6 +141,7 @@ describe("buildRankingRows", () => {
     expect(branchOne?.expectedReportedKg).toBe(100);
     expect(branchOne?.expectedVariancePct).toBeCloseTo(-16.67);
     expect(branchOne?.expectedReportedMoney).toBe(5500);
+    expect(branchOne?.expectedComparableMoney).toBe(6000);
     expect(branchOne?.expectedTotalReportedMoney).toBe(6000);
     expect(branchOne?.expectedEffectivePrice).toBe(50);
     expect(branchOne?.expectedComparableDays).toBe(2);
@@ -213,6 +214,7 @@ describe("needsReview", () => {
     salesWithoutWeight: 0,
     salesWithoutReportedKg: 0,
     expectedMoney: 1000,
+    expectedComparableMoney: 1000,
     expectedReportedMoney: 1000,
     expectedTotalReportedMoney: 1000,
     expectedMoneyDifference: 0,
@@ -384,6 +386,21 @@ describe("needsReview", () => {
 
     expect(needsReview(row)).toBe(true);
     expect(reviewReasons(row)).toContain("2 ventas sin monto registrado.");
+  });
+
+  it("uses the comparable expected amount for mixed days", () => {
+    const row = rankingRow({
+      expectedMoney: 2000,
+      expectedComparableMoney: 1000,
+      expectedReportedMoney: 1000,
+      expectedMoneyDifference: 0,
+      expectedSalesWithoutReportedMoney: 1,
+    });
+
+    expect(reviewReasons(row)).toContain("1 venta sin monto registrado.");
+    expect(reviewReasons(row)).not.toContain(
+      "Venta registrada por debajo del mínimo.",
+    );
   });
 
   it("does not flag money reasons before expected data loads", () => {
