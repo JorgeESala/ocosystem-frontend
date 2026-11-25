@@ -89,6 +89,7 @@ describe("routeOrderExcel", () => {
     expect(summary?.getCell("A1").value).toContain("RESUMEN DE PEDIDOS");
 
     const sheet = workbook.getWorksheet("Ruta Centro");
+    expect(sheet?.pageSetup.orientation).toBe("landscape");
     expect(sheet?.getCell("A1").value).toContain("PEDIDO DE RUTA");
     expect(sheet?.getCell("D1").value).toContain("FECHA");
     expect(sheet?.getCell("D5").numFmt).toBe("0");
@@ -152,24 +153,35 @@ describe("routeOrderExcel", () => {
     ]);
 
     const sheet = workbook.getWorksheet("Ruta Centro");
-    expect(sheet?.getCell("A4").value).toBe("No.");
-    expect(sheet?.getCell("B4").value).toBe("Cliente");
-    expect(sheet?.getCell("E4").value).toBe("Pollo");
-    expect(sheet?.getCell("F4").value).toBe("Alimento");
-    expect(sheet?.getCell("G4").value).toBe("Huevo");
-    expect(sheet?.getCell("H4").value).toBe("Peso");
-    expect(sheet?.getCell("I4").value).toBe("Efectivo");
-    expect(sheet?.getCell("J4").value).toBe("Firma");
-    expect(sheet?.getCell("K4").value).toBe("Comentarios");
-    expect(sheet?.getCell("A5").value).toBe(1);
-    expect(sheet?.getCell("E5").value).toBe(50);
-    expect(sheet?.getCell("F5").value).toBe("485");
-    expect(sheet?.getCell("G5").value).toBe("4.85");
-    expect(sheet?.getCell("H5").value).toBe(219.616);
-    expect(sheet?.getCell("I5").value).toBe(11200.5);
-    expect(sheet?.getCell("J5").value).toBe("");
-    expect(sheet?.getCell("H5").numFmt).toBe("0.###");
-    expect(sheet?.getCell("I5").numFmt).toContain("$");
+    expect(sheet?.pageSetup.orientation).toBe("portrait");
+    expect(sheet?.getCell("A1").value).toBe("PEDIDO DE RUTA · Ruta Centro");
+    expect(sheet?.getCell("A1").alignment?.wrapText).toBe(true);
+    expect(sheet?.getCell("E1").value).toBe("Lunes");
+    expect(sheet?.getCell("G1").value).toContain("FECHA");
+    expect(sheet?.getCell("A3").value).toBe("No.");
+    expect(sheet?.getCell("B3").value).toBe("Cliente");
+    expect(sheet?.getCell("C3").value).toBe("Pollo");
+    expect(sheet?.getCell("D3").value).toBe("Alimento");
+    expect(sheet?.getCell("E3").value).toBe("Huevo");
+    expect(sheet?.getCell("F3").value).toBe("Peso");
+    expect(sheet?.getCell("G3").value).toBe("Efectivo");
+    expect(sheet?.getCell("H3").value).toBe("Firma");
+    expect(sheet?.getCell("I3").value).toBe("Comentarios");
+    expect(sheet?.getCell("A4").value).toBe(1);
+    expect(sheet?.getCell("B4").value).toBe("Cliente A\nAbarrotes A\nCentro");
+    expect(sheet?.getCell("C4").value).toBe(50);
+    expect(sheet?.getCell("D4").value).toBe("485");
+    expect(sheet?.getCell("E4").value).toBe("4.85");
+    expect(sheet?.getCell("F4").value).toBe(219.616);
+    expect(sheet?.getCell("G4").value).toBe(11200.5);
+    expect(sheet?.getCell("H4").value).toBe("");
+    expect(sheet?.getCell("F4").numFmt).toBe("0.###");
+    expect(sheet?.getCell("G4").numFmt).toContain("$");
+    expect(sheet?.getColumn(1).width).toBeGreaterThanOrEqual(6);
+    expect(sheet?.getColumn(3).width).toBeGreaterThanOrEqual(8);
+    expect(sheet?.getColumn(5).width).toBeGreaterThanOrEqual(9);
+    expect(sheet?.getColumn(6).width).toBeGreaterThanOrEqual(9);
+    expect(sheet?.getColumn(7).width).toBeGreaterThanOrEqual(12);
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
@@ -180,6 +192,8 @@ describe("routeOrderExcel", () => {
     expect(content).toContain("10 GY 10 MD");
     expect(content).not.toContain("Precio por kilo");
     expect(content).not.toContain("Últ. vendido");
+    expect(content).not.toContain('"Negocio"');
+    expect(content).not.toContain('"Localidad"');
     expect(content).not.toContain('"Verduras"');
     expect(content).not.toContain('"Condimentos"');
     expect(content).not.toContain('"Abarrotes"');
@@ -218,8 +232,8 @@ describe("routeOrderExcel", () => {
     ]);
 
     const sheet = workbook.getWorksheet("Ruta Centro");
-    expect(sheet?.getCell("H5").value).toBe("");
-    expect(sheet?.getCell("I5").value).toBe("");
+    expect(sheet?.getCell("F4").value).toBe("");
+    expect(sheet?.getCell("G4").value).toBe("");
   });
 
   it("numera consecutivamente internos y externos en pollo vivo", async () => {

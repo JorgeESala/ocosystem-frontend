@@ -56,6 +56,7 @@ describe("routeOrderSheet", () => {
   it("genera la hoja de huevo con encabezado, columnas, totales y escape", () => {
     const html = buildRouteOrdersPrintHtml([eggInput]);
 
+    expect(html).toContain("@page { size: landscape;");
     expect(html).toContain("Pedido de ruta · Ruta Centro");
     expect(html).toContain("Huevo");
     expect(html).toContain("Precio actual del huevo");
@@ -99,6 +100,7 @@ describe("routeOrderSheet", () => {
       },
     ]);
 
+    expect(html).toContain("@page { size: portrait;");
     expect(html).toContain("No.</th>");
     expect(html).toContain("Pollo</th>");
     expect(html).toContain("Alimento</th>");
@@ -107,6 +109,9 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Efectivo</th>");
     expect(html).toContain("Firma</th>");
     expect(html).toContain("Comentarios</th>");
+    expect(html).toContain("Cliente A<br/>Abarrotes A<br/>Centro");
+    expect(html).not.toContain("<th>Negocio</th>");
+    expect(html).not.toContain("<th>Localidad</th>");
     expect(html).toContain('<td class="signature"></td>');
     expect(html).toContain("Total pollos:");
     expect(html).toContain("485");
