@@ -357,8 +357,8 @@ const buildRouteSheet = (
         { width: 9.0 },
         { width: 9.0 },
         { width: 12.0 },
-        { width: 11.0 },
-        { width: 24.0 },
+        { width: 20.0 },
+        { width: 14.0 },
       ];
 
   if (egg) {

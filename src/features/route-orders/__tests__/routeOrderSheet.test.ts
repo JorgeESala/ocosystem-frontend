@@ -110,6 +110,11 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Firma</th>");
     expect(html).toContain("Comentarios</th>");
     expect(html).toContain("Cliente A<br/>Abarrotes A<br/>Centro");
+    const printWidths = Array.from(
+      html.matchAll(/<col style="width:(\d+)%" \/>/g),
+      (match) => Number(match[1]),
+    );
+    expect(printWidths.slice(-2)).toEqual([16, 9]);
     expect(html).not.toContain("<th>Negocio</th>");
     expect(html).not.toContain("<th>Localidad</th>");
     expect(html).toContain('<td class="signature"></td>');
