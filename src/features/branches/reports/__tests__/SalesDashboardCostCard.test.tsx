@@ -23,6 +23,10 @@ vi.mock("recharts", async (importOriginal) => ({
   ResponsiveContainer: MockResponsiveContainer,
 }));
 
+vi.mock("@/hooks/useAuthRole", () => ({
+  useAuthRole: () => ({ isAdmin: true }),
+}));
+
 vi.mock("xlsx", () => ({
   utils: {
     book_new: vi.fn(() => ({})),

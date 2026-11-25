@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "flowbite-react";
 import { HiChevronDown, HiChevronRight, HiChevronUp } from "react-icons/hi";
-import { formatMXN } from "@/utils/moneyNumbers";
+import { formatMXN, formatMXNCompact } from "@/utils/moneyNumbers";
 import { DeltaBadge } from "./DeltaBadge";
 import type { BranchRankingRow } from "../utils/consolidatedMetrics";
 import {
@@ -20,7 +20,12 @@ import {
   reviewReasons,
   REVIEW_VARIANCE_THRESHOLD_PCT,
 } from "../utils/consolidatedMetrics";
-import { formatKgValue, formatVariance } from "../utils/expectedSales";
+import {
+  formatKgValue,
+  formatMoney,
+  formatVariance,
+  moneyComparisonState,
+} from "../utils/expectedSales";
 
 export type RankingSortKey =
   | "totalSales"
@@ -41,6 +46,7 @@ interface Props {
   onSelectBranch: (branchId: number, branchName: string) => void;
   sort: RankingSort;
   onSortChange: (sort: RankingSort) => void;
+  expectedError?: boolean;
 }
 
 const SORT_OPTIONS: { value: RankingSortKey; label: string }[] = [
@@ -110,20 +116,24 @@ const ReviewBadge = ({ row }: { row: BranchRankingRow }) => {
 const ComplianceCell = ({
   row,
   align = "end",
+  expectedError = false,
 }: {
   row: BranchRankingRow;
   align?: "start" | "end";
+  expectedError?: boolean;
 }) => {
   const compliance = compliancePct(row);
   const alignment =
     align === "end" ? "items-end text-right" : "items-start text-left";
 
   if (compliance == null) {
-    const missingLabel = !row.expectedLoaded
-      ? "Cargando kilos esperados"
-      : row.expectedKg == null
-        ? "Sin kilos esperados"
-        : "Sin kilos vendidos";
+    const missingLabel = expectedError
+      ? "No se pudo cargar la venta esperada"
+      : !row.expectedLoaded
+        ? "Cargando kilos esperados"
+        : row.expectedKg == null
+          ? "Sin kilos esperados"
+          : "Sin kilos vendidos";
     return (
       <div className={`flex flex-col ${alignment}`}>
         <span className="text-sm text-gray-500">—</span>
@@ -150,6 +160,37 @@ const ComplianceCell = ({
         {formatKgValue(row.expectedReportedKg)} vendidos ·{" "}
         {formatKgValue(row.expectedKg)} esperados
       </span>
+      {row.expectedComparableMoney != null &&
+      row.expectedReportedMoney != null ? (
+        <span
+          className={`text-xs tabular-nums ${
+            moneyComparisonState(
+              row.expectedComparableMoney,
+              row.expectedReportedMoney,
+            ) === "below"
+              ? "text-red-400"
+              : moneyComparisonState(
+                    row.expectedComparableMoney,
+                    row.expectedReportedMoney,
+                  ) === "within"
+                ? "text-amber-400"
+                : "text-gray-400"
+          }`}
+        >
+          Mín. comp. {formatMXNCompact(row.expectedComparableMoney)} · Comp.{" "}
+          {formatMXNCompact(row.expectedReportedMoney)}
+        </span>
+      ) : row.expectedLoaded && row.expectedKg != null ? (
+        <span className="text-xs text-gray-500">
+          {row.referenceProductBarcode
+            ? row.referencePriceMissing
+              ? "Sin precio de referencia"
+              : row.expectedSalesWithoutReportedMoney > 0
+                ? "Sin monto registrado"
+                : "Sin precio de referencia"
+            : "Sin producto de referencia"}
+        </span>
+      ) : null}
     </div>
   );
 };
@@ -186,13 +227,21 @@ const legend = (
       remesa − 250 g) × pollos vendidos.
     </p>
     <p>
+      Venta mínima = kg esperados × el último precio de venta del producto de
+      referencia de cada día. Comp. es la venta registrada en los días con
+      precio; el total incluye todos los días. Se permite 0.5% de tolerancia por
+      redondeo. No es una meta ni una proyección.
+    </p>
+    <p>
       El color de Cumplimiento indica la desviación: verde ±5%, ámbar 5–10%,
       rojo ≥{REVIEW_VARIANCE_THRESHOLD_PCT}%. Merma total incluye tripa; la
       Pérdida Neta del KPI la excluye.
     </p>
     <p>
       Revisar = desviación de {REVIEW_VARIANCE_THRESHOLD_PCT}% o más, días sin
-      reporte, sin kilos esperados o ventas excluidas del cálculo.
+      reporte, sin kilos esperados, sin producto o precio de referencia, venta
+      sin monto registrado, venta por debajo del mínimo o ventas excluidas del
+      cálculo.
     </p>
   </div>
 );
@@ -203,6 +252,7 @@ export const BranchRankingTable = ({
   onSelectBranch,
   sort,
   onSortChange,
+  expectedError = false,
 }: Props) => {
   const sortedRows = useMemo(() => {
     const items = [...rows];
@@ -378,7 +428,7 @@ export const BranchRankingTable = ({
                   {formatPieces(row.totalSlaughtered)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <ComplianceCell row={row} />
+                  <ComplianceCell row={row} expectedError={expectedError} />
                 </TableCell>
                 <TableCell className="text-right text-white tabular-nums">
                   {formatQuantity(row.mermaQuantity)} kg
@@ -461,8 +511,55 @@ export const BranchRankingTable = ({
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cumplimiento kg
                   </p>
-                  <ComplianceCell row={row} align="start" />
+                  <ComplianceCell
+                    row={row}
+                    align="start"
+                    expectedError={expectedError}
+                  />
                 </div>
+                {row.expectedLoaded &&
+                  row.expectedKg != null &&
+                  row.expectedComparableMoney != null &&
+                  row.expectedReportedMoney != null && (
+                    <div className="col-span-2">
+                      <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+                        Venta mínima vs registrada
+                      </p>
+                      <div className="flex flex-wrap items-baseline gap-3 text-white">
+                        <span>
+                          Mín. comp. {formatMXN(row.expectedComparableMoney)}
+                        </span>
+                        <span>
+                          Comp. {formatMXN(row.expectedReportedMoney)}
+                        </span>
+                      </div>
+                      {row.expectedTotalReportedMoney != null &&
+                        row.expectedTotalReportedMoney !==
+                          row.expectedReportedMoney && (
+                          <p className="text-xs text-gray-400">
+                            Total registrado{" "}
+                            {formatMXN(row.expectedTotalReportedMoney)}
+                          </p>
+                        )}
+                      <p
+                        className={`text-xs ${
+                          moneyComparisonState(
+                            row.expectedComparableMoney,
+                            row.expectedReportedMoney,
+                          ) === "below"
+                            ? "text-red-400"
+                            : moneyComparisonState(
+                                  row.expectedComparableMoney,
+                                  row.expectedReportedMoney,
+                                ) === "within"
+                              ? "text-amber-400"
+                              : "text-green-400"
+                        }`}
+                      >
+                        Diferencia {formatMoney(row.expectedMoneyDifference)}
+                      </p>
+                    </div>
+                  )}
                 <div className="col-span-2">
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cobertura

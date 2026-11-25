@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import { useSalesReport } from "../api/salesReportes.queries";
 import { useExpectedSalesReport } from "../api/expectedSales.queries";
+import { useAuthRole } from "@/hooks/useAuthRole";
 import { ProductSalesTable } from "./ProductSalesTable";
 import DateRangePicker from "@/components/DateRangePicker";
 import { DateRangePresets } from "./DateRangePresets";
@@ -87,6 +88,7 @@ export const SalesDashboard = ({
   onDatesChange,
   onBack,
 }: Props) => {
+  const { isAdmin } = useAuthRole();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [detailBarcode, setDetailBarcode] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -673,6 +675,8 @@ export const SalesDashboard = ({
               isError={expectedSalesError}
               onRetry={() => void refetchExpectedSales()}
               scopeLabel={branchName}
+              asOf={dates.end}
+              canConfigure={isAdmin}
             />
           </div>
 
