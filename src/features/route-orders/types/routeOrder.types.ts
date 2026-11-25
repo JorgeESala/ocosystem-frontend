@@ -18,6 +18,10 @@ export interface RouteOrderLineDTO {
   headCount?: number | null;
   quantity: number;
   unitPrice: number;
+  feedText?: string | null;
+  eggText?: string | null;
+  weight?: number | null;
+  cashAmount?: number | null;
   vegetables?: string | null;
   condiments?: string | null;
   groceries?: string | null;
@@ -56,6 +60,10 @@ export interface RouteOrderLineSaveDTO {
   quantity: number;
   headCount?: number;
   unitPrice: number;
+  feedText?: string | null;
+  eggText?: string | null;
+  weight?: number;
+  cashAmount?: number;
   vegetables?: string | null;
   condiments?: string | null;
   groceries?: string | null;
@@ -103,6 +111,10 @@ export interface RouteOrderDraftRow {
   headCount: string;
   quantity: string;
   unitPrice: string;
+  feedText: string;
+  eggText: string;
+  weight: string;
+  cashAmount: string;
   lastSalePricePerCarton?: number | null;
   lastSalePricePerKg?: number | null;
   vegetables: string;
