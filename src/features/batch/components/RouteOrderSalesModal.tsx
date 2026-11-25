@@ -574,7 +574,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                     {group.salesRegenerationRequired && (
                       <Button
                         size="xs"
-                        color="warning"
+                        color="yellow"
                         onClick={() => onRegenerate(group)}
                         disabled={regenerateMutation.isPending}
                       >
