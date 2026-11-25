@@ -145,11 +145,21 @@ describe("RouteOrderTable", () => {
       />,
     );
 
+    const table = screen.getByRole("table");
+    expect(table).toHaveClass("w-full", "table-fixed");
+    expect(table).not.toHaveClass("min-w-[1500px]");
     expect(screen.getByText("Pollo")).toBeInTheDocument();
     expect(screen.getByText("Alimento")).toBeInTheDocument();
     expect(screen.getByText("Huevo")).toBeInTheDocument();
     expect(screen.getByText("Peso")).toBeInTheDocument();
     expect(screen.getByText("Efectivo")).toBeInTheDocument();
+    expect(screen.queryByText("Negocio")).not.toBeInTheDocument();
+    expect(screen.queryByText("Localidad")).not.toBeInTheDocument();
+    expect(screen.queryByText("Últ. vendido")).not.toBeInTheDocument();
+    expect(screen.getByText("Últ. $30.00")).toBeInTheDocument();
+    expect(screen.getByTestId("client-1")).toHaveTextContent("Cliente Uno");
+    expect(screen.getByTestId("client-1")).toHaveTextContent("Abarrotes Uno");
+    expect(screen.getByTestId("client-1")).toHaveTextContent("Centro");
     expect(screen.queryByText("Total")).not.toBeInTheDocument();
     expect(screen.queryByText("Verduras")).not.toBeInTheDocument();
     expect(screen.queryByText("Condimentos")).not.toBeInTheDocument();
@@ -189,6 +199,23 @@ describe("RouteOrderTable", () => {
     expect(onChange).toHaveBeenCalledWith(1, { eggText: "3" });
     expect(onChange).toHaveBeenCalledWith(1, { weight: "30.8" });
     expect(onChange).toHaveBeenCalledWith(1, { cashAmount: "1601" });
+  });
+
+  it("mantiene cliente, negocio y localidad separados en la hoja de huevo", () => {
+    render(
+      <RouteOrderTable
+        unitType="EGG"
+        rows={rows}
+        currentEggPricePerCarton={65}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Negocio")).toBeInTheDocument();
+    expect(screen.getByText("Localidad")).toBeInTheDocument();
+    expect(screen.getByText("Últ. vendido")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toHaveClass("min-w-[1500px]");
   });
 
   it("no muestra las columnas de control en la hoja de huevo", () => {
