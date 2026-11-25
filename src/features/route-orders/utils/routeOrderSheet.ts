@@ -79,12 +79,12 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
     <col style="width:4%" />
     <col style="width:30%" />
     <col style="width:7%" />
-    <col style="width:11%" />
-    <col style="width:8%" />
-    <col style="width:8%" />
-    <col style="width:11%" />
-    <col style="width:8%" />
-    <col style="width:13%" />
+    <col style="width:10%" />
+    <col style="width:7%" />
+    <col style="width:7%" />
+    <col style="width:10%" />
+    <col style="width:16%" />
+    <col style="width:9%" />
   </colgroup>`;
 };
 
