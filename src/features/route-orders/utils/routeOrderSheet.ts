@@ -77,16 +77,14 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
   }
   return `<colgroup>
     <col style="width:4%" />
-    <col style="width:15%" />
-    <col style="width:14%" />
+    <col style="width:30%" />
+    <col style="width:7%" />
     <col style="width:11%" />
-    <col style="width:6%" />
-    <col style="width:9%" />
-    <col style="width:7%" />
-    <col style="width:7%" />
-    <col style="width:9%" />
     <col style="width:8%" />
-    <col style="width:10%" />
+    <col style="width:8%" />
+    <col style="width:11%" />
+    <col style="width:8%" />
+    <col style="width:13%" />
   </colgroup>`;
 };
 
@@ -141,12 +139,14 @@ const buildTable = (
       if (!egg) {
         const weight = toNumber(row.weight);
         const cashAmount = toNumber(row.cashAmount);
+        const clientLabel = [row.clientName, row.businessName, row.localityName]
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+          .join("\n");
         return `
         <tr>
           <td class="num">${startIndex + index}</td>
-          <td>${escapeHtml(row.clientName)}</td>
-          <td>${escapeHtml(row.businessName)}</td>
-          <td>${escapeHtml(row.localityName)}</td>
+          <td>${escapeMultiline(clientLabel)}</td>
           <td class="num">${quantityText ? escapeHtml(quantityText) : ""}</td>
           <td>${escapeHtml(row.feedText)}</td>
           <td>${escapeHtml(row.eggText)}</td>
@@ -196,8 +196,6 @@ const buildTable = (
                  <th>Comentarios</th>`
               : `<th class="num">No.</th>
                  <th>Cliente</th>
-                 <th>Negocio</th>
-                 <th>Localidad</th>
                  <th class="num">${quantityLabel(unitType)}</th>
                  <th>Alimento</th>
                  <th>Huevo</th>
@@ -293,6 +291,9 @@ export const buildRouteOrdersPrintHtml = (
   const sheets = inputs
     .map((input) => `<section class="sheet">${buildSheetBody(input)}</section>`)
     .join("");
+  const portrait =
+    inputs.length > 0 &&
+    inputs.every((input) => input.unitType === "LIVE_CHICKEN");
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -300,7 +301,7 @@ export const buildRouteOrdersPrintHtml = (
     <meta charset="utf-8" />
     <title>Pedidos de ruta</title>
     <style>
-      @page { size: landscape; margin: 8mm; }
+      @page { size: ${portrait ? "portrait" : "landscape"}; margin: 8mm; }
       * { box-sizing: border-box; }
       body { font-family: Arial, sans-serif; color:#111; margin:0; padding:10px; }
       h1 { font-size:16px; margin:0 0 2px; }
@@ -333,7 +334,12 @@ export const buildRouteOrdersPrintHtml = (
 export const openRouteOrdersPrint = (inputs: RouteOrderPrintInput[]): void => {
   if (inputs.length === 0) return;
   const html = buildRouteOrdersPrintHtml(inputs);
-  const win = window.open("", "_blank", "width=1100,height=800");
+  const portrait = inputs.every((input) => input.unitType === "LIVE_CHICKEN");
+  const win = window.open(
+    "",
+    "_blank",
+    portrait ? "width=900,height=1100" : "width=1100,height=800",
+  );
   if (!win) return;
   win.document.open();
   win.document.write(html);

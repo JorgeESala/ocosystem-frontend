@@ -57,8 +57,6 @@ const routeHeaders = (input: RouteOrderPrintInput): string[] => {
     return [
       "No.",
       "Cliente",
-      "Negocio",
-      "Localidad",
       quantityHeader(input.unitType),
       "Alimento",
       "Huevo",
@@ -90,11 +88,13 @@ const routeRowValues = (
   if (input.unitType === "LIVE_CHICKEN") {
     const weight = toNumber(row.weight);
     const cashAmount = toNumber(row.cashAmount);
+    const clientLabel = [row.clientName, row.businessName, row.localityName]
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+      .join("\n");
     return [
       index + 1,
-      row.clientName,
-      row.businessName,
-      row.localityName,
+      clientLabel,
       toNumber(row.headCount),
       row.feedText,
       row.eggText,
@@ -127,9 +127,9 @@ const styleHeaderAndData = (
   unitType: RouteOrderUnitType,
 ) => {
   const egg = unitType === "EGG";
-  worksheet.getRow(headerRow).height = 36;
+  worksheet.getRow(headerRow).height = egg ? 36 : 42;
   worksheet.getRow(headerRow).eachCell({ includeEmpty: true }, (cell) => {
-    cell.font = { name: "Arial", size: 12 };
+    cell.font = { name: "Arial", size: egg ? 12 : 10 };
     cell.alignment = {
       horizontal: "center",
       vertical: "middle",
@@ -139,16 +139,24 @@ const styleHeaderAndData = (
 
   for (let rowIndex = headerRow + 1; rowIndex <= lastDataRow; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
-    row.height = 28;
+    row.height = egg ? 28 : 36;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
       const notesColumn = egg && col >= 5 && col <= 7;
+      const clientColumn = !egg && col === 2;
+      const commentsColumn = col === lastCol;
       cell.font = {
         name: "Arial",
-        size: notesColumn || col === lastCol ? 12 : 14,
+        size: egg
+          ? notesColumn || commentsColumn
+            ? 12
+            : 14
+          : clientColumn || commentsColumn
+            ? 10
+            : 11,
         color: { argb: BLACK },
       };
       cell.alignment = {
-        horizontal: "center",
+        horizontal: clientColumn || commentsColumn ? "left" : "center",
         vertical: "middle",
         wrapText: true,
       };
@@ -158,9 +166,9 @@ const styleHeaderAndData = (
       worksheet.getCell(rowIndex, 8).numFmt = "$#,##0.00;[Red]-$#,##0.00";
       worksheet.getCell(rowIndex, 9).numFmt = "#,##0.00;[Red]-#,##0.00";
     } else {
-      worksheet.getCell(rowIndex, 5).numFmt = "0.###";
-      worksheet.getCell(rowIndex, 8).numFmt = "0.###";
-      worksheet.getCell(rowIndex, 9).numFmt = "$#,##0.00;[Red]-$#,##0.00";
+      worksheet.getCell(rowIndex, 3).numFmt = "0.###";
+      worksheet.getCell(rowIndex, 6).numFmt = "0.###";
+      worksheet.getCell(rowIndex, 7).numFmt = "$#,##0.00;[Red]-$#,##0.00";
     }
   }
 };
@@ -205,8 +213,8 @@ const writeSectionTotals = (
 ): number => {
   const totals = computeTotals(rows, input.unitType);
   const egg = input.unitType === "EGG";
-  const valueCol = egg ? 4 : 5;
-  const labelLastCol = egg ? 1 : 4;
+  const valueCol = egg ? 4 : 3;
+  const labelLastCol = egg ? 1 : 2;
   let row = startRow;
   row = writeTotalLine(
     worksheet,
@@ -259,8 +267,8 @@ const writeOverallTotals = (
 ): number => {
   const totals = computeTotals(rows, input.unitType);
   const egg = input.unitType === "EGG";
-  const valueCol = egg ? 4 : 5;
-  const labelLastCol = egg ? 1 : 4;
+  const valueCol = egg ? 4 : 3;
+  const labelLastCol = egg ? 1 : 2;
   let row = startRow;
   if (egg) {
     row = writeTotalLine(
@@ -342,41 +350,65 @@ const buildRouteSheet = (
         { width: 28.0 },
       ]
     : [
-        { width: 5.0 },
-        { width: 28.7 },
-        { width: 30.0 },
-        { width: 22.0 },
-        { width: 10.0 },
-        { width: 14.0 },
-        { width: 10.0 },
-        { width: 10.0 },
-        { width: 14.0 },
-        { width: 14.0 },
+        { width: 6.0 },
+        { width: 34.0 },
+        { width: 8.0 },
+        { width: 12.0 },
+        { width: 9.0 },
+        { width: 9.0 },
+        { width: 12.0 },
+        { width: 11.0 },
         { width: 24.0 },
       ];
 
-  worksheet.mergeCells("A1:B1");
-  styleTitleCell(
-    worksheet.getCell("A1"),
-    GREEN,
-    `PEDIDO DE RUTA · ${input.routeName}`,
-  );
-  styleTitleCell(worksheet.getCell("C1"), YELLOW, dayLabel(input.date));
-  worksheet.mergeCells("D1:E1");
-  styleTitleCell(
-    worksheet.getCell("D1"),
-    GREEN,
-    `FECHA  ${formatHumanDate(input.date, "short")}`,
-  );
-  for (let col = 6; col <= lastCol; col += 1) {
-    worksheet.getCell(1, col).fill = fill(GREEN);
+  if (egg) {
+    worksheet.mergeCells("A1:B1");
+    styleTitleCell(
+      worksheet.getCell("A1"),
+      GREEN,
+      `PEDIDO DE RUTA · ${input.routeName}`,
+    );
+    styleTitleCell(worksheet.getCell("C1"), YELLOW, dayLabel(input.date));
+    worksheet.mergeCells("D1:E1");
+    styleTitleCell(
+      worksheet.getCell("D1"),
+      GREEN,
+      `FECHA  ${formatHumanDate(input.date, "short")}`,
+    );
+    for (let col = 6; col <= lastCol; col += 1) {
+      worksheet.getCell(1, col).fill = fill(GREEN);
+    }
+    worksheet.getRow(1).height = 33;
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+  } else {
+    worksheet.mergeCells("A1:D1");
+    styleTitleCell(
+      worksheet.getCell("A1"),
+      GREEN,
+      `PEDIDO DE RUTA · ${input.routeName}`,
+    );
+    worksheet.mergeCells("E1:F1");
+    styleTitleCell(worksheet.getCell("E1"), YELLOW, dayLabel(input.date));
+    worksheet.mergeCells("G1:I1");
+    styleTitleCell(
+      worksheet.getCell("G1"),
+      GREEN,
+      `FECHA  ${formatHumanDate(input.date, "short")}`,
+    );
+    worksheet.getRow(1).height = 42;
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+    worksheet.getCell("A1").alignment = {
+      horizontal: "left",
+      vertical: "middle",
+      wrapText: true,
+    };
   }
-  worksheet.getRow(1).height = 33;
-  worksheet.getRow(1).eachCell((cell) => {
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  });
 
-  worksheet.mergeCells("A2:E2");
+  worksheet.mergeCells(egg ? "A2:E2" : "A2:F2");
   const meta = [
     `Chofer: ${input.driverName || "________________"}`,
     `Vehículo: ${input.vehicleName || "________________"}`,
@@ -412,7 +444,7 @@ const buildRouteSheet = (
     priceCell.alignment = { horizontal: "left", vertical: "middle" };
   }
 
-  let rowCursor = 4;
+  let rowCursor = egg ? 4 : 3;
   let rowNumberOffset = 0;
   sections.forEach((section, sectionIndex) => {
     if (section.title) {
@@ -500,7 +532,7 @@ const buildRouteSheet = (
   }
 
   worksheet.pageSetup = {
-    orientation: "landscape",
+    orientation: egg ? "landscape" : "portrait",
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
