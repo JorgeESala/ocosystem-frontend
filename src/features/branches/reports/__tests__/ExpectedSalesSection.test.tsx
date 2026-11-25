@@ -404,6 +404,24 @@ describe("ExpectedSalesSection", () => {
     ).toBeNull();
   });
 
+  it("shows the expected calculation only when enabled", () => {
+    const { unmount } = render(
+      <ExpectedSalesSection data={report} showCalculation />,
+    );
+
+    expect(
+      screen.getAllByLabelText("Ver cálculo de la venta esperada").length,
+    ).toBeGreaterThan(0);
+
+    unmount();
+
+    render(<ExpectedSalesSection data={report} />);
+
+    expect(
+      screen.queryAllByLabelText("Ver cálculo de la venta esperada"),
+    ).toHaveLength(0);
+  });
+
   it("hides the reference product editor for non-admin users", () => {
     render(<ExpectedSalesSection data={report} asOf={new Date(2026, 5, 7)} />);
 

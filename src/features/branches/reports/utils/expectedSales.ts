@@ -188,6 +188,10 @@ const weightFormatter = new Intl.NumberFormat("es-MX", {
   maximumFractionDigits: 3,
 });
 
+const preciseWeightFormatter = new Intl.NumberFormat("es-MX", {
+  maximumFractionDigits: 4,
+});
+
 export const formatKg = (value: number | null | undefined): string =>
   value == null ? "—" : `${kgFormatter.format(value)} kg`;
 
@@ -200,6 +204,9 @@ export const formatBirds = (value: number | null | undefined): string =>
 export const formatChickenWeight = (
   value: number | null | undefined,
 ): string => (value == null ? "—" : `${weightFormatter.format(value)} kg`);
+
+export const formatWeightValue = (value: number | null | undefined): string =>
+  value == null ? "—" : `${preciseWeightFormatter.format(value)} kg`;
 
 export const formatVariance = (value: number | null | undefined): string => {
   if (value == null) return "—";

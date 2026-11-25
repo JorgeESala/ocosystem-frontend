@@ -14,7 +14,7 @@ type KpiColor =
 
 interface KPICardProps {
   title: string;
-  value: string;
+  value: ReactNode;
   icon: IconType;
   color: KpiColor;
   delta?: number | null;

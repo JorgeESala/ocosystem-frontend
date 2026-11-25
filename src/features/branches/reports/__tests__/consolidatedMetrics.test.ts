@@ -213,6 +213,8 @@ describe("needsReview", () => {
     expectedLoaded: true,
     salesWithoutWeight: 0,
     salesWithoutReportedKg: 0,
+    expectedBirdsSold: 120,
+    expectedAvgChickenWeight: 1.85,
     expectedMoney: 1000,
     expectedComparableMoney: 1000,
     expectedReportedMoney: 1000,

@@ -29,6 +29,7 @@ import DateRangePicker from "@/components/DateRangePicker";
 import { DateRangePresets } from "./DateRangePresets";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { ExpectedSalesSection } from "./ExpectedSalesSection";
+import { CalculationTooltip } from "./CalculationTooltip";
 import { TopProductsCard } from "./TopProductsCard";
 import { StrategyInsights } from "./StrategyInsights";
 import { TicketsByWeekdayCard } from "./TicketsByWeekdayCard";
@@ -482,7 +483,32 @@ export const SalesDashboard = ({
             />
             <KPICard
               title="Venta Esperada"
-              value={formatKg(expectedSales?.summary.expectedKg)}
+              value={
+                expectedSales?.summary.expectedKg != null ? (
+                  <CalculationTooltip
+                    scopeLabel={branchName}
+                    birdsSold={expectedSales.summary.birdsSold}
+                    avgChickenWeight={expectedSales.summary.avgChickenWeight}
+                    expectedKg={expectedSales.summary.expectedKg}
+                    pricePerKg={expectedSales.summary.effectivePricePerKg}
+                    expectedMoney={expectedSales.summary.expectedMoney}
+                    wastePerChickenKg={expectedSales.summary.wastePerChickenKg}
+                    missingProduct={
+                      (expectedSales.summary.branchesWithoutReference ?? 0) > 0
+                    }
+                    missingPrice={
+                      (expectedSales.summary.daysWithoutPrice ?? 0) > 0
+                    }
+                    missingAmount={
+                      (expectedSales.summary.salesWithoutReportedMoney ?? 0) > 0
+                    }
+                  >
+                    {formatKg(expectedSales.summary.expectedKg)}
+                  </CalculationTooltip>
+                ) : (
+                  formatKg(expectedSales?.summary.expectedKg)
+                )
+              }
               color="yellow"
               icon={HiScale}
               footnote={
@@ -677,6 +703,7 @@ export const SalesDashboard = ({
               scopeLabel={branchName}
               asOf={dates.end}
               canConfigure={isAdmin}
+              showCalculation
             />
           </div>
 
