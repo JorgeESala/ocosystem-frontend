@@ -182,6 +182,11 @@ describe("routeOrderExcel", () => {
     expect(sheet?.getColumn(5).width).toBeGreaterThanOrEqual(9);
     expect(sheet?.getColumn(6).width).toBeGreaterThanOrEqual(9);
     expect(sheet?.getColumn(7).width).toBeGreaterThanOrEqual(12);
+    expect(sheet?.getColumn(8).width).toBeGreaterThanOrEqual(18);
+    expect(sheet?.getColumn(9).width).toBeLessThanOrEqual(16);
+    expect(sheet?.getColumn(8).width).toBeGreaterThan(
+      sheet?.getColumn(9).width ?? 0,
+    );
 
     const values: unknown[] = [];
     sheet?.eachRow((row) => {
