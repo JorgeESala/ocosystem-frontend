@@ -112,7 +112,7 @@ export const RouteOrderTable: React.FC<Props> = ({
               </>
             )}
             <th className="px-3 py-3">Comentarios</th>
-            <th className="px-3 py-3" />
+            <th className="px-3 py-3 text-center" />
           </tr>
         </thead>
         <tbody>
@@ -171,7 +171,9 @@ export const RouteOrderTable: React.FC<Props> = ({
                           : { headCount: event.target.value },
                       )
                     }
-                    className={liveChicken ? "w-full" : "w-24"}
+                    className={
+                      liveChicken ? "w-full text-right tabular-nums" : "w-24"
+                    }
                   />
                 </td>
                 {unitType === "LIVE_CHICKEN" && (
@@ -219,7 +221,7 @@ export const RouteOrderTable: React.FC<Props> = ({
                             weight: event.target.value,
                           })
                         }
-                        className="w-full"
+                        className="w-full text-right tabular-nums"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -235,7 +237,7 @@ export const RouteOrderTable: React.FC<Props> = ({
                             cashAmount: event.target.value,
                           })
                         }
-                        className="w-full"
+                        className="w-full text-right tabular-nums"
                       />
                     </td>
                   </>
@@ -266,10 +268,12 @@ export const RouteOrderTable: React.FC<Props> = ({
                         unitPrice: event.target.value,
                       })
                     }
-                    className={liveChicken ? "w-full" : "w-24"}
+                    className={
+                      liveChicken ? "w-full text-right tabular-nums" : "w-24"
+                    }
                   />
                   {liveChicken && (
-                    <p className="mt-1 text-[10px] whitespace-nowrap text-gray-400">
+                    <p className="mt-1 text-right text-[10px] whitespace-nowrap text-gray-400 tabular-nums">
                       Últ. {lastPrice(row, unitType)}
                     </p>
                   )}
@@ -357,7 +361,7 @@ export const RouteOrderTable: React.FC<Props> = ({
                     className={liveChicken ? "w-full min-w-0" : "min-w-[120px]"}
                   />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-center">
                   {row.added && (
                     <button
                       type="button"
