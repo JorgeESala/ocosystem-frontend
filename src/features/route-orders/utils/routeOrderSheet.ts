@@ -3,7 +3,6 @@ import { formatMXN } from "@/utils/moneyNumbers";
 import {
   buildOrderSections,
   computeTotals,
-  pricePerBox,
   rowTotal,
   toNumber,
 } from "./routeOrderCalc";
@@ -49,10 +48,7 @@ const unitLabel = (unitType: RouteOrderUnitType): string =>
   unitType === "EGG" ? "Huevo" : "Pollo vivo";
 
 const quantityLabel = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Pollo";
-
-const priceLabel = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
+  unitType === "EGG" ? "Huevo" : "Pollo";
 
 const dayLabel = (date: string): string => {
   const name = getDayName(date);
@@ -62,17 +58,15 @@ const dayLabel = (date: string): string => {
 const buildColgroup = (unitType: RouteOrderUnitType): string => {
   if (unitType === "EGG") {
     return `<colgroup>
-      <col style="width:13%" />
-      <col style="width:15%" />
-      <col style="width:10%" />
-      <col style="width:8%" />
-      <col style="width:8%" />
-      <col style="width:8%" />
-      <col style="width:8%" />
-      <col style="width:10%" />
+      <col style="width:4%" />
+      <col style="width:23%" />
       <col style="width:7%" />
-      <col style="width:7%" />
-      <col style="width:6%" />
+      <col style="width:12%" />
+      <col style="width:11%" />
+      <col style="width:9%" />
+      <col style="width:8%" />
+      <col style="width:16%" />
+      <col style="width:10%" />
     </colgroup>`;
   }
   return `<colgroup>
@@ -89,25 +83,6 @@ const buildColgroup = (unitType: RouteOrderUnitType): string => {
 };
 
 const buildHeader = (input: RouteOrderPrintInput): string => {
-  const priceReference =
-    input.unitType === "EGG" &&
-    input.currentEggPricePerCarton != null &&
-    input.currentEggPricePerCarton > 0
-      ? `<p class="meta">Precio actual del huevo: ${formatMXN(
-          input.currentEggPricePerCarton,
-        )} por casillero (${formatMXN(
-          input.currentEggPricePerBox ??
-            pricePerBox(input.currentEggPricePerCarton),
-        )} por caja)${
-          input.currentEggPriceEffectiveFrom
-            ? `, vigente desde ${formatHumanDate(
-                input.currentEggPriceEffectiveFrom,
-                "short",
-              )}`
-            : ""
-        }.</p>`
-      : "";
-
   return `
     <h1>Pedido de ruta · ${escapeHtml(input.routeName)}</h1>
     <p class="sub">${escapeHtml(dayLabel(input.date))} ${escapeHtml(
@@ -117,8 +92,7 @@ const buildHeader = (input: RouteOrderPrintInput): string => {
       input.driverName || "________________",
     )} &nbsp;&nbsp;&nbsp; Vehículo: ${escapeHtml(
       input.vehicleName || "________________",
-    )}${input.tripId != null ? ` &nbsp;&nbsp;&nbsp; Viaje #${input.tripId}` : ""}</p>
-    ${priceReference}`;
+    )}${input.tripId != null ? ` &nbsp;&nbsp;&nbsp; Viaje #${input.tripId}` : ""}</p>`;
 };
 
 const buildTable = (
@@ -132,9 +106,6 @@ const buildTable = (
     .map((row, index) => {
       const quantity = egg ? toNumber(row.quantity) : toNumber(row.headCount);
       const quantityText = egg ? row.quantity : row.headCount;
-      const unitPrice = toNumber(row.unitPrice);
-      const showPrices = quantity > 0 || unitPrice > 0;
-      const total = rowTotal(row);
 
       if (!egg) {
         const weight = toNumber(row.weight);
@@ -157,20 +128,20 @@ const buildTable = (
         </tr>`;
       }
 
+      const clientLabel = [row.clientName, row.businessName, row.localityName]
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+        .join("\n");
       return `
         <tr>
-          <td>${escapeHtml(row.clientName)}</td>
-          <td>${escapeHtml(row.businessName)}</td>
-          <td>${escapeHtml(row.localityName)}</td>
+          <td class="num">${startIndex + index}</td>
+          <td>${escapeMultiline(clientLabel)}</td>
           <td class="num">${quantityText ? escapeHtml(quantityText) : ""}</td>
-          <td class="num">${showPrices ? formatMXN(unitPrice) : ""}</td>
-          <td class="num">${
-            showPrices ? formatMXN(pricePerBox(unitPrice)) : ""
-          }</td>
-          <td class="num">${quantity > 0 ? formatMXN(total) : ""}</td>
           <td>${escapeMultiline(row.vegetables)}</td>
           <td>${escapeMultiline(row.condiments)}</td>
           <td>${escapeMultiline(row.groceries)}</td>
+          <td class="num">${quantity > 0 ? formatMXN(rowTotal(row)) : ""}</td>
+          <td class="signature"></td>
           <td>${escapeMultiline(row.comments)}</td>
         </tr>`;
     })
@@ -183,16 +154,14 @@ const buildTable = (
         <tr>
           ${
             egg
-              ? `<th>Cliente</th>
-                 <th>Negocio</th>
-                 <th>Localidad</th>
+              ? `<th class="num">No.</th>
+                 <th>Cliente</th>
                  <th class="num">${quantityLabel(unitType)}</th>
-                 <th class="num">${priceLabel(unitType)}</th>
-                 <th class="num">Precio/caja</th>
-                 <th class="num">Total</th>
                  <th>Verduras</th>
                  <th>Condimentos</th>
                  <th>Abarrotes</th>
+                 <th class="num">Total</th>
+                 <th class="signature">Firma</th>
                  <th>Comentarios</th>`
               : `<th class="num">No.</th>
                  <th>Cliente</th>
@@ -293,7 +262,9 @@ export const buildRouteOrdersPrintHtml = (
     .join("");
   const portrait =
     inputs.length > 0 &&
-    inputs.every((input) => input.unitType === "LIVE_CHICKEN");
+    inputs.every(
+      (input) => input.unitType === "EGG" || input.unitType === "LIVE_CHICKEN",
+    );
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -313,6 +284,7 @@ export const buildRouteOrdersPrintHtml = (
       thead { display: table-header-group; }
       tr { page-break-inside: avoid; }
       .num { text-align:right; white-space:nowrap; }
+      .signature { height:30px; }
       h2.section-title { font-size:12px; margin:12px 0 4px; text-transform:uppercase; background:#e5e7eb; padding:4px 6px; border:1px solid #999; }
       .section-totals { margin:4px 0 10px; font-size:10px; }
       .totals { display:flex; flex-wrap:wrap; gap:16px; margin-top:8px; font-size:11px; }
@@ -334,7 +306,9 @@ export const buildRouteOrdersPrintHtml = (
 export const openRouteOrdersPrint = (inputs: RouteOrderPrintInput[]): void => {
   if (inputs.length === 0) return;
   const html = buildRouteOrdersPrintHtml(inputs);
-  const portrait = inputs.every((input) => input.unitType === "LIVE_CHICKEN");
+  const portrait = inputs.every(
+    (input) => input.unitType === "EGG" || input.unitType === "LIVE_CHICKEN",
+  );
   const win = window.open(
     "",
     "_blank",

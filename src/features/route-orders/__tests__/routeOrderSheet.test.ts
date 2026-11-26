@@ -56,13 +56,24 @@ describe("routeOrderSheet", () => {
   it("genera la hoja de huevo con encabezado, columnas, totales y escape", () => {
     const html = buildRouteOrdersPrintHtml([eggInput]);
 
-    expect(html).toContain("@page { size: landscape;");
+    expect(html).toContain("@page { size: portrait;");
     expect(html).toContain("Pedido de ruta · Ruta Centro");
-    expect(html).toContain("Huevo");
-    expect(html).toContain("Precio actual del huevo");
-    expect(html).toContain("Huevo (casilleros)");
-    expect(html).toContain("Precio/casillero");
-    expect(html).toContain("Precio/caja");
+    expect(html).toContain("No.</th>");
+    expect(html).toContain("Cliente</th>");
+    expect(html).toContain("Huevo</th>");
+    expect(html).toContain("Verduras</th>");
+    expect(html).toContain("Condimentos</th>");
+    expect(html).toContain("Abarrotes</th>");
+    expect(html).toContain("Total</th>");
+    expect(html).toContain("Firma</th>");
+    expect(html).toContain("Comentarios</th>");
+    expect(html).not.toContain("Huevo (casilleros)");
+    expect(html).not.toContain("Verduras (kilos)");
+    expect(html).not.toContain("Precio/casillero");
+    expect(html).not.toContain("Precio/caja");
+    expect(html).not.toContain("Precio actual del huevo");
+    expect(html).toContain("Cliente A<br/>Abarrotes A<br/>Centro");
+    expect(html).toContain('<td class="signature"></td>');
     expect(html).not.toContain("Clientes externos");
     expect(html).not.toContain("Subtotal clientes externos");
     expect(html).toContain("TOTAL DEL PEDIDO");
@@ -71,6 +82,15 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(html).toContain("window.print()");
     expect(html).toContain("1,170.00");
+
+    const printWidths = Array.from(
+      html.matchAll(/<col style="width:(\d+)%" \/>/g),
+      (match) => Number(match[1]),
+    );
+    expect(printWidths.slice(-2)).toEqual([16, 10]);
+    expect(printWidths[printWidths.length - 2]).toBeGreaterThan(
+      printWidths[printWidths.length - 1] ?? 0,
+    );
   });
 
   it("genera la hoja de pollo vivo con las columnas de control", () => {
@@ -274,7 +294,7 @@ describe("routeOrderSheet", () => {
     expect(html).toContain("Cliente B");
   });
 
-  it("usa el precio por casillero de cuatro decimales para totales exactos", () => {
+  it("usa el precio por casillero para calcular el total exacto", () => {
     const preciseDraft: RouteOrderDraft = {
       ...draft,
       rows: [
@@ -294,8 +314,8 @@ describe("routeOrderSheet", () => {
       { ...eggInput, draft: preciseDraft },
     ]);
 
-    expect(html).toContain("$66.6667");
-    expect(html).toContain("$800.00");
+    expect(html).not.toContain("$66.6667");
+    expect(html).not.toContain("$800.00");
     expect(html).toContain("$1,200.00");
   });
 

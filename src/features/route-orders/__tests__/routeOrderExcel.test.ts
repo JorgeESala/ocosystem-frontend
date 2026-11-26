@@ -89,12 +89,31 @@ describe("routeOrderExcel", () => {
     expect(summary?.getCell("A1").value).toContain("RESUMEN DE PEDIDOS");
 
     const sheet = workbook.getWorksheet("Ruta Centro");
-    expect(sheet?.pageSetup.orientation).toBe("landscape");
+    expect(sheet?.pageSetup.orientation).toBe("portrait");
     expect(sheet?.getCell("A1").value).toContain("PEDIDO DE RUTA");
-    expect(sheet?.getCell("D1").value).toContain("FECHA");
-    expect(sheet?.getCell("D5").numFmt).toBe("0");
-    expect(sheet?.getCell("H5").numFmt).toContain("$");
-    expect(sheet?.getCell("I5").numFmt).not.toContain("$");
+    expect(sheet?.getCell("G1").value).toContain("FECHA");
+    expect(sheet?.getCell("A3").value).toBe("No.");
+    expect(sheet?.getCell("B3").value).toBe("Cliente");
+    expect(sheet?.getCell("C3").value).toBe("Huevo");
+    expect(sheet?.getCell("D3").value).toBe("Verduras");
+    expect(sheet?.getCell("E3").value).toBe("Condimentos");
+    expect(sheet?.getCell("F3").value).toBe("Abarrotes");
+    expect(sheet?.getCell("G3").value).toBe("Total");
+    expect(sheet?.getCell("H3").value).toBe("Firma");
+    expect(sheet?.getCell("I3").value).toBe("Comentarios");
+    expect(sheet?.getCell("A4").value).toBe(1);
+    expect(sheet?.getCell("B4").value).toBe("Cliente A\nAbarrotes A\nCentro");
+    expect(sheet?.getCell("C4").value).toBe(18);
+    expect(sheet?.getCell("D4").value).toBe("Tomate");
+    expect(sheet?.getCell("G4").value).toBe(1170);
+    expect(sheet?.getCell("H4").value).toBe("");
+    expect(sheet?.getCell("C4").numFmt).toBe("0");
+    expect(sheet?.getCell("G4").numFmt).toContain("$");
+    expect(sheet?.getColumn(8).width).toBeGreaterThanOrEqual(18);
+    expect(sheet?.getColumn(9).width).toBeLessThanOrEqual(16);
+    expect(sheet?.getColumn(8).width).toBeGreaterThan(
+      sheet?.getColumn(9).width ?? 0,
+    );
     expect(
       (
         workbook as unknown as {
@@ -109,6 +128,11 @@ describe("routeOrderExcel", () => {
     });
     const content = JSON.stringify(values);
     expect(content).not.toContain("CLIENTES EXTERNOS");
+    expect(content).not.toContain("Precio por casillero");
+    expect(content).not.toContain("Precio por caja");
+    expect(content).not.toContain("Verduras (kilos)");
+    expect(content).not.toContain("Precio actual del huevo");
+    expect(content).toContain("TOTAL DE CAJAS");
     expect(content).toContain("TOTAL DEL PEDIDO");
     expect(content).toContain("Cliente A");
     expect(content).not.toContain("Cliente B");
@@ -122,6 +146,7 @@ describe("routeOrderExcel", () => {
     const summaryContent = JSON.stringify(summaryValues);
     expect(summaryContent).not.toContain("Externos");
     expect(summaryContent).toContain("Total");
+    expect(summary?.getCell("I3").value).toBe("Casilleros");
   });
 
   it("genera la hoja de pollo vivo con las columnas de control", async () => {
@@ -317,8 +342,9 @@ describe("routeOrderExcel", () => {
       content.indexOf("CLIENTES EXTERNOS"),
     );
     expect(content).toContain("TOTAL DEL PEDIDO");
-    expect(sheet?.getCell("A5").value).toBe("Nombre Cliente");
-    expect(sheet?.getCell("J5").value).toBe("Comentarios");
+    expect(sheet?.getCell("A4").value).toBe("No.");
+    expect(sheet?.getCell("B4").value).toBe("Cliente");
+    expect(sheet?.getCell("I4").value).toBe("Comentarios");
     expect(content).not.toContain("Cliente B");
 
     const summary = workbook.getWorksheet("Resumen");
