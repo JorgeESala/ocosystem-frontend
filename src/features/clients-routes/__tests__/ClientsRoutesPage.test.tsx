@@ -77,6 +77,7 @@ vi.mock("@/core/api/route/routes.queries", () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
+  useReorderRoutes: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useRoutePerformance: mocks.useRoutePerformance,
 }));
 

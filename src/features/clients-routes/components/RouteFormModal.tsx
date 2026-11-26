@@ -9,7 +9,13 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiCheck, HiChevronDown, HiPlus, HiX } from "react-icons/hi";
+import {
+  HiCheck,
+  HiChevronDown,
+  HiChevronUp,
+  HiPlus,
+  HiX,
+} from "react-icons/hi";
 import {
   useCreateRoute,
   useRoute,
@@ -107,6 +113,19 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
     }));
   };
 
+  const moveLocality = (id: number, direction: -1 | 1) => {
+    setForm((prev) => {
+      const index = prev.localityIds.indexOf(id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= prev.localityIds.length) {
+        return prev;
+      }
+      const next = [...prev.localityIds];
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...prev, localityIds: next };
+    });
+  };
+
   const toggleDay = (day: number) => {
     setForm((prev) => ({
       ...prev,
@@ -129,7 +148,7 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
     }
     const payload = {
       name,
-      localityIds: [...form.localityIds].sort((a, b) => a - b),
+      localityIds: [...form.localityIds],
       deliveryDays: [...form.deliveryDays].sort((a, b) => a - b),
     };
     try {
@@ -242,12 +261,30 @@ export const RouteFormModal: React.FC<RouteFormModalProps> = ({
               )}
               {form.localityIds.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {form.localityIds.map((id) => (
+                  {form.localityIds.map((id, index) => (
                     <span
                       key={id}
                       className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-xs text-gray-200"
                     >
                       {localityName(id)}
+                      <button
+                        type="button"
+                        onClick={() => moveLocality(id, -1)}
+                        disabled={index === 0}
+                        aria-label={`Mover ${localityName(id)} arriba`}
+                        className="text-gray-400 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <HiChevronUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveLocality(id, 1)}
+                        disabled={index === form.localityIds.length - 1}
+                        aria-label={`Mover ${localityName(id)} abajo`}
+                        className="text-gray-400 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <HiChevronDown size={12} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => removeLocality(id)}

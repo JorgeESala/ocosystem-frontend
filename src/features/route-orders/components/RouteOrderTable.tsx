@@ -1,5 +1,5 @@
 import { TextInput, Textarea } from "flowbite-react";
-import { HiTrash } from "react-icons/hi";
+import { HiChevronDown, HiChevronUp, HiTrash } from "react-icons/hi";
 import { formatMXN } from "@/utils/moneyNumbers";
 import {
   CARTONS_PER_BOX,
@@ -19,6 +19,7 @@ interface Props {
   currentEggPricePerCarton?: number | null;
   onChange: (clientId: number, patch: Partial<RouteOrderDraftRow>) => void;
   onRemove: (clientId: number) => void;
+  onMove?: (clientId: number, direction: "up" | "down") => void;
 }
 
 const lastPrice = (row: RouteOrderDraftRow, unitType: RouteOrderUnitType) => {
@@ -39,6 +40,7 @@ export const RouteOrderTable: React.FC<Props> = ({
   currentEggPricePerCarton,
   onChange,
   onRemove,
+  onMove,
 }) => {
   if (rows.length === 0) {
     return (
@@ -50,6 +52,32 @@ export const RouteOrderTable: React.FC<Props> = ({
   }
 
   const liveChicken = unitType === "LIVE_CHICKEN";
+
+  const moveControls = (row: RouteOrderDraftRow, index: number) =>
+    onMove ? (
+      <div className="flex shrink-0 flex-col">
+        <button
+          type="button"
+          onClick={() => onMove(row.clientId, "up")}
+          disabled={index === 0}
+          aria-label={`Mover ${row.clientName} arriba`}
+          data-testid={`move-up-${row.clientId}`}
+          className="rounded p-0.5 text-gray-500 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
+        >
+          <HiChevronUp size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMove(row.clientId, "down")}
+          disabled={index === rows.length - 1}
+          aria-label={`Mover ${row.clientName} abajo`}
+          data-testid={`move-down-${row.clientId}`}
+          className="rounded p-0.5 text-gray-500 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
+        >
+          <HiChevronDown size={12} />
+        </button>
+      </div>
+    ) : null;
 
   return (
     <div className="overflow-x-auto rounded-3xl border border-gray-700 bg-slate-950/70">
@@ -116,7 +144,7 @@ export const RouteOrderTable: React.FC<Props> = ({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const quantity =
               unitType === "EGG"
                 ? toNumber(row.quantity)
@@ -134,22 +162,32 @@ export const RouteOrderTable: React.FC<Props> = ({
                     className="px-3 py-2"
                     data-testid={`client-${row.clientId}`}
                   >
-                    <div className="font-medium text-white">
-                      {row.clientName}
-                      {addedBadge}
-                    </div>
-                    {(row.businessName || row.localityName) && (
-                      <div className="mt-0.5 text-[10px] leading-4 font-normal text-gray-400">
-                        {row.businessName && <div>{row.businessName}</div>}
-                        {row.localityName && <div>{row.localityName}</div>}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium text-white">
+                          {row.clientName}
+                          {addedBadge}
+                        </div>
+                        {(row.businessName || row.localityName) && (
+                          <div className="mt-0.5 text-[10px] leading-4 font-normal text-gray-400">
+                            {row.businessName && <div>{row.businessName}</div>}
+                            {row.localityName && <div>{row.localityName}</div>}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      {moveControls(row, index)}
+                    </div>
                   </td>
                 ) : (
                   <>
                     <td className="px-3 py-2 font-medium text-white">
-                      {row.clientName}
-                      {addedBadge}
+                      <div className="flex items-start justify-between gap-2">
+                        <span>
+                          {row.clientName}
+                          {addedBadge}
+                        </span>
+                        {moveControls(row, index)}
+                      </div>
                     </td>
                     <td className="px-3 py-2">{row.businessName || "—"}</td>
                     <td className="px-3 py-2">{row.localityName || "—"}</td>

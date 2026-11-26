@@ -9,6 +9,7 @@ import {
   getRoutePerformance,
   getRoutes,
   reactivateRoute,
+  reorderRoutes,
   updateRoute,
   type RoutePayload,
 } from "@/core/api/route/route.api";
@@ -145,6 +146,23 @@ export const useReactivateRoute = () => {
     mutationFn: async (id: number): Promise<Route> => {
       try {
         return await reactivateRoute(id);
+      } catch (error) {
+        throw translateRouteError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: routeKeys.all });
+    },
+  });
+};
+
+export const useReorderRoutes = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (routeIds: number[]): Promise<Route[]> => {
+      try {
+        return await reorderRoutes(routeIds);
       } catch (error) {
         throw translateRouteError(error);
       }

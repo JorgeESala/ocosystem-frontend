@@ -20,6 +20,7 @@ import {
   HiPlus,
   HiPrinter,
   HiSave,
+  HiSortAscending,
   HiTrash,
 } from "react-icons/hi";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -63,10 +64,12 @@ import {
   computeTotals,
   draftToSavePayload,
   isInternalRow,
+  moveDraftRow,
   removeClientFromDraft,
   roundMoney,
   roundQuantity,
   rowHasOrderData,
+  sortDraftByLocality,
   toNumber,
   updateDraftRow,
 } from "../utils/routeOrderCalc";
@@ -150,6 +153,16 @@ export default function RouteOrdersPage({ unitType }: Props) {
 
   const selectedSheet =
     sheets.find((sheet) => sheet.route.id === selectedRouteId) ?? null;
+  const localityRank = useMemo(
+    () =>
+      new Map(
+        (selectedSheet?.localities ?? []).map((locality, index) => [
+          locality.name,
+          index,
+        ]),
+      ),
+    [selectedSheet],
+  );
   const tripForSales = selectedSheet?.order.trip ?? linkedTrip;
   const linkedTripId = linkedTrip?.id ?? draft?.tripId ?? null;
   const { data: tripSales = [] } = useTripSales(unitType, linkedTripId, {
@@ -348,6 +361,18 @@ export default function RouteOrdersPage({ unitType }: Props) {
   const handleRemoveClient = (clientId: number) => {
     if (!draft) return;
     setDraft(removeClientFromDraft(draft, clientId));
+    setIsDirty(true);
+  };
+
+  const handleMoveRow = (clientId: number, direction: "up" | "down") => {
+    if (!draft) return;
+    setDraft(moveDraftRow(draft, clientId, direction));
+    setIsDirty(true);
+  };
+
+  const handleSortByLocality = () => {
+    if (!draft) return;
+    setDraft(sortDraftByLocality(draft, localityRank));
     setIsDirty(true);
   };
 
@@ -1045,14 +1070,25 @@ export default function RouteOrdersPage({ unitType }: Props) {
                 {selectedSheet.clients.length} clientes en la ruta
               </p>
             </div>
-            <Button
-              size="sm"
-              color="light"
-              onClick={() => setShowAddClient(true)}
-            >
-              <HiPlus className="mr-2 h-4 w-4" />
-              Agregar cliente
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                color="light"
+                onClick={handleSortByLocality}
+                disabled={!draft}
+              >
+                <HiSortAscending className="mr-2 h-4 w-4" />
+                Ordenar por localidad
+              </Button>
+              <Button
+                size="sm"
+                color="light"
+                onClick={() => setShowAddClient(true)}
+              >
+                <HiPlus className="mr-2 h-4 w-4" />
+                Agregar cliente
+              </Button>
+            </div>
           </div>
 
           {isDivided && (
@@ -1077,6 +1113,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
                   }
                   onChange={updateRow}
                   onRemove={handleRemoveClient}
+                  onMove={handleMoveRow}
                 />
                 <RouteOrderTotals
                   unitType={unitType}
@@ -1091,6 +1128,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
               currentEggPricePerCarton={currentPrice?.pricePerCarton ?? null}
               onChange={updateRow}
               onRemove={handleRemoveClient}
+              onMove={handleMoveRow}
             />
           )}
         </div>
