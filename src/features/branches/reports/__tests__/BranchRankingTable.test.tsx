@@ -359,9 +359,48 @@ describe("BranchRankingTable", () => {
       }),
     ]);
 
+    fireEvent.mouseEnter(
+      table().getAllByLabelText("Ver cálculo de la venta esperada")[0],
+    );
+
+    const tooltip = screen.getByRole("tooltip");
+    expect(within(tooltip).getByText("Sucursal Centro")).toBeTruthy();
     expect(
-      table().getAllByLabelText("Ver cálculo de la venta esperada").length,
-    ).toBeGreaterThan(0);
+      within(tooltip).getByText(/Mínimo comparable: \$775\.00/),
+    ).toBeTruthy();
+    expect(
+      within(tooltip).getByText(
+        "Suma de kg esperados × precio de cada día con precio y monto registrado.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows partial missing warnings in the ranking calculation", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 1000,
+        expectedComparableMoney: 1000,
+        expectedReportedMoney: 1000,
+        expectedMoneyDifference: 0,
+        expectedEffectivePrice: 55,
+        expectedSalesWithoutReportedMoney: 1,
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    fireEvent.mouseEnter(
+      table().getAllByLabelText("Ver cálculo de la venta esperada")[0],
+    );
+
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Falta monto registrado en una o más ventas."),
+    ).toBeTruthy();
   });
 
   it("does not flag a mixed comparable day as below the minimum", () => {

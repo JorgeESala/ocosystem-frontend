@@ -143,11 +143,6 @@ const ComplianceCell = ({
     );
   }
 
-  const calculationNote =
-    row.expectedSalesWithoutReportedMoney > 0
-      ? "El mínimo usa solo los días con monto registrado; las ventas sin monto se avisan en el reporte."
-      : "El peso promedio es ponderado por pollos vendidos; el resultado suma cada venta de remesa.";
-
   const calculationLines = (
     <span className="flex flex-col">
       <span className="text-xs text-gray-400">
@@ -197,10 +192,11 @@ const ComplianceCell = ({
         expectedKg={row.expectedKg}
         pricePerKg={row.expectedEffectivePrice}
         expectedMoney={row.expectedComparableMoney}
+        moneyLabel="Mínimo comparable"
+        moneyNote="Suma de kg esperados × precio de cada día con precio y monto registrado."
         missingProduct={!row.referenceProductBarcode}
         missingPrice={row.referencePriceMissing}
         missingAmount={row.expectedSalesWithoutReportedMoney > 0}
-        note={calculationNote}
       >
         {calculationLines}
       </CalculationTooltip>

@@ -43,16 +43,63 @@ describe("ExpectedCalculationContent", () => {
     expect(screen.getByText(/Precio efectivo: \$55\.00 \/ kg/)).toBeTruthy();
     expect(screen.getByText(/Mínimo comparable: \$10,560\.00/)).toBeTruthy();
     expect(
-      screen.getByText(/Suma de kg esperados × precio de cada día/),
+      screen.getByText(
+        "Suma de kg esperados × precio de cada día con precio y monto registrado.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("labels the total minimum when the call site uses the total", () => {
+    render(
+      <ExpectedCalculationContent
+        birdsSold={120}
+        avgChickenWeight={1.85}
+        expectedKg={192}
+        pricePerKg={55}
+        expectedMoney={10560}
+        moneyLabel="Mínimo total"
+        moneyNote="Suma de kg esperados × precio de cada día con precio de referencia; incluye días sin monto registrado."
+      />,
+    );
+
+    expect(screen.getByText(/Mínimo total: \$10,560\.00/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Suma de kg esperados × precio de cada día con precio de referencia; incluye días sin monto registrado.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows partial warnings even when a minimum exists", () => {
+    render(
+      <ExpectedCalculationContent
+        birdsSold={120}
+        avgChickenWeight={1.85}
+        expectedKg={192}
+        pricePerKg={55}
+        expectedMoney={10560}
+        missingPrice
+        missingAmount
+      />,
+    );
+
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Falta monto registrado en una o más ventas."),
     ).toBeTruthy();
   });
 
   it("shows the missing reference states", () => {
     render(<ExpectedCalculationContent missingProduct />);
     expect(screen.getByText("Sin producto de referencia.")).toBeTruthy();
+    expect(screen.getByText("Sin mínimo calculado.")).toBeTruthy();
 
     render(<ExpectedCalculationContent missingPrice />);
-    expect(screen.getByText("Sin precio de referencia.")).toBeTruthy();
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
   });
 
   it("distinguishes a missing registered amount", () => {
@@ -67,7 +114,7 @@ describe("ExpectedCalculationContent", () => {
     );
 
     expect(
-      screen.getByText("Sin monto registrado en una o más ventas."),
+      screen.getByText("Falta monto registrado en una o más ventas."),
     ).toBeTruthy();
   });
 });

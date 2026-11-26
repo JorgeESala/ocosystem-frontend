@@ -177,16 +177,6 @@ export const ExpectedSalesSection = ({
   const comparableDays = summary?.comparableDays ?? 0;
   const daysWithData = summary?.daysWithData ?? 0;
   const missingReportedMoney = (summary?.salesWithoutReportedMoney ?? 0) > 0;
-  const summaryNote = [
-    (summary?.daysWithoutPrice ?? 0) > 0
-      ? "Algunos días no tienen precio de referencia; el mínimo usa los días con precio."
-      : null,
-    missingReportedMoney
-      ? "Las ventas sin monto registrado se avisan en el reporte."
-      : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
   const summaryCalculation = {
     scopeLabel,
     birdsSold: summary?.birdsSold,
@@ -194,13 +184,17 @@ export const ExpectedSalesSection = ({
     expectedKg: summary?.expectedKg,
     pricePerKg: summary?.effectivePricePerKg,
     expectedMoney: summary?.expectedMoney,
+    moneyLabel: "Mínimo total",
+    moneyNote:
+      "Suma de kg esperados × precio de cada día con precio de referencia; incluye días sin monto registrado.",
     wastePerChickenKg: wastePerChicken,
-    missingProduct: branchInfo ? !branchInfo.referenceProductBarcode : false,
+    missingProduct: branchInfo
+      ? !branchInfo.referenceProductBarcode
+      : (summary?.branchesWithoutReference ?? 0) > 0,
     missingPrice: branchInfo
       ? branchInfo.priceMissingDays > 0
       : (summary?.daysWithoutPrice ?? 0) > 0,
     missingAmount: missingReportedMoney,
-    note: summaryNote || undefined,
   };
   const dailyCalculation = (row: (typeof dailyRows)[number]) => ({
     scopeLabel: formatWeekdayDayMonth(row.day),

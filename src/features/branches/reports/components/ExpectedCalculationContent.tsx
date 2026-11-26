@@ -14,6 +14,8 @@ export interface ExpectedCalculationProps {
   expectedKg?: number | null;
   pricePerKg?: number | null;
   expectedMoney?: number | null;
+  moneyLabel?: string;
+  moneyNote?: string;
   wastePerChickenKg?: number;
   exactMoney?: boolean;
   missingProduct?: boolean;
@@ -30,6 +32,8 @@ export const ExpectedCalculationContent = ({
   expectedKg,
   pricePerKg,
   expectedMoney,
+  moneyLabel = "Mínimo comparable",
+  moneyNote = "Suma de kg esperados × precio de cada día con precio y monto registrado.",
   wastePerChickenKg = 0.25,
   exactMoney = false,
   missingProduct = false,
@@ -39,6 +43,13 @@ export const ExpectedCalculationContent = ({
 }: ExpectedCalculationProps) => {
   const hasKg =
     birdsSold != null && avgChickenWeight != null && expectedKg != null;
+  const warnings = [
+    missingProduct ? "Sin producto de referencia." : null,
+    !missingProduct && missingPrice
+      ? "Falta precio de referencia en uno o más días."
+      : null,
+    missingAmount ? "Falta monto registrado en una o más ventas." : null,
+  ].filter((warning): warning is string => warning != null);
 
   return (
     <div className="max-w-xs space-y-1 text-left text-xs text-gray-200">
@@ -69,36 +80,34 @@ export const ExpectedCalculationContent = ({
 
       <div className="space-y-0.5 border-t border-gray-700 pt-1">
         <p className="font-semibold text-gray-300">Mínimo en dinero</p>
-        {missingProduct ? (
-          <p className="text-amber-300">Sin producto de referencia.</p>
-        ) : pricePerKg != null ? (
-          expectedMoney != null ? (
-            exactMoney && expectedKg != null ? (
-              <p className="font-mono text-[11px] text-white">
-                {formatKgValue(expectedKg)} × {formatPricePerKg(pricePerKg)} ={" "}
-                {formatMoney(expectedMoney)}
-              </p>
-            ) : (
-              <>
-                <p>Precio efectivo: {formatPricePerKg(pricePerKg)}</p>
-                <p>Mínimo comparable: {formatMoney(expectedMoney)}</p>
-                <p className="text-gray-400">
-                  Suma de kg esperados × precio de cada día con monto
-                  registrado.
-                </p>
-              </>
-            )
-          ) : missingAmount ? (
-            <p className="text-amber-300">
-              Sin monto registrado en una o más ventas.
+        {expectedMoney != null ? (
+          exactMoney && expectedKg != null && pricePerKg != null ? (
+            <p className="font-mono text-[11px] text-white">
+              {formatKgValue(expectedKg)} × {formatPricePerKg(pricePerKg)} ={" "}
+              {formatMoney(expectedMoney)}
             </p>
           ) : (
-            <p className="text-gray-400">Sin monto comparable.</p>
+            <>
+              {pricePerKg != null && (
+                <p>Precio efectivo: {formatPricePerKg(pricePerKg)}</p>
+              )}
+              <p>
+                {moneyLabel}: {formatMoney(expectedMoney)}
+              </p>
+              <p className="text-gray-400">{moneyNote}</p>
+            </>
           )
-        ) : missingPrice ? (
-          <p className="text-amber-300">Sin precio de referencia.</p>
         ) : (
-          <p className="text-amber-300">Sin precio de referencia.</p>
+          <p className="text-gray-400">Sin mínimo calculado.</p>
+        )}
+        {warnings.length > 0 && (
+          <div className="space-y-0.5 pt-1">
+            {warnings.map((warning) => (
+              <p key={warning} className="text-amber-300">
+                {warning}
+              </p>
+            ))}
+          </div>
         )}
       </div>
 
