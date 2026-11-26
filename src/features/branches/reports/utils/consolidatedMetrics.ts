@@ -1,5 +1,6 @@
 import type { BranchSalesSummaryDTO } from "../api/consolidatedSales.api";
 import type { BranchExpectedSalesDTO } from "../api/expectedSales.api";
+import { comparableExpectedMoney, isBelowMinimum } from "./expectedSales";
 
 export interface BranchRankingRow extends BranchSalesSummaryDTO {
   share: number;
@@ -11,6 +12,18 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedLoaded: boolean;
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
+  expectedBirdsSold: number | null;
+  expectedAvgChickenWeight: number | null;
+  expectedMoney: number | null;
+  expectedComparableMoney: number | null;
+  expectedReportedMoney: number | null;
+  expectedTotalReportedMoney: number | null;
+  expectedMoneyDifference: number | null;
+  expectedEffectivePrice: number | null;
+  expectedComparableDays: number;
+  expectedSalesWithoutReportedMoney: number;
+  referenceProductBarcode: string | null;
+  referencePriceMissing: boolean;
 }
 
 export const REVIEW_VARIANCE_THRESHOLD_PCT = 10;
@@ -74,6 +87,22 @@ export const buildRankingRows = (
         expectedLoaded: expectedBranches !== undefined,
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
+        expectedBirdsSold: expected?.birdsSold ?? null,
+        expectedAvgChickenWeight: expected?.avgChickenWeight ?? null,
+        expectedMoney: expected?.expectedMoney ?? null,
+        expectedComparableMoney: comparableExpectedMoney(
+          expected?.comparableReportedMoney,
+          expected?.moneyDifference,
+        ),
+        expectedReportedMoney: expected?.comparableReportedMoney ?? null,
+        expectedTotalReportedMoney: expected?.reportedMoney ?? null,
+        expectedMoneyDifference: expected?.moneyDifference ?? null,
+        expectedEffectivePrice: expected?.effectivePricePerKg ?? null,
+        expectedComparableDays: expected?.comparableDays ?? 0,
+        expectedSalesWithoutReportedMoney:
+          expected?.salesWithoutReportedMoney ?? 0,
+        referenceProductBarcode: expected?.referenceProductBarcode ?? null,
+        referencePriceMissing: (expected?.priceMissingDays ?? 0) > 0,
       };
     })
     .sort((a, b) => b.totalSales - a.totalSales);
@@ -113,6 +142,34 @@ export const reviewReasons = (row: BranchRankingRow): string[] => {
         excludedSales === 1 ? "venta excluida" : "ventas excluidas"
       } del cálculo.`,
     );
+  }
+
+  if (row.expectedLoaded) {
+    if (row.expectedKg != null && !row.referenceProductBarcode) {
+      reasons.push("Sin producto de referencia de pollo.");
+    } else if (row.expectedKg != null && row.referencePriceMissing) {
+      reasons.push(
+        row.expectedMoney == null
+          ? "Sin precio de referencia."
+          : "Sin precio de referencia para algunos días.",
+      );
+    }
+
+    if (
+      isBelowMinimum(row.expectedComparableMoney, row.expectedReportedMoney)
+    ) {
+      reasons.push("Venta registrada por debajo del mínimo.");
+    }
+
+    if (row.expectedSalesWithoutReportedMoney > 0) {
+      reasons.push(
+        `${row.expectedSalesWithoutReportedMoney} ${
+          row.expectedSalesWithoutReportedMoney === 1
+            ? "venta sin monto registrado"
+            : "ventas sin monto registrado"
+        }.`,
+      );
+    }
   }
 
   return reasons;

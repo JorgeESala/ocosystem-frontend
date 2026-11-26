@@ -23,11 +23,13 @@ import {
 } from "recharts";
 import { useSalesReport } from "../api/salesReportes.queries";
 import { useExpectedSalesReport } from "../api/expectedSales.queries";
+import { useAuthRole } from "@/hooks/useAuthRole";
 import { ProductSalesTable } from "./ProductSalesTable";
 import DateRangePicker from "@/components/DateRangePicker";
 import { DateRangePresets } from "./DateRangePresets";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { ExpectedSalesSection } from "./ExpectedSalesSection";
+import { ExpectedSalesKpiValue } from "./ExpectedSalesKpiValue";
 import { TopProductsCard } from "./TopProductsCard";
 import { StrategyInsights } from "./StrategyInsights";
 import { TicketsByWeekdayCard } from "./TicketsByWeekdayCard";
@@ -87,6 +89,7 @@ export const SalesDashboard = ({
   onDatesChange,
   onBack,
 }: Props) => {
+  const { isAdmin } = useAuthRole();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [detailBarcode, setDetailBarcode] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -480,7 +483,12 @@ export const SalesDashboard = ({
             />
             <KPICard
               title="Venta Esperada"
-              value={formatKg(expectedSales?.summary.expectedKg)}
+              value={
+                <ExpectedSalesKpiValue
+                  summary={expectedSales?.summary}
+                  branchName={branchName}
+                />
+              }
               color="yellow"
               icon={HiScale}
               footnote={
@@ -673,6 +681,9 @@ export const SalesDashboard = ({
               isError={expectedSalesError}
               onRetry={() => void refetchExpectedSales()}
               scopeLabel={branchName}
+              asOf={dates.end}
+              canConfigure={isAdmin}
+              showCalculation
             />
           </div>
 

@@ -30,6 +30,18 @@ const row = (
   expectedLoaded: true,
   salesWithoutWeight: 0,
   salesWithoutReportedKg: 0,
+  expectedBirdsSold: 120,
+  expectedAvgChickenWeight: 1.85,
+  expectedMoney: 1000,
+  expectedComparableMoney: 1000,
+  expectedReportedMoney: 1000,
+  expectedTotalReportedMoney: 1000,
+  expectedMoneyDifference: 0,
+  expectedEffectivePrice: 50,
+  expectedComparableDays: 7,
+  expectedSalesWithoutReportedMoney: 0,
+  referenceProductBarcode: "REF",
+  referencePriceMissing: false,
   ...overrides,
 });
 
@@ -44,6 +56,7 @@ const renderTable = (
     sort?: RankingSort;
     onSortChange?: (sort: RankingSort) => void;
     onSelectBranch?: (branchId: number, branchName: string) => void;
+    expectedError?: boolean;
   } = {},
 ) =>
   render(
@@ -53,6 +66,7 @@ const renderTable = (
       onSelectBranch={overrides.onSelectBranch ?? vi.fn()}
       sort={overrides.sort ?? defaultSort}
       onSortChange={overrides.onSortChange ?? vi.fn()}
+      expectedError={overrides.expectedError}
     />,
   );
 
@@ -209,7 +223,7 @@ describe("BranchRankingTable", () => {
       }),
     ]);
 
-    expect(cards().getByText("Sucursal Centro")).toBeTruthy();
+    expect(cards().getAllByText("Sucursal Centro").length).toBeGreaterThan(0);
     expect(cards().getByText(/1,050 vendidos/)).toBeTruthy();
     expect(cards().getByText("7/7 días")).toBeTruthy();
   });
@@ -267,5 +281,242 @@ describe("BranchRankingTable", () => {
       key: "totalSales",
       direction: "desc",
     });
+  });
+
+  it("shows the money minimum and registered money in the table", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 45000,
+        expectedComparableMoney: 45000,
+        expectedReportedMoney: 46000,
+        expectedTotalReportedMoney: 46000,
+        expectedMoneyDifference: 1000,
+      }),
+    ]);
+
+    expect(
+      table().getByText(/Mín\. comp\. \$45,000 · Comp\. \$46,000/),
+    ).toBeTruthy();
+  });
+
+  it("flags a branch below the money minimum", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1000,
+        expectedVariancePct: 0,
+        expectedMoney: 1000,
+        expectedReportedMoney: 900,
+        expectedTotalReportedMoney: 900,
+        expectedMoneyDifference: -100,
+      }),
+    ]);
+
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(
+      table().getByTitle("Venta registrada por debajo del mínimo."),
+    ).toBeTruthy();
+  });
+
+  it("shows a missing reference label when the branch has no product", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: null,
+        expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
+        expectedMoneyDifference: null,
+        expectedEffectivePrice: null,
+        expectedComparableDays: 0,
+        expectedSalesWithoutReportedMoney: 0,
+        referenceProductBarcode: null,
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    expect(table().getByText("Sin producto de referencia")).toBeTruthy();
+    expect(cards().getByText("Sin producto de referencia")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("offers the expected calculation on hover", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 15.5,
+        expectedReportedKg: 15.5,
+        expectedVariancePct: 0,
+        expectedMoney: 775,
+        expectedComparableMoney: 775,
+        expectedReportedMoney: 775,
+        expectedMoneyDifference: 0,
+        expectedBirdsSold: 10,
+        expectedAvgChickenWeight: 1.8,
+      }),
+    ]);
+
+    fireEvent.mouseEnter(
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    const tooltip = screen.getByRole("tooltip");
+    expect(within(tooltip).getByText("Sucursal Centro")).toBeTruthy();
+    expect(
+      within(tooltip).getByText(/Mínimo comparable: \$775\.00/),
+    ).toBeTruthy();
+    expect(
+      within(tooltip).getByText(
+        "Suma de kg esperados × precio de cada día con precio y monto registrado.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows partial missing warnings in the ranking calculation", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 1000,
+        expectedComparableMoney: 1000,
+        expectedReportedMoney: 1000,
+        expectedMoneyDifference: 0,
+        expectedEffectivePrice: 55,
+        expectedSalesWithoutReportedMoney: 1,
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    fireEvent.mouseEnter(
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Falta monto registrado en una o más ventas."),
+    ).toBeTruthy();
+  });
+
+  it("does not flag a mixed comparable day as below the minimum", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1000,
+        expectedVariancePct: 0,
+        expectedMoney: 2000,
+        expectedComparableMoney: 1000,
+        expectedReportedMoney: 1000,
+        expectedTotalReportedMoney: 1000,
+        expectedMoneyDifference: 0,
+        expectedSalesWithoutReportedMoney: 1,
+      }),
+    ]);
+
+    expect(
+      table().getByText(/Mín\. comp\. \$1,000 · Comp\. \$1,000/),
+    ).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(table().getByTitle("1 venta sin monto registrado.")).toBeTruthy();
+    expect(
+      table().queryByText("Venta registrada por debajo del mínimo."),
+    ).toBeNull();
+  });
+
+  it("shows a missing amount label when the price exists but the amount is missing", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 1000,
+        expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
+        expectedMoneyDifference: null,
+        expectedSalesWithoutReportedMoney: 1,
+        referenceProductBarcode: "REF",
+        referencePriceMissing: false,
+      }),
+    ]);
+
+    expect(table().getByText("Sin monto registrado")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+    expect(table().getByTitle("1 venta sin monto registrado.")).toBeTruthy();
+  });
+
+  it("shows a missing price label when the product has no price", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: null,
+        expectedReportedMoney: null,
+        expectedTotalReportedMoney: null,
+        expectedMoneyDifference: null,
+        expectedEffectivePrice: null,
+        expectedComparableDays: 0,
+        expectedSalesWithoutReportedMoney: 0,
+        referenceProductBarcode: "REF",
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    expect(table().getByText("Sin precio de referencia")).toBeTruthy();
+    expect(cards().getByText("Sin precio de referencia")).toBeTruthy();
+    expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("shows the money comparison in the mobile card", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 45000,
+        expectedComparableMoney: 45000,
+        expectedReportedMoney: 46000,
+        expectedMoneyDifference: 1000,
+      }),
+    ]);
+
+    expect(cards().getByText(/Mín\. comp\. \$45,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Comp\. \$46,000\.00/)).toBeTruthy();
+    expect(cards().getByText(/Diferencia \$1,000\.00/)).toBeTruthy();
+  });
+
+  it("shows the expected sales error instead of loading forever", () => {
+    renderTable(
+      [
+        row(1, "Sucursal Centro", {
+          expectedLoaded: false,
+          expectedKg: null,
+          expectedReportedKg: null,
+          expectedVariancePct: null,
+          expectedMoney: null,
+          expectedComparableMoney: null,
+          expectedReportedMoney: null,
+          expectedTotalReportedMoney: null,
+          expectedMoneyDifference: null,
+          expectedEffectivePrice: null,
+          expectedComparableDays: 0,
+          expectedSalesWithoutReportedMoney: 0,
+          referenceProductBarcode: null,
+          referencePriceMissing: false,
+        }),
+      ],
+      { expectedError: true },
+    );
+
+    expect(
+      table().getByText("No se pudo cargar la venta esperada"),
+    ).toBeTruthy();
+    expect(table().queryByText("Cargando kilos esperados")).toBeNull();
+    expect(table().queryByText("Revisar")).toBeNull();
   });
 });

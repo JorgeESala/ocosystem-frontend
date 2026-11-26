@@ -32,6 +32,7 @@ import type {
 import { calculateEggUnits } from "@/utils/egg.utils";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
 import type { BatchResponseDTO } from "../types.batch";
 
 type UnitType = "EGG" | "LIVE_CHICKEN";
@@ -42,6 +43,8 @@ interface ActualValues {
   weight: string;
   kgSent: string;
   unitPrice: string;
+  saleTotal: string;
+  totalSource: "price" | "total";
 }
 
 interface RouteGroup {
@@ -62,23 +65,56 @@ interface Props {
 
 const initialValues = (
   candidate: RouteOrderSaleCandidateDTO,
-): ActualValues => ({
-  headCount: candidate.headCount != null ? String(candidate.headCount) : "",
-  quantity: candidate.quantity != null ? String(candidate.quantity) : "",
-  weight: candidate.weight != null ? String(candidate.weight) : "",
-  kgSent: candidate.kgSent != null ? String(candidate.kgSent) : "",
-  unitPrice: String(candidate.unitPrice ?? 0),
-});
+  unitType: UnitType,
+): ActualValues => {
+  const unitPrice = String(candidate.unitPrice ?? 0);
+  const quantity = candidate.quantity != null ? String(candidate.quantity) : "";
+  const weight = candidate.weight != null ? String(candidate.weight) : "";
+  const total =
+    unitType === "EGG"
+      ? roundMoney(toNumber(quantity) * toNumber(unitPrice))
+      : roundMoney(toNumber(weight) * toNumber(unitPrice));
+
+  return {
+    headCount: candidate.headCount != null ? String(candidate.headCount) : "",
+    quantity,
+    weight,
+    kgSent: candidate.kgSent != null ? String(candidate.kgSent) : "",
+    unitPrice,
+    saleTotal: total.toFixed(2),
+    totalSource: "price",
+  };
+};
 
 const lineTotal = (
   values: ActualValues | undefined,
   unitType: UnitType,
 ): number => {
   if (!values) return 0;
+  if (values.totalSource === "total" && values.saleTotal.trim() !== "") {
+    return roundMoney(toNumber(values.saleTotal));
+  }
   if (unitType === "EGG") {
     return roundMoney(toNumber(values.quantity) * toNumber(values.unitPrice));
   }
   return roundMoney(toNumber(values.weight) * toNumber(values.unitPrice));
+};
+
+const formatInputMoney = (value: number): string =>
+  roundMoney(value).toFixed(2);
+
+const priceForInput = (value: number): string => {
+  if (!Number.isFinite(value) || value <= 0) return "0";
+  return String(Number(value.toFixed(4)));
+};
+
+const derivedUnitPrice = (values: ActualValues): number => {
+  if (values.totalSource !== "total") return toNumber(values.unitPrice);
+  const weight = toNumber(values.weight);
+  if (values.saleTotal.trim() === "" || weight <= 0) {
+    return toNumber(values.unitPrice);
+  }
+  return Number((toNumber(values.saleTotal) / weight).toFixed(10));
 };
 
 const eggHint = (cartons: string): string => {
@@ -136,7 +172,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
       Object.fromEntries(
         candidates.map((candidate) => [
           candidate.lineId,
-          initialValues(candidate),
+          initialValues(candidate, unitType),
         ]),
       ),
     );
@@ -144,7 +180,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
     setDriverByOrder({});
     setSubmitError(null);
     setResult(null);
-  }, [candidates, date, isSuccess]);
+  }, [candidates, date, isSuccess, unitType]);
 
   const routeOptions = useMemo(
     () =>
@@ -212,6 +248,37 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
     [selectedCandidates, unitType, values],
   );
 
+  const pendingOrderQuantity = useMemo(
+    () =>
+      candidates.reduce((sum, candidate) => {
+        if (candidate.alreadySold && !forced.has(candidate.lineId)) return sum;
+        const current =
+          values[candidate.lineId] ?? initialValues(candidate, unitType);
+        const quantity =
+          unitType === "EGG"
+            ? toNumber(current.quantity) * 30
+            : toNumber(current.headCount);
+        return sum + (Number.isFinite(quantity) ? quantity : 0);
+      }, 0),
+    [candidates, forced, unitType, values],
+  );
+
+  const remainingQuantity = Number(batch.remainingQuantity || 0);
+  const availableQuantity = remainingQuantity - pendingOrderQuantity;
+
+  const avgChickenWeight = useMemo(() => {
+    if (unitType !== "LIVE_CHICKEN") return null;
+    const realWeight = Number(batch.weightReal || 0);
+    const initialQuantity = Number(batch.initialQuantity || 0);
+    if (realWeight > 0 && initialQuantity > 0) {
+      return realWeight / initialQuantity;
+    }
+    const metadataWeight = Number(
+      batch.metadata?.avg_weight ?? batch.metadata?.avgWeight ?? 0,
+    );
+    return metadataWeight > 0 ? metadataWeight : null;
+  }, [batch, unitType]);
+
   const selectable = (candidate: RouteOrderSaleCandidateDTO) =>
     !candidate.alreadySold || forced.has(candidate.lineId);
 
@@ -225,10 +292,63 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           weight: "",
           kgSent: "",
           unitPrice: "0",
+          saleTotal: "",
+          totalSource: "price",
         }),
         ...patch,
       },
     }));
+  };
+
+  const handlePriceChange = (
+    lineId: number,
+    current: ActualValues,
+    value: string,
+  ) => {
+    const quantity = unitType === "EGG" ? current.quantity : current.weight;
+    setLineValue(lineId, {
+      unitPrice: value,
+      saleTotal: formatInputMoney(toNumber(quantity) * toNumber(value)),
+      totalSource: "price",
+    });
+  };
+
+  const handleLiveChickenWeightChange = (
+    lineId: number,
+    current: ActualValues,
+    value: string,
+  ) => {
+    const weight = toNumber(value);
+    const patch: Partial<ActualValues> = {
+      weight: value,
+      ...(current.kgSent.trim() ? {} : { kgSent: value }),
+    };
+
+    if (current.totalSource === "total" && current.saleTotal.trim() !== "") {
+      patch.unitPrice =
+        weight > 0 ? priceForInput(toNumber(current.saleTotal) / weight) : "0";
+    } else {
+      patch.saleTotal = formatInputMoney(weight * toNumber(current.unitPrice));
+      patch.totalSource = "price";
+    }
+
+    setLineValue(lineId, patch);
+  };
+
+  const handleLiveChickenTotalChange = (
+    lineId: number,
+    current: ActualValues,
+    value: string,
+  ) => {
+    const weight = toNumber(current.weight);
+    setLineValue(lineId, {
+      saleTotal: value,
+      unitPrice:
+        weight > 0 && value.trim() !== ""
+          ? priceForInput(toNumber(value) / weight)
+          : current.unitPrice,
+      totalSource: "total",
+    });
   };
 
   const toggleSelected = (lineId: number) => {
@@ -298,7 +418,8 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
   ): GenerateRouteOrderSalesDTO["lines"] | null => {
     const lines: GenerateRouteOrderSalesDTO["lines"] = [];
     for (const candidate of candidates) {
-      const current = values[candidate.lineId] ?? initialValues(candidate);
+      const current =
+        values[candidate.lineId] ?? initialValues(candidate, unitType);
       const driverId = candidate.driverId ?? driverByOrder[candidate.orderId];
       if (!driverId) {
         setSubmitError(
@@ -345,7 +466,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
           headCount: toNumber(current.headCount),
           weight: toNumber(current.weight),
           kgSent: toNumber(current.kgSent),
-          unitPrice: toNumber(current.unitPrice),
+          unitPrice: derivedUnitPrice(current),
         });
       }
     }
@@ -476,10 +597,68 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
             </span>
           </div>
 
+          <div className="grid gap-3 sm:grid-cols-2">
+            {unitType === "LIVE_CHICKEN" && (
+              <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
+                <p className="text-[10px] tracking-wider text-gray-500 uppercase">
+                  Peso promedio por ave
+                </p>
+                <p
+                  data-testid="avg-chicken-weight"
+                  className="text-lg font-semibold text-white"
+                >
+                  {avgChickenWeight != null
+                    ? `${avgChickenWeight.toFixed(2)} kg/ave`
+                    : "—"}
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  Peso real entre las aves de la remesa
+                </p>
+              </div>
+            )}
+            <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
+              <p className="text-[10px] tracking-wider text-gray-500 uppercase">
+                Disponible para venta
+              </p>
+              <div
+                data-testid="available-to-sell"
+                className={`flex flex-wrap items-center gap-2 text-lg font-semibold ${
+                  availableQuantity < 0 ? "text-red-300" : "text-emerald-300"
+                }`}
+              >
+                {unitType === "EGG" ? (
+                  availableQuantity >= 0 ? (
+                    <EggQuantityDisplay totalPieces={availableQuantity} />
+                  ) : null
+                ) : (
+                  <span>{availableQuantity.toLocaleString("es-MX")} aves</span>
+                )}
+                {availableQuantity < 0 && (
+                  <span className="text-[10px] font-semibold tracking-wide uppercase">
+                    Sobrepedido
+                  </span>
+                )}
+                {availableQuantity < 0 && unitType === "EGG" && (
+                  <span className="flex items-center gap-1 text-sm">
+                    Faltan
+                    <EggQuantityDisplay
+                      totalPieces={Math.abs(availableQuantity)}
+                    />
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500">
+                {unitType === "EGG"
+                  ? "Piezas restantes menos casilleros pedidos"
+                  : `Remesa ${remainingQuantity.toLocaleString("es-MX")} · pedidos ${pendingOrderQuantity.toLocaleString("es-MX")}`}
+              </p>
+            </div>
+          </div>
+
           {groups.some((group) => group.salesRegenerationRequired) && (
             <Alert color="warning">
-              Hay pedidos con cambios pendientes. Sus ventas ya generadas no
-              se actualizarán hasta que uses <strong>Regenerar ventas</strong>.
+              Hay pedidos con cambios pendientes. Sus ventas ya generadas no se
+              actualizarán hasta que uses <strong>Regenerar ventas</strong>.
               {unitType === "LIVE_CHICKEN"
                 ? " Verifica los kilos vendidos y enviados antes de regenerar."
                 : ""}
@@ -574,7 +753,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                     {group.salesRegenerationRequired && (
                       <Button
                         size="xs"
-                        color="warning"
+                        color="yellow"
                         onClick={() => onRegenerate(group)}
                         disabled={regenerateMutation.isPending}
                       >
@@ -588,7 +767,8 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                   <div className="divide-y divide-gray-800">
                     {group.rows.map((candidate) => {
                       const current =
-                        values[candidate.lineId] ?? initialValues(candidate);
+                        values[candidate.lineId] ??
+                        initialValues(candidate, unitType);
                       const disabled = !selectable(candidate);
                       const total = lineTotal(current, unitType);
                       return (
@@ -674,9 +854,11 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                                   value={current.unitPrice}
                                   data-testid={`price-${candidate.lineId}`}
                                   onChange={(event) =>
-                                    setLineValue(candidate.lineId, {
-                                      unitPrice: event.target.value,
-                                    })
+                                    handlePriceChange(
+                                      candidate.lineId,
+                                      current,
+                                      event.target.value,
+                                    )
                                   }
                                 />
                               </div>
@@ -712,15 +894,13 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                                   step="0.01"
                                   value={current.weight}
                                   data-testid={`kg-${candidate.lineId}`}
-                                  onChange={(event) => {
-                                    const weight = event.target.value;
-                                    setLineValue(candidate.lineId, {
-                                      weight,
-                                      ...(current.kgSent.trim()
-                                        ? {}
-                                        : { kgSent: weight }),
-                                    });
-                                  }}
+                                  onChange={(event) =>
+                                    handleLiveChickenWeightChange(
+                                      candidate.lineId,
+                                      current,
+                                      event.target.value,
+                                    )
+                                  }
                                 />
                               </div>
                               <div className="col-span-1">
@@ -747,14 +927,31 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                                   value={current.unitPrice}
                                   data-testid={`price-${candidate.lineId}`}
                                   onChange={(event) =>
-                                    setLineValue(candidate.lineId, {
-                                      unitPrice: event.target.value,
-                                    })
+                                    handlePriceChange(
+                                      candidate.lineId,
+                                      current,
+                                      event.target.value,
+                                    )
                                   }
                                 />
                               </div>
-                              <div className="col-span-1 text-right font-mono text-xs text-white">
-                                {formatMXN(total)}
+                              <div className="col-span-1">
+                                <TextInput
+                                  sizing="sm"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={current.saleTotal}
+                                  data-testid={`total-${candidate.lineId}`}
+                                  onChange={(event) =>
+                                    handleLiveChickenTotalChange(
+                                      candidate.lineId,
+                                      current,
+                                      event.target.value,
+                                    )
+                                  }
+                                  className="w-full text-right tabular-nums"
+                                />
                               </div>
                             </>
                           )}
@@ -803,9 +1000,7 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
                 : ""}
               {(result.regenerationRequiredOrderIds?.length ?? 0) > 0
                 ? ` ${result.regenerationRequiredOrderIds?.length} pedido${
-                    result.regenerationRequiredOrderIds?.length === 1
-                      ? ""
-                      : "s"
+                    result.regenerationRequiredOrderIds?.length === 1 ? "" : "s"
                   } requiere${result.regenerationRequiredOrderIds?.length === 1 ? "" : "n"} regenerar sus ventas.`
                 : ""}
             </Alert>

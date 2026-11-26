@@ -24,6 +24,10 @@ vi.mock("recharts", async (importOriginal) => ({
   ResponsiveContainer: MockResponsiveContainer,
 }));
 
+vi.mock("@/hooks/useAuthRole", () => ({
+  useAuthRole: () => ({ isAdmin: true }),
+}));
+
 vi.mock("xlsx", () => ({
   utils: {
     book_new: vi.fn(() => ({})),
@@ -247,8 +251,8 @@ describe("ConsolidatedSalesDashboard category costs", () => {
     );
 
     expect(
-      screen.getByText(/No se pudo cargar la venta esperada/),
-    ).toBeTruthy();
+      screen.getAllByText(/No se pudo cargar la venta esperada/).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("No disponible")).toBeTruthy();
 
     fireEvent.click(screen.getByText("Reintentar"));

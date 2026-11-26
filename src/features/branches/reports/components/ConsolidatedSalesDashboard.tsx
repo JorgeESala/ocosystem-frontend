@@ -22,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 import { useReportBranches } from "@/features/branches/branch/reportBranches.queries";
+import { useAuthRole } from "@/hooks/useAuthRole";
 import { useConsolidatedSalesReport } from "../api/consolidatedSales.queries";
 import { useExpectedSalesReport } from "../api/expectedSales.queries";
 import { fetchProductAnalytics } from "../api/productAnalytics.api";
@@ -93,6 +94,7 @@ export const ConsolidatedSalesDashboard = ({
   onSelectBranch,
 }: Props) => {
   const { slug } = useParams();
+  const { isAdmin } = useAuthRole();
   const {
     branches,
     excluded,
@@ -357,6 +359,13 @@ export const ConsolidatedSalesDashboard = ({
             "Kg esperados",
             "Kg vendidos",
             "Variación esperada %",
+            "Mínimo esperado ($)",
+            "Venta total ($)",
+            "Venta comparable ($)",
+            "Diferencia ($)",
+            "Días comparables",
+            "Precio efectivo/kg",
+            "Ventas sin monto",
             "Merma",
             "Días con reporte",
             "Días faltantes",
@@ -368,7 +377,18 @@ export const ConsolidatedSalesDashboard = ({
             row.salesDelta == null ? "" : Number(row.salesDelta.toFixed(2)),
             row.avgTicket,
             row.totalSlaughtered,
-            ...expectedSalesRankingColumns(row),
+            ...expectedSalesRankingColumns({
+              expectedKg: row.expectedKg,
+              expectedReportedKg: row.expectedReportedKg,
+              expectedVariancePct: row.expectedVariancePct,
+              expectedMoney: row.expectedMoney,
+              reportedMoney: row.expectedTotalReportedMoney,
+              comparableReportedMoney: row.expectedReportedMoney,
+              moneyDifference: row.expectedMoneyDifference,
+              comparableDays: row.expectedComparableDays,
+              effectivePricePerKg: row.expectedEffectivePrice,
+              salesWithoutReportedMoney: row.expectedSalesWithoutReportedMoney,
+            }),
             row.mermaQuantity,
             row.daysWithReport,
             row.missingDays,
@@ -384,6 +404,13 @@ export const ConsolidatedSalesDashboard = ({
           { wch: 14 },
           { wch: 14 },
           { wch: 18 },
+          { wch: 20 },
+          { wch: 18 },
+          { wch: 20 },
+          { wch: 16 },
+          { wch: 16 },
+          { wch: 18 },
+          { wch: 16 },
           { wch: 12 },
           { wch: 15 },
           { wch: 13 },
@@ -733,6 +760,7 @@ export const ConsolidatedSalesDashboard = ({
               onSelectBranch={onSelectBranch}
               sort={rankingSort}
               onSortChange={setRankingSort}
+              expectedError={expectedSalesError}
             />
           </div>
 
@@ -743,6 +771,8 @@ export const ConsolidatedSalesDashboard = ({
               isError={expectedSalesError}
               onRetry={() => void refetchExpectedSales()}
               scopeLabel={scopeLabel}
+              asOf={dates.end}
+              canConfigure={isAdmin}
             />
           </div>
 

@@ -1,13 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ExpectedSalesReportDTO } from "../api/expectedSales.api";
+import type {
+  ExpectedSalesReportDTO,
+  ReferenceProductDTO,
+} from "../api/expectedSales.api";
 
 vi.mock("@/shared/api/http", () => {
   const mockGet = vi.fn();
-  return { http: { get: mockGet } };
+  const mockPut = vi.fn();
+  const mockDelete = vi.fn();
+  return { http: { get: mockGet, put: mockPut, delete: mockDelete } };
 });
 
 import { http } from "@/shared/api/http";
-import { fetchExpectedSalesReport } from "../api/expectedSales.api";
+import {
+  deleteReferenceProduct,
+  fetchExpectedSalesReport,
+  fetchReferenceProducts,
+  updateReferenceProduct,
+} from "../api/expectedSales.api";
 
 const mockedHttp = vi.mocked(http);
 
@@ -24,10 +34,31 @@ const report = {
     salesWithoutReportedKg: 0,
     daysWithData: 1,
     wastePerChickenKg: 0.25,
+    expectedMoney: 5000,
+    reportedMoney: 5500,
+    comparableReportedMoney: 5500,
+    moneyDifference: 500,
+    effectivePricePerKg: 50,
+    daysWithoutPrice: 0,
+    comparableDays: 1,
+    branchesWithoutReference: 0,
+    salesWithZeroMoney: 0,
+    salesWithoutReportedMoney: 0,
+    daysWithoutReportedMoney: 0,
   },
   branches: [],
   daily: [],
 } as ExpectedSalesReportDTO;
+
+const referenceProduct: ReferenceProductDTO = {
+  branchId: 1,
+  branchName: "Centro",
+  productBarcode: "REF",
+  productName: "Pollo entero",
+  unitName: "Kilogramo",
+  pricePerKg: 50,
+  priceAsOf: "2026-06-07",
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -49,5 +80,40 @@ describe("fetchExpectedSalesReport", () => {
     expect(url).toContain("startDate=");
     expect(url).toContain("endDate=");
     expect(result).toBe(report);
+  });
+});
+
+describe("reference product requests", () => {
+  it("fetches the reference products as of the report end", async () => {
+    mockedHttp.get.mockResolvedValue({ data: [referenceProduct] });
+
+    const result = await fetchReferenceProducts("2026-06-07");
+
+    expect(mockedHttp.get).toHaveBeenCalledWith(
+      "/api/reports/sales/expected/reference-products?asOf=2026-06-07",
+    );
+    expect(result).toEqual([referenceProduct]);
+  });
+
+  it("updates the reference product of a branch", async () => {
+    mockedHttp.put.mockResolvedValue({ data: referenceProduct });
+
+    const result = await updateReferenceProduct(1, "REF");
+
+    expect(mockedHttp.put).toHaveBeenCalledWith(
+      "/api/reports/sales/expected/reference-products/1",
+      { productBarcode: "REF" },
+    );
+    expect(result).toEqual(referenceProduct);
+  });
+
+  it("clears the reference product of a branch", async () => {
+    mockedHttp.delete.mockResolvedValue({});
+
+    await deleteReferenceProduct(1);
+
+    expect(mockedHttp.delete).toHaveBeenCalledWith(
+      "/api/reports/sales/expected/reference-products/1",
+    );
   });
 });

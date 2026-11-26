@@ -28,7 +28,7 @@ const lastPrice = (row: RouteOrderDraftRow, unitType: RouteOrderUnitType) => {
 };
 
 const quantityHeader = (unitType: RouteOrderUnitType) =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
+  unitType === "EGG" ? "Huevo (casilleros)" : "Pollo";
 
 const priceHeader = (unitType: RouteOrderUnitType) =>
   unitType === "EGG" ? "Precio/casillero" : "Precio/kg";
@@ -49,20 +49,51 @@ export const RouteOrderTable: React.FC<Props> = ({
     );
   }
 
+  const liveChicken = unitType === "LIVE_CHICKEN";
+
   return (
     <div className="overflow-x-auto rounded-3xl border border-gray-700 bg-slate-950/70">
       <table
         className={`text-left text-xs text-gray-300 ${
-          unitType === "EGG" ? "min-w-[1500px]" : "min-w-[1050px]"
+          liveChicken
+            ? "w-full min-w-[1000px] table-fixed lg:min-w-0"
+            : "min-w-[1500px]"
         }`}
       >
+        {liveChicken && (
+          <colgroup>
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "7%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "7%" }} />
+            <col style={{ width: "7%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "4%" }} />
+          </colgroup>
+        )}
         <thead className="bg-slate-900/80 text-[10px] tracking-[0.12em] text-gray-400 uppercase">
           <tr>
             <th className="px-3 py-3">Cliente</th>
-            <th className="px-3 py-3">Negocio</th>
-            <th className="px-3 py-3">Localidad</th>
+            {!liveChicken && (
+              <>
+                <th className="px-3 py-3">Negocio</th>
+                <th className="px-3 py-3">Localidad</th>
+              </>
+            )}
             <th className="px-3 py-3 text-right">{quantityHeader(unitType)}</th>
-            <th className="px-3 py-3 text-right">Últ. vendido</th>
+            {unitType === "LIVE_CHICKEN" && (
+              <>
+                <th className="px-3 py-3">Alimento</th>
+                <th className="px-3 py-3">Huevo</th>
+                <th className="px-3 py-3 text-right">Peso</th>
+                <th className="px-3 py-3 text-right">Efectivo</th>
+              </>
+            )}
+            {!liveChicken && (
+              <th className="px-3 py-3 text-right">Últ. vendido</th>
+            )}
             {unitType === "EGG" && (
               <th className="px-3 py-3 text-right">Precio actual</th>
             )}
@@ -81,7 +112,7 @@ export const RouteOrderTable: React.FC<Props> = ({
               </>
             )}
             <th className="px-3 py-3">Comentarios</th>
-            <th className="px-3 py-3" />
+            <th className="px-3 py-3 text-center" />
           </tr>
         </thead>
         <tbody>
@@ -91,18 +122,39 @@ export const RouteOrderTable: React.FC<Props> = ({
                 ? toNumber(row.quantity)
                 : toNumber(row.headCount);
             const unitPrice = toNumber(row.unitPrice);
+            const addedBadge = row.added ? (
+              <span className="ml-2 rounded bg-emerald-900/40 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">
+                Otra ruta
+              </span>
+            ) : null;
             return (
               <tr key={row.key} className="border-t border-gray-800 align-top">
-                <td className="px-3 py-2 font-medium text-white">
-                  {row.clientName}
-                  {row.added && (
-                    <span className="ml-2 rounded bg-emerald-900/40 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">
-                      Otra ruta
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 py-2">{row.businessName || "—"}</td>
-                <td className="px-3 py-2">{row.localityName || "—"}</td>
+                {liveChicken ? (
+                  <td
+                    className="px-3 py-2"
+                    data-testid={`client-${row.clientId}`}
+                  >
+                    <div className="font-medium text-white">
+                      {row.clientName}
+                      {addedBadge}
+                    </div>
+                    {(row.businessName || row.localityName) && (
+                      <div className="mt-0.5 text-[10px] leading-4 font-normal text-gray-400">
+                        {row.businessName && <div>{row.businessName}</div>}
+                        {row.localityName && <div>{row.localityName}</div>}
+                      </div>
+                    )}
+                  </td>
+                ) : (
+                  <>
+                    <td className="px-3 py-2 font-medium text-white">
+                      {row.clientName}
+                      {addedBadge}
+                    </td>
+                    <td className="px-3 py-2">{row.businessName || "—"}</td>
+                    <td className="px-3 py-2">{row.localityName || "—"}</td>
+                  </>
+                )}
                 <td className="px-3 py-2">
                   <TextInput
                     type="number"
@@ -119,12 +171,82 @@ export const RouteOrderTable: React.FC<Props> = ({
                           : { headCount: event.target.value },
                       )
                     }
-                    className="w-24"
+                    className={
+                      liveChicken ? "w-full text-right tabular-nums" : "w-24"
+                    }
                   />
                 </td>
-                <td className="px-3 py-2 text-right whitespace-nowrap">
-                  {lastPrice(row, unitType)}
-                </td>
+                {unitType === "LIVE_CHICKEN" && (
+                  <>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="text"
+                        sizing="sm"
+                        maxLength={200}
+                        value={row.feedText}
+                        data-testid={`feed-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            feedText: event.target.value,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="text"
+                        sizing="sm"
+                        maxLength={200}
+                        value={row.eggText}
+                        data-testid={`egg-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            eggText: event.target.value,
+                          })
+                        }
+                        className="w-full"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="number"
+                        sizing="sm"
+                        min="0"
+                        step="0.001"
+                        value={row.weight}
+                        data-testid={`weight-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            weight: event.target.value,
+                          })
+                        }
+                        className="w-full text-right tabular-nums"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <TextInput
+                        type="number"
+                        sizing="sm"
+                        min="0"
+                        step="0.01"
+                        value={row.cashAmount}
+                        data-testid={`cash-${row.clientId}`}
+                        onChange={(event) =>
+                          onChange(row.clientId, {
+                            cashAmount: event.target.value,
+                          })
+                        }
+                        className="w-full text-right tabular-nums"
+                      />
+                    </td>
+                  </>
+                )}
+                {!liveChicken && (
+                  <td className="px-3 py-2 text-right whitespace-nowrap">
+                    {lastPrice(row, unitType)}
+                  </td>
+                )}
                 {unitType === "EGG" && (
                   <td className="px-3 py-2 text-right whitespace-nowrap">
                     {currentEggPricePerCarton != null &&
@@ -146,8 +268,15 @@ export const RouteOrderTable: React.FC<Props> = ({
                         unitPrice: event.target.value,
                       })
                     }
-                    className="w-24"
+                    className={
+                      liveChicken ? "w-full text-right tabular-nums" : "w-24"
+                    }
                   />
+                  {liveChicken && (
+                    <p className="mt-1 text-right text-[10px] whitespace-nowrap text-gray-400 tabular-nums">
+                      Últ. {lastPrice(row, unitType)}
+                    </p>
+                  )}
                 </td>
                 {unitType === "EGG" && (
                   <td className="px-3 py-2">
@@ -229,10 +358,10 @@ export const RouteOrderTable: React.FC<Props> = ({
                         comments: event.target.value,
                       })
                     }
-                    className="min-w-[120px]"
+                    className={liveChicken ? "w-full min-w-0" : "min-w-[120px]"}
                   />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-center">
                   {row.added && (
                     <button
                       type="button"

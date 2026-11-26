@@ -4,7 +4,7 @@ import themeXml from "./routeOrderTheme.xml?raw";
 import {
   buildOrderSections,
   computeTotals,
-  pricePerBox,
+  rowTotal,
   toNumber,
 } from "./routeOrderCalc";
 import type { RouteOrderPrintInput } from "./routeOrderSheet";
@@ -26,10 +26,7 @@ const THIN_BORDER = {
 };
 
 const quantityHeader = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Huevo (casilleros)" : "Cabezas";
-
-const priceHeader = (unitType: RouteOrderUnitType): string =>
-  unitType === "EGG" ? "Precio por casillero" : "Precio por kilo";
+  unitType === "EGG" ? "Huevo" : "Pollo";
 
 const dayLabel = (date: string): string => {
   const name = getDayName(date);
@@ -53,15 +50,28 @@ const lastColumnLetter = (worksheet: Worksheet, lastCol: number): string =>
   worksheet.getColumn(lastCol).letter;
 
 const routeHeaders = (input: RouteOrderPrintInput): string[] => {
-  const egg = input.unitType === "EGG";
+  if (input.unitType === "LIVE_CHICKEN") {
+    return [
+      "No.",
+      "Cliente",
+      quantityHeader(input.unitType),
+      "Alimento",
+      "Huevo",
+      "Peso",
+      "Efectivo",
+      "Firma",
+      "Comentarios",
+    ];
+  }
   return [
-    "Nombre Cliente",
-    "Nombre de la tienda",
-    "Localidad",
+    "No.",
+    "Cliente",
     quantityHeader(input.unitType),
-    ...(egg ? ["Verduras (kilos)", "Condimentos", "Abarrotes"] : []),
-    priceHeader(input.unitType),
-    ...(egg ? ["Precio por caja"] : []),
+    "Verduras",
+    "Condimentos",
+    "Abarrotes",
+    "Total",
+    "Firma",
     "Comentarios",
   ];
 };
@@ -69,17 +79,41 @@ const routeHeaders = (input: RouteOrderPrintInput): string[] => {
 const routeRowValues = (
   row: RouteOrderDraftRow,
   input: RouteOrderPrintInput,
+  index: number,
 ): (string | number)[] => {
-  const egg = input.unitType === "EGG";
-  const unitPrice = toNumber(row.unitPrice);
+  if (input.unitType === "LIVE_CHICKEN") {
+    const weight = toNumber(row.weight);
+    const cashAmount = toNumber(row.cashAmount);
+    const clientLabel = [row.clientName, row.businessName, row.localityName]
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+      .join("\n");
+    return [
+      index + 1,
+      clientLabel,
+      toNumber(row.headCount),
+      row.feedText,
+      row.eggText,
+      weight > 0 ? weight : "",
+      cashAmount > 0 ? cashAmount : "",
+      "",
+      row.comments,
+    ];
+  }
+  const quantity = toNumber(row.quantity);
+  const clientLabel = [row.clientName, row.businessName, row.localityName]
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0)
+    .join("\n");
   return [
-    row.clientName,
-    row.businessName,
-    row.localityName,
-    egg ? toNumber(row.quantity) : toNumber(row.headCount),
-    ...(egg ? [row.vegetables, row.condiments, row.groceries] : []),
-    unitPrice,
-    ...(egg ? [pricePerBox(unitPrice)] : []),
+    index + 1,
+    clientLabel,
+    quantity,
+    row.vegetables,
+    row.condiments,
+    row.groceries,
+    quantity > 0 ? rowTotal(row) : "",
+    "",
     row.comments,
   ];
 };
@@ -89,11 +123,12 @@ const styleHeaderAndData = (
   headerRow: number,
   lastDataRow: number,
   lastCol: number,
-  egg: boolean,
+  unitType: RouteOrderUnitType,
 ) => {
-  worksheet.getRow(headerRow).height = 36;
+  const egg = unitType === "EGG";
+  worksheet.getRow(headerRow).height = 42;
   worksheet.getRow(headerRow).eachCell({ includeEmpty: true }, (cell) => {
-    cell.font = { name: "Arial", size: 12 };
+    cell.font = { name: "Arial", size: 10 };
     cell.alignment = {
       horizontal: "center",
       vertical: "middle",
@@ -101,28 +136,31 @@ const styleHeaderAndData = (
     };
   });
 
-  const priceCol = egg ? 8 : 5;
-  const boxCol = egg ? 9 : null;
   for (let rowIndex = headerRow + 1; rowIndex <= lastDataRow; rowIndex += 1) {
     const row = worksheet.getRow(rowIndex);
-    row.height = 28;
+    row.height = 36;
     row.eachCell({ includeEmpty: true }, (cell, col) => {
-      const notesColumn = egg && col >= 5 && col <= 7;
+      const notesColumn = egg && col >= 4 && col <= 6;
+      const clientColumn = col === 2;
+      const commentsColumn = col === lastCol;
       cell.font = {
         name: "Arial",
-        size: notesColumn || col === lastCol ? 12 : 14,
+        size: clientColumn || commentsColumn || notesColumn ? 10 : 11,
         color: { argb: BLACK },
       };
       cell.alignment = {
-        horizontal: "center",
+        horizontal: clientColumn || commentsColumn ? "left" : "center",
         vertical: "middle",
         wrapText: true,
       };
     });
-    worksheet.getCell(rowIndex, 4).numFmt = egg ? "0" : "0.###";
-    worksheet.getCell(rowIndex, priceCol).numFmt = "$#,##0.00;[Red]-$#,##0.00";
-    if (boxCol) {
-      worksheet.getCell(rowIndex, boxCol).numFmt = "#,##0.00;[Red]-#,##0.00";
+    if (egg) {
+      worksheet.getCell(rowIndex, 3).numFmt = "0";
+      worksheet.getCell(rowIndex, 7).numFmt = "$#,##0.00;[Red]-$#,##0.00";
+    } else {
+      worksheet.getCell(rowIndex, 3).numFmt = "0.###";
+      worksheet.getCell(rowIndex, 6).numFmt = "0.###";
+      worksheet.getCell(rowIndex, 7).numFmt = "$#,##0.00;[Red]-$#,##0.00";
     }
   }
 };
@@ -135,7 +173,11 @@ const writeTotalLine = (
   argb: string | undefined,
   money: boolean,
   valueCol: number,
+  labelLastCol = 1,
 ): number => {
+  if (labelLastCol > 1) {
+    worksheet.mergeCells(rowIndex, 1, rowIndex, labelLastCol);
+  }
   const row = worksheet.getRow(rowIndex);
   row.getCell(1).value = label;
   row.getCell(valueCol).value = value;
@@ -163,15 +205,18 @@ const writeSectionTotals = (
 ): number => {
   const totals = computeTotals(rows, input.unitType);
   const egg = input.unitType === "EGG";
+  const valueCol = 3;
+  const labelLastCol = 2;
   let row = startRow;
   row = writeTotalLine(
     worksheet,
     row,
-    `TOTAL DE ${egg ? "CAJAS" : "CABEZAS"} · ${sectionTitle.toUpperCase()}`,
+    `TOTAL DE ${egg ? "CAJAS" : "POLLOS"} · ${sectionTitle.toUpperCase()}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,
-    4,
+    valueCol,
+    labelLastCol,
   );
   if (egg) {
     row = writeTotalLine(
@@ -181,7 +226,8 @@ const writeSectionTotals = (
       totals.totalAmount,
       MONEY_GREEN,
       true,
-      4,
+      7,
+      6,
     );
     row = writeTotalLine(
       worksheet,
@@ -190,7 +236,8 @@ const writeSectionTotals = (
       totals.totalQuantity,
       undefined,
       false,
-      4,
+      valueCol,
+      labelLastCol,
     );
   }
   row = writeTotalLine(
@@ -200,7 +247,8 @@ const writeSectionTotals = (
     totals.clientCount,
     undefined,
     false,
-    4,
+    valueCol,
+    labelLastCol,
   );
   return row;
 };
@@ -213,6 +261,8 @@ const writeOverallTotals = (
 ): number => {
   const totals = computeTotals(rows, input.unitType);
   const egg = input.unitType === "EGG";
+  const valueCol = 3;
+  const labelLastCol = 2;
   let row = startRow;
   if (egg) {
     row = writeTotalLine(
@@ -222,17 +272,19 @@ const writeOverallTotals = (
       totals.totalAmount,
       MONEY_GREEN,
       true,
-      4,
+      7,
+      6,
     );
   }
   row = writeTotalLine(
     worksheet,
     row,
-    `TOTAL DE ${egg ? "CAJAS" : "CABEZAS"}`,
+    `TOTAL DE ${egg ? "CAJAS" : "POLLOS"}`,
     egg ? totals.totalBoxes : totals.totalQuantity,
     YELLOW,
     false,
-    4,
+    valueCol,
+    labelLastCol,
   );
   if (egg) {
     row = writeTotalLine(
@@ -242,7 +294,8 @@ const writeOverallTotals = (
       totals.totalQuantity,
       undefined,
       false,
-      4,
+      valueCol,
+      labelLastCol,
     );
   }
   row = writeTotalLine(
@@ -252,7 +305,8 @@ const writeOverallTotals = (
     totals.clientCount,
     undefined,
     false,
-    4,
+    valueCol,
+    labelLastCol,
   );
   return row;
 };
@@ -278,45 +332,55 @@ const buildRouteSheet = (
   const lastCol = headers.length;
   const lastColLetter = lastColumnLetter(worksheet, lastCol);
 
-  worksheet.columns = [
-    { width: 28.7 },
-    { width: 37.2 },
-    { width: 27.0 },
-    { width: 14.6 },
-    ...(egg
-      ? [
-          { width: 33.5 },
-          { width: 28.7 },
-          { width: 20.5 },
-          { width: 19.6 },
-          { width: 18.1 },
-        ]
-      : [{ width: 16.0 }]),
-    { width: 28.0 },
-  ];
+  worksheet.columns = egg
+    ? [
+        { width: 6 },
+        { width: 30 },
+        { width: 9 },
+        { width: 13 },
+        { width: 12 },
+        { width: 11 },
+        { width: 12 },
+        { width: 20 },
+        { width: 14 },
+      ]
+    : [
+        { width: 6.0 },
+        { width: 34.0 },
+        { width: 8.0 },
+        { width: 12.0 },
+        { width: 9.0 },
+        { width: 9.0 },
+        { width: 12.0 },
+        { width: 20.0 },
+        { width: 14.0 },
+      ];
 
-  worksheet.mergeCells("A1:B1");
+  worksheet.mergeCells("A1:D1");
   styleTitleCell(
     worksheet.getCell("A1"),
     GREEN,
     `PEDIDO DE RUTA · ${input.routeName}`,
   );
-  styleTitleCell(worksheet.getCell("C1"), YELLOW, dayLabel(input.date));
-  worksheet.mergeCells("D1:E1");
+  worksheet.mergeCells("E1:F1");
+  styleTitleCell(worksheet.getCell("E1"), YELLOW, dayLabel(input.date));
+  worksheet.mergeCells("G1:I1");
   styleTitleCell(
-    worksheet.getCell("D1"),
+    worksheet.getCell("G1"),
     GREEN,
     `FECHA  ${formatHumanDate(input.date, "short")}`,
   );
-  for (let col = 6; col <= lastCol; col += 1) {
-    worksheet.getCell(1, col).fill = fill(GREEN);
-  }
-  worksheet.getRow(1).height = 33;
+  worksheet.getRow(1).height = 42;
   worksheet.getRow(1).eachCell((cell) => {
     cell.alignment = { horizontal: "center", vertical: "middle" };
   });
+  worksheet.getCell("A1").alignment = {
+    horizontal: "left",
+    vertical: "middle",
+    wrapText: true,
+  };
 
-  worksheet.mergeCells("A2:E2");
+  worksheet.mergeCells("A2:F2");
   const meta = [
     `Chofer: ${input.driverName || "________________"}`,
     `Vehículo: ${input.vehicleName || "________________"}`,
@@ -329,30 +393,8 @@ const buildRouteSheet = (
   metaCell.font = { name: "Arial", size: 11, color: { argb: BLACK } };
   metaCell.alignment = { horizontal: "left", vertical: "middle" };
 
-  if (
-    egg &&
-    input.currentEggPricePerCarton != null &&
-    input.currentEggPricePerCarton > 0
-  ) {
-    worksheet.mergeCells("A3:E3");
-    const priceCell = worksheet.getCell("A3");
-    priceCell.value = `Precio actual del huevo: ${input.currentEggPricePerCarton.toFixed(
-      2,
-    )} por casillero (${(
-      input.currentEggPricePerBox ?? pricePerBox(input.currentEggPricePerCarton)
-    ).toFixed(2)} por caja)${
-      input.currentEggPriceEffectiveFrom
-        ? `, vigente desde ${formatHumanDate(
-            input.currentEggPriceEffectiveFrom,
-            "short",
-          )}`
-        : ""
-    }`;
-    priceCell.font = { name: "Arial", size: 10, color: { argb: BLACK } };
-    priceCell.alignment = { horizontal: "left", vertical: "middle" };
-  }
-
-  let rowCursor = 4;
+  let rowCursor = 3;
+  let rowNumberOffset = 0;
   sections.forEach((section, sectionIndex) => {
     if (section.title) {
       worksheet.mergeCells(`A${rowCursor}:${lastColLetter}${rowCursor}`);
@@ -371,7 +413,10 @@ const buildRouteSheet = (
     }
 
     const headerRow = rowCursor;
-    const dataRows = section.rows.map((row) => routeRowValues(row, input));
+    const dataRows = section.rows.map((row, index) =>
+      routeRowValues(row, input, rowNumberOffset + index),
+    );
+    rowNumberOffset += dataRows.length;
     const lastDataRow = headerRow + dataRows.length;
     if (dataRows.length > 0) {
       worksheet.addTable({
@@ -393,7 +438,13 @@ const buildRouteSheet = (
       });
     }
 
-    styleHeaderAndData(worksheet, headerRow, lastDataRow, lastCol, egg);
+    styleHeaderAndData(
+      worksheet,
+      headerRow,
+      lastDataRow,
+      lastCol,
+      input.unitType,
+    );
     if (section.title) {
       rowCursor = writeSectionTotals(
         worksheet,
@@ -430,7 +481,7 @@ const buildRouteSheet = (
   }
 
   worksheet.pageSetup = {
-    orientation: "landscape",
+    orientation: "portrait",
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
@@ -468,7 +519,7 @@ const buildSummarySheet = (
     "Viaje",
     "Tipo",
     "Clientes",
-    egg ? "Casilleros/Kilos" : "Cabezas",
+    egg ? "Casilleros" : "Pollo",
     ...(egg ? ["Cajas", "Total"] : []),
   ];
   worksheet.columns = [
