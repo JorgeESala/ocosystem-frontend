@@ -65,6 +65,39 @@ const formatQuantity = (value: number) =>
 const formatPieces = (value: number) =>
   value.toLocaleString("es-MX", { maximumFractionDigits: 0 });
 
+const calculationProps = (row: BranchRankingRow) => ({
+  scopeLabel: row.branchName,
+  birdsSold: row.expectedBirdsSold,
+  avgChickenWeight: row.expectedAvgChickenWeight,
+  expectedKg: row.expectedKg,
+  pricePerKg: row.expectedEffectivePrice,
+  expectedMoney: row.expectedComparableMoney,
+  moneyLabel: "Mínimo comparable",
+  moneyNote:
+    "Suma de kg esperados × precio de cada día con precio y monto registrado.",
+  valueLabel:
+    row.expectedComparableMoney != null
+      ? formatMoney(row.expectedComparableMoney)
+      : `${formatKgValue(row.expectedKg)} kg esperados`,
+  missingProduct: !row.referenceProductBarcode,
+  missingPrice: row.referencePriceMissing,
+  missingAmount: row.expectedSalesWithoutReportedMoney > 0,
+});
+
+const missingMoneyLabel = (row: BranchRankingRow): string | null => {
+  if (!row.expectedLoaded || row.expectedKg == null) return null;
+  if (
+    row.expectedComparableMoney != null &&
+    row.expectedReportedMoney != null
+  ) {
+    return null;
+  }
+  if (!row.referenceProductBarcode) return "Sin producto de referencia";
+  if (row.referencePriceMissing) return "Sin precio de referencia";
+  if (row.expectedSalesWithoutReportedMoney > 0) return "Sin monto registrado";
+  return "Sin precio de referencia";
+};
+
 const compliancePct = (row: BranchRankingRow): number | null => {
   if (
     row.expectedKg == null ||
@@ -118,10 +151,14 @@ const ComplianceCell = ({
   row,
   align = "end",
   expectedError = false,
+  showMoney = true,
+  showCalculation = true,
 }: {
   row: BranchRankingRow;
   align?: "start" | "end";
   expectedError?: boolean;
+  showMoney?: boolean;
+  showCalculation?: boolean;
 }) => {
   const compliance = compliancePct(row);
   const alignment =
@@ -145,60 +182,42 @@ const ComplianceCell = ({
 
   const calculationLines = (
     <span className="flex flex-col">
+      {showMoney &&
+        (row.expectedComparableMoney != null &&
+        row.expectedReportedMoney != null ? (
+          <span
+            className={`text-xs tabular-nums ${
+              moneyComparisonState(
+                row.expectedComparableMoney,
+                row.expectedReportedMoney,
+              ) === "below"
+                ? "text-red-400"
+                : moneyComparisonState(
+                      row.expectedComparableMoney,
+                      row.expectedReportedMoney,
+                    ) === "within"
+                  ? "text-amber-400"
+                  : "text-gray-400"
+            }`}
+          >
+            Mín. comp. {formatMXNCompact(row.expectedComparableMoney)} · Comp.{" "}
+            {formatMXNCompact(row.expectedReportedMoney)}
+          </span>
+        ) : row.expectedLoaded && row.expectedKg != null ? (
+          <span className="text-xs text-gray-500">
+            {missingMoneyLabel(row)}
+          </span>
+        ) : null)}
       <span className="text-xs text-gray-400">
         {formatKgValue(row.expectedReportedKg)} vendidos ·{" "}
         {formatKgValue(row.expectedKg)} esperados
       </span>
-      {row.expectedComparableMoney != null &&
-      row.expectedReportedMoney != null ? (
-        <span
-          className={`text-xs tabular-nums ${
-            moneyComparisonState(
-              row.expectedComparableMoney,
-              row.expectedReportedMoney,
-            ) === "below"
-              ? "text-red-400"
-              : moneyComparisonState(
-                    row.expectedComparableMoney,
-                    row.expectedReportedMoney,
-                  ) === "within"
-                ? "text-amber-400"
-                : "text-gray-400"
-          }`}
-        >
-          Mín. comp. {formatMXNCompact(row.expectedComparableMoney)} · Comp.{" "}
-          {formatMXNCompact(row.expectedReportedMoney)}
-        </span>
-      ) : row.expectedLoaded && row.expectedKg != null ? (
-        <span className="text-xs text-gray-500">
-          {row.referenceProductBarcode
-            ? row.referencePriceMissing
-              ? "Sin precio de referencia"
-              : row.expectedSalesWithoutReportedMoney > 0
-                ? "Sin monto registrado"
-                : "Sin precio de referencia"
-            : "Sin producto de referencia"}
-        </span>
-      ) : null}
     </span>
   );
 
   const wrappedLines =
-    row.expectedLoaded && row.expectedKg != null ? (
-      <CalculationTooltip
-        scopeLabel={row.branchName}
-        birdsSold={row.expectedBirdsSold}
-        avgChickenWeight={row.expectedAvgChickenWeight}
-        expectedKg={row.expectedKg}
-        pricePerKg={row.expectedEffectivePrice}
-        expectedMoney={row.expectedComparableMoney}
-        moneyLabel="Mínimo comparable"
-        moneyNote="Suma de kg esperados × precio de cada día con precio y monto registrado."
-        valueLabel={`${formatKgValue(row.expectedKg)} kg esperados`}
-        missingProduct={!row.referenceProductBarcode}
-        missingPrice={row.referencePriceMissing}
-        missingAmount={row.expectedSalesWithoutReportedMoney > 0}
-      >
+    showCalculation && row.expectedLoaded && row.expectedKg != null ? (
+      <CalculationTooltip {...calculationProps(row)}>
         {calculationLines}
       </CalculationTooltip>
     ) : (
@@ -252,14 +271,14 @@ const CoverageCell = ({
 const legend = (
   <div className="mt-3 space-y-1 text-xs text-gray-500">
     <p>
-      Cumplimiento = kg vendidos / kg esperados. Esperado = (peso promedio de la
-      remesa − 250 g) × pollos vendidos.
-    </p>
-    <p>
       Venta mínima = kg esperados × el último precio de venta del producto de
       referencia de cada día. Comp. es la venta registrada en los días con
       precio; el total incluye todos los días. Se permite 0.5% de tolerancia por
       redondeo. No es una meta ni una proyección.
+    </p>
+    <p>
+      Cumplimiento = kg vendidos / kg esperados. Esperado = (peso promedio de la
+      remesa − 250 g) × pollos vendidos.
     </p>
     <p>
       El color de Cumplimiento indica la desviación: verde ±5%, ámbar 5–10%,
@@ -536,6 +555,58 @@ export const BranchRankingTable = ({
                     {formatQuantity(row.mermaQuantity)} kg
                   </p>
                 </div>
+                {row.expectedLoaded && row.expectedKg != null && (
+                  <div className="col-span-2">
+                    <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+                      Venta mínima vs registrada
+                    </p>
+                    {row.expectedComparableMoney != null &&
+                    row.expectedReportedMoney != null ? (
+                      <>
+                        <CalculationTooltip {...calculationProps(row)}>
+                          <span className="flex flex-wrap items-baseline gap-3 text-white">
+                            <span>
+                              Mín. comp.{" "}
+                              {formatMXN(row.expectedComparableMoney)}
+                            </span>
+                            <span>
+                              Comp. {formatMXN(row.expectedReportedMoney)}
+                            </span>
+                          </span>
+                        </CalculationTooltip>
+                        {row.expectedTotalReportedMoney != null &&
+                          row.expectedTotalReportedMoney !==
+                            row.expectedReportedMoney && (
+                            <p className="text-xs text-gray-400">
+                              Total registrado{" "}
+                              {formatMXN(row.expectedTotalReportedMoney)}
+                            </p>
+                          )}
+                        <p
+                          className={`text-xs ${
+                            moneyComparisonState(
+                              row.expectedComparableMoney,
+                              row.expectedReportedMoney,
+                            ) === "below"
+                              ? "text-red-400"
+                              : moneyComparisonState(
+                                    row.expectedComparableMoney,
+                                    row.expectedReportedMoney,
+                                  ) === "within"
+                                ? "text-amber-400"
+                                : "text-green-400"
+                          }`}
+                        >
+                          Diferencia {formatMoney(row.expectedMoneyDifference)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-500">
+                        {missingMoneyLabel(row)}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="col-span-2">
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cumplimiento kg
@@ -544,51 +615,10 @@ export const BranchRankingTable = ({
                     row={row}
                     align="start"
                     expectedError={expectedError}
+                    showMoney={false}
+                    showCalculation={false}
                   />
                 </div>
-                {row.expectedLoaded &&
-                  row.expectedKg != null &&
-                  row.expectedComparableMoney != null &&
-                  row.expectedReportedMoney != null && (
-                    <div className="col-span-2">
-                      <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
-                        Venta mínima vs registrada
-                      </p>
-                      <div className="flex flex-wrap items-baseline gap-3 text-white">
-                        <span>
-                          Mín. comp. {formatMXN(row.expectedComparableMoney)}
-                        </span>
-                        <span>
-                          Comp. {formatMXN(row.expectedReportedMoney)}
-                        </span>
-                      </div>
-                      {row.expectedTotalReportedMoney != null &&
-                        row.expectedTotalReportedMoney !==
-                          row.expectedReportedMoney && (
-                          <p className="text-xs text-gray-400">
-                            Total registrado{" "}
-                            {formatMXN(row.expectedTotalReportedMoney)}
-                          </p>
-                        )}
-                      <p
-                        className={`text-xs ${
-                          moneyComparisonState(
-                            row.expectedComparableMoney,
-                            row.expectedReportedMoney,
-                          ) === "below"
-                            ? "text-red-400"
-                            : moneyComparisonState(
-                                  row.expectedComparableMoney,
-                                  row.expectedReportedMoney,
-                                ) === "within"
-                              ? "text-amber-400"
-                              : "text-green-400"
-                        }`}
-                      >
-                        Diferencia {formatMoney(row.expectedMoneyDifference)}
-                      </p>
-                    </div>
-                  )}
                 <div className="col-span-2">
                   <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
                     Cobertura

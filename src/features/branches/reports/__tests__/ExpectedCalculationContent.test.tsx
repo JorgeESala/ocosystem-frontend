@@ -47,6 +47,12 @@ describe("ExpectedCalculationContent", () => {
         "Suma de kg esperados × precio de cada día con precio y monto registrado.",
       ),
     ).toBeTruthy();
+    expect(
+      screen
+        .getByText("Mínimo en dinero")
+        .compareDocumentPosition(screen.getByText("Kilos esperados")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("labels the total minimum when the call site uses the total", () => {

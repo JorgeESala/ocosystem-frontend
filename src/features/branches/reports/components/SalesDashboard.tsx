@@ -487,6 +487,7 @@ export const SalesDashboard = ({
                 <ExpectedSalesKpiValue
                   summary={expectedSales?.summary}
                   branchName={branchName}
+                  showCalculation
                 />
               }
               color="yellow"
@@ -494,16 +495,19 @@ export const SalesDashboard = ({
               footnote={
                 expectedSalesError && !expectedSales
                   ? "No disponible"
-                  : `Vendidos: ${formatKg(expectedSales?.summary.reportedKg)} · ${formatVariance(expectedSales?.summary.variancePct)}`
+                  : expectedSales?.summary.expectedMoney == null
+                    ? "Sin producto o precio de referencia"
+                    : `Kg esperados: ${formatKg(expectedSales.summary.expectedKg)} · Vendidos: ${formatKg(expectedSales.summary.reportedKg)} · ${formatVariance(expectedSales.summary.variancePct)}`
               }
               onClick={() => scrollToSection("expected-sales-section")}
               actionHint="Ver detalle"
               info={
                 <InfoTip title="Venta Esperada">
-                  Kilos que deberían venderse según el peso promedio de cada
-                  remesa, menos 250 g de merma por pollo, multiplicado por los
-                  pollos vendidos. Se compara contra los kilos registrados en
-                  Entradas y Ventas.
+                  El mínimo en dinero es kg esperados × el último precio de
+                  referencia de cada día. Los kg esperados se calculan con el
+                  peso promedio de cada remesa, menos 250 g de merma por pollo,
+                  por los pollos vendidos. Se compara contra la venta
+                  registrada.
                 </InfoTip>
               }
             />
