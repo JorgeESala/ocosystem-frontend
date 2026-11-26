@@ -103,6 +103,8 @@ describe("ExpectedSalesSection", () => {
   it("renders the expected, reported and difference totals", () => {
     render(<ExpectedSalesSection data={report} />);
 
+    fireEvent.click(screen.getByText("Kg"));
+
     expect(
       screen.getByRole("heading", { name: /Venta esperada vs vendida/ }),
     ).toBeTruthy();
@@ -111,6 +113,32 @@ describe("ExpectedSalesSection", () => {
     expect(screen.getByText("50 kg")).toBeTruthy();
     expect(screen.getAllByText("+5.0%").length).toBeGreaterThan(0);
     expect(screen.getByText("600 pollos vendidos")).toBeTruthy();
+  });
+
+  it("opens in the money view with Dinero as the first option", () => {
+    render(<ExpectedSalesSection data={report} />);
+
+    expect(screen.getByText("Venta mínima esperada")).toBeTruthy();
+
+    const dinero = screen.getByRole("button", { name: "Dinero" });
+    const kg = screen.getByRole("button", { name: "Kg" });
+    expect(
+      dinero.compareDocumentPosition(kg) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    expect(
+      screen
+        .getAllByRole("columnheader")
+        .slice(0, 6)
+        .map((header) => header.textContent),
+    ).toEqual([
+      "Día",
+      "Mín. esperado",
+      "Venta total",
+      "Venta comparable",
+      "Diferencia",
+      "Kg esperados",
+    ]);
   });
 
   it("switches to the money view with the minimum and registered money", () => {

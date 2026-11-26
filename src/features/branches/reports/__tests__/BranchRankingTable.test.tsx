@@ -228,6 +228,24 @@ describe("BranchRankingTable", () => {
     expect(cards().getByText("7/7 días")).toBeTruthy();
   });
 
+  it("shows the money comparison before kg compliance in the card", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+      }),
+    ]);
+
+    const money = cards().getByText("Venta mínima vs registrada");
+    const kg = cards().getByText("Cumplimiento kg");
+
+    expect(
+      money.compareDocumentPosition(kg) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(cards().getAllByText(/Mín\. comp\./).length).toBe(1);
+  });
+
   it("opens the branch detail from a card", () => {
     const onSelectBranch = vi.fn();
     renderTable([row(3, "Sucursal Sur")], { onSelectBranch });
@@ -372,6 +390,12 @@ describe("BranchRankingTable", () => {
       within(tooltip).getByText(
         "Suma de kg esperados × precio de cada día con precio y monto registrado.",
       ),
+    ).toBeTruthy();
+    expect(
+      within(tooltip)
+        .getByText("Mínimo en dinero")
+        .compareDocumentPosition(within(tooltip).getByText("Kilos esperados")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 

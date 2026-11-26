@@ -36,7 +36,15 @@ const openTooltip = () => {
 
 describe("ExpectedSalesKpiValue", () => {
   it("labels the KPI minimum as the total", () => {
-    render(<ExpectedSalesKpiValue summary={summary} branchName="Centro" />);
+    render(
+      <ExpectedSalesKpiValue
+        summary={summary}
+        branchName="Centro"
+        showCalculation
+      />,
+    );
+
+    expect(screen.getByText("$45,000")).toBeTruthy();
 
     openTooltip();
 
@@ -57,6 +65,7 @@ describe("ExpectedSalesKpiValue", () => {
           daysWithoutPrice: 1,
           salesWithoutReportedMoney: 1,
         }}
+        showCalculation
       />,
     );
 
@@ -68,5 +77,20 @@ describe("ExpectedSalesKpiValue", () => {
     expect(
       screen.getByText("Falta monto registrado en una o más ventas."),
     ).toBeTruthy();
+  });
+
+  it("shows the money value without a calculation when disabled", () => {
+    render(<ExpectedSalesKpiValue summary={summary} />);
+
+    expect(screen.getByText("$45,000")).toBeTruthy();
+    expect(
+      screen.queryByLabelText(/Ver cálculo de la venta esperada/),
+    ).toBeNull();
+  });
+
+  it("shows a blank value without a summary", () => {
+    render(<ExpectedSalesKpiValue />);
+
+    expect(screen.getByText("—")).toBeTruthy();
   });
 });

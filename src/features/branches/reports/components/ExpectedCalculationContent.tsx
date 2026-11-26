@@ -57,28 +57,6 @@ export const ExpectedCalculationContent = ({
       {scopeLabel && <p className="text-gray-400">{scopeLabel}</p>}
 
       <div className="space-y-0.5 border-t border-gray-700 pt-1">
-        <p className="font-semibold text-gray-300">Kilos esperados</p>
-        {hasKg ? (
-          <>
-            <p>
-              Peso promedio de la remesa: {formatWeightValue(avgChickenWeight)}
-            </p>
-            <p>Merma por pollo: {formatWeightValue(wastePerChickenKg)}</p>
-            <p>Pollos vendidos: {formatBirds(birdsSold)}</p>
-            <p className="font-mono text-[11px] text-white">
-              ({formatWeightValue(avgChickenWeight)} −{" "}
-              {formatWeightValue(wastePerChickenKg)}) × {formatBirds(birdsSold)}{" "}
-              = {formatKgValue(expectedKg)} kg
-            </p>
-          </>
-        ) : (
-          <p className="text-gray-400">
-            Sin datos de remesa para calcular los kilos.
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-0.5 border-t border-gray-700 pt-1">
         <p className="font-semibold text-gray-300">Mínimo en dinero</p>
         {expectedMoney != null ? (
           exactMoney && expectedKg != null && pricePerKg != null ? (
@@ -108,6 +86,28 @@ export const ExpectedCalculationContent = ({
               </p>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="space-y-0.5 border-t border-gray-700 pt-1">
+        <p className="font-semibold text-gray-300">Kilos esperados</p>
+        {hasKg ? (
+          <>
+            <p>
+              Peso promedio de la remesa: {formatWeightValue(avgChickenWeight)}
+            </p>
+            <p>Merma por pollo: {formatWeightValue(wastePerChickenKg)}</p>
+            <p>Pollos vendidos: {formatBirds(birdsSold)}</p>
+            <p className="font-mono text-[11px] text-white">
+              ({formatWeightValue(avgChickenWeight)} −{" "}
+              {formatWeightValue(wastePerChickenKg)}) × {formatBirds(birdsSold)}{" "}
+              = {formatKgValue(expectedKg)} kg
+            </p>
+          </>
+        ) : (
+          <p className="text-gray-400">
+            Sin datos de remesa para calcular los kilos.
+          </p>
         )}
       </div>
 

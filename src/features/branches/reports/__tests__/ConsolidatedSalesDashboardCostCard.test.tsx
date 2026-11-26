@@ -139,6 +139,17 @@ vi.mock("../api/expectedSales.queries", () => ({
             salesWithoutReportedKg: 0,
             daysWithData: 1,
             wastePerChickenKg: 0.25,
+            expectedMoney: 45000,
+            reportedMoney: 46000,
+            comparableReportedMoney: 46000,
+            moneyDifference: 1000,
+            effectivePricePerKg: 45,
+            daysWithoutPrice: 0,
+            comparableDays: 1,
+            branchesWithoutReference: 0,
+            salesWithZeroMoney: 0,
+            salesWithoutReportedMoney: 0,
+            daysWithoutReportedMoney: 0,
           },
           branches: [
             {

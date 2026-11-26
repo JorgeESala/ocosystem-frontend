@@ -103,7 +103,7 @@ export const ExpectedSalesSection = ({
   canConfigure = false,
   showCalculation = false,
 }: Props) => {
-  const [view, setView] = useState<"kg" | "money">("kg");
+  const [view, setView] = useState<"money" | "kg">("money");
   const [configOpen, setConfigOpen] = useState(false);
 
   const dailyRows = useMemo(
@@ -230,13 +230,14 @@ export const ExpectedSalesSection = ({
           <h3 className="flex items-center gap-1 text-lg font-semibold text-gray-200">
             Venta esperada vs vendida
             <InfoTip title="Venta esperada vs vendida">
-              Por cada venta de remesa: (peso promedio del pollo de la remesa −{" "}
-              {wasteGrams} g) × pollos vendidos. Si un día hay ventas de varias
-              remesas, se suman. En dinero, el mínimo es kg esperados × el
-              último precio de venta de referencia de cada día. La venta total
-              incluye todos los días; la diferencia usa solo los días
-              comparables. Se permite {MONEY_REVIEW_TOLERANCE_PCT}% de
-              tolerancia por redondeo. No es una meta ni una proyección.
+              El mínimo en dinero es kg esperados × el último precio de venta de
+              referencia de cada día. Los kg esperados se calculan por cada
+              venta de remesa: (peso promedio del pollo de la remesa −{" "}
+              {wasteGrams} g) × pollos vendidos; si un día hay ventas de varias
+              remesas, se suman. La venta total incluye todos los días con monto
+              registrado; la diferencia usa solo los días comparables. Se
+              permite {MONEY_REVIEW_TOLERANCE_PCT}% de tolerancia por redondeo.
+              No es una meta ni una proyección.
             </InfoTip>
           </h3>
           {scopeLabel && (
@@ -248,17 +249,17 @@ export const ExpectedSalesSection = ({
           <div className="flex items-center gap-1 rounded-lg border border-gray-700 p-1">
             <Button
               size="xs"
-              color={moneyView ? "gray" : "blue"}
-              onClick={() => setView("kg")}
-            >
-              Kg
-            </Button>
-            <Button
-              size="xs"
               color={moneyView ? "blue" : "gray"}
               onClick={() => setView("money")}
             >
               Dinero
+            </Button>
+            <Button
+              size="xs"
+              color={moneyView ? "gray" : "blue"}
+              onClick={() => setView("kg")}
+            >
+              Kg
             </Button>
           </div>
           {canConfigure && asOf && (
@@ -468,16 +469,16 @@ export const ExpectedSalesSection = ({
                   <TableHeadCell>Día</TableHeadCell>
                   {moneyView ? (
                     <>
+                      <TableHeadCell>Mín. esperado</TableHeadCell>
+                      <TableHeadCell>Venta total</TableHeadCell>
+                      <TableHeadCell>Venta comparable</TableHeadCell>
+                      <TableHeadCell>Diferencia</TableHeadCell>
                       <TableHeadCell>Kg esperados</TableHeadCell>
                       <TableHeadCell>
                         {hasMultipleBranches
                           ? "Precio efectivo/kg"
                           : "Precio/kg"}
                       </TableHeadCell>
-                      <TableHeadCell>Mín. esperado</TableHeadCell>
-                      <TableHeadCell>Venta total</TableHeadCell>
-                      <TableHeadCell>Venta comparable</TableHeadCell>
-                      <TableHeadCell>Diferencia</TableHeadCell>
                     </>
                   ) : (
                     <>
@@ -499,28 +500,6 @@ export const ExpectedSalesSection = ({
                     </TableCell>
                     {moneyView ? (
                       <>
-                        <TableCell className="text-white">
-                          {showCalculation && row.expectedKg != null ? (
-                            <CalculationTooltip
-                              {...dailyCalculation(row)}
-                              valueLabel={formatKgValue(row.expectedKg)}
-                            >
-                              {formatKgValue(row.expectedKg)}
-                            </CalculationTooltip>
-                          ) : (
-                            formatKgValue(row.expectedKg)
-                          )}
-                        </TableCell>
-                        <TableCell className="text-white">
-                          <span>
-                            {formatPricePerKg(row.referencePricePerKg)}
-                          </span>
-                          {row.priceAsOf && !hasMultipleBranches && (
-                            <span className="block text-[11px] text-gray-500">
-                              Precio del {formatFullDate(row.priceAsOf)}
-                            </span>
-                          )}
-                        </TableCell>
                         <TableCell className="text-white">
                           {showCalculation &&
                           row.expectedKg != null &&
@@ -550,6 +529,28 @@ export const ExpectedSalesSection = ({
                           )}
                         >
                           {formatMoney(row.moneyDifference)}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          {showCalculation && row.expectedKg != null ? (
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatKgValue(row.expectedKg)}
+                            >
+                              {formatKgValue(row.expectedKg)}
+                            </CalculationTooltip>
+                          ) : (
+                            formatKgValue(row.expectedKg)
+                          )}
+                        </TableCell>
+                        <TableCell className="text-white">
+                          <span>
+                            {formatPricePerKg(row.referencePricePerKg)}
+                          </span>
+                          {row.priceAsOf && !hasMultipleBranches && (
+                            <span className="block text-[11px] text-gray-500">
+                              Precio del {formatFullDate(row.priceAsOf)}
+                            </span>
+                          )}
                         </TableCell>
                       </>
                     ) : (
