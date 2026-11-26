@@ -12,6 +12,8 @@ export interface BranchRankingRow extends BranchSalesSummaryDTO {
   expectedLoaded: boolean;
   salesWithoutWeight: number;
   salesWithoutReportedKg: number;
+  expectedBirdsSold: number | null;
+  expectedAvgChickenWeight: number | null;
   expectedMoney: number | null;
   expectedComparableMoney: number | null;
   expectedReportedMoney: number | null;
@@ -85,6 +87,8 @@ export const buildRankingRows = (
         expectedLoaded: expectedBranches !== undefined,
         salesWithoutWeight: expected?.salesWithoutWeight ?? 0,
         salesWithoutReportedKg: expected?.salesWithoutReportedKg ?? 0,
+        expectedBirdsSold: expected?.birdsSold ?? null,
+        expectedAvgChickenWeight: expected?.avgChickenWeight ?? null,
         expectedMoney: expected?.expectedMoney ?? null,
         expectedComparableMoney: comparableExpectedMoney(
           expected?.comparableReportedMoney,

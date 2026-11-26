@@ -14,6 +14,7 @@ import {
 import { HiChevronDown, HiChevronRight, HiChevronUp } from "react-icons/hi";
 import { formatMXN, formatMXNCompact } from "@/utils/moneyNumbers";
 import { DeltaBadge } from "./DeltaBadge";
+import { CalculationTooltip } from "./CalculationTooltip";
 import type { BranchRankingRow } from "../utils/consolidatedMetrics";
 import {
   needsReview,
@@ -142,20 +143,8 @@ const ComplianceCell = ({
     );
   }
 
-  return (
-    <div className={`flex flex-col ${alignment}`}>
-      <div className="flex items-center gap-2">
-        <span
-          className={`text-sm font-semibold tabular-nums ${complianceColor(
-            row.expectedVariancePct,
-          )}`}
-        >
-          {compliance.toFixed(1)}%
-        </span>
-        <span className="text-xs text-gray-400 tabular-nums">
-          {formatVariance(row.expectedVariancePct)}
-        </span>
-      </div>
+  const calculationLines = (
+    <span className="flex flex-col">
       <span className="text-xs text-gray-400">
         {formatKgValue(row.expectedReportedKg)} vendidos ·{" "}
         {formatKgValue(row.expectedKg)} esperados
@@ -191,6 +180,46 @@ const ComplianceCell = ({
             : "Sin producto de referencia"}
         </span>
       ) : null}
+    </span>
+  );
+
+  const wrappedLines =
+    row.expectedLoaded && row.expectedKg != null ? (
+      <CalculationTooltip
+        scopeLabel={row.branchName}
+        birdsSold={row.expectedBirdsSold}
+        avgChickenWeight={row.expectedAvgChickenWeight}
+        expectedKg={row.expectedKg}
+        pricePerKg={row.expectedEffectivePrice}
+        expectedMoney={row.expectedComparableMoney}
+        moneyLabel="Mínimo comparable"
+        moneyNote="Suma de kg esperados × precio de cada día con precio y monto registrado."
+        valueLabel={`${formatKgValue(row.expectedKg)} kg esperados`}
+        missingProduct={!row.referenceProductBarcode}
+        missingPrice={row.referencePriceMissing}
+        missingAmount={row.expectedSalesWithoutReportedMoney > 0}
+      >
+        {calculationLines}
+      </CalculationTooltip>
+    ) : (
+      calculationLines
+    );
+
+  return (
+    <div className={`flex flex-col ${alignment}`}>
+      <div className="flex items-center gap-2">
+        <span
+          className={`text-sm font-semibold tabular-nums ${complianceColor(
+            row.expectedVariancePct,
+          )}`}
+        >
+          {compliance.toFixed(1)}%
+        </span>
+        <span className="text-xs text-gray-400 tabular-nums">
+          {formatVariance(row.expectedVariancePct)}
+        </span>
+      </div>
+      {wrappedLines}
     </div>
   );
 };

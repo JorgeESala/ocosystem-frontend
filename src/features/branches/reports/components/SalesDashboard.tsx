@@ -29,6 +29,7 @@ import DateRangePicker from "@/components/DateRangePicker";
 import { DateRangePresets } from "./DateRangePresets";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 import { ExpectedSalesSection } from "./ExpectedSalesSection";
+import { ExpectedSalesKpiValue } from "./ExpectedSalesKpiValue";
 import { TopProductsCard } from "./TopProductsCard";
 import { StrategyInsights } from "./StrategyInsights";
 import { TicketsByWeekdayCard } from "./TicketsByWeekdayCard";
@@ -482,7 +483,12 @@ export const SalesDashboard = ({
             />
             <KPICard
               title="Venta Esperada"
-              value={formatKg(expectedSales?.summary.expectedKg)}
+              value={
+                <ExpectedSalesKpiValue
+                  summary={expectedSales?.summary}
+                  branchName={branchName}
+                />
+              }
               color="yellow"
               icon={HiScale}
               footnote={
@@ -677,6 +683,7 @@ export const SalesDashboard = ({
               scopeLabel={branchName}
               asOf={dates.end}
               canConfigure={isAdmin}
+              showCalculation
             />
           </div>
 

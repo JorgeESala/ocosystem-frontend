@@ -30,6 +30,8 @@ const row = (
   expectedLoaded: true,
   salesWithoutWeight: 0,
   salesWithoutReportedKg: 0,
+  expectedBirdsSold: 120,
+  expectedAvgChickenWeight: 1.85,
   expectedMoney: 1000,
   expectedComparableMoney: 1000,
   expectedReportedMoney: 1000,
@@ -221,7 +223,7 @@ describe("BranchRankingTable", () => {
       }),
     ]);
 
-    expect(cards().getByText("Sucursal Centro")).toBeTruthy();
+    expect(cards().getAllByText("Sucursal Centro").length).toBeGreaterThan(0);
     expect(cards().getByText(/1,050 vendidos/)).toBeTruthy();
     expect(cards().getByText("7/7 días")).toBeTruthy();
   });
@@ -340,6 +342,65 @@ describe("BranchRankingTable", () => {
     expect(table().getByText("Sin producto de referencia")).toBeTruthy();
     expect(cards().getByText("Sin producto de referencia")).toBeTruthy();
     expect(table().getByText("Revisar")).toBeTruthy();
+  });
+
+  it("offers the expected calculation on hover", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 15.5,
+        expectedReportedKg: 15.5,
+        expectedVariancePct: 0,
+        expectedMoney: 775,
+        expectedComparableMoney: 775,
+        expectedReportedMoney: 775,
+        expectedMoneyDifference: 0,
+        expectedBirdsSold: 10,
+        expectedAvgChickenWeight: 1.8,
+      }),
+    ]);
+
+    fireEvent.mouseEnter(
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    const tooltip = screen.getByRole("tooltip");
+    expect(within(tooltip).getByText("Sucursal Centro")).toBeTruthy();
+    expect(
+      within(tooltip).getByText(/Mínimo comparable: \$775\.00/),
+    ).toBeTruthy();
+    expect(
+      within(tooltip).getByText(
+        "Suma de kg esperados × precio de cada día con precio y monto registrado.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows partial missing warnings in the ranking calculation", () => {
+    renderTable([
+      row(1, "Sucursal Centro", {
+        expectedKg: 1000,
+        expectedReportedKg: 1050,
+        expectedVariancePct: 5,
+        expectedMoney: 1000,
+        expectedComparableMoney: 1000,
+        expectedReportedMoney: 1000,
+        expectedMoneyDifference: 0,
+        expectedEffectivePrice: 55,
+        expectedSalesWithoutReportedMoney: 1,
+        referencePriceMissing: true,
+      }),
+    ]);
+
+    fireEvent.mouseEnter(
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Falta monto registrado en una o más ventas."),
+    ).toBeTruthy();
   });
 
   it("does not flag a mixed comparable day as below the minimum", () => {

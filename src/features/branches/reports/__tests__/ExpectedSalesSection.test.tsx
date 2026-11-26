@@ -404,6 +404,63 @@ describe("ExpectedSalesSection", () => {
     ).toBeNull();
   });
 
+  it("shows the total minimum calculation only when enabled", () => {
+    const { unmount } = render(
+      <ExpectedSalesSection data={report} showCalculation />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+    fireEvent.mouseEnter(
+      screen.getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    expect(screen.getByText(/Mínimo total: \$45,000\.00/)).toBeTruthy();
+    expect(screen.getByText(/incluye días sin monto registrado/)).toBeTruthy();
+
+    unmount();
+
+    render(<ExpectedSalesSection data={report} />);
+
+    expect(
+      screen.queryAllByLabelText(/Ver cálculo de la venta esperada/),
+    ).toHaveLength(0);
+  });
+
+  it("shows partial price and amount warnings in the summary calculation", () => {
+    render(
+      <ExpectedSalesSection
+        data={{
+          ...report,
+          summary: {
+            ...report.summary,
+            daysWithoutPrice: 1,
+            salesWithoutReportedMoney: 1,
+          },
+          branches: [
+            {
+              ...report.branches[0],
+              priceMissingDays: 1,
+              salesWithoutReportedMoney: 1,
+            },
+          ],
+        }}
+        showCalculation
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dinero"));
+    fireEvent.mouseEnter(
+      screen.getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
+    );
+
+    expect(
+      screen.getByText("Falta precio de referencia en uno o más días."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Falta monto registrado en una o más ventas."),
+    ).toBeTruthy();
+  });
+
   it("hides the reference product editor for non-admin users", () => {
     render(<ExpectedSalesSection data={report} asOf={new Date(2026, 5, 7)} />);
 

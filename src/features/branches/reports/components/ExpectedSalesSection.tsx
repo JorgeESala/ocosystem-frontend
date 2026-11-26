@@ -43,6 +43,7 @@ import {
   MONEY_REVIEW_TOLERANCE_PCT,
 } from "../utils/expectedSales";
 import { ReferenceProductModal } from "./ReferenceProductModal";
+import { CalculationTooltip } from "./CalculationTooltip";
 
 interface Props {
   data?: ExpectedSalesReportDTO;
@@ -52,6 +53,7 @@ interface Props {
   scopeLabel?: string;
   asOf?: Date;
   canConfigure?: boolean;
+  showCalculation?: boolean;
 }
 
 const SummaryItem = ({
@@ -62,7 +64,7 @@ const SummaryItem = ({
   valueClassName = "text-white",
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   hint?: string;
   info?: ReactNode;
   valueClassName?: string;
@@ -99,6 +101,7 @@ export const ExpectedSalesSection = ({
   scopeLabel,
   asOf,
   canConfigure = false,
+  showCalculation = false,
 }: Props) => {
   const [view, setView] = useState<"kg" | "money">("kg");
   const [configOpen, setConfigOpen] = useState(false);
@@ -174,6 +177,38 @@ export const ExpectedSalesSection = ({
   const comparableDays = summary?.comparableDays ?? 0;
   const daysWithData = summary?.daysWithData ?? 0;
   const missingReportedMoney = (summary?.salesWithoutReportedMoney ?? 0) > 0;
+  const summaryCalculation = {
+    scopeLabel,
+    birdsSold: summary?.birdsSold,
+    avgChickenWeight: summary?.avgChickenWeight,
+    expectedKg: summary?.expectedKg,
+    pricePerKg: summary?.effectivePricePerKg,
+    expectedMoney: summary?.expectedMoney,
+    moneyLabel: "Mínimo total",
+    moneyNote:
+      "Suma de kg esperados × precio de cada día con precio de referencia; incluye días sin monto registrado.",
+    wastePerChickenKg: wastePerChicken,
+    missingProduct: branchInfo
+      ? !branchInfo.referenceProductBarcode
+      : (summary?.branchesWithoutReference ?? 0) > 0,
+    missingPrice: branchInfo
+      ? branchInfo.priceMissingDays > 0
+      : (summary?.daysWithoutPrice ?? 0) > 0,
+    missingAmount: missingReportedMoney,
+  };
+  const dailyCalculation = (row: (typeof dailyRows)[number]) => ({
+    scopeLabel: formatWeekdayDayMonth(row.day),
+    birdsSold: row.birdsSold,
+    avgChickenWeight: row.avgChickenWeight,
+    expectedKg: row.expectedKg,
+    pricePerKg: row.referencePricePerKg,
+    expectedMoney: row.expectedMoney,
+    wastePerChickenKg: wastePerChicken,
+    exactMoney: true,
+    missingProduct: branchInfo ? !branchInfo.referenceProductBarcode : false,
+    missingPrice: row.referencePricePerKg == null,
+    missingAmount: row.salesWithoutReportedMoney > 0,
+  });
   const differenceHint = moneyState
     ? `${moneyStateHint(moneyState)} · ${comparableDays} de ${daysWithData} días`
     : summary?.expectedMoney == null
@@ -239,7 +274,18 @@ export const ExpectedSalesSection = ({
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <SummaryItem
             label="Venta mínima esperada"
-            value={formatMoney(summary?.expectedMoney)}
+            value={
+              showCalculation && summary?.expectedMoney != null ? (
+                <CalculationTooltip
+                  {...summaryCalculation}
+                  valueLabel={formatMoney(summary.expectedMoney)}
+                >
+                  {formatMoney(summary.expectedMoney)}
+                </CalculationTooltip>
+              ) : (
+                formatMoney(summary?.expectedMoney)
+              )
+            }
             hint={minimumHint}
           />
           <SummaryItem
@@ -258,7 +304,18 @@ export const ExpectedSalesSection = ({
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <SummaryItem
             label="Kg esperados"
-            value={formatKg(summary?.expectedKg)}
+            value={
+              showCalculation && summary?.expectedKg != null ? (
+                <CalculationTooltip
+                  {...summaryCalculation}
+                  valueLabel={formatKg(summary.expectedKg)}
+                >
+                  {formatKg(summary.expectedKg)}
+                </CalculationTooltip>
+              ) : (
+                formatKg(summary?.expectedKg)
+              )
+            }
             hint={`Peso promedio: ${formatChickenWeight(summary?.avgChickenWeight)}`}
           />
           <SummaryItem
@@ -443,7 +500,16 @@ export const ExpectedSalesSection = ({
                     {moneyView ? (
                       <>
                         <TableCell className="text-white">
-                          {formatKgValue(row.expectedKg)}
+                          {showCalculation && row.expectedKg != null ? (
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatKgValue(row.expectedKg)}
+                            >
+                              {formatKgValue(row.expectedKg)}
+                            </CalculationTooltip>
+                          ) : (
+                            formatKgValue(row.expectedKg)
+                          )}
                         </TableCell>
                         <TableCell className="text-white">
                           <span>
@@ -456,7 +522,18 @@ export const ExpectedSalesSection = ({
                           )}
                         </TableCell>
                         <TableCell className="text-white">
-                          {formatMoney(row.expectedMoney)}
+                          {showCalculation &&
+                          row.expectedKg != null &&
+                          row.expectedMoney != null ? (
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatMoney(row.expectedMoney)}
+                            >
+                              {formatMoney(row.expectedMoney)}
+                            </CalculationTooltip>
+                          ) : (
+                            formatMoney(row.expectedMoney)
+                          )}
                         </TableCell>
                         <TableCell className="text-white">
                           {formatMoney(row.reportedMoney)}
@@ -484,7 +561,16 @@ export const ExpectedSalesSection = ({
                           {formatChickenWeight(row.avgChickenWeight)}
                         </TableCell>
                         <TableCell className="text-white">
-                          {formatKgValue(row.expectedKg)}
+                          {showCalculation && row.expectedKg != null ? (
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatKgValue(row.expectedKg)}
+                            >
+                              {formatKgValue(row.expectedKg)}
+                            </CalculationTooltip>
+                          ) : (
+                            formatKgValue(row.expectedKg)
+                          )}
                         </TableCell>
                         <TableCell className="text-white">
                           {formatKgValue(row.reportedKg)}
