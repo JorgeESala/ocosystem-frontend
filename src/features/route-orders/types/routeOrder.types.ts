@@ -53,6 +53,7 @@ export interface RouteOrderSheetDTO {
   localities: RouteDetailLocality[];
   clients: RouteDetailClient[];
   order: RouteOrderDTO;
+  previousClientOrder?: number[] | null;
 }
 
 export interface RouteOrderLineSaveDTO {

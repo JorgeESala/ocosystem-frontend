@@ -78,6 +78,7 @@ export interface Route {
   active?: boolean;
   localityIds?: number[];
   deliveryDays?: number[];
+  sortOrder?: number;
 }
 export type ComparisonMode = "WINDOW" | "PREVIOUS_MONTH";
 

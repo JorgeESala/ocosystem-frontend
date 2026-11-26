@@ -163,22 +163,54 @@ const defaultUnitPrice = (
   return 0;
 };
 
-const sortRows = (rows: RouteOrderDraftRow[]): RouteOrderDraftRow[] =>
-  [...rows].sort((left, right) => {
-    const locality = left.localityName.localeCompare(right.localityName, "es", {
-      sensitivity: "base",
-    });
-    if (locality !== 0) return locality;
+const compareText = (left: string, right: string): number =>
+  left.localeCompare(right, "es", { sensitivity: "base" });
 
-    const business = left.businessName.localeCompare(right.businessName, "es", {
-      sensitivity: "base",
-    });
-    if (business !== 0) return business;
+const localityRankOf = (
+  row: RouteOrderDraftRow,
+  localityRank?: Map<string, number>,
+): number => localityRank?.get(row.localityName) ?? Number.MAX_SAFE_INTEGER;
 
-    return left.clientName.localeCompare(right.clientName, "es", {
-      sensitivity: "base",
-    });
-  });
+const compareLocality = (
+  left: RouteOrderDraftRow,
+  right: RouteOrderDraftRow,
+  localityRank?: Map<string, number>,
+): number => {
+  const leftRank = localityRankOf(left, localityRank);
+  const rightRank = localityRankOf(right, localityRank);
+  if (leftRank !== rightRank) return leftRank - rightRank;
+  if (leftRank === Number.MAX_SAFE_INTEGER) {
+    return compareText(left.localityName, right.localityName);
+  }
+  return 0;
+};
+
+const compareWithinLocality = (
+  left: RouteOrderDraftRow,
+  right: RouteOrderDraftRow,
+): number => {
+  const business = compareText(left.businessName, right.businessName);
+  if (business !== 0) return business;
+  return compareText(left.clientName, right.clientName);
+};
+
+const compareDefaultRows = (
+  left: RouteOrderDraftRow,
+  right: RouteOrderDraftRow,
+  localityRank?: Map<string, number>,
+): number => {
+  const locality = compareLocality(left, right, localityRank);
+  if (locality !== 0) return locality;
+  return compareWithinLocality(left, right);
+};
+
+export const sortRows = (
+  rows: RouteOrderDraftRow[],
+  localityRank?: Map<string, number>,
+): RouteOrderDraftRow[] =>
+  [...rows].sort((left, right) =>
+    compareDefaultRows(left, right, localityRank),
+  );
 
 const emptyRow = (
   client: ClientLike,
@@ -330,6 +362,37 @@ export const buildDraft = (
     }
   }
 
+  const localityRank = new Map(
+    sheet.localities.map((locality, index) => [locality.name, index]),
+  );
+  const defaultRows = sortRows(rows, localityRank);
+  const savedOrder = new Map<number, number>();
+  (sheet.order?.lines ?? []).forEach((line, index) => {
+    if (line.clientId != null) {
+      savedOrder.set(line.clientId, line.sortOrder ?? index);
+    }
+  });
+  const previousOrder = new Map<number, number>();
+  (sheet.previousClientOrder ?? []).forEach((clientId, index) => {
+    previousOrder.set(clientId, index);
+  });
+  const orderMap = savedOrder.size > 0 ? savedOrder : previousOrder;
+  const orderedRows =
+    orderMap.size === 0
+      ? defaultRows
+      : [...rows].sort((left, right) => {
+          const locality = compareLocality(left, right, localityRank);
+          if (locality !== 0) return locality;
+          const leftOrder = orderMap.get(left.clientId);
+          const rightOrder = orderMap.get(right.clientId);
+          if (leftOrder != null && rightOrder != null) {
+            return leftOrder - rightOrder;
+          }
+          if (leftOrder != null) return -1;
+          if (rightOrder != null) return 1;
+          return compareWithinLocality(left, right);
+        });
+
   return {
     orderId: sheet.order?.id ?? null,
     routeId: sheet.route.id,
@@ -341,7 +404,7 @@ export const buildDraft = (
     tripId: sheet.order?.tripId ?? null,
     notes: sheet.order?.notes ?? "",
     salesRegenerationRequired: Boolean(sheet.order?.salesRegenerationRequired),
-    rows: sortRows(rows),
+    rows: orderedRows,
   };
 };
 
@@ -354,14 +417,60 @@ export const addClientToDraft = (
   if (draft.rows.some((row) => row.clientId === client.id)) {
     return draft;
   }
-  return {
-    ...draft,
-    rows: sortRows([
-      ...draft.rows,
-      emptyRow(client, unitType, currentEggPricePerCarton, true),
-    ]),
-  };
+  const newRow = emptyRow(client, unitType, currentEggPricePerCarton, true);
+  const rows = [...draft.rows];
+  let insertAt = rows.length;
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    const candidate = rows[index];
+    if (
+      isInternalRow(candidate) === isInternalRow(newRow) &&
+      candidate.localityName === newRow.localityName
+    ) {
+      insertAt = index + 1;
+      break;
+    }
+  }
+  rows.splice(insertAt, 0, newRow);
+  return { ...draft, rows };
 };
+
+export const moveDraftRow = (
+  draft: RouteOrderDraft,
+  clientId: number,
+  direction: "up" | "down",
+): RouteOrderDraft => {
+  const rows = draft.rows;
+  const index = rows.findIndex((row) => row.clientId === clientId);
+  if (index < 0) return draft;
+
+  const target = rows[index];
+  const step = direction === "up" ? -1 : 1;
+  const sameGroup = (row: RouteOrderDraftRow) =>
+    isInternalRow(row) === isInternalRow(target) &&
+    row.localityName === target.localityName;
+
+  let swapIndex = index + step;
+  while (
+    swapIndex >= 0 &&
+    swapIndex < rows.length &&
+    !sameGroup(rows[swapIndex])
+  ) {
+    swapIndex += step;
+  }
+  if (swapIndex < 0 || swapIndex >= rows.length) return draft;
+
+  const next = [...rows];
+  [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  return { ...draft, rows: next };
+};
+
+export const sortDraftByLocality = (
+  draft: RouteOrderDraft,
+  localityRank?: Map<string, number>,
+): RouteOrderDraft => ({
+  ...draft,
+  rows: sortRows(draft.rows, localityRank),
+});
 
 export const removeClientFromDraft = (
   draft: RouteOrderDraft,

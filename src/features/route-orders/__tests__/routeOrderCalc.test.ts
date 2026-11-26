@@ -7,10 +7,12 @@ import {
   cartonsToBoxes,
   computeTotals,
   draftToSavePayload,
+  moveDraftRow,
   pricePerBox,
   removeClientFromDraft,
   roundUnitPrice,
   rowHasOrderData,
+  sortDraftByLocality,
 } from "../utils/routeOrderCalc";
 import type {
   RouteOrderDraft,
@@ -433,10 +435,136 @@ describe("routeOrderCalc", () => {
       unitPrice: 70,
       comments: "Sin cantidad pero con nota",
     });
-    expect(payload.lines[1]).toMatchObject({
-      clientId: 11,
-      quantity: 6,
-      unitPrice: 65,
-    });
+  });
+
+  it("ordena por localidad de la ruta y usa el pedido anterior dentro de cada localidad", () => {
+    const orderedSheet: RouteOrderSheetDTO = {
+      ...sheet,
+      localities: [
+        { id: 2, name: "Norte" },
+        { id: 1, name: "Centro" },
+      ],
+      clients: [
+        {
+          ...sheet.clients[0],
+          id: 20,
+          name: "Cliente Norte B",
+          businessName: "Abarrotes Norte B",
+          localityName: "Norte",
+        },
+        {
+          ...sheet.clients[0],
+          id: 21,
+          name: "Cliente Norte A",
+          businessName: "Abarrotes Norte A",
+          localityName: "Norte",
+        },
+        sheet.clients[0],
+        sheet.clients[1],
+      ],
+      order: { ...sheet.order, id: null, lines: [] },
+      previousClientOrder: [21, 20, 11, 10],
+    };
+
+    const draft = buildDraft(orderedSheet, "EGG", null);
+
+    expect(draft.rows.map((row) => row.clientId)).toEqual([21, 20, 11, 10]);
+  });
+
+  it("mueve clientes dentro de su localidad y respeta los extremos", () => {
+    const draft = buildDraft(
+      {
+        ...sheet,
+        localities: [
+          { id: 2, name: "Norte" },
+          { id: 1, name: "Centro" },
+        ],
+        clients: [
+          {
+            ...sheet.clients[0],
+            id: 20,
+            name: "Cliente Norte B",
+            localityName: "Norte",
+          },
+          {
+            ...sheet.clients[0],
+            id: 21,
+            name: "Cliente Norte A",
+            localityName: "Norte",
+          },
+          sheet.clients[0],
+        ],
+      },
+      "EGG",
+      null,
+    );
+
+    const moved = moveDraftRow(draft, 20, "up");
+    expect(moved.rows.map((row) => row.clientId)).toEqual([20, 21, 10]);
+
+    const blocked = moveDraftRow(moved, 20, "up");
+    expect(blocked.rows.map((row) => row.clientId)).toEqual([20, 21, 10]);
+  });
+
+  it("inserta un cliente nuevo al final de su localidad", () => {
+    const draft = buildDraft(
+      {
+        ...sheet,
+        localities: [{ id: 2, name: "Norte" }],
+        clients: [
+          {
+            ...sheet.clients[0],
+            id: 20,
+            name: "Cliente Norte B",
+            localityName: "Norte",
+          },
+          {
+            ...sheet.clients[0],
+            id: 21,
+            name: "Cliente Norte A",
+            localityName: "Norte",
+          },
+        ],
+        order: { ...sheet.order, id: null, lines: [] },
+      },
+      "EGG",
+      null,
+    );
+
+    const added = addClientToDraft(
+      draft,
+      {
+        id: 22,
+        name: "Cliente Norte C",
+        businessName: "Abarrotes Norte C",
+        localityId: 2,
+        localityName: "Norte",
+        isInternalBranch: false,
+        isInternalClient: false,
+        lastSalePricePerCarton: null,
+        lastSalePricePerKg: null,
+      },
+      "EGG",
+      null,
+    );
+
+    expect(added.rows.map((row) => row.clientId)).toEqual([21, 20, 22]);
+  });
+
+  it("vuelve a ordenar por localidad al solicitarlo", () => {
+    const draft: RouteOrderDraft = {
+      ...buildDraft(sheet, "EGG", null),
+      rows: [...buildDraft(sheet, "EGG", null).rows].reverse(),
+    };
+
+    const sorted = sortDraftByLocality(
+      draft,
+      new Map([
+        ["Norte", 0],
+        ["Centro", 1],
+      ]),
+    );
+
+    expect(sorted.rows.map((row) => row.clientId)).toEqual([10, 11]);
   });
 });

@@ -91,6 +91,11 @@ export const reactivateRoute = async (id: number): Promise<Route> => {
   return data;
 };
 
+export const reorderRoutes = async (routeIds: number[]): Promise<Route[]> => {
+  const { data } = await http.put<Route[]>(`${BASE_URL}/reorder`, routeIds);
+  return data;
+};
+
 export const getRoutePerformance = async (
   startDate: string,
   endDate: string,

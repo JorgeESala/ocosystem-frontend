@@ -31,6 +31,7 @@ const mocks = vi.hoisted(() => ({
   useRoutes: vi.fn(),
   useDeleteRoute: vi.fn(),
   useReactivateRoute: vi.fn(),
+  useReorderRoutes: vi.fn(),
   useRoutePerformance: vi.fn(),
   useLocalities: vi.fn(),
 }));
@@ -42,6 +43,7 @@ vi.mock("@/core/api/route/routes.queries", () => ({
   useUpdateRoute: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useDeleteRoute: mocks.useDeleteRoute,
   useReactivateRoute: mocks.useReactivateRoute,
+  useReorderRoutes: mocks.useReorderRoutes,
   useRoutePerformance: mocks.useRoutePerformance,
 }));
 
@@ -103,6 +105,10 @@ describe("RoutesTab", () => {
       mutateAsync: vi.fn(),
       isPending: false,
     });
+    mocks.useReorderRoutes.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
     mocks.useRoutePerformance.mockReturnValue({
       data: [],
       isLoading: false,
@@ -132,6 +138,28 @@ describe("RoutesTab", () => {
     expect(
       screen.getByLabelText("¿Qué significan los días de entrega?"),
     ).toBeInTheDocument();
+  });
+
+  it("mueve rutas y guarda el orden", async () => {
+    const reorder = vi.fn().mockResolvedValue([]);
+    mocks.useReorderRoutes.mockReturnValue({
+      mutateAsync: reorder,
+      isPending: false,
+    });
+    mocks.useRoutes.mockReturnValue({
+      data: [activeRoute, { ...activeRoute, id: 3, name: "Ruta Sur" }],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<RoutesTab unitType="EGG" />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mover Ruta Sur arriba" }),
+    );
+
+    await waitFor(() => expect(reorder).toHaveBeenCalledWith([3, 1]));
   });
 
   it("muestra rutas inactivas y permite reactivarlas", async () => {

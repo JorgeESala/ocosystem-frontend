@@ -251,4 +251,27 @@ describe("RouteOrderTable", () => {
 
     expect(onRemove).toHaveBeenCalledWith(2);
   });
+
+  it("mueve clientes con las flechas y deshabilita los extremos", () => {
+    const onMove = vi.fn();
+    render(
+      <RouteOrderTable
+        unitType="EGG"
+        rows={rows}
+        currentEggPricePerCarton={65}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+        onMove={onMove}
+      />,
+    );
+
+    expect(screen.getByTestId("move-up-1")).toBeDisabled();
+    expect(screen.getByTestId("move-down-2")).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId("move-down-1"));
+    expect(onMove).toHaveBeenCalledWith(1, "down");
+
+    fireEvent.click(screen.getByTestId("move-up-2"));
+    expect(onMove).toHaveBeenCalledWith(2, "up");
+  });
 });

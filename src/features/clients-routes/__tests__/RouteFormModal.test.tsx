@@ -90,6 +90,32 @@ describe("RouteFormModal", () => {
     );
   });
 
+  it("respeta el orden de las localidades al moverlas", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({});
+    mocks.useCreateRoute.mockReturnValue({ mutateAsync, isPending: false });
+
+    render(<RouteFormModal show routeIdToEdit={null} onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Ruta Centro" },
+    });
+    fireEvent.focus(screen.getByPlaceholderText("Buscar localidad"));
+    fireEvent.click(screen.getByRole("button", { name: "Centro" }));
+    fireEvent.focus(screen.getByPlaceholderText("Buscar localidad"));
+    fireEvent.click(screen.getByRole("button", { name: "Sur" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mover Sur arriba" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Registrar" }));
+
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith({
+        name: "Ruta Centro",
+        localityIds: [2, 1],
+        deliveryDays: [],
+      }),
+    );
+  });
+
   it("precarga localidades y días al editar", async () => {
     mocks.useRoute.mockReturnValue({
       data: {

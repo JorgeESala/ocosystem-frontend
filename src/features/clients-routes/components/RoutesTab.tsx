@@ -7,10 +7,17 @@ import {
   Spinner,
   TextInput,
 } from "flowbite-react";
-import { HiPencil, HiRefresh, HiTrash } from "react-icons/hi";
+import {
+  HiChevronDown,
+  HiChevronUp,
+  HiPencil,
+  HiRefresh,
+  HiTrash,
+} from "react-icons/hi";
 import {
   useDeleteRoute,
   useReactivateRoute,
+  useReorderRoutes,
   useRoutes,
 } from "@/core/api/route/routes.queries";
 import type { Route } from "@/core/api/types";
@@ -77,6 +84,7 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
   const { data: localities } = useLocalities();
   const deleteMutation = useDeleteRoute();
   const reactivateMutation = useReactivateRoute();
+  const reorderMutation = useReorderRoutes();
 
   const rows = useMemo(() => {
     const term = search.trim();
@@ -84,6 +92,8 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
     if (!term) return all;
     return all.filter((route) => includesNormalized(route.name, term));
   }, [routes, search]);
+
+  const canReorder = search.trim().length === 0;
 
   const localityName = (id: number) =>
     localities?.find((locality) => locality.id === id)?.name ?? `#${id}`;
@@ -106,6 +116,16 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
 
   const handleReactivate = async (id: number) => {
     await reactivateMutation.mutateAsync(id);
+  };
+
+  const handleMoveRoute = async (routeId: number, direction: -1 | 1) => {
+    if (!routes || search.trim()) return;
+    const index = routes.findIndex((route) => route.id === routeId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= routes.length) return;
+    const ids = routes.map((route) => route.id);
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    await reorderMutation.mutateAsync(ids);
   };
 
   if (isLoading) {
@@ -161,6 +181,7 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
           <table className="w-full text-left text-sm text-gray-300">
             <thead className="bg-slate-900/80 text-xs tracking-[0.18em] text-gray-400 uppercase">
               <tr>
+                <th className="px-4 py-3">Orden</th>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">
                   <span className="inline-flex items-center gap-1">
@@ -184,12 +205,51 @@ export const RoutesTab: React.FC<RoutesTabProps> = ({
               </tr>
             </thead>
             <tbody>
-              {rows.map((route) => (
+              {rows.map((route, index) => (
                 <tr
                   key={route.id}
                   className="group cursor-pointer border-t border-gray-800 transition-colors hover:bg-slate-900/50"
                   onClick={() => setDetailRouteId(route.id)}
                 >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <span className="w-5 text-center text-xs text-gray-500">
+                        {index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveRoute(route.id, -1);
+                        }}
+                        disabled={
+                          !canReorder ||
+                          index === 0 ||
+                          reorderMutation.isPending
+                        }
+                        aria-label={`Mover ${route.name} arriba`}
+                        className="rounded p-0.5 text-gray-400 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <HiChevronUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveRoute(route.id, 1);
+                        }}
+                        disabled={
+                          !canReorder ||
+                          index === rows.length - 1 ||
+                          reorderMutation.isPending
+                        }
+                        aria-label={`Mover ${route.name} abajo`}
+                        className="rounded p-0.5 text-gray-400 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <HiChevronDown size={14} />
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 font-medium text-white">
                     <span className="inline-flex items-center gap-2">
                       {route.name}
