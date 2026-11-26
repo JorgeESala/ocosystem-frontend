@@ -22,6 +22,7 @@ export const ExpectedSalesKpiValue = ({ summary, branchName }: Props) => {
       expectedMoney={summary.expectedMoney}
       moneyLabel="Mínimo total"
       moneyNote="Suma de kg esperados × precio de cada día con precio de referencia; incluye días sin monto registrado."
+      valueLabel={formatKg(summary.expectedKg)}
       wastePerChickenKg={summary.wastePerChickenKg}
       missingProduct={(summary.branchesWithoutReference ?? 0) > 0}
       missingPrice={(summary.daysWithoutPrice ?? 0) > 0}

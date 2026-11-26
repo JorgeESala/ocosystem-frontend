@@ -411,7 +411,7 @@ describe("ExpectedSalesSection", () => {
 
     fireEvent.click(screen.getByText("Dinero"));
     fireEvent.mouseEnter(
-      screen.getAllByLabelText("Ver cálculo de la venta esperada")[0],
+      screen.getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
     );
 
     expect(screen.getByText(/Mínimo total: \$45,000\.00/)).toBeTruthy();
@@ -422,7 +422,7 @@ describe("ExpectedSalesSection", () => {
     render(<ExpectedSalesSection data={report} />);
 
     expect(
-      screen.queryAllByLabelText("Ver cálculo de la venta esperada"),
+      screen.queryAllByLabelText(/Ver cálculo de la venta esperada/),
     ).toHaveLength(0);
   });
 
@@ -450,7 +450,7 @@ describe("ExpectedSalesSection", () => {
 
     fireEvent.click(screen.getByText("Dinero"));
     fireEvent.mouseEnter(
-      screen.getAllByLabelText("Ver cálculo de la venta esperada")[0],
+      screen.getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
     );
 
     expect(

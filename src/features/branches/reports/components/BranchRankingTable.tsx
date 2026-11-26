@@ -194,6 +194,7 @@ const ComplianceCell = ({
         expectedMoney={row.expectedComparableMoney}
         moneyLabel="Mínimo comparable"
         moneyNote="Suma de kg esperados × precio de cada día con precio y monto registrado."
+        valueLabel={`${formatKgValue(row.expectedKg)} kg esperados`}
         missingProduct={!row.referenceProductBarcode}
         missingPrice={row.referencePriceMissing}
         missingAmount={row.expectedSalesWithoutReportedMoney > 0}

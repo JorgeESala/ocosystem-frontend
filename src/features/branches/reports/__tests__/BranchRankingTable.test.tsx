@@ -360,7 +360,7 @@ describe("BranchRankingTable", () => {
     ]);
 
     fireEvent.mouseEnter(
-      table().getAllByLabelText("Ver cálculo de la venta esperada")[0],
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
     );
 
     const tooltip = screen.getByRole("tooltip");
@@ -392,7 +392,7 @@ describe("BranchRankingTable", () => {
     ]);
 
     fireEvent.mouseEnter(
-      table().getAllByLabelText("Ver cálculo de la venta esperada")[0],
+      table().getAllByLabelText(/Ver cálculo de la venta esperada/)[0],
     );
 
     expect(

@@ -17,6 +17,7 @@ import {
 interface Props extends ExpectedCalculationProps {
   children: ReactNode;
   triggerLabel?: string;
+  valueLabel?: string;
 }
 
 const VIEWPORT_MARGIN = 8;
@@ -24,6 +25,7 @@ const VIEWPORT_MARGIN = 8;
 export const CalculationTooltip = ({
   children,
   triggerLabel = "Ver cálculo de la venta esperada",
+  valueLabel,
   ...contentProps
 }: Props) => {
   const [open, setOpen] = useState(false);
@@ -42,8 +44,7 @@ export const CalculationTooltip = ({
 
   const show = useCallback(() => setOpen(true), []);
 
-  useLayoutEffect(() => {
-    if (!open) return;
+  const positionTooltip = useCallback(() => {
     const trigger = triggerRef.current;
     const content = contentRef.current;
     if (!trigger || !content) return;
@@ -51,8 +52,12 @@ export const CalculationTooltip = ({
     const triggerRect = trigger.getBoundingClientRect();
     const contentRect = content.getBoundingClientRect();
     const above = triggerRect.top - contentRect.height - VIEWPORT_MARGIN;
-    const top =
+    const preferredTop =
       above >= VIEWPORT_MARGIN ? above : triggerRect.bottom + VIEWPORT_MARGIN;
+    const maxTop = Math.max(
+      VIEWPORT_MARGIN,
+      window.innerHeight - contentRect.height - VIEWPORT_MARGIN,
+    );
     const centered =
       triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
     const maxLeft = Math.max(
@@ -61,9 +66,21 @@ export const CalculationTooltip = ({
     );
     const left = Math.min(Math.max(VIEWPORT_MARGIN, centered), maxLeft);
 
-    setPosition({ top, left });
+    setPosition({ top: Math.min(preferredTop, maxTop), left });
     setMeasured(true);
-  }, [open]);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (open) positionTooltip();
+  }, [open, positionTooltip]);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!open || !content || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => positionTooltip());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [open, positionTooltip]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,18 +99,25 @@ export const CalculationTooltip = ({
       }
       close();
     };
-    const handleViewportChange = () => close();
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && contentRef.current?.contains(target)) {
+        return;
+      }
+      close();
+    };
+    const handleResize = () => close();
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("pointerdown", handlePointerDownOutside);
-    window.addEventListener("scroll", handleViewportChange, true);
-    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("pointerdown", handlePointerDownOutside);
-      window.removeEventListener("scroll", handleViewportChange, true);
-      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
     };
   }, [open, close]);
 
@@ -112,13 +136,17 @@ export const CalculationTooltip = ({
     if (!touchOpen) close();
   };
 
+  const accessibleLabel = valueLabel
+    ? `${valueLabel}. ${triggerLabel}`
+    : triggerLabel;
+
   return (
     <>
       <span
         ref={triggerRef}
         className="cursor-help border-b border-dotted border-gray-500/70"
         tabIndex={0}
-        aria-label={triggerLabel}
+        aria-label={accessibleLabel}
         aria-describedby={open ? tooltipId : undefined}
         onMouseEnter={show}
         onMouseLeave={handleLeave}
@@ -126,7 +154,10 @@ export const CalculationTooltip = ({
         onBlur={handleLeave}
         onPointerDown={handlePointerDown}
         onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+          if (event.key === "Escape") close();
+        }}
       >
         {children}
       </span>

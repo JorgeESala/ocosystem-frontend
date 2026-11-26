@@ -276,7 +276,10 @@ export const ExpectedSalesSection = ({
             label="Venta mínima esperada"
             value={
               showCalculation && summary?.expectedMoney != null ? (
-                <CalculationTooltip {...summaryCalculation}>
+                <CalculationTooltip
+                  {...summaryCalculation}
+                  valueLabel={formatMoney(summary.expectedMoney)}
+                >
                   {formatMoney(summary.expectedMoney)}
                 </CalculationTooltip>
               ) : (
@@ -303,7 +306,10 @@ export const ExpectedSalesSection = ({
             label="Kg esperados"
             value={
               showCalculation && summary?.expectedKg != null ? (
-                <CalculationTooltip {...summaryCalculation}>
+                <CalculationTooltip
+                  {...summaryCalculation}
+                  valueLabel={formatKg(summary.expectedKg)}
+                >
                   {formatKg(summary.expectedKg)}
                 </CalculationTooltip>
               ) : (
@@ -495,7 +501,10 @@ export const ExpectedSalesSection = ({
                       <>
                         <TableCell className="text-white">
                           {showCalculation && row.expectedKg != null ? (
-                            <CalculationTooltip {...dailyCalculation(row)}>
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatKgValue(row.expectedKg)}
+                            >
                               {formatKgValue(row.expectedKg)}
                             </CalculationTooltip>
                           ) : (
@@ -516,7 +525,10 @@ export const ExpectedSalesSection = ({
                           {showCalculation &&
                           row.expectedKg != null &&
                           row.expectedMoney != null ? (
-                            <CalculationTooltip {...dailyCalculation(row)}>
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatMoney(row.expectedMoney)}
+                            >
                               {formatMoney(row.expectedMoney)}
                             </CalculationTooltip>
                           ) : (
@@ -550,7 +562,10 @@ export const ExpectedSalesSection = ({
                         </TableCell>
                         <TableCell className="text-white">
                           {showCalculation && row.expectedKg != null ? (
-                            <CalculationTooltip {...dailyCalculation(row)}>
+                            <CalculationTooltip
+                              {...dailyCalculation(row)}
+                              valueLabel={formatKgValue(row.expectedKg)}
+                            >
                               {formatKgValue(row.expectedKg)}
                             </CalculationTooltip>
                           ) : (

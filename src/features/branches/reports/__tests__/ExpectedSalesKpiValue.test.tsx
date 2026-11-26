@@ -30,7 +30,7 @@ const summary: ExpectedSalesSummaryDTO = {
 
 const openTooltip = () => {
   fireEvent.mouseEnter(
-    screen.getByLabelText("Ver cálculo de la venta esperada"),
+    screen.getByLabelText(/Ver cálculo de la venta esperada/),
   );
 };
 
