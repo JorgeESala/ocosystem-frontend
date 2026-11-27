@@ -63,6 +63,52 @@ export interface PendingOrderQuantityDTO {
   lineCount: number;
 }
 
+export interface PendingOrderLineDTO {
+  lineId: number;
+  clientId: number;
+  clientName: string;
+  businessName?: string | null;
+  localityName?: string | null;
+  quantity: number;
+}
+
+export interface PendingOrderOrderDTO {
+  orderId: number;
+  tripId: number | null;
+  driverName?: string | null;
+  quantity: number;
+  lineCount: number;
+  excludedQuantity: number;
+  excludedLineCount: number;
+  lines: PendingOrderLineDTO[];
+}
+
+export interface PendingOrderRouteDTO {
+  routeId: number;
+  routeName: string;
+  quantity: number;
+  lineCount: number;
+  orders: PendingOrderOrderDTO[];
+}
+
+export interface PendingOrderDayDTO {
+  date: string;
+  quantity: number;
+  lineCount: number;
+  routes: PendingOrderRouteDTO[];
+}
+
+export interface PendingOrderBreakdownDTO {
+  unitType: "EGG" | "LIVE_CHICKEN";
+  startDate: string;
+  endDate: string;
+  totalQuantity: number;
+  lineCount: number;
+  excludedQuantity: number;
+  excludedLineCount: number;
+  days: PendingOrderDayDTO[];
+}
+
 export interface RouteOrderLineSaveDTO {
   clientId: number;
   quantity: number;

@@ -2,6 +2,7 @@ import React from "react";
 import { HiArrowUp } from "react-icons/hi";
 import { GiFeather } from "react-icons/gi";
 import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
+import { AvailabilityAuditDrawer } from "./AvailabilityAuditDrawer";
 import type { BatchResponseDTO, BusinessUnitType } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
@@ -10,6 +11,7 @@ import { ValorEnInventarioHelp } from "./common/ValorEnInventarioHelp";
 
 interface GlobalAvailabilitySummaryProps {
   batches: BatchResponseDTO[];
+  allBatches?: BatchResponseDTO[];
   unitType: BusinessUnitType;
   startDate: string | null;
   endDate: string | null;
@@ -18,7 +20,9 @@ interface GlobalAvailabilitySummaryProps {
 
 export const GlobalAvailabilitySummary: React.FC<
   GlobalAvailabilitySummaryProps
-> = ({ batches, unitType, startDate, endDate, onBatchClick }) => {
+> = ({ batches, allBatches, unitType, startDate, endDate, onBatchClick }) => {
+  const [auditOpen, setAuditOpen] = React.useState(false);
+  const completeBatches = allBatches ?? batches;
   const visibleBatches = batches.filter((b) => Number(b.remainingQuantity) > 0);
   const supportsOrders = unitType === "EGG" || unitType === "LIVE_CHICKEN";
 
@@ -121,33 +125,39 @@ export const GlobalAvailabilitySummary: React.FC<
         <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-md bg-gray-900/50 px-3 py-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-gray-400">Pedidos pendientes:</span>
-            <span
+            <button
+              type="button"
+              onClick={() => setAuditOpen(true)}
               data-testid="pending-orders"
-              className="font-semibold text-amber-300"
+              className="font-semibold text-amber-300 underline decoration-dotted underline-offset-2 hover:text-amber-200"
+              aria-label="Ver detalle de pedidos pendientes"
             >
               {isPendingOrdersLoading
                 ? "Calculando..."
                 : pendingOrders
                   ? unitsDisplay(pendingUnits)
                   : "—"}
-            </span>
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-400">
               Disponible después de pedidos:
             </span>
-            <span
+            <button
+              type="button"
+              onClick={() => setAuditOpen(true)}
               data-testid="available-after-orders"
-              className={
+              className={`font-semibold underline decoration-dotted underline-offset-2 ${
                 availableAfterOrders < 0
-                  ? "font-semibold text-red-300"
-                  : "font-semibold text-emerald-300"
-              }
+                  ? "text-red-300 hover:text-red-200"
+                  : "text-emerald-300 hover:text-emerald-200"
+              }`}
+              aria-label="Ver detalle de disponibilidad"
             >
               {isPendingOrdersLoading
                 ? "Calculando..."
                 : unitsDisplay(availableAfterOrders)}
-            </span>
+            </button>
             {availableAfterOrders < 0 && (
               <span className="text-[10px] font-semibold tracking-wide text-red-300 uppercase">
                 Sobrepedido
@@ -213,6 +223,19 @@ export const GlobalAvailabilitySummary: React.FC<
           </div>
         ))}
       </div>
+
+      {supportsOrders && (
+        <AvailabilityAuditDrawer
+          open={auditOpen}
+          onClose={() => setAuditOpen(false)}
+          unitType={unitType === "EGG" ? "EGG" : "LIVE_CHICKEN"}
+          startDate={startDate}
+          endDate={endDate}
+          includedBatches={visibleBatches}
+          allBatches={completeBatches}
+          totalRemainingUnits={totalRemainingUnits}
+        />
+      )}
     </div>
   );
 };

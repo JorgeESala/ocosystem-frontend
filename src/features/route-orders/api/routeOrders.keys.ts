@@ -17,4 +17,13 @@ export const routeOrderKeys = {
       startDate,
       endDate,
     ] as const,
+  pendingQuantityBreakdown: (
+    slug: string,
+    startDate: string,
+    endDate: string,
+  ) =>
+    [
+      ...routeOrderKeys.pendingQuantity(slug, startDate, endDate),
+      "breakdown",
+    ] as const,
 };

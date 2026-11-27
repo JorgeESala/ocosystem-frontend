@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import {
   createRouteOrderTrip,
   generateRouteOrderSales,
+  getPendingOrderBreakdown,
   getPendingOrderQuantity,
   getRouteOrderSaleCandidates,
   getRouteOrderSheet,
@@ -83,6 +84,28 @@ export const usePendingOrderQuantity = (
         ? routeOrderKeys.pendingQuantity(slug ?? "", startDate, endDate)
         : routeOrderKeys.all,
     queryFn: () => getPendingOrderQuantity(startDate!, endDate!),
+    enabled: enabled && !!slug && !!startDate && !!endDate,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const usePendingOrderBreakdown = (
+  startDate: string | null,
+  endDate: string | null,
+  enabled = true,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey:
+      startDate && endDate
+        ? routeOrderKeys.pendingQuantityBreakdown(
+            slug ?? "",
+            startDate,
+            endDate,
+          )
+        : routeOrderKeys.all,
+    queryFn: () => getPendingOrderBreakdown(startDate!, endDate!),
     enabled: enabled && !!slug && !!startDate && !!endDate,
     staleTime: 1000 * 30,
   });

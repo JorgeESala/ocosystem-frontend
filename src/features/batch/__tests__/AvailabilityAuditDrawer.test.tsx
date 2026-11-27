@@ -1,0 +1,324 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AvailabilityAuditDrawer } from "../components/AvailabilityAuditDrawer";
+import type { BatchResponseDTO } from "../types.batch";
+import type { PendingOrderBreakdownDTO } from "@/features/route-orders/types/routeOrder.types";
+
+const mocks = vi.hoisted(() => ({
+  usePendingOrderBreakdown: vi.fn(),
+  createObjectUrl: vi.fn(() => "blob:audit"),
+  revokeObjectUrl: vi.fn(),
+}));
+
+vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
+  usePendingOrderBreakdown: mocks.usePendingOrderBreakdown,
+}));
+
+const batch = (
+  overrides: Partial<BatchResponseDTO> = {},
+): BatchResponseDTO => ({
+  id: 1,
+  supplierId: 1,
+  supplierName: "Proveedor",
+  cedisId: 1,
+  cedisName: "CEDIS",
+  entryDate: "2030-01-07",
+  totalAmount: "1000",
+  type: "LIVE_CHICKEN",
+  metadata: {},
+  initialQuantity: "500",
+  soldQuantity: "62",
+  adjustedQuantity: "0",
+  remainingQuantity: "438",
+  remainingBoxes: 0,
+  remainingCartons: 0,
+  remainingPieces: 0,
+  availableCost: "876.00",
+  ...overrides,
+});
+
+const breakdown: PendingOrderBreakdownDTO = {
+  unitType: "LIVE_CHICKEN",
+  startDate: "2030-01-01",
+  endDate: "2030-01-31",
+  totalQuantity: 1545,
+  lineCount: 2,
+  excludedQuantity: 50,
+  excludedLineCount: 1,
+  days: [
+    {
+      date: "2030-01-20",
+      quantity: 1545,
+      lineCount: 2,
+      routes: [
+        {
+          routeId: 3,
+          routeName: "Ruta Centro",
+          quantity: 1545,
+          lineCount: 2,
+          orders: [
+            {
+              orderId: 456,
+              tripId: null,
+              driverName: "Chofer Uno",
+              quantity: 1545,
+              lineCount: 2,
+              excludedQuantity: 50,
+              excludedLineCount: 1,
+              lines: [
+                {
+                  lineId: 1,
+                  clientId: 10,
+                  clientName: "Cliente A",
+                  businessName: "Abarrotes A",
+                  localityName: "Centro",
+                  quantity: 1000,
+                },
+                {
+                  lineId: 2,
+                  clientId: 11,
+                  clientName: "Cliente B",
+                  businessName: "Abarrotes B",
+                  localityName: "Centro",
+                  quantity: 545,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          routeId: 4,
+          routeName: "Ruta Norte",
+          quantity: 0,
+          lineCount: 0,
+          orders: [],
+        },
+      ],
+    },
+  ],
+};
+
+const renderDrawer = (unitType: "LIVE_CHICKEN" | "EGG" = "LIVE_CHICKEN") =>
+  render(
+    <AvailabilityAuditDrawer
+      open
+      onClose={vi.fn()}
+      unitType={unitType}
+      startDate="2030-01-01"
+      endDate="2030-01-31"
+      includedBatches={[batch()]}
+      allBatches={[
+        batch({
+          id: 2,
+          entryDate: "2029-12-01",
+          remainingQuantity: "100",
+        }),
+        batch({
+          id: 3,
+          entryDate: "2030-01-08",
+          remainingQuantity: "0",
+        }),
+      ]}
+      totalRemainingUnits={438}
+    />,
+  );
+
+describe("AvailabilityAuditDrawer", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      writable: true,
+      value: mocks.createObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      writable: true,
+      value: mocks.revokeObjectUrl,
+    });
+    mocks.usePendingOrderBreakdown.mockReturnValue({
+      data: breakdown,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+  });
+
+  it("muestra la resta de existencia menos pedidos pendientes", () => {
+    renderDrawer();
+
+    expect(screen.getByText("Existencia en remesas")).toBeInTheDocument();
+    expect(screen.getAllByText("438 aves").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1,545 aves").length).toBeGreaterThan(0);
+    expect(screen.getByText("-1,107 aves")).toBeInTheDocument();
+    expect(screen.getByText("Sobrepedido")).toBeInTheDocument();
+  });
+
+  it("abre por día y desglosa ruta, pedido y clientes", () => {
+    renderDrawer();
+
+    expect(screen.getByRole("button", { name: "Por día" })).toBeInTheDocument();
+    expect(screen.getAllByText("Ruta Centro").length).toBeGreaterThan(0);
+    expect(screen.getByText("Pedido #456")).toBeInTheDocument();
+    expect(screen.getByText("Sin viaje")).toBeInTheDocument();
+    expect(screen.getByText("Cliente A")).toBeInTheDocument();
+    expect(screen.getByText("Cliente B")).toBeInTheDocument();
+    expect(
+      screen.getByText(/línea\(s\) ya vendida\(s\) excluida\(s\)/),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra las remesas incluidas y las excluidas con su motivo", async () => {
+    const user = userEvent.setup();
+    renderDrawer();
+
+    await user.click(screen.getByRole("button", { name: "Remesas" }));
+
+    expect(screen.getByText("Remesas no incluidas")).toBeInTheDocument();
+    expect(screen.getByText("Fuera del rango de fechas")).toBeInTheDocument();
+    expect(screen.getByText("Sin existencia")).toBeInTheDocument();
+    expect(screen.getByText("#1")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table")).getByText("$876.00"),
+    ).toBeInTheDocument();
+  });
+
+  it("exporta los pedidos y las remesas a CSV", async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    renderDrawer();
+
+    await user.click(screen.getByRole("button", { name: /Exportar pedidos/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(1);
+    expect(mocks.revokeObjectUrl).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Remesas" }));
+    await user.click(screen.getByRole("button", { name: /Exportar remesas/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(2);
+    expect(clickSpy).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getByRole("button", { name: "Por día" }));
+    expect(screen.getByText("Pedido #456")).toBeInTheDocument();
+
+    clickSpy.mockRestore();
+  });
+
+  it("muestra y exporta cantidades de huevo", async () => {
+    mocks.usePendingOrderBreakdown.mockReturnValue({
+      data: {
+        ...breakdown,
+        unitType: "EGG",
+        totalQuantity: 10,
+        lineCount: 1,
+        days: [
+          {
+            date: "2030-01-20",
+            quantity: 10,
+            lineCount: 1,
+            routes: [
+              {
+                routeId: 3,
+                routeName: "Ruta Centro",
+                quantity: 10,
+                lineCount: 1,
+                orders: [
+                  {
+                    orderId: 456,
+                    tripId: 77,
+                    driverName: "Chofer Uno",
+                    quantity: 10,
+                    lineCount: 1,
+                    excludedQuantity: 0,
+                    excludedLineCount: 0,
+                    lines: [
+                      {
+                        lineId: 1,
+                        clientId: 10,
+                        clientName: "Cliente A",
+                        businessName: "Abarrotes A",
+                        localityName: "Centro",
+                        quantity: 10,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    render(
+      <AvailabilityAuditDrawer
+        open
+        onClose={vi.fn()}
+        unitType="EGG"
+        startDate="2030-01-01"
+        endDate="2030-01-31"
+        includedBatches={[
+          batch({
+            type: "EGG",
+            remainingQuantity: "360",
+            remainingBoxes: 1,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+        ]}
+        allBatches={[
+          batch({
+            type: "EGG",
+            remainingQuantity: "360",
+            remainingBoxes: 1,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+          batch({
+            id: 2,
+            type: "EGG",
+            entryDate: "2029-12-01",
+            remainingQuantity: "720",
+            remainingBoxes: 2,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+        ]}
+        totalRemainingUnits={360}
+      />,
+    );
+
+    expect(screen.getAllByText("10 casilleros").length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle("Cajas").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Exportar pedidos/i }));
+    await user.click(screen.getByRole("button", { name: "Remesas" }));
+    await user.click(screen.getByRole("button", { name: /Exportar remesas/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(2);
+
+    clickSpy.mockRestore();
+  });
+
+  it("filtra el detalle por ruta", async () => {
+    const user = userEvent.setup();
+    renderDrawer();
+
+    await user.selectOptions(
+      screen.getByLabelText("Ruta"),
+      String(breakdown.days[0].routes[0].routeId),
+    );
+
+    expect(screen.getAllByText("Ruta Centro").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1,545 aves").length).toBeGreaterThan(0);
+  });
+});

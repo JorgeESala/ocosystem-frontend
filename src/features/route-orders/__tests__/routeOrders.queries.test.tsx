@@ -3,7 +3,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { usePendingOrderQuantity } from "../api/routeOrders.queries";
+import {
+  usePendingOrderBreakdown,
+  usePendingOrderQuantity,
+} from "../api/routeOrders.queries";
 import { http } from "@/shared/api/http";
 
 vi.mock("@/shared/api/http", () => ({
@@ -55,6 +58,51 @@ describe("usePendingOrderQuantity", () => {
 
   it("no consulta cuando falta el rango", () => {
     const { result } = renderHook(() => usePendingOrderQuantity(null, null), {
+      wrapper,
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(httpGet).not.toHaveBeenCalled();
+  });
+});
+
+describe("usePendingOrderBreakdown", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("consulta el desglose pendiente para el rango", async () => {
+    httpGet.mockResolvedValue({
+      data: {
+        unitType: "LIVE_CHICKEN",
+        startDate: "2026-01-01",
+        endDate: "2026-01-31",
+        totalQuantity: 50,
+        lineCount: 1,
+        excludedQuantity: 0,
+        excludedLineCount: 0,
+        days: [],
+      },
+    });
+
+    const { result } = renderHook(
+      () => usePendingOrderBreakdown("2026-01-01", "2026-01-31"),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(httpGet).toHaveBeenCalledWith(
+      "/api/v1/route-orders/pending-quantity/breakdown",
+      {
+        params: { startDate: "2026-01-01", endDate: "2026-01-31" },
+      },
+    );
+    expect(result.current.data?.totalQuantity).toBe(50);
+  });
+
+  it("no consulta el desglose cuando falta el rango", () => {
+    const { result } = renderHook(() => usePendingOrderBreakdown(null, null), {
       wrapper,
     });
 
