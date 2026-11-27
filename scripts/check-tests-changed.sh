@@ -14,7 +14,7 @@ if [ -z "${base}" ]; then
   exit 0
 fi
 
-changed="$(git diff --name-only "${base}" HEAD)"
+changed="$(git diff --name-only "${base}...HEAD")"
 source_changes="$(printf '%s\n' "${changed}" | grep -E '^src/' | grep -Ev '(__tests__/|\.test\.|\.spec\.|^src/test/)' || true)"
 test_changes="$(printf '%s\n' "${changed}" | grep -E '(^src/.*(__tests__/|\.test\.|\.spec\.))|^e2e/|^src/test/' || true)"
 
