@@ -304,13 +304,14 @@ copy changes without application behavior; state the reason.
 
 ## Changed-line coverage
 
-CI runs `npm run test:coverage:ci`, which generates `coverage/lcov.info`, and
-then runs the gate. The gate measures only the frontend lines added or changed
+CI runs `npm run test:coverage`, which generates `coverage/lcov.info`, and then
+runs the gate. The gate measures only the frontend lines added or changed
 against a base ref, with an 80% threshold. Tests, type declarations, the Vite
 entry point, type-only folders, and config data files are excluded.
 
-The CI script uses stock worker counts. `npm run test:coverage` keeps the
-two-worker cap for the dev laptop. To debug locally:
+The two-worker cap is intentional: a four-worker coverage run measured 160s
+against 131s with two, because jsdom setup is duplicated per worker. To debug
+locally:
 
 ```bash
 python -m pip install diff-cover   # once

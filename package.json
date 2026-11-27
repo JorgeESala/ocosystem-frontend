@@ -12,7 +12,6 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --maxWorkers=2 --testTimeout=30000",
-    "test:coverage:ci": "vitest run --coverage --testTimeout=30000",
     "test:light": "vitest run --maxWorkers=2 --testTimeout=25000",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
