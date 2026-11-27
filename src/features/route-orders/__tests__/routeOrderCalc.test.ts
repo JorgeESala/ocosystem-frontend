@@ -4,6 +4,7 @@ import {
   applyUnitPriceToDraft,
   buildDraft,
   buildOrderSections,
+  canMoveDraftRow,
   cartonsToBoxes,
   computeTotals,
   draftToSavePayload,
@@ -29,6 +30,7 @@ const sheet: RouteOrderSheetDTO = {
       id: 10,
       name: "Cliente A",
       businessName: "Abarrotes A",
+      localityId: 1,
       localityName: "Centro",
       isInternalBranch: false,
       isInternalClient: false,
@@ -39,6 +41,7 @@ const sheet: RouteOrderSheetDTO = {
       id: 11,
       name: "Cliente B",
       businessName: "Abarrotes B",
+      localityId: 1,
       localityName: "Centro",
       isInternalBranch: false,
       isInternalClient: false,
@@ -484,12 +487,14 @@ describe("routeOrderCalc", () => {
             ...sheet.clients[0],
             id: 20,
             name: "Cliente Norte B",
+            localityId: 2,
             localityName: "Norte",
           },
           {
             ...sheet.clients[0],
             id: 21,
             name: "Cliente Norte A",
+            localityId: 2,
             localityName: "Norte",
           },
           sheet.clients[0],
@@ -506,6 +511,80 @@ describe("routeOrderCalc", () => {
     expect(blocked.rows.map((row) => row.clientId)).toEqual([20, 21, 10]);
   });
 
+  it("no cruza a otra localidad al mover con las flechas", () => {
+    const base = buildDraft(sheet, "EGG", null);
+    const baseRow = base.rows[0];
+    const draft: RouteOrderDraft = {
+      ...base,
+      rows: [
+        {
+          ...baseRow,
+          key: "client-20",
+          clientId: 20,
+          clientName: "Norte A",
+          localityId: 1,
+          localityName: "Norte",
+        },
+        {
+          ...baseRow,
+          key: "client-21",
+          clientId: 21,
+          clientName: "Centro A",
+          localityId: 2,
+          localityName: "Centro",
+        },
+        {
+          ...baseRow,
+          key: "client-22",
+          clientId: 22,
+          clientName: "Norte B",
+          localityId: 1,
+          localityName: "Norte",
+        },
+      ],
+    };
+
+    const moved = moveDraftRow(draft, 20, "down");
+
+    expect(moved.rows.map((row) => row.clientId)).toEqual([20, 21, 22]);
+    expect(canMoveDraftRow(draft.rows, 20, "down")).toBe(false);
+    expect(canMoveDraftRow(draft.rows, 21, "up")).toBe(false);
+    expect(canMoveDraftRow(draft.rows, 21, "down")).toBe(false);
+  });
+
+  it("ordena localidades con el mismo nombre usando su identificador", () => {
+    const draft = buildDraft(
+      {
+        ...sheet,
+        localities: [
+          { id: 2, name: "Centro" },
+          { id: 1, name: "Centro" },
+        ],
+        clients: [
+          {
+            ...sheet.clients[0],
+            id: 30,
+            name: "Cliente A",
+            localityId: 1,
+            localityName: "Centro",
+          },
+          {
+            ...sheet.clients[0],
+            id: 31,
+            name: "Cliente Z",
+            localityId: 2,
+            localityName: "Centro",
+          },
+        ],
+        order: { ...sheet.order, id: null, lines: [] },
+      },
+      "EGG",
+      null,
+    );
+
+    expect(draft.rows.map((row) => row.clientId)).toEqual([31, 30]);
+  });
+
   it("inserta un cliente nuevo al final de su localidad", () => {
     const draft = buildDraft(
       {
@@ -516,12 +595,14 @@ describe("routeOrderCalc", () => {
             ...sheet.clients[0],
             id: 20,
             name: "Cliente Norte B",
+            localityId: 2,
             localityName: "Norte",
           },
           {
             ...sheet.clients[0],
             id: 21,
             name: "Cliente Norte A",
+            localityId: 2,
             localityName: "Norte",
           },
         ],
@@ -560,8 +641,8 @@ describe("routeOrderCalc", () => {
     const sorted = sortDraftByLocality(
       draft,
       new Map([
-        ["Norte", 0],
-        ["Centro", 1],
+        [1, 0],
+        [2, 1],
       ]),
     );
 

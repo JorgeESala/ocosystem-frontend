@@ -137,6 +137,7 @@ interface ClientLike {
   id: number;
   name: string;
   businessName?: string | null;
+  localityId?: number | null;
   localityName?: string | null;
   isInternalBranch?: boolean | null;
   isInternalClient?: boolean | null;
@@ -168,13 +169,16 @@ const compareText = (left: string, right: string): number =>
 
 const localityRankOf = (
   row: RouteOrderDraftRow,
-  localityRank?: Map<string, number>,
-): number => localityRank?.get(row.localityName) ?? Number.MAX_SAFE_INTEGER;
+  localityRank?: ReadonlyMap<number, number>,
+): number =>
+  row.localityId != null
+    ? (localityRank?.get(row.localityId) ?? Number.MAX_SAFE_INTEGER)
+    : Number.MAX_SAFE_INTEGER;
 
 const compareLocality = (
   left: RouteOrderDraftRow,
   right: RouteOrderDraftRow,
-  localityRank?: Map<string, number>,
+  localityRank?: ReadonlyMap<number, number>,
 ): number => {
   const leftRank = localityRankOf(left, localityRank);
   const rightRank = localityRankOf(right, localityRank);
@@ -197,7 +201,7 @@ const compareWithinLocality = (
 const compareDefaultRows = (
   left: RouteOrderDraftRow,
   right: RouteOrderDraftRow,
-  localityRank?: Map<string, number>,
+  localityRank?: ReadonlyMap<number, number>,
 ): number => {
   const locality = compareLocality(left, right, localityRank);
   if (locality !== 0) return locality;
@@ -206,7 +210,7 @@ const compareDefaultRows = (
 
 export const sortRows = (
   rows: RouteOrderDraftRow[],
-  localityRank?: Map<string, number>,
+  localityRank?: ReadonlyMap<number, number>,
 ): RouteOrderDraftRow[] =>
   [...rows].sort((left, right) =>
     compareDefaultRows(left, right, localityRank),
@@ -222,6 +226,7 @@ const emptyRow = (
   clientId: client.id,
   clientName: client.name ?? client.businessName ?? "",
   businessName: client.businessName ?? "",
+  localityId: client.localityId ?? null,
   localityName: client.localityName ?? "",
   isInternalBranch: Boolean(client.isInternalBranch),
   isInternalClient: Boolean(client.isInternalClient),
@@ -255,6 +260,7 @@ const rowFromSavedLine = (
     clientId: line.clientId,
     clientName: line.clientName ?? line.businessName ?? "",
     businessName: line.businessName ?? "",
+    localityId: line.localityId ?? null,
     localityName: line.localityName ?? "",
     isInternalBranch: Boolean(line.isInternalBranch),
     isInternalClient: Boolean(line.isInternalClient),
@@ -318,6 +324,7 @@ export const buildDraft = (
       clientId: client.id,
       clientName: client.name ?? client.businessName ?? "",
       businessName: client.businessName ?? "",
+      localityId: client.localityId ?? null,
       localityName: client.localityName ?? "",
       isInternalBranch:
         saved.isInternalBranch ?? Boolean(client.isInternalBranch),
@@ -363,7 +370,7 @@ export const buildDraft = (
   }
 
   const localityRank = new Map(
-    sheet.localities.map((locality, index) => [locality.name, index]),
+    sheet.localities.map((locality, index) => [locality.id, index]),
   );
   const defaultRows = sortRows(rows, localityRank);
   const savedOrder = new Map<number, number>();
@@ -408,6 +415,31 @@ export const buildDraft = (
   };
 };
 
+const sameLocality = (
+  left: RouteOrderDraftRow,
+  right: RouteOrderDraftRow,
+): boolean =>
+  left.localityId != null && right.localityId != null
+    ? left.localityId === right.localityId
+    : left.localityName === right.localityName;
+
+const sameRowGroup = (
+  left: RouteOrderDraftRow,
+  right: RouteOrderDraftRow,
+): boolean =>
+  isInternalRow(left) === isInternalRow(right) && sameLocality(left, right);
+
+export const canMoveDraftRow = (
+  rows: RouteOrderDraftRow[],
+  clientId: number,
+  direction: "up" | "down",
+): boolean => {
+  const index = rows.findIndex((row) => row.clientId === clientId);
+  if (index < 0) return false;
+  const adjacent = rows[index + (direction === "up" ? -1 : 1)];
+  return adjacent != null && sameRowGroup(rows[index], adjacent);
+};
+
 export const addClientToDraft = (
   draft: RouteOrderDraft,
   client: Client,
@@ -422,10 +454,7 @@ export const addClientToDraft = (
   let insertAt = rows.length;
   for (let index = rows.length - 1; index >= 0; index -= 1) {
     const candidate = rows[index];
-    if (
-      isInternalRow(candidate) === isInternalRow(newRow) &&
-      candidate.localityName === newRow.localityName
-    ) {
+    if (sameRowGroup(candidate, newRow)) {
       insertAt = index + 1;
       break;
     }
@@ -440,33 +469,18 @@ export const moveDraftRow = (
   direction: "up" | "down",
 ): RouteOrderDraft => {
   const rows = draft.rows;
+  if (!canMoveDraftRow(rows, clientId, direction)) return draft;
   const index = rows.findIndex((row) => row.clientId === clientId);
-  if (index < 0) return draft;
-
-  const target = rows[index];
-  const step = direction === "up" ? -1 : 1;
-  const sameGroup = (row: RouteOrderDraftRow) =>
-    isInternalRow(row) === isInternalRow(target) &&
-    row.localityName === target.localityName;
-
-  let swapIndex = index + step;
-  while (
-    swapIndex >= 0 &&
-    swapIndex < rows.length &&
-    !sameGroup(rows[swapIndex])
-  ) {
-    swapIndex += step;
-  }
-  if (swapIndex < 0 || swapIndex >= rows.length) return draft;
 
   const next = [...rows];
+  const swapIndex = index + (direction === "up" ? -1 : 1);
   [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
   return { ...draft, rows: next };
 };
 
 export const sortDraftByLocality = (
   draft: RouteOrderDraft,
-  localityRank?: Map<string, number>,
+  localityRank?: ReadonlyMap<number, number>,
 ): RouteOrderDraft => ({
   ...draft,
   rows: sortRows(draft.rows, localityRank),
