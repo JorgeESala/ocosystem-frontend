@@ -225,6 +225,7 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
       {activeTab === "availability" && (
         <GlobalAvailabilitySummary
           batches={filteredBatches}
+          allBatches={batches}
           unitType={unitType}
           startDate={startDate ? toLocalDateString(startDate) : null}
           endDate={endDate ? toLocalDateString(endDate) : null}

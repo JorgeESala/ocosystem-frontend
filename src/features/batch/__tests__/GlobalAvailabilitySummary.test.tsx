@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GlobalAvailabilitySummary } from "../components/GlobalAvailabilitySummary";
 import type { BatchResponseDTO } from "../types.batch";
@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
   usePendingOrderQuantity: mocks.usePendingOrderQuantity,
+}));
+
+vi.mock("../components/AvailabilityAuditDrawer", () => ({
+  AvailabilityAuditDrawer: ({ open }: { open: boolean }) =>
+    open ? <div>Auditoría de disponibilidad</div> : null,
 }));
 
 const batch = (
@@ -70,6 +75,18 @@ describe("GlobalAvailabilitySummary", () => {
       "2030-01-31",
       true,
     );
+  });
+
+  it("abre la auditoría desde los pedidos pendientes", () => {
+    renderSummary("LIVE_CHICKEN", [batch({ remainingQuantity: "10" })]);
+
+    expect(
+      screen.queryByText("Auditoría de disponibilidad"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("pending-orders"));
+
+    expect(screen.getByText("Auditoría de disponibilidad")).toBeInTheDocument();
   });
 
   it("muestra la disponibilidad de huevo en piezas y casilleros", () => {
