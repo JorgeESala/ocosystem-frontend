@@ -12,6 +12,7 @@ export interface RouteOrderLineDTO {
   clientId: number | null;
   clientName: string;
   businessName?: string | null;
+  localityId?: number | null;
   localityName?: string | null;
   isInternalBranch?: boolean | null;
   isInternalClient?: boolean | null;
@@ -112,6 +113,7 @@ export interface RouteOrderDraftRow {
   clientId: number;
   clientName: string;
   businessName: string;
+  localityId?: number | null;
   localityName: string;
   isInternalBranch: boolean;
   isInternalClient: boolean;

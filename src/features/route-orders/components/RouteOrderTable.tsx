@@ -20,6 +20,7 @@ interface Props {
   onChange: (clientId: number, patch: Partial<RouteOrderDraftRow>) => void;
   onRemove: (clientId: number) => void;
   onMove?: (clientId: number, direction: "up" | "down") => void;
+  canMove?: (clientId: number, direction: "up" | "down") => boolean;
 }
 
 const lastPrice = (row: RouteOrderDraftRow, unitType: RouteOrderUnitType) => {
@@ -41,6 +42,7 @@ export const RouteOrderTable: React.FC<Props> = ({
   onChange,
   onRemove,
   onMove,
+  canMove,
 }) => {
   if (rows.length === 0) {
     return (
@@ -59,7 +61,7 @@ export const RouteOrderTable: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => onMove(row.clientId, "up")}
-          disabled={index === 0}
+          disabled={canMove ? !canMove(row.clientId, "up") : index === 0}
           aria-label={`Mover ${row.clientName} arriba`}
           data-testid={`move-up-${row.clientId}`}
           className="rounded p-0.5 text-gray-500 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
@@ -69,7 +71,9 @@ export const RouteOrderTable: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => onMove(row.clientId, "down")}
-          disabled={index === rows.length - 1}
+          disabled={
+            canMove ? !canMove(row.clientId, "down") : index === rows.length - 1
+          }
           aria-label={`Mover ${row.clientName} abajo`}
           data-testid={`move-down-${row.clientId}`}
           className="rounded p-0.5 text-gray-500 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-25"

@@ -162,6 +162,32 @@ describe("RoutesTab", () => {
     await waitFor(() => expect(reorder).toHaveBeenCalledWith([3, 1]));
   });
 
+  it("envía el orden completo cuando hay más de dos rutas", async () => {
+    const reorder = vi.fn().mockResolvedValue([]);
+    mocks.useReorderRoutes.mockReturnValue({
+      mutateAsync: reorder,
+      isPending: false,
+    });
+    mocks.useRoutes.mockReturnValue({
+      data: [
+        activeRoute,
+        { ...activeRoute, id: 3, name: "Ruta Sur" },
+        { ...activeRoute, id: 5, name: "Ruta Norte" },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    render(<RoutesTab unitType="EGG" />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mover Ruta Norte arriba" }),
+    );
+
+    await waitFor(() => expect(reorder).toHaveBeenCalledWith([1, 5, 3]));
+  });
+
   it("muestra rutas inactivas y permite reactivarlas", async () => {
     const reactivate = vi.fn().mockResolvedValue({});
     mocks.useReactivateRoute.mockReturnValue({

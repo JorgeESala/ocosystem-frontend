@@ -274,4 +274,23 @@ describe("RouteOrderTable", () => {
     fireEvent.click(screen.getByTestId("move-up-2"));
     expect(onMove).toHaveBeenCalledWith(2, "up");
   });
+
+  it("deshabilita las flechas en los límites de localidad", () => {
+    render(
+      <RouteOrderTable
+        unitType="EGG"
+        rows={rows}
+        currentEggPricePerCarton={65}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+        onMove={vi.fn()}
+        canMove={(clientId, direction) =>
+          !(clientId === 1 && direction === "down")
+        }
+      />,
+    );
+
+    expect(screen.getByTestId("move-down-1")).toBeDisabled();
+    expect(screen.getByTestId("move-up-2")).toBeEnabled();
+  });
 });

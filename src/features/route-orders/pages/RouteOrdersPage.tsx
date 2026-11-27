@@ -61,6 +61,7 @@ import {
   applyUnitPriceToDraft,
   buildDraft,
   buildOrderSections,
+  canMoveDraftRow,
   computeTotals,
   draftToSavePayload,
   isInternalRow,
@@ -157,7 +158,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
     () =>
       new Map(
         (selectedSheet?.localities ?? []).map((locality, index) => [
-          locality.name,
+          locality.id,
           index,
         ]),
       ),
@@ -369,6 +370,9 @@ export default function RouteOrdersPage({ unitType }: Props) {
     setDraft(moveDraftRow(draft, clientId, direction));
     setIsDirty(true);
   };
+
+  const canMoveRow = (clientId: number, direction: "up" | "down") =>
+    draft ? canMoveDraftRow(draft.rows, clientId, direction) : false;
 
   const handleSortByLocality = () => {
     if (!draft) return;
@@ -1114,6 +1118,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
                   onChange={updateRow}
                   onRemove={handleRemoveClient}
                   onMove={handleMoveRow}
+                  canMove={canMoveRow}
                 />
                 <RouteOrderTotals
                   unitType={unitType}
@@ -1129,6 +1134,7 @@ export default function RouteOrdersPage({ unitType }: Props) {
               onChange={updateRow}
               onRemove={handleRemoveClient}
               onMove={handleMoveRow}
+              canMove={canMoveRow}
             />
           )}
         </div>
