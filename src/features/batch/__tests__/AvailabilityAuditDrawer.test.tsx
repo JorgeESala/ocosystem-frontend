@@ -7,6 +7,8 @@ import type { PendingOrderBreakdownDTO } from "@/features/route-orders/types/rou
 
 const mocks = vi.hoisted(() => ({
   usePendingOrderBreakdown: vi.fn(),
+  createObjectUrl: vi.fn(() => "blob:audit"),
+  revokeObjectUrl: vi.fn(),
 }));
 
 vi.mock("@/features/route-orders/api/routeOrders.queries", () => ({
@@ -119,6 +121,16 @@ const renderDrawer = (unitType: "LIVE_CHICKEN" | "EGG" = "LIVE_CHICKEN") =>
 describe("AvailabilityAuditDrawer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      writable: true,
+      value: mocks.createObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      writable: true,
+      value: mocks.revokeObjectUrl,
+    });
     mocks.usePendingOrderBreakdown.mockReturnValue({
       data: breakdown,
       isLoading: false,
@@ -164,6 +176,26 @@ describe("AvailabilityAuditDrawer", () => {
     expect(
       within(screen.getByRole("table")).getByText("$876.00"),
     ).toBeInTheDocument();
+  });
+
+  it("exporta los pedidos y las remesas a CSV", async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    renderDrawer();
+
+    await user.click(screen.getByRole("button", { name: /Exportar pedidos/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(1);
+    expect(mocks.revokeObjectUrl).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Remesas" }));
+    await user.click(screen.getByRole("button", { name: /Exportar remesas/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(2);
+    expect(clickSpy).toHaveBeenCalledTimes(2);
+
+    clickSpy.mockRestore();
   });
 
   it("filtra el detalle por ruta", async () => {

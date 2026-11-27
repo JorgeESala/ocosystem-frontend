@@ -100,4 +100,13 @@ describe("usePendingOrderBreakdown", () => {
     );
     expect(result.current.data?.totalQuantity).toBe(50);
   });
+
+  it("no consulta el desglose cuando falta el rango", () => {
+    const { result } = renderHook(() => usePendingOrderBreakdown(null, null), {
+      wrapper,
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(httpGet).not.toHaveBeenCalled();
+  });
 });
