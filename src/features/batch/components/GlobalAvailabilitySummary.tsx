@@ -56,10 +56,10 @@ export const GlobalAvailabilitySummary: React.FC<
 
   const totalRemainingUnits =
     unitType === "EGG" ? totalRemainingPieces : totalRemaining;
-  const pendingUnits =
-    unitType === "EGG"
-      ? Number(pendingOrders?.quantity ?? 0) * 30
-      : Number(pendingOrders?.quantity ?? 0);
+  let pendingUnits = Number(pendingOrders?.quantity ?? 0);
+  if (unitType === "EGG") {
+    pendingUnits *= 30;
+  }
   const availableAfterOrders = totalRemainingUnits - pendingUnits;
 
   const unitsDisplay = (units: number) =>

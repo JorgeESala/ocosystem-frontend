@@ -4,6 +4,9 @@ import { MemoryRouter } from "react-router-dom";
 import { BatchPage } from "../pages/BatchPage";
 
 const tripMock = vi.hoisted(() => ({ useTripSummary: vi.fn() }));
+const summaryMock = vi.hoisted(() => ({
+  props: [] as Array<Record<string, unknown>>,
+}));
 
 const batch = {
   id: 130,
@@ -70,7 +73,10 @@ vi.mock("../config/unitConfig", () => ({
 }));
 
 vi.mock("../components/GlobalAvailabilitySummary", () => ({
-  GlobalAvailabilitySummary: () => <div>Disponibilidad</div>,
+  GlobalAvailabilitySummary: (props: Record<string, unknown>) => {
+    summaryMock.props.push(props);
+    return <div>Disponibilidad</div>;
+  },
 }));
 
 vi.mock("../components/WeeklySalesChart", () => ({
@@ -88,6 +94,7 @@ vi.mock("../components/BatchEntryForm", () => ({
 describe("BatchPage - acceso a un viaje", () => {
   beforeEach(() => {
     tripMock.useTripSummary.mockReset();
+    summaryMock.props.length = 0;
     tripMock.useTripSummary.mockImplementation(
       (_unitType: string, id: number | null) => ({
         data: id === 76 ? tripSummary : undefined,
@@ -116,9 +123,7 @@ describe("BatchPage - acceso a un viaje", () => {
   it("muestra la remesa indicada aunque no tenga existencia", async () => {
     render(
       <MemoryRouter
-        initialEntries={[
-          "/business/pollo-vivo/salesAndBatches?batch=130",
-        ]}
+        initialEntries={["/business/pollo-vivo/salesAndBatches?batch=130"]}
       >
         <BatchPage unitType="LIVE_CHICKEN" />
       </MemoryRouter>,
@@ -130,5 +135,21 @@ describe("BatchPage - acceso a un viaje", () => {
         screen.getByRole("switch", { name: "Solo con disponibilidad" }),
       ).not.toBeChecked(),
     );
+  });
+
+  it("entrega el mismo rango de fechas a la disponibilidad global", async () => {
+    render(
+      <MemoryRouter initialEntries={["/business/pollo-vivo/salesAndBatches"]}>
+        <BatchPage unitType="LIVE_CHICKEN" />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findAllByText("Disponibilidad")).not.toHaveLength(0);
+    await waitFor(() => expect(summaryMock.props.length).toBeGreaterThan(0));
+
+    const props = summaryMock.props[summaryMock.props.length - 1];
+    expect(props.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(props.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(props.batches).toEqual([]);
   });
 });
