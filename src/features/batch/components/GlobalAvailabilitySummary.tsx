@@ -5,24 +5,30 @@ import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
 import type { BatchResponseDTO, BusinessUnitType } from "../types.batch";
 import { formatHumanDate } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
+import { usePendingOrderQuantity } from "@/features/route-orders/api/routeOrders.queries";
 import { ValorEnInventarioHelp } from "./common/ValorEnInventarioHelp";
 
 interface GlobalAvailabilitySummaryProps {
   batches: BatchResponseDTO[];
   unitType: BusinessUnitType;
+  startDate: string | null;
+  endDate: string | null;
   onBatchClick: (batchId: number) => void;
 }
 
 export const GlobalAvailabilitySummary: React.FC<
   GlobalAvailabilitySummaryProps
-> = ({ batches, unitType, onBatchClick }) => {
+> = ({ batches, unitType, startDate, endDate, onBatchClick }) => {
   const visibleBatches = batches.filter((b) => Number(b.remainingQuantity) > 0);
+  const supportsOrders = unitType === "EGG" || unitType === "LIVE_CHICKEN";
 
   const helpUnit: "aves" | "piezas" = unitType === "EGG" ? "piezas" : "aves";
   const valorEnInventarioHelp = React.useMemo(
     () => <ValorEnInventarioHelp unit={helpUnit} />,
     [helpUnit],
   );
+  const { data: pendingOrders, isLoading: isPendingOrdersLoading } =
+    usePendingOrderQuantity(startDate, endDate, supportsOrders);
 
   if (visibleBatches.length === 0) {
     return (
@@ -47,6 +53,21 @@ export const GlobalAvailabilitySummary: React.FC<
     (sum, b) => sum + Number(b.remainingQuantity),
     0,
   );
+
+  const totalRemainingUnits =
+    unitType === "EGG" ? totalRemainingPieces : totalRemaining;
+  let pendingUnits = Number(pendingOrders?.quantity ?? 0);
+  if (unitType === "EGG") {
+    pendingUnits *= 30;
+  }
+  const availableAfterOrders = totalRemainingUnits - pendingUnits;
+
+  const unitsDisplay = (units: number) =>
+    unitType === "EGG" ? (
+      <EggQuantityDisplay totalPieces={Math.max(0, units)} />
+    ) : (
+      <span>{units.toLocaleString("es-MX")} aves</span>
+    );
 
   const totalValorEnInventario = visibleBatches.reduce<number | null>(
     (acc, b) => {
@@ -95,6 +116,54 @@ export const GlobalAvailabilitySummary: React.FC<
           <p className="text-[10px] text-gray-400">MXN restantes en remesas</p>
         </div>
       </div>
+
+      {supportsOrders && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-md bg-gray-900/50 px-3 py-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400">Pedidos pendientes:</span>
+            <span
+              data-testid="pending-orders"
+              className="font-semibold text-amber-300"
+            >
+              {isPendingOrdersLoading
+                ? "Calculando..."
+                : pendingOrders
+                  ? unitsDisplay(pendingUnits)
+                  : "—"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400">
+              Disponible después de pedidos:
+            </span>
+            <span
+              data-testid="available-after-orders"
+              className={
+                availableAfterOrders < 0
+                  ? "font-semibold text-red-300"
+                  : "font-semibold text-emerald-300"
+              }
+            >
+              {isPendingOrdersLoading
+                ? "Calculando..."
+                : unitsDisplay(availableAfterOrders)}
+            </span>
+            {availableAfterOrders < 0 && (
+              <span className="text-[10px] font-semibold tracking-wide text-red-300 uppercase">
+                Sobrepedido
+              </span>
+            )}
+            {availableAfterOrders < 0 && unitType === "EGG" && (
+              <span className="flex items-center gap-1 text-red-300">
+                Faltan
+                <EggQuantityDisplay
+                  totalPieces={Math.abs(availableAfterOrders)}
+                />
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         {visibleBatches.map((batch) => (

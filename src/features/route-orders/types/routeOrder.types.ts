@@ -56,6 +56,12 @@ export interface RouteOrderSheetDTO {
   previousClientOrder?: number[] | null;
 }
 
+export interface PendingOrderQuantityDTO {
+  unitType: "EGG" | "LIVE_CHICKEN";
+  quantity: number;
+  lineCount: number;
+}
+
 export interface RouteOrderLineSaveDTO {
   clientId: number;
   quantity: number;

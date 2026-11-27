@@ -2,6 +2,7 @@ import { http } from "@/shared/api/http";
 import type {
   GenerateRouteOrderSalesDTO,
   GenerateRouteOrderSalesResultDTO,
+  PendingOrderQuantityDTO,
   RouteOrderDTO,
   RouteOrderSaleCandidateDTO,
   RouteOrderSaveDTO,
@@ -42,6 +43,17 @@ export const getRouteOrderSaleCandidates = async (
   const { data } = await http.get<RouteOrderSaleCandidateDTO[]>(
     `${BASE_URL}/sale-candidates`,
     { params: { date } },
+  );
+  return data;
+};
+
+export const getPendingOrderQuantity = async (
+  startDate: string,
+  endDate: string,
+): Promise<PendingOrderQuantityDTO> => {
+  const { data } = await http.get<PendingOrderQuantityDTO>(
+    `${BASE_URL}/pending-quantity`,
+    { params: { startDate, endDate } },
   );
   return data;
 };

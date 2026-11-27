@@ -9,6 +9,7 @@ import {
 } from "flowbite-react";
 import { useBatches } from "../api/batch.queries";
 import { useTripSummary } from "@/features/trips/api/trips.queries";
+import { toLocalDateString } from "@/utils/date.utils";
 import type { TripsUnitType } from "@/features/trips/types/trip.types";
 import type { Batch, BatchPageProps } from "../types.batch";
 
@@ -225,6 +226,8 @@ export const BatchPage: React.FC<BatchPageProps> = ({ unitType }) => {
         <GlobalAvailabilitySummary
           batches={filteredBatches}
           unitType={unitType}
+          startDate={startDate ? toLocalDateString(startDate) : null}
+          endDate={endDate ? toLocalDateString(endDate) : null}
           onBatchClick={handleBatchClick}
         />
       )}
