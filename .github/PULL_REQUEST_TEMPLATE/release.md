@@ -1,5 +1,7 @@
 ## Release
 
+> The agent may merge this PR only after the human explicitly says "merge to main".
+
 <!-- One line: what this release ships and why. -->
 
 ### Included

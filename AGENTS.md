@@ -255,7 +255,8 @@ Caveats:
   the diff.
 - The human owns `main`. Prepare the release PR with
   `gh pr create --base main --head dev --template .github/PULL_REQUEST_TEMPLATE/release.md`,
-  keep it current, and never merge it yourself.
+  keep it current, and merge it only when the human explicitly says "merge to
+  main".
 - If the human says "freeze dev", hold behavior-changing merges to `dev` until
   "unfreeze". Documentation and test-only changes may still merge.
 - There are no time-based release reminders. The human decides when to release.
