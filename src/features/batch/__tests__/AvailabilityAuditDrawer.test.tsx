@@ -87,6 +87,13 @@ const breakdown: PendingOrderBreakdownDTO = {
             },
           ],
         },
+        {
+          routeId: 4,
+          routeName: "Ruta Norte",
+          quantity: 0,
+          lineCount: 0,
+          orders: [],
+        },
       ],
     },
   ],
@@ -102,7 +109,6 @@ const renderDrawer = (unitType: "LIVE_CHICKEN" | "EGG" = "LIVE_CHICKEN") =>
       endDate="2030-01-31"
       includedBatches={[batch()]}
       allBatches={[
-        batch(),
         batch({
           id: 2,
           entryDate: "2029-12-01",
@@ -194,6 +200,111 @@ describe("AvailabilityAuditDrawer", () => {
     await user.click(screen.getByRole("button", { name: /Exportar remesas/i }));
     expect(mocks.createObjectUrl).toHaveBeenCalledTimes(2);
     expect(clickSpy).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getByRole("button", { name: "Por día" }));
+    expect(screen.getByText("Pedido #456")).toBeInTheDocument();
+
+    clickSpy.mockRestore();
+  });
+
+  it("muestra y exporta cantidades de huevo", async () => {
+    mocks.usePendingOrderBreakdown.mockReturnValue({
+      data: {
+        ...breakdown,
+        unitType: "EGG",
+        totalQuantity: 10,
+        lineCount: 1,
+        days: [
+          {
+            date: "2030-01-20",
+            quantity: 10,
+            lineCount: 1,
+            routes: [
+              {
+                routeId: 3,
+                routeName: "Ruta Centro",
+                quantity: 10,
+                lineCount: 1,
+                orders: [
+                  {
+                    orderId: 456,
+                    tripId: 77,
+                    driverName: "Chofer Uno",
+                    quantity: 10,
+                    lineCount: 1,
+                    excludedQuantity: 0,
+                    excludedLineCount: 0,
+                    lines: [
+                      {
+                        lineId: 1,
+                        clientId: 10,
+                        clientName: "Cliente A",
+                        businessName: "Abarrotes A",
+                        localityName: "Centro",
+                        quantity: 10,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    const user = userEvent.setup();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    render(
+      <AvailabilityAuditDrawer
+        open
+        onClose={vi.fn()}
+        unitType="EGG"
+        startDate="2030-01-01"
+        endDate="2030-01-31"
+        includedBatches={[
+          batch({
+            type: "EGG",
+            remainingQuantity: "360",
+            remainingBoxes: 1,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+        ]}
+        allBatches={[
+          batch({
+            type: "EGG",
+            remainingQuantity: "360",
+            remainingBoxes: 1,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+          batch({
+            id: 2,
+            type: "EGG",
+            entryDate: "2029-12-01",
+            remainingQuantity: "720",
+            remainingBoxes: 2,
+            remainingCartons: 0,
+            remainingPieces: 0,
+          }),
+        ]}
+        totalRemainingUnits={360}
+      />,
+    );
+
+    expect(screen.getAllByText("10 casilleros").length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle("Cajas").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Exportar pedidos/i }));
+    await user.click(screen.getByRole("button", { name: "Remesas" }));
+    await user.click(screen.getByRole("button", { name: /Exportar remesas/i }));
+    expect(mocks.createObjectUrl).toHaveBeenCalledTimes(2);
 
     clickSpy.mockRestore();
   });
