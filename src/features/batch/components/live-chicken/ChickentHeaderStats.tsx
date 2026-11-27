@@ -12,6 +12,8 @@ export const ChickenHeaderStats: React.FC<{ batch: BatchResponseDTO }> = ({
   const weightDeclared = Number(batch.metadata?.declared_weight || 0);
   const weightReal = Number(batch.weightReal || 0);
   const weightDiffArrival = weightReal - weightDeclared;
+  const avgWeight =
+    initialAves > 0 && weightReal > 0 ? weightReal / initialAves : 0;
 
   const totalCost = Number(batch.totalAmount || 0);
   const priceProvider = weightDeclared > 0 ? totalCost / weightDeclared : 0;
@@ -21,13 +23,17 @@ export const ChickenHeaderStats: React.FC<{ batch: BatchResponseDTO }> = ({
 
   return (
     <div className="mt-2 flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4 border-b border-gray-700/30 pb-3 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 border-b border-gray-700/30 pb-3 sm:grid-cols-3 md:grid-cols-6">
         <StatItem label="Aves Iniciales" value={`${initialAves} und.`} />
         <StatItem
           label="Peso Declarado"
           value={`${weightDeclared.toFixed(2)} kg`}
         />
         <StatItem label="Peso Real" value={`${weightReal.toFixed(2)} kg`} />
+        <StatItem
+          label="Peso Promedio"
+          value={avgWeight > 0 ? `${avgWeight.toFixed(2)} kg` : "—"}
+        />
         <StatItem
           label="Disponible"
           value={`${remainingAves} aves`}

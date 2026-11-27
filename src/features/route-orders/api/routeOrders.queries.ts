@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import {
   createRouteOrderTrip,
   generateRouteOrderSales,
+  getPendingOrderQuantity,
   getRouteOrderSaleCandidates,
   getRouteOrderSheet,
   getRouteOrdersDay,
@@ -65,6 +66,24 @@ export const useRouteOrderSaleCandidates = (
       : routeOrderKeys.saleCandidates(),
     queryFn: () => getRouteOrderSaleCandidates(date!),
     enabled: enabled && !!slug && !!date,
+    staleTime: 1000 * 30,
+  });
+};
+
+export const usePendingOrderQuantity = (
+  startDate: string | null,
+  endDate: string | null,
+  enabled = true,
+) => {
+  const { slug } = useParams<{ slug: string }>();
+
+  return useQuery({
+    queryKey:
+      startDate && endDate
+        ? routeOrderKeys.pendingQuantity(slug ?? "", startDate, endDate)
+        : routeOrderKeys.all,
+    queryFn: () => getPendingOrderQuantity(startDate!, endDate!),
+    enabled: enabled && !!slug && !!startDate && !!endDate,
     staleTime: 1000 * 30,
   });
 };

@@ -32,7 +32,6 @@ import type {
 import { calculateEggUnits } from "@/utils/egg.utils";
 import { formatHumanDate, toLocalDateString } from "@/utils/date.utils";
 import { formatMXN } from "@/utils/moneyNumbers";
-import { EggQuantityDisplay } from "./egg/EggQuantityDisplay";
 import type { BatchResponseDTO } from "../types.batch";
 
 type UnitType = "EGG" | "LIVE_CHICKEN";
@@ -247,37 +246,6 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
       ),
     [selectedCandidates, unitType, values],
   );
-
-  const pendingOrderQuantity = useMemo(
-    () =>
-      candidates.reduce((sum, candidate) => {
-        if (candidate.alreadySold && !forced.has(candidate.lineId)) return sum;
-        const current =
-          values[candidate.lineId] ?? initialValues(candidate, unitType);
-        const quantity =
-          unitType === "EGG"
-            ? toNumber(current.quantity) * 30
-            : toNumber(current.headCount);
-        return sum + (Number.isFinite(quantity) ? quantity : 0);
-      }, 0),
-    [candidates, forced, unitType, values],
-  );
-
-  const remainingQuantity = Number(batch.remainingQuantity || 0);
-  const availableQuantity = remainingQuantity - pendingOrderQuantity;
-
-  const avgChickenWeight = useMemo(() => {
-    if (unitType !== "LIVE_CHICKEN") return null;
-    const realWeight = Number(batch.weightReal || 0);
-    const initialQuantity = Number(batch.initialQuantity || 0);
-    if (realWeight > 0 && initialQuantity > 0) {
-      return realWeight / initialQuantity;
-    }
-    const metadataWeight = Number(
-      batch.metadata?.avg_weight ?? batch.metadata?.avgWeight ?? 0,
-    );
-    return metadataWeight > 0 ? metadataWeight : null;
-  }, [batch, unitType]);
 
   const selectable = (candidate: RouteOrderSaleCandidateDTO) =>
     !candidate.alreadySold || forced.has(candidate.lineId);
@@ -595,64 +563,6 @@ export const RouteOrderSalesModal: React.FC<Props> = ({ batch, onClose }) => {
             <span className="text-xs text-gray-500">
               {formatHumanDate(date, "long")} · {batch.supplierName}
             </span>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {unitType === "LIVE_CHICKEN" && (
-              <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
-                <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-                  Peso promedio por ave
-                </p>
-                <p
-                  data-testid="avg-chicken-weight"
-                  className="text-lg font-semibold text-white"
-                >
-                  {avgChickenWeight != null
-                    ? `${avgChickenWeight.toFixed(2)} kg/ave`
-                    : "—"}
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  Peso real entre las aves de la remesa
-                </p>
-              </div>
-            )}
-            <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
-              <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-                Disponible para venta
-              </p>
-              <div
-                data-testid="available-to-sell"
-                className={`flex flex-wrap items-center gap-2 text-lg font-semibold ${
-                  availableQuantity < 0 ? "text-red-300" : "text-emerald-300"
-                }`}
-              >
-                {unitType === "EGG" ? (
-                  availableQuantity >= 0 ? (
-                    <EggQuantityDisplay totalPieces={availableQuantity} />
-                  ) : null
-                ) : (
-                  <span>{availableQuantity.toLocaleString("es-MX")} aves</span>
-                )}
-                {availableQuantity < 0 && (
-                  <span className="text-[10px] font-semibold tracking-wide uppercase">
-                    Sobrepedido
-                  </span>
-                )}
-                {availableQuantity < 0 && unitType === "EGG" && (
-                  <span className="flex items-center gap-1 text-sm">
-                    Faltan
-                    <EggQuantityDisplay
-                      totalPieces={Math.abs(availableQuantity)}
-                    />
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-gray-500">
-                {unitType === "EGG"
-                  ? "Piezas restantes menos casilleros pedidos"
-                  : `Remesa ${remainingQuantity.toLocaleString("es-MX")} · pedidos ${pendingOrderQuantity.toLocaleString("es-MX")}`}
-              </p>
-            </div>
           </div>
 
           {groups.some((group) => group.salesRegenerationRequired) && (

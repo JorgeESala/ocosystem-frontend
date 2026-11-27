@@ -9,4 +9,12 @@ export const routeOrderKeys = {
   saleCandidates: () => [...routeOrderKeys.all, "sale-candidates"] as const,
   saleCandidatesByDate: (slug: string, date: string) =>
     [...routeOrderKeys.saleCandidates(), slug, date] as const,
+  pendingQuantity: (slug: string, startDate: string, endDate: string) =>
+    [
+      ...routeOrderKeys.all,
+      "pending-quantity",
+      slug,
+      startDate,
+      endDate,
+    ] as const,
 };

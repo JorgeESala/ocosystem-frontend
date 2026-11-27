@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { RouteOrderSalesModal } from "../components/RouteOrderSalesModal";
 import type { BatchResponseDTO } from "../types.batch";
 import type { RouteOrderSaleCandidateDTO } from "@/features/route-orders/types/routeOrder.types";
@@ -361,105 +361,5 @@ describe("RouteOrderSalesModal", () => {
     expect(mocks.mutate).toHaveBeenCalledTimes(1);
     const line = mocks.mutate.mock.calls[0][0].lines[0];
     expect(line.weight * line.unitPrice).toBeCloseTo(9000, 2);
-  });
-
-  it("muestra el peso promedio por ave de la remesa", () => {
-    mocks.candidates = [candidate()];
-
-    renderModal({
-      initialQuantity: "100",
-      weightReal: "215",
-      remainingQuantity: "100",
-    });
-
-    expect(screen.getByTestId("avg-chicken-weight")).toHaveTextContent(
-      "2.15 kg/ave",
-    );
-  });
-
-  it("muestra las aves disponibles después de los pedidos pendientes", () => {
-    mocks.candidates = [candidate({ headCount: 5 })];
-
-    renderModal({ remainingQuantity: "20" });
-
-    expect(screen.getByTestId("available-to-sell")).toHaveTextContent(
-      "15 aves",
-    );
-  });
-
-  it("no descuenta pedidos que ya se vendieron", () => {
-    mocks.candidates = [candidate({ headCount: 5, alreadySold: true })];
-
-    renderModal({ remainingQuantity: "15" });
-
-    expect(screen.getByTestId("available-to-sell")).toHaveTextContent(
-      "15 aves",
-    );
-  });
-
-  it("descuenta una venta adicional forzada", () => {
-    mocks.candidates = [candidate({ headCount: 5, alreadySold: true })];
-
-    renderModal({ remainingQuantity: "15" });
-    fireEvent.click(screen.getByRole("button", { name: /Agregar otra/i }));
-
-    expect(screen.getByTestId("available-to-sell")).toHaveTextContent(
-      "10 aves",
-    );
-  });
-
-  it("actualiza la disponibilidad al cambiar las cabezas", () => {
-    mocks.candidates = [candidate({ headCount: 5 })];
-
-    renderModal({ remainingQuantity: "20" });
-    fireEvent.change(screen.getByTestId("heads-1"), {
-      target: { value: "8" },
-    });
-
-    expect(screen.getByTestId("available-to-sell")).toHaveTextContent(
-      "12 aves",
-    );
-  });
-
-  it("muestra la disponibilidad de huevo en cajas y casilleros", () => {
-    mocks.candidates = [
-      candidate({ unitType: "EGG", quantity: 12, headCount: 0 }),
-    ];
-
-    render(
-      <RouteOrderSalesModal
-        batch={{ ...batch, type: "EGG", remainingQuantity: "7200" }}
-        onClose={vi.fn()}
-      />,
-    );
-
-    const available = screen.getByTestId("available-to-sell");
-    expect(within(available).getByTitle("Cajas")).toHaveTextContent("19");
-  });
-
-  it("no muestra el peso promedio en huevo", () => {
-    mocks.candidates = [
-      candidate({ unitType: "EGG", quantity: 12, headCount: 0 }),
-    ];
-
-    render(
-      <RouteOrderSalesModal
-        batch={{ ...batch, type: "EGG" }}
-        onClose={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByTestId("avg-chicken-weight")).not.toBeInTheDocument();
-  });
-
-  it("muestra sobrepedido cuando los pedidos superan la remesa", () => {
-    mocks.candidates = [candidate({ headCount: 25 })];
-
-    renderModal({ remainingQuantity: "20" });
-
-    expect(screen.getByTestId("available-to-sell")).toHaveTextContent(
-      "-5 aves",
-    );
-    expect(screen.getByText("Sobrepedido")).toBeInTheDocument();
   });
 });
