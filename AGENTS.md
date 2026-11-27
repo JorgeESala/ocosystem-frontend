@@ -196,18 +196,17 @@ comments"`). Don't add code comments, JSDoc, or file headers.
 
 ## Typecheck / build before pushing
 
-There is no CI or pre-commit hook. Before considering a change done, run:
+There is no pre-commit hook. Before considering a change done, run:
 
 ```bash
-npx tsc --noEmit
 npm run lint
-npm run test
+npm run test -- src/path/to/affected.test.tsx
 npm run build
 ```
 
-The build runs `tsc -b && vite build` and is the authoritative typecheck —
-project-references mode catches extra errors that plain `tsc --noEmit` misses
-(e.g. recharts prop types).
+The full suite runs in CI. The build runs `tsc -b && vite build` and is the
+only real typecheck. Do not run `npx tsc --noEmit`: the root `tsconfig.json`
+has `"files": []` with project references, so that command checks nothing.
 
 Caveats:
 
@@ -250,6 +249,17 @@ Caveats:
 - Never commit `dist/`, `node_modules/`, `.env`, or the `git-diagnostics-*.zip`
   artifact in the repo root.
 
+## Delivery workflow
+
+- The agent merges feature PRs to `dev` after CI is green and a self-review of
+  the diff.
+- The human owns `main`. Prepare the release PR with
+  `gh pr create --base main --head dev --template .github/PULL_REQUEST_TEMPLATE/release.md`,
+  keep it current, and never merge it yourself.
+- If the human says "freeze dev", hold behavior-changing merges to `dev` until
+  "unfreeze". Documentation and test-only changes may still merge.
+- There are no time-based release reminders. The human decides when to release.
+
 ## Test-driven development (required)
 
 For any behavior change:
@@ -263,13 +273,14 @@ For any behavior change:
    ```
 
 3. Implement the smallest change that makes it pass.
-4. Re-run the focused test, then the full suite:
+4. Re-run the focused test, then the affected test files. The full suite runs
+   in CI:
 
    ```bash
-   npm run test
+   npm run test -- src/path/to/affected.test.tsx
    ```
 
-5. Refactor only while the suite is green.
+5. Refactor only while the focused and affected tests are green.
 
 Bug fixes start with a regression test that reproduces the bug. New components,
 hooks, validation, and API behavior start with a test. Tests live in
@@ -280,22 +291,26 @@ assertions to make the suite pass.
 Before finishing:
 
 - [ ] The new test failed before the implementation
-- [ ] The focused test passes
-- [ ] `npm run test` passes
-- [ ] `npm run lint` and `npm run build` pass
-- [ ] `bash scripts/check-tests-changed.sh` passes
-- [ ] `bash scripts/check-changed-coverage.sh origin/main` passes
-- [ ] `bash scripts/check-branch-sync.sh` passes
+- [ ] The focused test passes locally
+- [ ] The affected test files pass locally
+- [ ] `npm run lint` and `npm run build` pass locally or in CI
+- [ ] `npm run test` passes in CI on the PR
+- [ ] The changed-line coverage gate passes in CI on the PR
+- [ ] `bash scripts/check-tests-changed.sh` passes in CI
+- [ ] `bash scripts/check-branch-sync.sh` passes after a production release
 
 Use `[no-test]` in the commit message only for documentation, styling-only, or
 copy changes without application behavior; state the reason.
 
 ## Changed-line coverage
 
-`npm run test:coverage` generates `coverage/lcov.info`. The gate measures only
-the frontend lines added or changed against a base ref, with an 80% threshold.
-Tests, type declarations, the Vite entry point, type-only folders, and config
-data files are excluded.
+CI runs `npm run test:coverage:ci`, which generates `coverage/lcov.info`, and
+then runs the gate. The gate measures only the frontend lines added or changed
+against a base ref, with an 80% threshold. Tests, type declarations, the Vite
+entry point, type-only folders, and config data files are excluded.
+
+The CI script uses stock worker counts. `npm run test:coverage` keeps the
+two-worker cap for the dev laptop. To debug locally:
 
 ```bash
 python -m pip install diff-cover   # once
@@ -308,10 +323,13 @@ threshold or widen the exclusions without a documented reason.
 
 ## CI / deploys
 
-- GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `lint`, `tsc`,
-  `build`, `vitest` on every push to `dev`/`main` and on pull requests.
+- GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci`, `lint`, `build`
+  (`tsc -b` + `vite`), and `vitest` with coverage on every push to `dev`/`main`
+  and on pull requests.
 - Agent gates: `.github/workflows/branch-sync.yml` fails when `main` has commits
-  missing from `dev`. The CI test job runs `scripts/check-tests-changed.sh` and
+  missing from `dev`. It runs after pushes to `dev` and on a weekday schedule,
+  not on `main` pushes, because `main` is expected to be ahead until the
+  post-release sync. The CI test job runs `scripts/check-tests-changed.sh` and
   fails production-code changes without test changes; use `[no-test]` in the
   commit message or PR title only for changes that genuinely need no test. It
   also runs `scripts/check-changed-coverage.sh` with an 80% threshold on changed
